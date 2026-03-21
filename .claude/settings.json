@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run *)",
+      "Bash(uv sync*)",
+      "Bash(uv add *)",
+      "Bash(uv lock*)",
+      "Bash(npm run *)",
+      "Bash(npm install*)",
+      "Bash(npx *)",
+      "Bash(docker compose *)",
+      "Bash(docker-compose *)",
+      "Bash(docker logs *)",
+      "Bash(docker ps*)",
+      "Bash(docker port *)",
+      "Bash(celery *)",
+      "Bash(alembic *)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git branch*)",
+      "Bash(git stash*)",
+      "Bash(git rev-parse*)",
+      "Bash(git check-ignore*)",
+      "Bash(gh pr *)",
+      "Bash(gh issue *)",
+      "Bash(gh run *)",
+      "Bash(gh auth status*)",
+      "Bash(curl localhost*)",
+      "Bash(pg_isready*)",
+      "Bash(redis-cli ping*)",
+      "Bash(brew services*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.ato.gov.au)",
+      "WebFetch(domain:law.ato.gov.au)",
+      "WebFetch(domain:developer.xero.com)",
+      "WebFetch(domain:stackoverflow.com)",
+      "WebFetch(domain:docs.celeryq.dev)"
+    ],
+    "deny": []
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); FILE_PATH=$(echo \"$INPUT\" | jq -r '.tool_input.file_path'); case \"$FILE_PATH\" in *.py) ruff format \"$FILE_PATH\" 2>/dev/null; ruff check --fix \"$FILE_PATH\" 2>/dev/null || true ;; *.ts|*.tsx) npx prettier --write \"$FILE_PATH\" 2>/dev/null || true ;; esac"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}

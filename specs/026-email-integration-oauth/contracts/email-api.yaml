@@ -1,0 +1,648 @@
+openapi: 3.1.0
+info:
+  title: Clairo Email Integration API
+  version: 1.0.0
+  description: |
+    API for managing email OAuth connections for ATO correspondence capture.
+    Part of Spec 026: Email Integration & OAuth.
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  # OAuth Flows
+  /email/oauth/{provider}/authorize:
+    get:
+      summary: Initiate OAuth flow
+      operationId: initiateOAuth
+      tags:
+        - OAuth
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/EmailProvider'
+        - name: redirect_uri
+          in: query
+          schema:
+            type: string
+            format: uri
+          description: Where to redirect after OAuth (frontend URL)
+      responses:
+        '200':
+          description: OAuth authorization URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authorization_url:
+                    type: string
+                    format: uri
+                  state:
+                    type: string
+        '400':
+          description: Invalid provider
+
+  /email/oauth/{provider}/callback:
+    get:
+      summary: OAuth callback handler
+      operationId: handleOAuthCallback
+      tags:
+        - OAuth
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/EmailProvider'
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: error
+          in: query
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to frontend with success/error
+        '400':
+          description: OAuth error or state mismatch
+
+  # Connections
+  /email/connections:
+    get:
+      summary: List email connections
+      operationId: listConnections
+      tags:
+        - Connections
+      responses:
+        '200':
+          description: List of email connections
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EmailConnectionSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /email/connections/{connection_id}:
+    get:
+      summary: Get connection details
+      operationId: getConnection
+      tags:
+        - Connections
+      parameters:
+        - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '200':
+          description: Connection details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConnectionDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Disconnect email account
+      operationId: disconnectEmail
+      tags:
+        - Connections
+      parameters:
+        - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '204':
+          description: Connection removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /email/connections/{connection_id}/reconnect:
+    post:
+      summary: Initiate reconnection for expired connection
+      operationId: reconnectEmail
+      tags:
+        - Connections
+      parameters:
+        - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '200':
+          description: OAuth URL for reconnection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authorization_url:
+                    type: string
+                    format: uri
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /email/connections/{connection_id}/sync:
+    post:
+      summary: Trigger manual sync
+      operationId: triggerSync
+      tags:
+        - Sync
+      parameters:
+        - $ref: '#/components/parameters/ConnectionId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_backfill:
+                  type: boolean
+                  default: false
+                  description: Re-sync all emails (last 12 months)
+      responses:
+        '202':
+          description: Sync job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJobResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Sync already in progress
+
+  /email/connections/{connection_id}/sync/status:
+    get:
+      summary: Get sync status
+      operationId: getSyncStatus
+      tags:
+        - Sync
+      parameters:
+        - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '200':
+          description: Current sync status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Forwarding
+  /email/forwarding:
+    get:
+      summary: Get forwarding address for tenant
+      operationId: getForwardingAddress
+      tags:
+        - Forwarding
+      responses:
+        '200':
+          description: Forwarding configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForwardingConfig'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Enable email forwarding
+      operationId: enableForwarding
+      tags:
+        - Forwarding
+      responses:
+        '201':
+          description: Forwarding enabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForwardingConfig'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Forwarding already enabled
+
+  # Emails
+  /email/inbox:
+    get:
+      summary: List synced ATO emails
+      operationId: listEmails
+      tags:
+        - Emails
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: connection_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by connection
+        - name: is_read
+          in: query
+          schema:
+            type: boolean
+          description: Filter by read status
+        - name: is_processed
+          in: query
+          schema:
+            type: boolean
+          description: Filter by processed status
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of emails
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /email/inbox/{email_id}:
+    get:
+      summary: Get email details
+      operationId: getEmail
+      tags:
+        - Emails
+      parameters:
+        - name: email_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Email details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /email/inbox/{email_id}/mark-read:
+    post:
+      summary: Mark email as read
+      operationId: markEmailRead
+      tags:
+        - Emails
+      parameters:
+        - name: email_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Email marked as read
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /email/inbox/{email_id}/attachments/{attachment_id}:
+    get:
+      summary: Download attachment
+      operationId: downloadAttachment
+      tags:
+        - Emails
+      parameters:
+        - name: email_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: attachment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Attachment content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    ConnectionId:
+      name: connection_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    PageNumber:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PageSize:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+
+  schemas:
+    EmailProvider:
+      type: string
+      enum:
+        - gmail
+        - outlook
+
+    ConnectionStatus:
+      type: string
+      enum:
+        - PENDING
+        - ACTIVE
+        - EXPIRED
+        - REVOKED
+        - DISCONNECTED
+
+    EmailConnectionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          enum: [GMAIL, OUTLOOK, FORWARDING]
+        email_address:
+          type: string
+          format: email
+        status:
+          $ref: '#/components/schemas/ConnectionStatus'
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_sync_email_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    EmailConnectionDetail:
+      allOf:
+        - $ref: '#/components/schemas/EmailConnectionSummary'
+        - type: object
+          properties:
+            display_name:
+              type: string
+              nullable: true
+            status_reason:
+              type: string
+              nullable: true
+            token_expires_at:
+              type: string
+              format: date-time
+            sync_jobs:
+              type: array
+              items:
+                $ref: '#/components/schemas/SyncJobSummary'
+              maxItems: 10
+
+    SyncJobSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        job_type:
+          type: string
+          enum: [INITIAL_BACKFILL, INCREMENTAL]
+        status:
+          type: string
+          enum: [PENDING, RUNNING, COMPLETED, FAILED]
+        emails_synced:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    SyncJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, RUNNING]
+        message:
+          type: string
+
+    SyncStatus:
+      type: object
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ConnectionStatus'
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_sync_email_count:
+          type: integer
+        current_job:
+          $ref: '#/components/schemas/SyncJobSummary'
+          nullable: true
+        total_emails_synced:
+          type: integer
+
+    ForwardingConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        forwarding_address:
+          type: string
+          format: email
+        instructions:
+          type: string
+          description: Setup instructions for mail rule
+
+    EmailSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        from_address:
+          type: string
+          format: email
+        from_name:
+          type: string
+          nullable: true
+        subject:
+          type: string
+        received_at:
+          type: string
+          format: date-time
+        snippet:
+          type: string
+          nullable: true
+        is_read:
+          type: boolean
+        is_processed:
+          type: boolean
+        has_attachments:
+          type: boolean
+        attachment_count:
+          type: integer
+
+    EmailDetail:
+      allOf:
+        - $ref: '#/components/schemas/EmailSummary'
+        - type: object
+          properties:
+            to_addresses:
+              type: array
+              items:
+                type: string
+                format: email
+            cc_addresses:
+              type: array
+              items:
+                type: string
+                format: email
+            body_text:
+              type: string
+              nullable: true
+            body_html:
+              type: string
+              nullable: true
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttachmentSummary'
+
+    AttachmentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        content_type:
+          type: string
+        size_bytes:
+          type: integer
+
+    EmailListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        unread_count:
+          type: integer
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Not authenticated
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Resource not found
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: OAuth
+    description: OAuth flow endpoints
+  - name: Connections
+    description: Email connection management
+  - name: Sync
+    description: Email sync operations
+  - name: Forwarding
+    description: Email forwarding fallback
+  - name: Emails
+    description: Email inbox operations

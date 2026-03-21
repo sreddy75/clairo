@@ -1,0 +1,1445 @@
+openapi: 3.1.0
+info:
+  title: ATOtrack Workflow Integration API
+  version: 1.0.0
+  description: |
+    API for ATOtrack workflow integration - automatic task creation, insight generation,
+    deadline notifications, AI response drafting, and practice management sync.
+  contact:
+    name: Clairo API Support
+    email: api@clairo.com.au
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: Dashboard
+    description: ATOtrack dashboard aggregation
+  - name: Correspondence
+    description: Correspondence workflow operations
+  - name: Tasks
+    description: Task management for correspondence
+  - name: Insights
+    description: Insight generation from correspondence
+  - name: Notifications
+    description: Deadline notification management
+  - name: Response Drafting
+    description: AI-powered response drafting
+  - name: Practice Management
+    description: Karbon/XPM integration
+
+paths:
+  /atotrack/dashboard:
+    get:
+      operationId: getATOtrackDashboard
+      tags: [Dashboard]
+      summary: Get ATOtrack dashboard data
+      description: |
+        Returns aggregated dashboard data including summary cards, items requiring
+        attention, and recent resolved items. Cached for 5 minutes.
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence:
+    get:
+      operationId: listCorrespondence
+      tags: [Correspondence]
+      summary: List correspondence with filters
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/CorrespondenceStatus"
+        - name: client_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: notice_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ATONoticeType"
+        - name: urgency
+          in: query
+          schema:
+            $ref: "#/components/schemas/UrgencyLevel"
+        - name: due_before
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: due_after
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search in title, reference, client name
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+            maximum: 100
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [due_date, created_at, urgency, client_name]
+            default: due_date
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+      responses:
+        "200":
+          description: Paginated correspondence list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorrespondenceListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence/{id}:
+    get:
+      operationId: getCorrespondence
+      tags: [Correspondence]
+      summary: Get correspondence detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Correspondence detail with linked task/insight
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorrespondenceDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence/{id}/resolve:
+    post:
+      operationId: resolveCorrespondence
+      tags: [Correspondence]
+      summary: Mark correspondence as resolved
+      description: |
+        Marks correspondence as resolved, completes linked task,
+        dismisses linked insight, and cancels pending notifications.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolveRequest"
+      responses:
+        "200":
+          description: Correspondence resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolveResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence/{id}/reopen:
+    post:
+      operationId: reopenCorrespondence
+      tags: [Correspondence]
+      summary: Reopen resolved correspondence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Correspondence reopened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorrespondenceDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence/{id}/task:
+    get:
+      operationId: getCorrespondenceTask
+      tags: [Tasks]
+      summary: Get linked task for correspondence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Linked task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createCorrespondenceTask
+      tags: [Tasks]
+      summary: Manually create task for correspondence
+      description: Create a task if auto-creation didn't happen or was overridden
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskRequest"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+        "409":
+          description: Task already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence/{id}/task/complete:
+    post:
+      operationId: completeCorrespondenceTask
+      tags: [Tasks]
+      summary: Complete the linked task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Task completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence/{id}/insight:
+    get:
+      operationId: getCorrespondenceInsight
+      tags: [Insights]
+      summary: Get linked insight for correspondence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Linked insight
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence/{id}/notifications:
+    get:
+      operationId: getCorrespondenceNotifications
+      tags: [Notifications]
+      summary: Get scheduled notifications for correspondence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Scheduled notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence/{id}/notifications/snooze:
+    post:
+      operationId: snoozeNotifications
+      tags: [Notifications]
+      summary: Snooze notifications for correspondence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SnoozeRequest"
+      responses:
+        "200":
+          description: Notifications snoozed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/correspondence/{id}/draft:
+    get:
+      operationId: getResponseDrafts
+      tags: [Response Drafting]
+      summary: Get existing response drafts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Response drafts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftsListResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: generateResponseDraft
+      tags: [Response Drafting]
+      summary: Generate AI response draft
+      description: |
+        Uses Claude API with RAG to generate a professional response draft.
+        Typically completes within 30 seconds.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateDraftRequest"
+      responses:
+        "202":
+          description: Draft generation started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftJobResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          description: Rate limited - too many draft requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /atotrack/drafts/{id}:
+    get:
+      operationId: getDraft
+      tags: [Response Drafting]
+      summary: Get a specific draft
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Draft details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    patch:
+      operationId: updateDraft
+      tags: [Response Drafting]
+      summary: Update draft content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDraftRequest"
+      responses:
+        "200":
+          description: Draft updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    delete:
+      operationId: deleteDraft
+      tags: [Response Drafting]
+      summary: Delete a draft
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Draft deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/drafts/templates:
+    get:
+      operationId: getDraftTemplates
+      tags: [Response Drafting]
+      summary: Get available draft templates
+      parameters:
+        - name: notice_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ATONoticeType"
+      responses:
+        "200":
+          description: Available templates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplatesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/integrations:
+    get:
+      operationId: getPMIntegrations
+      tags: [Practice Management]
+      summary: Get practice management integrations
+      responses:
+        "200":
+          description: PM integrations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PMIntegrationsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/integrations/karbon:
+    post:
+      operationId: connectKarbon
+      tags: [Practice Management]
+      summary: Connect Karbon integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KarbonConnectRequest"
+      responses:
+        "201":
+          description: Karbon connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PMIntegrationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    delete:
+      operationId: disconnectKarbon
+      tags: [Practice Management]
+      summary: Disconnect Karbon integration
+      responses:
+        "204":
+          description: Karbon disconnected
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/integrations/xpm:
+    post:
+      operationId: connectXPM
+      tags: [Practice Management]
+      summary: Connect XPM integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/XPMConnectRequest"
+      responses:
+        "201":
+          description: XPM connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PMIntegrationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    delete:
+      operationId: disconnectXPM
+      tags: [Practice Management]
+      summary: Disconnect XPM integration
+      responses:
+        "204":
+          description: XPM disconnected
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/integrations/sync:
+    post:
+      operationId: triggerPMSync
+      tags: [Practice Management]
+      summary: Trigger manual PM sync
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PMSyncRequest"
+      responses:
+        "202":
+          description: Sync started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PMSyncResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/integrations/sync-history:
+    get:
+      operationId: getPMSyncHistory
+      tags: [Practice Management]
+      summary: Get PM sync history
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Sync history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PMSyncHistoryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/settings:
+    get:
+      operationId: getATOtrackSettings
+      tags: [Dashboard]
+      summary: Get ATOtrack settings
+      responses:
+        "200":
+          description: ATOtrack settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ATOtrackSettingsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    patch:
+      operationId: updateATOtrackSettings
+      tags: [Dashboard]
+      summary: Update ATOtrack settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSettingsRequest"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ATOtrackSettingsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /atotrack/stats:
+    get:
+      operationId: getATOtrackStats
+      tags: [Dashboard]
+      summary: Get ATOtrack statistics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, quarter, year]
+            default: month
+      responses:
+        "200":
+          description: ATOtrack statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  schemas:
+    # Enums
+    CorrespondenceStatus:
+      type: string
+      enum: [pending, in_progress, resolved, escalated]
+
+    ATONoticeType:
+      type: string
+      enum:
+        - audit_notice
+        - penalty_notice
+        - debt_notice
+        - activity_statement_reminder
+        - payment_confirmation
+        - refund_notification
+        - registration_confirmation
+        - objection_outcome
+        - amendment_notice
+        - compliance_letter
+        - information_request
+        - general_correspondence
+
+    UrgencyLevel:
+      type: string
+      enum: [critical, high, medium, low]
+
+    ResponseDraftType:
+      type: string
+      enum:
+        - audit_response
+        - remission_request
+        - objection
+        - information_response
+        - extension_request
+        - payment_arrangement
+        - general_response
+
+    ResponseDraftStatus:
+      type: string
+      enum: [generating, draft, finalized, sent]
+
+    NotificationStatus:
+      type: string
+      enum: [scheduled, sent, cancelled, snoozed]
+
+    PMProvider:
+      type: string
+      enum: [karbon, xpm]
+
+    PMSyncStatus:
+      type: string
+      enum: [pending, syncing, completed, failed]
+
+    # Dashboard
+    DashboardResponse:
+      type: object
+      required: [summary, requires_attention, recent_resolved, cached_at]
+      properties:
+        summary:
+          $ref: "#/components/schemas/DashboardSummary"
+        requires_attention:
+          type: array
+          items:
+            $ref: "#/components/schemas/CorrespondenceSummary"
+          maxItems: 10
+        recent_resolved:
+          type: array
+          items:
+            $ref: "#/components/schemas/CorrespondenceSummary"
+          maxItems: 5
+        cached_at:
+          type: string
+          format: date-time
+
+    DashboardSummary:
+      type: object
+      required: [overdue, due_soon, in_progress, triage, resolved_this_month]
+      properties:
+        overdue:
+          type: integer
+        due_soon:
+          type: integer
+          description: Due within 7 days
+        in_progress:
+          type: integer
+        triage:
+          type: integer
+          description: Needs manual review
+        resolved_this_month:
+          type: integer
+
+    CorrespondenceSummary:
+      type: object
+      required: [id, title, notice_type, urgency, due_date, client_name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        notice_type:
+          $ref: "#/components/schemas/ATONoticeType"
+        urgency:
+          $ref: "#/components/schemas/UrgencyLevel"
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        days_remaining:
+          type: integer
+          nullable: true
+        client_id:
+          type: string
+          format: uuid
+          nullable: true
+        client_name:
+          type: string
+        amount:
+          type: number
+          nullable: true
+        has_task:
+          type: boolean
+        has_insight:
+          type: boolean
+
+    # Correspondence
+    CorrespondenceListResponse:
+      type: object
+      required: [items, total, page, per_page, pages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CorrespondenceSummary"
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        pages:
+          type: integer
+
+    CorrespondenceDetailResponse:
+      type: object
+      required: [id, title, notice_type, status, urgency, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        notice_type:
+          $ref: "#/components/schemas/ATONoticeType"
+        status:
+          $ref: "#/components/schemas/CorrespondenceStatus"
+        urgency:
+          $ref: "#/components/schemas/UrgencyLevel"
+        reference_number:
+          type: string
+          nullable: true
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        days_remaining:
+          type: integer
+          nullable: true
+        client_id:
+          type: string
+          format: uuid
+          nullable: true
+        client_name:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          nullable: true
+        period:
+          type: string
+          nullable: true
+        summary:
+          type: string
+          nullable: true
+        raw_content:
+          type: string
+        email_id:
+          type: string
+          format: uuid
+        task:
+          $ref: "#/components/schemas/TaskSummary"
+          nullable: true
+        insight:
+          $ref: "#/components/schemas/InsightSummary"
+          nullable: true
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationSummary"
+        drafts_count:
+          type: integer
+        pm_synced:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        resolved_by:
+          type: string
+          nullable: true
+
+    ResolveRequest:
+      type: object
+      properties:
+        resolution_notes:
+          type: string
+          maxLength: 1000
+
+    ResolveResponse:
+      type: object
+      required: [correspondence_id, status, task_completed, insight_dismissed, notifications_cancelled]
+      properties:
+        correspondence_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/CorrespondenceStatus"
+        task_completed:
+          type: boolean
+        insight_dismissed:
+          type: boolean
+        notifications_cancelled:
+          type: integer
+
+    # Tasks
+    TaskSummary:
+      type: object
+      required: [id, title, status, due_date]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, cancelled]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        due_date:
+          type: string
+          format: date
+        assignee_id:
+          type: string
+          format: uuid
+          nullable: true
+        assignee_name:
+          type: string
+          nullable: true
+
+    TaskResponse:
+      allOf:
+        - $ref: "#/components/schemas/TaskSummary"
+        - type: object
+          properties:
+            description:
+              type: string
+            correspondence_id:
+              type: string
+              format: uuid
+            client_id:
+              type: string
+              format: uuid
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+            completed_at:
+              type: string
+              format: date-time
+              nullable: true
+
+    CreateTaskRequest:
+      type: object
+      required: [title, due_date]
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        due_date:
+          type: string
+          format: date
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          default: medium
+        assignee_id:
+          type: string
+          format: uuid
+
+    # Insights
+    InsightSummary:
+      type: object
+      required: [id, title, severity, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [active, acknowledged, dismissed]
+        action_url:
+          type: string
+
+    InsightResponse:
+      allOf:
+        - $ref: "#/components/schemas/InsightSummary"
+        - type: object
+          properties:
+            description:
+              type: string
+            correspondence_id:
+              type: string
+              format: uuid
+            client_id:
+              type: string
+              format: uuid
+              nullable: true
+            due_date:
+              type: string
+              format: date
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+            dismissed_at:
+              type: string
+              format: date-time
+              nullable: true
+
+    # Notifications
+    NotificationSummary:
+      type: object
+      required: [id, type, status, scheduled_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [7_days, 3_days, 1_day, overdue]
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+        scheduled_at:
+          type: string
+          format: date-time
+        sent_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    NotificationsResponse:
+      type: object
+      required: [correspondence_id, notifications]
+      properties:
+        correspondence_id:
+          type: string
+          format: uuid
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationSummary"
+
+    SnoozeRequest:
+      type: object
+      required: [snooze_until]
+      properties:
+        snooze_until:
+          type: string
+          format: date-time
+
+    # Response Drafting
+    DraftsListResponse:
+      type: object
+      required: [correspondence_id, drafts]
+      properties:
+        correspondence_id:
+          type: string
+          format: uuid
+        drafts:
+          type: array
+          items:
+            $ref: "#/components/schemas/DraftSummary"
+
+    DraftSummary:
+      type: object
+      required: [id, draft_type, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        draft_type:
+          $ref: "#/components/schemas/ResponseDraftType"
+        status:
+          $ref: "#/components/schemas/ResponseDraftStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DraftResponse:
+      allOf:
+        - $ref: "#/components/schemas/DraftSummary"
+        - type: object
+          required: [content]
+          properties:
+            correspondence_id:
+              type: string
+              format: uuid
+            content:
+              type: string
+            model_used:
+              type: string
+            rag_sources:
+              type: array
+              items:
+                type: string
+            generation_time_ms:
+              type: integer
+
+    GenerateDraftRequest:
+      type: object
+      required: [draft_type]
+      properties:
+        draft_type:
+          $ref: "#/components/schemas/ResponseDraftType"
+        additional_context:
+          type: string
+          maxLength: 2000
+        use_template:
+          type: string
+          description: Template ID to use as base
+
+    DraftJobResponse:
+      type: object
+      required: [job_id, status, estimated_completion]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing]
+        estimated_completion:
+          type: integer
+          description: Estimated seconds to completion
+
+    UpdateDraftRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        status:
+          $ref: "#/components/schemas/ResponseDraftStatus"
+
+    TemplatesResponse:
+      type: object
+      required: [templates]
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: "#/components/schemas/Template"
+
+    Template:
+      type: object
+      required: [id, name, draft_type, content]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        draft_type:
+          $ref: "#/components/schemas/ResponseDraftType"
+        description:
+          type: string
+        content:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+
+    # Practice Management
+    PMIntegrationsResponse:
+      type: object
+      required: [integrations]
+      properties:
+        integrations:
+          type: array
+          items:
+            $ref: "#/components/schemas/PMIntegrationResponse"
+
+    PMIntegrationResponse:
+      type: object
+      required: [provider, connected, connected_at]
+      properties:
+        provider:
+          $ref: "#/components/schemas/PMProvider"
+        connected:
+          type: boolean
+        connected_at:
+          type: string
+          format: date-time
+          nullable: true
+        auto_sync:
+          type: boolean
+        sync_tasks:
+          type: boolean
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_sync_status:
+          $ref: "#/components/schemas/PMSyncStatus"
+          nullable: true
+
+    KarbonConnectRequest:
+      type: object
+      required: [api_key, access_key]
+      properties:
+        api_key:
+          type: string
+        access_key:
+          type: string
+        auto_sync:
+          type: boolean
+          default: true
+        sync_tasks:
+          type: boolean
+          default: true
+
+    XPMConnectRequest:
+      type: object
+      required: [client_id, client_secret]
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        auto_sync:
+          type: boolean
+          default: true
+        sync_tasks:
+          type: boolean
+          default: true
+
+    PMSyncRequest:
+      type: object
+      properties:
+        provider:
+          $ref: "#/components/schemas/PMProvider"
+        correspondence_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific items to sync, or all if empty
+
+    PMSyncResponse:
+      type: object
+      required: [sync_id, status, items_count]
+      properties:
+        sync_id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/PMSyncStatus"
+        items_count:
+          type: integer
+
+    PMSyncHistoryResponse:
+      type: object
+      required: [syncs]
+      properties:
+        syncs:
+          type: array
+          items:
+            $ref: "#/components/schemas/PMSyncRecord"
+
+    PMSyncRecord:
+      type: object
+      required: [id, provider, status, started_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        provider:
+          $ref: "#/components/schemas/PMProvider"
+        status:
+          $ref: "#/components/schemas/PMSyncStatus"
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        items_synced:
+          type: integer
+        items_failed:
+          type: integer
+        error_message:
+          type: string
+          nullable: true
+
+    # Settings
+    ATOtrackSettingsResponse:
+      type: object
+      required: [auto_create_tasks, auto_create_insights, notification_preferences]
+      properties:
+        auto_create_tasks:
+          type: boolean
+        auto_create_insights:
+          type: boolean
+        default_task_assignee_id:
+          type: string
+          format: uuid
+          nullable: true
+        notification_preferences:
+          $ref: "#/components/schemas/NotificationPreferences"
+
+    NotificationPreferences:
+      type: object
+      properties:
+        email_enabled:
+          type: boolean
+          default: true
+        push_enabled:
+          type: boolean
+          default: true
+        reminder_7_days:
+          type: boolean
+          default: true
+        reminder_3_days:
+          type: boolean
+          default: true
+        reminder_1_day:
+          type: boolean
+          default: true
+        overdue_daily:
+          type: boolean
+          default: true
+
+    UpdateSettingsRequest:
+      type: object
+      properties:
+        auto_create_tasks:
+          type: boolean
+        auto_create_insights:
+          type: boolean
+        default_task_assignee_id:
+          type: string
+          format: uuid
+          nullable: true
+        notification_preferences:
+          $ref: "#/components/schemas/NotificationPreferences"
+
+    # Stats
+    StatsResponse:
+      type: object
+      required: [period, totals, by_type, by_urgency, resolution_time]
+      properties:
+        period:
+          type: string
+        totals:
+          type: object
+          properties:
+            received:
+              type: integer
+            resolved:
+              type: integer
+            overdue:
+              type: integer
+            drafts_generated:
+              type: integer
+        by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        by_urgency:
+          type: object
+          additionalProperties:
+            type: integer
+        resolution_time:
+          type: object
+          properties:
+            average_days:
+              type: number
+            median_days:
+              type: number
+
+    # Common
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

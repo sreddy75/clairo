@@ -1,0 +1,348 @@
+openapi: 3.1.0
+info:
+  title: Clairo A2UI API
+  description: Agent-to-User Interface endpoints for dynamic UI generation
+  version: 1.0.0
+
+paths:
+  /api/v1/insights/{insight_id}/ui:
+    get:
+      summary: Get A2UI for insight
+      description: Returns A2UI message for rendering an insight dynamically
+      operationId: getInsightUI
+      tags:
+        - A2UI
+        - Insights
+      parameters:
+        - name: insight_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Device-Type
+          in: header
+          required: false
+          schema:
+            type: string
+            enum: [desktop, mobile, tablet]
+      responses:
+        '200':
+          description: A2UI message for the insight
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2UIMessage'
+        '404':
+          description: Insight not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/insights/{insight_id}/ui/stream:
+    get:
+      summary: Stream A2UI for insight
+      description: Returns streaming A2UI as the agent generates components
+      operationId: streamInsightUI
+      tags:
+        - A2UI
+        - Insights
+      parameters:
+        - name: insight_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: SSE stream of A2UI components
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-sent events with A2UI component JSON
+
+  /api/v1/dashboard/ui:
+    get:
+      summary: Get A2UI for dashboard
+      description: Returns personalized dashboard A2UI based on context
+      operationId: getDashboardUI
+      tags:
+        - A2UI
+        - Dashboard
+      parameters:
+        - name: X-Device-Type
+          in: header
+          required: false
+          schema:
+            type: string
+            enum: [desktop, mobile, tablet]
+      responses:
+        '200':
+          description: A2UI message for personalized dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2UIMessage'
+
+  /api/v1/portal/requests/{request_id}/ui:
+    get:
+      summary: Get A2UI for document request
+      description: Returns context-aware document request UI
+      operationId: getDocumentRequestUI
+      tags:
+        - A2UI
+        - Portal
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Device-Type
+          in: header
+          required: false
+          schema:
+            type: string
+            enum: [desktop, mobile, tablet]
+      responses:
+        '200':
+          description: A2UI message for document request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2UIMessage'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/bas/{period_id}/review/ui:
+    get:
+      summary: Get A2UI for BAS review
+      description: Returns exception-focused BAS review UI
+      operationId: getBASReviewUI
+      tags:
+        - A2UI
+        - BAS
+      parameters:
+        - name: period_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A2UI message for BAS review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2UIMessage'
+        '404':
+          description: BAS period not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/queries/ui:
+    post:
+      summary: Get A2UI for ad-hoc query
+      description: AI processes natural language query and returns visualization
+      operationId: getQueryUI
+      tags:
+        - A2UI
+        - Queries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: A2UI message with query visualization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2UIMessage'
+
+  /api/v1/day-summary/ui:
+    get:
+      summary: Get A2UI for end-of-day summary
+      description: Returns personalized day summary with timesheet data
+      operationId: getDaySummaryUI
+      tags:
+        - A2UI
+        - Productivity
+      responses:
+        '200':
+          description: A2UI message for day summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2UIMessage'
+
+components:
+  schemas:
+    A2UIMessage:
+      type: object
+      required:
+        - surfaceUpdate
+        - meta
+      properties:
+        surfaceUpdate:
+          $ref: '#/components/schemas/SurfaceUpdate'
+        dataModelUpdate:
+          type: object
+          additionalProperties: true
+          description: Data bindings for components
+        renderControl:
+          $ref: '#/components/schemas/RenderControl'
+        meta:
+          $ref: '#/components/schemas/A2UIMeta'
+
+    SurfaceUpdate:
+      type: object
+      required:
+        - components
+      properties:
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/A2UIComponent'
+        layout:
+          type: string
+          enum: [stack, grid, flow, sidebar]
+
+    A2UIComponent:
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - lineChart
+            - barChart
+            - pieChart
+            - scatterChart
+            - dataTable
+            - comparisonTable
+            - statCard
+            - queryResult
+            - card
+            - accordion
+            - expandableSection
+            - tabs
+            - timeline
+            - actionButton
+            - approvalBar
+            - exportButton
+            - alertCard
+            - urgencyBanner
+            - badge
+            - textInput
+            - selectField
+            - checkbox
+            - dateRangePicker
+            - filterBar
+            - cameraCapture
+            - fileUpload
+            - avatar
+            - progressIndicator
+            - skeleton
+            - tooltip
+            - dialog
+        dataBinding:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/A2UIComponent'
+        props:
+          type: object
+          additionalProperties: true
+
+    RenderControl:
+      type: object
+      properties:
+        streaming:
+          type: boolean
+        replace:
+          type: array
+          items:
+            type: string
+        appendTo:
+          type: string
+        complete:
+          type: boolean
+
+    A2UIMeta:
+      type: object
+      required:
+        - messageId
+        - generatedAt
+        - deviceContext
+      properties:
+        messageId:
+          type: string
+          format: uuid
+        generatedAt:
+          type: string
+          format: date-time
+        deviceContext:
+          $ref: '#/components/schemas/DeviceContext'
+        agentId:
+          type: string
+        fallbackText:
+          type: string
+
+    DeviceContext:
+      type: object
+      required:
+        - isMobile
+        - isTablet
+      properties:
+        isMobile:
+          type: boolean
+        isTablet:
+          type: boolean
+        platform:
+          type: string
+          enum: [ios, android, windows, macos, linux]
+        browser:
+          type: string
+
+    QueryRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: Natural language query
+          example: "Which clients have declining revenue but increasing expenses?"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

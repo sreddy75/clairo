@@ -1,0 +1,334 @@
+# Progressive Xero Data Sync — API Contracts
+# Extends existing Xero integration API at /api/v1/xero/
+
+paths:
+
+  # =========================================================================
+  # Sync Operations (modify existing)
+  # =========================================================================
+
+  /api/v1/xero/connections/{connection_id}/sync:
+    post:
+      summary: Start a sync operation (enhanced with phase support)
+      description: |
+        Triggers a background sync for the specified connection.
+        Now supports phased initial sync and incremental sync.
+        Returns immediately with job details — sync runs in background.
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sync_type:
+                  type: string
+                  enum: [full, contacts, invoices, bank_transactions, accounts, incremental]
+                  default: full
+                force_full:
+                  type: boolean
+                  default: false
+                  description: Force full sync even if incremental is available
+      responses:
+        '202':
+          description: Sync job accepted and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJobResponse'
+        '409':
+          description: Sync already in progress
+
+  # =========================================================================
+  # Real-Time Progress (NEW — SSE endpoint)
+  # =========================================================================
+
+  /api/v1/xero/connections/{connection_id}/sync/stream:
+    get:
+      summary: Real-time sync progress via Server-Sent Events
+      description: |
+        SSE stream delivering real-time sync progress updates.
+        Each event contains entity-level progress with record counts.
+        Stream closes when sync completes or fails.
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: job_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Optional specific job to track. If omitted, tracks latest active job.
+      responses:
+        '200':
+          description: SSE stream of sync progress events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  Events:
+                  - event: sync_started, data: {job_id, phase, total_entities}
+                  - event: entity_progress, data: {entity, status, records_processed, ...}
+                  - event: phase_complete, data: {phase, next_phase, summary}
+                  - event: sync_complete, data: {job_id, summary, post_sync_tasks}
+                  - event: sync_failed, data: {job_id, error, entity}
+                  - event: post_sync_progress, data: {task_type, status, result}
+
+  # =========================================================================
+  # Multi-Client Sync (NEW)
+  # =========================================================================
+
+  /api/v1/xero/sync/all:
+    post:
+      summary: Sync all connected clients
+      description: |
+        Queues sync jobs for all active Xero connections belonging to the tenant.
+        Returns aggregate job tracking ID.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force_full:
+                  type: boolean
+                  default: false
+                sync_type:
+                  type: string
+                  enum: [full, incremental]
+                  default: incremental
+      responses:
+        '202':
+          description: Multi-client sync queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiClientSyncResponse'
+
+  /api/v1/xero/sync/all/status:
+    get:
+      summary: Get aggregate status of multi-client sync
+      responses:
+        '200':
+          description: Aggregate sync status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiClientSyncStatusResponse'
+
+  # =========================================================================
+  # Sync Progress & History (modify existing)
+  # =========================================================================
+
+  /api/v1/xero/connections/{connection_id}/sync/status:
+    get:
+      summary: Get current sync status (enhanced)
+      description: |
+        Returns current sync status with per-entity progress.
+        Now includes phase information and post-sync task status.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStatusResponse'
+
+  /api/v1/xero/connections/{connection_id}/sync/{job_id}/entities:
+    get:
+      summary: Get per-entity progress for a sync job
+      description: Returns detailed progress for each entity type in a sync job.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EntityProgressResponse'
+
+  # =========================================================================
+  # Xero Webhooks (NEW — Phase 3)
+  # =========================================================================
+
+  /api/v1/xero/webhooks:
+    post:
+      summary: Xero webhook receiver endpoint
+      description: |
+        Receives webhook events from Xero. Verifies HMAC-SHA256 signature.
+        On initial registration, responds to intent-to-receive validation.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      resourceUrl:
+                        type: string
+                      resourceId:
+                        type: string
+                      eventDateUtc:
+                        type: string
+                      eventType:
+                        type: string
+                      eventCategory:
+                        type: string
+                      tenantId:
+                        type: string
+      responses:
+        '200':
+          description: Webhook processed successfully
+        '401':
+          description: Invalid webhook signature
+
+components:
+  schemas:
+
+    SyncJobResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        connection_id:
+          type: string
+          format: uuid
+        sync_type:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled]
+        sync_phase:
+          type: integer
+          nullable: true
+        triggered_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    SyncStatusResponse:
+      type: object
+      properties:
+        job:
+          $ref: '#/components/schemas/SyncJobResponse'
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityProgressResponse'
+        phase:
+          type: integer
+          nullable: true
+        total_phases:
+          type: integer
+        records_processed:
+          type: integer
+        records_created:
+          type: integer
+        records_updated:
+          type: integer
+        records_failed:
+          type: integer
+        post_sync_tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostSyncTaskResponse'
+
+    EntityProgressResponse:
+      type: object
+      properties:
+        entity_type:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, skipped]
+        records_processed:
+          type: integer
+        records_created:
+          type: integer
+        records_updated:
+          type: integer
+        records_failed:
+          type: integer
+        error_message:
+          type: string
+          nullable: true
+        duration_ms:
+          type: integer
+          nullable: true
+
+    MultiClientSyncResponse:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        total_connections:
+          type: integer
+        jobs_queued:
+          type: integer
+        jobs_skipped:
+          type: integer
+          description: Connections that already have an active sync
+
+    MultiClientSyncStatusResponse:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        total:
+          type: integer
+        completed:
+          type: integer
+        in_progress:
+          type: integer
+        failed:
+          type: integer
+        pending:
+          type: integer
+        connections:
+          type: array
+          items:
+            type: object
+            properties:
+              connection_id:
+                type: string
+                format: uuid
+              organization_name:
+                type: string
+              status:
+                type: string
+              records_processed:
+                type: integer
+
+    PostSyncTaskResponse:
+      type: object
+      properties:
+        task_type:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+        result_summary:
+          type: object
+          nullable: true

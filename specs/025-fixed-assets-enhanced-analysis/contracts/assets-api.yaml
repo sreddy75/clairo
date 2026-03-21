@@ -1,0 +1,1002 @@
+openapi: 3.1.0
+info:
+  title: Clairo Assets & Enhanced Analysis API
+  version: 1.0.0
+  description: |
+    API for accessing Fixed Assets, Purchase Orders, Repeating Invoices,
+    Tracking Categories, and Quotes from Xero.
+    Part of Spec 025: Fixed Assets & Enhanced Analysis.
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  # Fixed Assets
+  /clients/{client_id}/assets:
+    get:
+      summary: List fixed assets for a client
+      operationId: listAssets
+      tags:
+        - Assets
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/AssetStatus'
+          description: Filter by asset status
+        - name: asset_type_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by asset type
+      responses:
+        '200':
+          description: List of fixed assets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{client_id}/assets/{asset_id}:
+    get:
+      summary: Get asset details
+      operationId: getAsset
+      tags:
+        - Assets
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Asset details with depreciation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{client_id}/assets/sync:
+    post:
+      summary: Trigger assets sync
+      operationId: syncAssets
+      tags:
+        - Assets
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '202':
+          description: Sync job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJobResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Assets scope not authorized
+
+  # Asset Types
+  /clients/{client_id}/asset-types:
+    get:
+      summary: List asset types
+      operationId: listAssetTypes
+      tags:
+        - Assets
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '200':
+          description: List of asset types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetTypeListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Depreciation Summary
+  /clients/{client_id}/assets/depreciation-summary:
+    get:
+      summary: Get depreciation summary
+      operationId: getDepreciationSummary
+      tags:
+        - Assets
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: financial_year
+          in: query
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+            example: "2025-26"
+          description: Financial year (e.g., 2025-26)
+      responses:
+        '200':
+          description: Depreciation summary by asset type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepreciationSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Instant Write-Off Detection
+  /clients/{client_id}/assets/instant-write-off:
+    get:
+      summary: Get instant write-off eligible assets
+      operationId: getInstantWriteOff
+      tags:
+        - Assets
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: financial_year
+          in: query
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+            example: "2025-26"
+      responses:
+        '200':
+          description: Instant write-off analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstantWriteOffResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Purchase Orders
+  /clients/{client_id}/purchase-orders:
+    get:
+      summary: List purchase orders
+      operationId: listPurchaseOrders
+      tags:
+        - Purchase Orders
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/PurchaseOrderStatus'
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of purchase orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /clients/{client_id}/purchase-orders/{po_id}:
+    get:
+      summary: Get purchase order details
+      operationId: getPurchaseOrder
+      tags:
+        - Purchase Orders
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: po_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Purchase order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{client_id}/purchase-orders/sync:
+    post:
+      summary: Trigger purchase orders sync
+      operationId: syncPurchaseOrders
+      tags:
+        - Purchase Orders
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '202':
+          description: Sync job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJobResponse'
+
+  # Repeating Invoices
+  /clients/{client_id}/repeating-invoices:
+    get:
+      summary: List repeating invoice templates
+      operationId: listRepeatingInvoices
+      tags:
+        - Repeating Invoices
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [ACCREC, ACCPAY]
+          description: Filter by type (ACCREC=sales, ACCPAY=bills)
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/RepeatingInvoiceStatus'
+      responses:
+        '200':
+          description: List of repeating invoice templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepeatingInvoiceListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /clients/{client_id}/repeating-invoices/{ri_id}:
+    get:
+      summary: Get repeating invoice details
+      operationId: getRepeatingInvoice
+      tags:
+        - Repeating Invoices
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: ri_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Repeating invoice details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepeatingInvoiceDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Recurring Revenue/Expense Summary
+  /clients/{client_id}/repeating-invoices/summary:
+    get:
+      summary: Get recurring revenue and expense summary
+      operationId: getRecurringSummary
+      tags:
+        - Repeating Invoices
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '200':
+          description: Annualized recurring amounts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringSummary'
+
+  # Tracking Categories
+  /clients/{client_id}/tracking-categories:
+    get:
+      summary: List tracking categories
+      operationId: listTrackingCategories
+      tags:
+        - Tracking Categories
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '200':
+          description: List of tracking categories with options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingCategoryListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Quotes
+  /clients/{client_id}/quotes:
+    get:
+      summary: List quotes
+      operationId: listQuotes
+      tags:
+        - Quotes
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/QuoteStatus'
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of quotes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /clients/{client_id}/quotes/{quote_id}:
+    get:
+      summary: Get quote details
+      operationId: getQuote
+      tags:
+        - Quotes
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: quote_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Quote details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Quote Pipeline Summary
+  /clients/{client_id}/quotes/pipeline:
+    get:
+      summary: Get quote pipeline summary
+      operationId: getQuotePipeline
+      tags:
+        - Quotes
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '200':
+          description: Quote pipeline analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotePipelineSummary'
+
+components:
+  parameters:
+    ClientId:
+      name: client_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    PageNumber:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PageSize:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+
+  schemas:
+    # Asset Schemas
+    AssetStatus:
+      type: string
+      enum:
+        - Draft
+        - Registered
+        - Disposed
+
+    DepreciationMethod:
+      type: string
+      enum:
+        - NoDepreciation
+        - StraightLine
+        - DiminishingValue100
+        - DiminishingValue150
+        - DiminishingValue200
+        - FullDepreciation
+
+    AssetSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        xero_asset_id:
+          type: string
+          format: uuid
+        asset_name:
+          type: string
+        asset_number:
+          type: string
+        asset_type_name:
+          type: string
+        purchase_date:
+          type: string
+          format: date
+        purchase_price:
+          type: number
+          format: decimal
+        book_value:
+          type: number
+          format: decimal
+        status:
+          $ref: '#/components/schemas/AssetStatus'
+
+    AssetDetail:
+      allOf:
+        - $ref: '#/components/schemas/AssetSummary'
+        - type: object
+          properties:
+            asset_type_id:
+              type: string
+              format: uuid
+            serial_number:
+              type: string
+            warranty_expiry_date:
+              type: string
+              format: date
+            disposal_date:
+              type: string
+              format: date
+            disposal_price:
+              type: number
+              format: decimal
+            depreciation_method:
+              $ref: '#/components/schemas/DepreciationMethod'
+            depreciation_rate:
+              type: number
+            effective_life_years:
+              type: integer
+            depreciation_start_date:
+              type: string
+              format: date
+            prior_accum_depreciation:
+              type: number
+              format: decimal
+            current_accum_depreciation:
+              type: number
+              format: decimal
+            current_gain_loss:
+              type: number
+              format: decimal
+            can_rollback:
+              type: boolean
+
+    AssetListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    AssetType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        asset_type_name:
+          type: string
+        depreciation_method:
+          $ref: '#/components/schemas/DepreciationMethod'
+        depreciation_rate:
+          type: number
+        effective_life_years:
+          type: integer
+        asset_count:
+          type: integer
+
+    AssetTypeListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetType'
+
+    DepreciationSummary:
+      type: object
+      properties:
+        financial_year:
+          type: string
+        total_depreciation:
+          type: number
+          format: decimal
+        by_asset_type:
+          type: array
+          items:
+            type: object
+            properties:
+              asset_type_name:
+                type: string
+              depreciation_amount:
+                type: number
+                format: decimal
+              asset_count:
+                type: integer
+        by_method:
+          type: array
+          items:
+            type: object
+            properties:
+              method:
+                $ref: '#/components/schemas/DepreciationMethod'
+              depreciation_amount:
+                type: number
+                format: decimal
+
+    InstantWriteOffResult:
+      type: object
+      properties:
+        eligible:
+          type: boolean
+        reason:
+          type: string
+          nullable: true
+        financial_year:
+          type: string
+        threshold:
+          type: number
+          format: decimal
+        qualifying_assets:
+          type: array
+          items:
+            type: object
+            properties:
+              asset_id:
+                type: string
+                format: uuid
+              asset_name:
+                type: string
+              purchase_date:
+                type: string
+                format: date
+              cost:
+                type: number
+                format: decimal
+        total_deduction:
+          type: number
+          format: decimal
+
+    # Purchase Order Schemas
+    PurchaseOrderStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SUBMITTED
+        - AUTHORISED
+        - BILLED
+        - DELETED
+
+    PurchaseOrderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        purchase_order_number:
+          type: string
+        contact_name:
+          type: string
+        date:
+          type: string
+          format: date
+        delivery_date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/PurchaseOrderStatus'
+        total:
+          type: number
+          format: decimal
+
+    PurchaseOrderDetail:
+      allOf:
+        - $ref: '#/components/schemas/PurchaseOrderSummary'
+        - type: object
+          properties:
+            reference:
+              type: string
+            sub_total:
+              type: number
+              format: decimal
+            total_tax:
+              type: number
+              format: decimal
+            currency_code:
+              type: string
+            line_items:
+              type: array
+              items:
+                $ref: '#/components/schemas/LineItem'
+
+    PurchaseOrderListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrderSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    # Repeating Invoice Schemas
+    RepeatingInvoiceStatus:
+      type: string
+      enum:
+        - DRAFT
+        - AUTHORISED
+
+    RepeatingInvoiceSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [ACCREC, ACCPAY]
+        contact_name:
+          type: string
+        schedule_unit:
+          type: string
+          enum: [WEEKLY, MONTHLY, YEARLY]
+        next_date:
+          type: string
+          format: date
+        total:
+          type: number
+          format: decimal
+        annualized_total:
+          type: number
+          format: decimal
+        status:
+          $ref: '#/components/schemas/RepeatingInvoiceStatus'
+
+    RepeatingInvoiceDetail:
+      allOf:
+        - $ref: '#/components/schemas/RepeatingInvoiceSummary'
+        - type: object
+          properties:
+            reference:
+              type: string
+            schedule_period:
+              type: integer
+            schedule_start_date:
+              type: string
+              format: date
+            schedule_end_date:
+              type: string
+              format: date
+            line_items:
+              type: array
+              items:
+                $ref: '#/components/schemas/LineItem'
+
+    RepeatingInvoiceListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepeatingInvoiceSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    RecurringSummary:
+      type: object
+      properties:
+        recurring_revenue:
+          type: number
+          format: decimal
+          description: Annualized recurring revenue
+        recurring_expenses:
+          type: number
+          format: decimal
+          description: Annualized recurring expenses
+        net_recurring:
+          type: number
+          format: decimal
+        by_schedule:
+          type: array
+          items:
+            type: object
+            properties:
+              unit:
+                type: string
+              revenue_count:
+                type: integer
+              revenue_total:
+                type: number
+                format: decimal
+              expense_count:
+                type: integer
+              expense_total:
+                type: number
+                format: decimal
+
+    # Tracking Category Schemas
+    TrackingOption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+
+    TrackingCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingOption'
+
+    TrackingCategoryListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingCategory'
+
+    # Quote Schemas
+    QuoteStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SENT
+        - ACCEPTED
+        - DECLINED
+        - INVOICED
+
+    QuoteSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        quote_number:
+          type: string
+        contact_name:
+          type: string
+        date:
+          type: string
+          format: date
+        expiry_date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/QuoteStatus'
+        total:
+          type: number
+          format: decimal
+
+    QuoteDetail:
+      allOf:
+        - $ref: '#/components/schemas/QuoteSummary'
+        - type: object
+          properties:
+            reference:
+              type: string
+            sub_total:
+              type: number
+              format: decimal
+            total_tax:
+              type: number
+              format: decimal
+            line_items:
+              type: array
+              items:
+                $ref: '#/components/schemas/LineItem'
+
+    QuoteListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    QuotePipelineSummary:
+      type: object
+      properties:
+        total_pipeline_value:
+          type: number
+          format: decimal
+        by_status:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                $ref: '#/components/schemas/QuoteStatus'
+              count:
+                type: integer
+              total_value:
+                type: number
+                format: decimal
+        conversion_rate:
+          type: number
+          description: Percentage of quotes that become invoices
+        expiring_soon:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteSummary'
+
+    # Shared Schemas
+    LineItem:
+      type: object
+      properties:
+        description:
+          type: string
+        quantity:
+          type: number
+        unit_amount:
+          type: number
+          format: decimal
+        line_amount:
+          type: number
+          format: decimal
+        account_code:
+          type: string
+        tax_type:
+          type: string
+        tracking:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              option:
+                type: string
+
+    SyncJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, running]
+        started_at:
+          type: string
+          format: date-time
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Not authenticated
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Resource not found
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Assets
+    description: Fixed asset operations
+  - name: Purchase Orders
+    description: Purchase order operations
+  - name: Repeating Invoices
+    description: Repeating invoice template operations
+  - name: Tracking Categories
+    description: Tracking category operations
+  - name: Quotes
+    description: Quote operations

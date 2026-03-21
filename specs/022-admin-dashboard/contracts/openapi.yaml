@@ -1,0 +1,851 @@
+openapi: 3.1.0
+info:
+  title: Admin Dashboard API
+  description: Internal admin endpoints for Clairo operators
+  version: 1.0.0
+  contact:
+    name: Clairo Development
+    email: dev@clairo.com.au
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Admin - Tenants
+    description: Tenant management endpoints
+  - name: Admin - Revenue
+    description: Revenue analytics endpoints
+  - name: Admin - Subscriptions
+    description: Subscription management endpoints
+  - name: Admin - Feature Flags
+    description: Feature flag override endpoints
+  - name: Admin - Usage
+    description: Platform usage analytics (existing)
+
+paths:
+  # =============================================================================
+  # Tenant Management
+  # =============================================================================
+  /admin/tenants:
+    get:
+      operationId: listTenants
+      summary: List all tenants
+      description: Returns paginated list of all tenants with filters
+      tags: [Admin - Tenants]
+      parameters:
+        - name: search
+          in: query
+          description: Search by name or email
+          schema:
+            type: string
+        - name: tier
+          in: query
+          description: Filter by subscription tier
+          schema:
+            $ref: '#/components/schemas/SubscriptionTier'
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [active, inactive, all]
+            default: active
+        - name: sort_by
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [name, created_at, mrr, client_count]
+            default: created_at
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        '200':
+          description: Paginated tenant list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/tenants/{tenant_id}:
+    get:
+      operationId: getTenant
+      summary: Get tenant details
+      description: Returns comprehensive tenant information
+      tags: [Admin - Tenants]
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Tenant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # =============================================================================
+  # Revenue Analytics
+  # =============================================================================
+  /admin/revenue/metrics:
+    get:
+      operationId: getRevenueMetrics
+      summary: Get revenue metrics
+      description: Returns MRR, churn, and expansion metrics
+      tags: [Admin - Revenue]
+      parameters:
+        - name: start_date
+          in: query
+          description: Start of date range (defaults to 30 days ago)
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: End of date range (defaults to today)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Revenue metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueMetricsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/revenue/trends:
+    get:
+      operationId: getRevenueTrends
+      summary: Get revenue trends
+      description: Returns daily/weekly/monthly MRR trends
+      tags: [Admin - Revenue]
+      parameters:
+        - name: period
+          in: query
+          description: Aggregation period
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: monthly
+        - name: months
+          in: query
+          description: Number of months to include
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 24
+            default: 12
+      responses:
+        '200':
+          description: Revenue trends
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueTrendsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # =============================================================================
+  # Subscription Management
+  # =============================================================================
+  /admin/tenants/{tenant_id}/tier:
+    patch:
+      operationId: changeTenantTier
+      summary: Change tenant subscription tier
+      description: Updates tenant tier and syncs with Stripe
+      tags: [Admin - Subscriptions]
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TierChangeRequest'
+      responses:
+        '200':
+          description: Tier changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TierChangeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict - e.g., downgrade with excess clients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TierChangeConflict'
+
+  /admin/tenants/{tenant_id}/credits:
+    post:
+      operationId: applyCredit
+      summary: Apply credit to tenant account
+      description: Applies one-time or recurring credit
+      tags: [Admin - Subscriptions]
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditRequest'
+      responses:
+        '200':
+          description: Credit applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # =============================================================================
+  # Feature Flag Overrides
+  # =============================================================================
+  /admin/tenants/{tenant_id}/feature-flags:
+    get:
+      operationId: getTenantFeatureFlags
+      summary: Get tenant feature flags
+      description: Returns all features with their current status (tier default or override)
+      tags: [Admin - Feature Flags]
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Feature flags
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlagsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{tenant_id}/feature-flags/{feature_key}:
+    put:
+      operationId: setFeatureFlagOverride
+      summary: Set feature flag override
+      description: Creates or updates a feature flag override for a tenant
+      tags: [Admin - Feature Flags]
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: feature_key
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/FeatureKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureFlagOverrideRequest'
+      responses:
+        '200':
+          description: Override set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlagOverrideResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: deleteFeatureFlagOverride
+      summary: Delete feature flag override
+      description: Removes override, reverting to tier default
+      tags: [Admin - Feature Flags]
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: feature_key
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/FeatureKey'
+      responses:
+        '204':
+          description: Override deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Admin JWT token with admin or super_admin role
+
+  parameters:
+    TenantId:
+      name: tenant_id
+      in: path
+      required: true
+      description: Tenant UUID
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Not authorized (requires admin role)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # =============================================================================
+    # Enums
+    # =============================================================================
+    SubscriptionTier:
+      type: string
+      enum: [starter, professional, growth, enterprise]
+
+    FeatureKey:
+      type: string
+      enum: [ai_insights, client_portal, custom_triggers, api_access, knowledge_base, magic_zone]
+
+    CreditType:
+      type: string
+      enum: [one_time, recurring]
+
+    # =============================================================================
+    # Tenant Schemas
+    # =============================================================================
+    TenantSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        owner_email:
+          type: string
+          format: email
+        tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        client_count:
+          type: integer
+        client_limit:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        mrr_cents:
+          type: integer
+          description: Monthly recurring revenue in cents
+      required:
+        - id
+        - name
+        - tier
+        - client_count
+        - is_active
+        - created_at
+
+    TenantListResponse:
+      type: object
+      properties:
+        tenants:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+        - tenants
+        - total
+        - page
+        - limit
+        - has_more
+
+    TenantDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        owner_email:
+          type: string
+          format: email
+        tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        # Billing
+        stripe_customer_id:
+          type: string
+        stripe_subscription_id:
+          type: string
+        subscription_status:
+          type: string
+        next_billing_date:
+          type: string
+          format: date-time
+          nullable: true
+        mrr_cents:
+          type: integer
+        # Usage
+        client_count:
+          type: integer
+        client_limit:
+          type: integer
+          nullable: true
+        ai_queries_month:
+          type: integer
+        documents_month:
+          type: integer
+        # Users
+        user_count:
+          type: integer
+        # History
+        subscription_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/BillingEventSummary'
+        recent_activity:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityItem'
+        # Feature flags
+        feature_flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureFlagStatus'
+      required:
+        - id
+        - name
+        - tier
+        - is_active
+        - created_at
+
+    # =============================================================================
+    # Revenue Schemas
+    # =============================================================================
+    RevenueMetricsResponse:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+        mrr:
+          type: object
+          properties:
+            current_cents:
+              type: integer
+              description: Current MRR in cents
+            previous_cents:
+              type: integer
+              description: MRR at start of period
+            change_percentage:
+              type: number
+              format: float
+        churn:
+          type: object
+          properties:
+            rate_percentage:
+              type: number
+              format: float
+            lost_cents:
+              type: integer
+            tenant_count:
+              type: integer
+        expansion:
+          type: object
+          properties:
+            amount_cents:
+              type: integer
+            upgrade_count:
+              type: integer
+            downgrade_count:
+              type: integer
+        tenant_counts:
+          type: object
+          properties:
+            total_active:
+              type: integer
+            by_tier:
+              type: object
+              additionalProperties:
+                type: integer
+      required:
+        - period
+        - mrr
+        - churn
+        - expansion
+        - tenant_counts
+
+    RevenueTrendsResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [daily, weekly, monthly]
+        data_points:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              mrr_cents:
+                type: integer
+              tenant_count:
+                type: integer
+              new_subscriptions:
+                type: integer
+              churned_subscriptions:
+                type: integer
+
+    # =============================================================================
+    # Subscription Management Schemas
+    # =============================================================================
+    TierChangeRequest:
+      type: object
+      properties:
+        new_tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+        force_downgrade:
+          type: boolean
+          default: false
+          description: Required if downgrading with excess clients
+      required:
+        - new_tier
+        - reason
+
+    TierChangeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        tenant_id:
+          type: string
+          format: uuid
+        old_tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        new_tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        effective_at:
+          type: string
+          format: date-time
+        stripe_subscription_id:
+          type: string
+        billing_event_id:
+          type: string
+          format: uuid
+      required:
+        - success
+        - tenant_id
+        - old_tier
+        - new_tier
+        - effective_at
+
+    TierChangeConflict:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+          enum: [excess_clients, pending_payment, stripe_error]
+        details:
+          type: object
+          properties:
+            current_clients:
+              type: integer
+            new_limit:
+              type: integer
+            message:
+              type: string
+
+    CreditRequest:
+      type: object
+      properties:
+        amount_cents:
+          type: integer
+          minimum: 1
+          maximum: 10000000
+          description: Credit amount in cents (max $100,000)
+        credit_type:
+          $ref: '#/components/schemas/CreditType'
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+      required:
+        - amount_cents
+        - credit_type
+        - reason
+
+    CreditResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        tenant_id:
+          type: string
+          format: uuid
+        amount_cents:
+          type: integer
+        credit_type:
+          $ref: '#/components/schemas/CreditType'
+        effective_at:
+          type: string
+          format: date-time
+        billing_event_id:
+          type: string
+          format: uuid
+      required:
+        - success
+        - tenant_id
+        - amount_cents
+        - credit_type
+        - effective_at
+
+    # =============================================================================
+    # Feature Flag Schemas
+    # =============================================================================
+    FeatureFlagStatus:
+      type: object
+      properties:
+        feature_key:
+          $ref: '#/components/schemas/FeatureKey'
+        tier_default:
+          type: boolean
+          description: Default value based on tier
+        override_value:
+          type: boolean
+          nullable: true
+          description: Override value (null if no override)
+        effective_value:
+          type: boolean
+          description: Actual value (override or tier default)
+        is_overridden:
+          type: boolean
+        override_reason:
+          type: string
+          nullable: true
+        override_created_at:
+          type: string
+          format: date-time
+          nullable: true
+        override_created_by:
+          type: string
+          nullable: true
+          description: Admin who created the override
+      required:
+        - feature_key
+        - tier_default
+        - effective_value
+        - is_overridden
+
+    FeatureFlagsResponse:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureFlagStatus'
+      required:
+        - tenant_id
+        - tier
+        - flags
+
+    FeatureFlagOverrideRequest:
+      type: object
+      properties:
+        value:
+          type: boolean
+          description: True to enable, False to disable
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+      required:
+        - value
+        - reason
+
+    FeatureFlagOverrideResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        tenant_id:
+          type: string
+          format: uuid
+        feature_key:
+          $ref: '#/components/schemas/FeatureKey'
+        old_value:
+          type: boolean
+          nullable: true
+        new_value:
+          type: boolean
+        effective_at:
+          type: string
+          format: date-time
+      required:
+        - success
+        - tenant_id
+        - feature_key
+        - new_value
+        - effective_at
+
+    # =============================================================================
+    # Supporting Schemas
+    # =============================================================================
+    BillingEventSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties: true
+
+    ActivityItem:
+      type: object
+      properties:
+        type:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        user:
+          type: string
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+        code:
+          type: string
+      required:
+        - detail

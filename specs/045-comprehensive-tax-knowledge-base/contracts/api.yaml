@@ -1,0 +1,569 @@
+openapi: 3.1.0
+info:
+  title: Clairo Tax Knowledge Base API
+  version: 1.0.0
+  description: API contracts for comprehensive Australian tax knowledge base (Spec 045)
+
+paths:
+  # === Public Endpoints (authenticated) ===
+
+  /api/v1/knowledge/domains:
+    get:
+      operationId: listTaxDomains
+      summary: List active specialist tax domains
+      tags: [knowledge]
+      responses:
+        "200":
+          description: List of active tax domains
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxDomainListResponse"
+
+  /api/v1/knowledge/domains/{slug}:
+    get:
+      operationId: getTaxDomain
+      summary: Get tax domain details
+      tags: [knowledge]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            example: gst
+      responses:
+        "200":
+          description: Domain details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxDomainResponse"
+        "404":
+          description: Domain not found
+
+  /api/v1/knowledge/search:
+    post:
+      operationId: searchKnowledge
+      summary: Search knowledge base with hybrid retrieval
+      tags: [knowledge]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KnowledgeSearchRequest"
+      responses:
+        "200":
+          description: Search results with citations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeSearchResponse"
+
+  /api/v1/knowledge/legislation/{section_ref}:
+    get:
+      operationId: getLegislationSection
+      summary: Get specific legislation section
+      tags: [knowledge]
+      parameters:
+        - name: section_ref
+          in: path
+          required: true
+          schema:
+            type: string
+            example: s109D-ITAA1936
+          description: "Section reference (e.g., s109D-ITAA1936, s104-10-ITAA1997)"
+      responses:
+        "200":
+          description: Legislation section with text, metadata, and cross-references
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegislationSectionResponse"
+        "404":
+          description: Section not found
+
+  # === Chat Endpoints (extended) ===
+
+  /api/v1/knowledge/chat:
+    post:
+      operationId: knowledgeChat
+      summary: General knowledge chat (extended with domain scoping)
+      tags: [knowledge-chat]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KnowledgeChatRequest"
+      responses:
+        "200":
+          description: Chat response with citations and confidence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeChatResponse"
+
+  # === Admin Endpoints ===
+
+  /api/v1/admin/knowledge/ingest/legislation:
+    post:
+      operationId: ingestLegislation
+      summary: Trigger legislation ingestion from legislation.gov.au
+      tags: [knowledge-admin]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LegislationIngestRequest"
+      responses:
+        "202":
+          description: Ingestion job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestionJobResponse"
+
+  /api/v1/admin/knowledge/ingest/case-law:
+    post:
+      operationId: ingestCaseLaw
+      summary: Trigger case law ingestion
+      tags: [knowledge-admin]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseLawIngestRequest"
+      responses:
+        "202":
+          description: Ingestion job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestionJobResponse"
+
+  /api/v1/admin/knowledge/freshness:
+    get:
+      operationId: getKnowledgeFreshness
+      summary: Content freshness report
+      tags: [knowledge-admin]
+      responses:
+        "200":
+          description: Freshness status per source
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreshnessReportResponse"
+
+  /api/v1/admin/knowledge/verify-citations:
+    post:
+      operationId: verifyCitations
+      summary: Run citation verification audit
+      tags: [knowledge-admin]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CitationAuditRequest"
+      responses:
+        "200":
+          description: Citation audit results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitationAuditResponse"
+
+components:
+  schemas:
+    # === Domain Schemas ===
+
+    TaxDomain:
+      type: object
+      required: [slug, name, description, topic_tags, is_active]
+      properties:
+        slug:
+          type: string
+          example: gst
+        name:
+          type: string
+          example: GST Guardian
+        description:
+          type: string
+        topic_tags:
+          type: array
+          items:
+            type: string
+        legislation_refs:
+          type: array
+          items:
+            type: string
+        ruling_types:
+          type: array
+          items:
+            type: string
+        icon:
+          type: string
+          nullable: true
+        display_order:
+          type: integer
+        is_active:
+          type: boolean
+
+    TaxDomainListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaxDomain"
+
+    TaxDomainResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/TaxDomain"
+
+    # === Search Schemas ===
+
+    KnowledgeSearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          example: "What are the Division 7A rules for loans from private companies?"
+        domain:
+          type: string
+          nullable: true
+          description: "Optional domain slug to scope search"
+          example: division_7a
+        filters:
+          $ref: "#/components/schemas/SearchFilters"
+        limit:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 50
+
+    SearchFilters:
+      type: object
+      properties:
+        entity_types:
+          type: array
+          items:
+            type: string
+            enum: [sole_trader, company, trust, partnership]
+        source_types:
+          type: array
+          items:
+            type: string
+            enum: [legislation, ato_ruling, ato_guide, case_law, tpb, treasury]
+        fy_applicable:
+          type: string
+          example: "2026"
+        exclude_superseded:
+          type: boolean
+          default: true
+
+    KnowledgeSearchResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/SearchResult"
+            query_type:
+              type: string
+              enum: [section_lookup, ruling_lookup, conceptual, procedural, scenario, case_law]
+            domain_detected:
+              type: string
+              nullable: true
+            total_results:
+              type: integer
+
+    SearchResult:
+      type: object
+      properties:
+        chunk_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        text:
+          type: string
+        source_url:
+          type: string
+          nullable: true
+        source_type:
+          type: string
+        section_ref:
+          type: string
+          nullable: true
+        ruling_number:
+          type: string
+          nullable: true
+        effective_date:
+          type: string
+          format: date
+          nullable: true
+        is_superseded:
+          type: boolean
+        relevance_score:
+          type: number
+          format: float
+        content_type:
+          type: string
+          nullable: true
+
+    # === Legislation Schemas ===
+
+    LegislationSectionResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            section_ref:
+              type: string
+              example: s109D
+            act_name:
+              type: string
+              example: Income Tax Assessment Act 1936
+            act_short_name:
+              type: string
+              example: ITAA 1936
+            heading:
+              type: string
+              nullable: true
+            text:
+              type: string
+              description: Full section text
+            part:
+              type: string
+              nullable: true
+            division:
+              type: string
+              nullable: true
+            subdivision:
+              type: string
+              nullable: true
+            compilation_date:
+              type: string
+              format: date
+            cross_references:
+              type: array
+              items:
+                type: string
+            defined_terms:
+              type: array
+              items:
+                type: string
+            related_rulings:
+              type: array
+              items:
+                type: object
+                properties:
+                  ruling_number:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: string
+
+    # === Chat Schemas (extended) ===
+
+    KnowledgeChatRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        conversation_id:
+          type: string
+          format: uuid
+          nullable: true
+        domain:
+          type: string
+          nullable: true
+          description: "Optional domain slug for scoped retrieval"
+        client_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Optional client for contextual answers"
+
+    KnowledgeChatResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+            citations:
+              type: array
+              items:
+                $ref: "#/components/schemas/Citation"
+            confidence:
+              type: string
+              enum: [high, medium, low]
+            confidence_score:
+              type: number
+              format: float
+            domain_detected:
+              type: string
+              nullable: true
+            query_type:
+              type: string
+            superseded_warnings:
+              type: array
+              items:
+                type: string
+            attribution:
+              type: string
+              description: "Required attribution text for legislation sources"
+
+    Citation:
+      type: object
+      properties:
+        number:
+          type: integer
+        title:
+          type: string
+          nullable: true
+        url:
+          type: string
+          nullable: true
+        source_type:
+          type: string
+        section_ref:
+          type: string
+          nullable: true
+        effective_date:
+          type: string
+          nullable: true
+        text_preview:
+          type: string
+        score:
+          type: number
+          format: float
+        verified:
+          type: boolean
+          description: "Whether citation was verified in post-generation check"
+
+    # === Admin Schemas ===
+
+    LegislationIngestRequest:
+      type: object
+      properties:
+        acts:
+          type: array
+          items:
+            type: string
+          description: "Act IDs to ingest. Empty = all configured acts."
+          example: ["C2004A05138", "C1936A00027"]
+        force_refresh:
+          type: boolean
+          default: false
+          description: "Re-ingest even if content hash unchanged"
+
+    CaseLawIngestRequest:
+      type: object
+      properties:
+        source:
+          type: string
+          enum: [open_legal_corpus, federal_court_rss, both]
+          default: both
+        filter_tax_only:
+          type: boolean
+          default: true
+
+    IngestionJobResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            job_id:
+              type: string
+              format: uuid
+            source_type:
+              type: string
+            status:
+              type: string
+              enum: [pending, running, completed, failed]
+            message:
+              type: string
+
+    FreshnessReportResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            sources:
+              type: array
+              items:
+                type: object
+                properties:
+                  source_type:
+                    type: string
+                  source_name:
+                    type: string
+                  last_ingested_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  chunk_count:
+                    type: integer
+                  error_count:
+                    type: integer
+                  freshness_status:
+                    type: string
+                    enum: [fresh, stale, error, never_ingested]
+            total_chunks:
+              type: integer
+            last_updated:
+              type: string
+              format: date-time
+
+    CitationAuditRequest:
+      type: object
+      properties:
+        sample_size:
+          type: integer
+          default: 100
+          description: "Number of recent responses to audit"
+
+    CitationAuditResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            total_audited:
+              type: integer
+            citations_checked:
+              type: integer
+            citations_verified:
+              type: integer
+            citations_ungrounded:
+              type: integer
+            verification_rate:
+              type: number
+              format: float
+            ungrounded_examples:
+              type: array
+              items:
+                type: object
+                properties:
+                  citation_text:
+                    type: string
+                  response_excerpt:
+                    type: string
+                  conversation_id:
+                    type: string

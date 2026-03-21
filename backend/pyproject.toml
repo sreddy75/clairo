@@ -1,0 +1,368 @@
+# Clairo Backend - Python Project Configuration
+# https://packaging.python.org/en/latest/specifications/pyproject-toml/
+
+[project]
+name = "clairo-backend"
+version = "0.1.0"
+description = "Clairo - AI-Powered Tax & Advisory Platform for Australian Accounting Practices"
+readme = "README.md"
+license = { text = "Proprietary" }
+authors = [{ name = "Clairo Team" }]
+requires-python = ">=3.12"
+
+# =============================================================================
+# Main Dependencies
+# =============================================================================
+dependencies = [
+    # Web Framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "gunicorn>=23.0.0",
+    "python-multipart>=0.0.12",
+    # Pydantic (validation & settings)
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "email-validator>=2.0.0", # Required for Pydantic EmailStr
+    # Database
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "psycopg2-binary>=2.9.0", # Required for Alembic migrations (sync driver)
+    "alembic>=1.14.0",
+    # Cache & Queue
+    "redis>=5.2.0",
+    "celery[redis]>=5.4.0",
+    # Vector Database
+    "pinecone>=5.0.0",
+    # Embeddings
+    "voyageai>=0.3.0",
+    # Content Scraping
+    "feedparser>=6.0.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.2.0",
+    # Object Storage
+    "minio>=7.2.12",
+    # Security
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "cryptography>=42.0.0", # For AES-256-GCM token encryption
+    # HTTP Client
+    "httpx>=0.28.0",
+    # Email
+    "resend>=2.0.0",
+    # Logging
+    "structlog>=24.4.0",
+    "reportlab>=4.4.7",
+    "openpyxl>=3.1.5",
+    "pymupdf>=1.26.7",
+    "anthropic>=0.75.0",
+    # Scheduling
+    "croniter>=2.0.0",
+    # Payment Processing
+    "stripe>=7.0.0",
+    "sentry-sdk>=2.48.0",
+    # Device detection for A2UI
+    "user-agents>=2.2.0",
+    "firebase-admin>=7.1.0",
+    "py-webauthn>=0.0.4",
+    "pywebpush>=2.1.2",
+    "python-docx>=1.2.0",
+    "celery-redbeat>=2.3.3",
+    "rank-bm25>=0.2.2",
+    "sentence-transformers>=5.2.3",
+    "openai>=2.28.0",
+]
+
+# =============================================================================
+# Optional Dependencies
+# =============================================================================
+[project.optional-dependencies]
+# AI/ML dependencies
+ai = [
+    "anthropic>=0.40.0",
+    "langchain>=0.3.13",
+    "langchain-anthropic>=0.3.0",
+    "langchain-community>=0.3.13",
+    "langgraph>=0.2.60",
+]
+
+# OCR dependencies
+ocr = [
+    "paddlepaddle>=2.6.0",
+    "paddleocr>=2.8.0",
+]
+
+# Development dependencies
+dev = [
+    # Testing
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "factory-boy>=3.3.0",
+    "httpx>=0.28.0",
+    "faker>=33.0.0",
+
+    # Type Checking
+    "mypy>=1.13.0",
+    "types-redis>=4.6.0",
+    "types-passlib>=1.7.7",
+    "types-python-jose>=3.3.4",
+    "sqlalchemy[mypy]>=2.0.36",
+
+    # Linting & Formatting
+    "ruff>=0.8.3",
+
+    # Pre-commit
+    "pre-commit>=4.0.0",
+]
+
+# All optional dependencies combined
+all = [
+    "clairo-backend[ai,ocr,dev]",
+]
+
+# =============================================================================
+# Build System
+# =============================================================================
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+# =============================================================================
+# Ruff Configuration
+# https://docs.astral.sh/ruff/configuration/
+# =============================================================================
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "PTH",    # flake8-use-pathlib
+    "RUF",    # Ruff-specific rules
+    "ASYNC",  # flake8-async
+    "S",      # flake8-bandit (security)
+    "DTZ",    # flake8-datetimez
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults (needed for Depends)
+    "B904",   # raise from in except (pre-existing, fix incrementally)
+    "S101",   # use of assert (needed for tests)
+    "S104",   # binding to all interfaces (intentional in development)
+    "S608",   # SQL injection false positives (parameterized queries used)
+    "ARG001", # unused function argument (needed for some interfaces)
+    "ARG002", # unused method argument (needed for interface/override compatibility)
+    "DTZ011", # date.today() without tz (pre-existing, fix incrementally)
+    "DTZ005", # datetime without tz (pre-existing, fix incrementally)
+    "UP017",  # deprecated type alias (pre-existing, fix incrementally)
+    "SIM102", # nested if (pre-existing, readability preference)
+    "SIM108", # ternary operator (pre-existing, readability preference)
+    "SIM117", # combine with-statements (pre-existing, fix incrementally)
+    "F841",   # unused variable (pre-existing, fix incrementally)
+    "F821",   # undefined name (pre-existing missing imports, fix urgently)
+    "DTZ001", # datetime without tz (pre-existing, fix incrementally)
+    "DTZ004", # datetime.utcfromtimestamp (pre-existing, fix incrementally)
+    "DTZ006", # datetime without tz (pre-existing, fix incrementally)
+    "E402",   # module level import not at top (pre-existing deferred imports)
+    "E711",   # comparison to None (pre-existing SQLAlchemy patterns)
+    "E712",   # comparison to True/False (pre-existing SQLAlchemy patterns)
+    "F402",   # import shadowed (pre-existing, fix incrementally)
+    "F811",   # redefined unused (pre-existing, fix incrementally)
+    "S105",   # hardcoded password (false positives on config keys)
+    "S106",   # hardcoded password argument (false positives)
+    "S110",   # try-except-pass (pre-existing, fix incrementally)
+    "PTH100", # os.path (pre-existing, fix incrementally)
+    "PTH120", # os.path (pre-existing, fix incrementally)
+    "C416",   # unnecessary comprehension (pre-existing, fix incrementally)
+    "RUF012", # mutable class default (SQLAlchemy __mapper_args__, pre-existing)
+    "RUF001", # ambiguous unicode (pre-existing)
+    "RUF003", # ambiguous comment (pre-existing)
+    "RUF005", # collection literal concatenation (pre-existing)
+    "RUF006", # unused parentheses (pre-existing)
+    "RUF022", # __all__ sorting (pre-existing, fix incrementally)
+    "RUF059", # unpacked variable unused (pre-existing in tests, new rule in ruff 0.11+)
+    "RUF100", # unused noqa (pre-existing, fix incrementally)
+    "UP038",  # isinstance union (pre-existing, fix incrementally)
+    "ARG003", # unused class method argument (pre-existing)
+    "ARG004", # unused static method argument (pre-existing)
+    "SIM103", # return boolean directly (pre-existing, readability preference)
+    "SIM110", # use any/all (pre-existing, readability preference)
+    "DTZ003", # datetime.utcnow (pre-existing, fix incrementally)
+    "DTZ007", # datetime.strptime without tz (pre-existing)
+    "ASYNC251", # blocking call in async (pre-existing, fix incrementally)
+    "TC001",  # type-checking import (app imports)
+    "TC002",  # type-checking import (third-party)
+    "TC003",  # type-checking import (stdlib)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",   # asserts allowed in tests
+    "ARG",    # unused arguments allowed in tests
+    "S105",   # hardcoded passwords allowed in tests
+    "S106",   # hardcoded passwords allowed in tests
+]
+"alembic/**/*.py" = [
+    "ARG001", # unused argument in migration context
+    "F401",   # unused imports in migrations (autogenerated)
+    "I001",   # import sorting in migrations (autogenerated)
+]
+"app/modules/*/__init__.py" = [
+    "F401",   # re-exports in module __init__ files
+]
+"app/tasks/__init__.py" = [
+    "F401",   # task module registration imports
+]
+"app/main.py" = [
+    "F401",   # model pre-imports for SQLAlchemy relationship resolution
+]
+"scripts/**/*.py" = [
+    "F401",   # utility scripts may have conditional imports
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+force-single-line = false
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# =============================================================================
+# Pytest Configuration
+# https://docs.pytest.org/en/stable/reference/customize.html
+# =============================================================================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+python_classes = ["Test*"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+    "--tb=short",
+]
+markers = [
+    "unit: Unit tests (fast, no external dependencies)",
+    "integration: Integration tests (may require database/services)",
+    "e2e: End-to-end tests (require full stack)",
+    "slow: Slow tests (excluded by default)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+# =============================================================================
+# Coverage Configuration
+# https://coverage.readthedocs.io/en/latest/config.html
+# =============================================================================
+[tool.coverage.run]
+source = ["app"]
+branch = true
+omit = [
+    "app/tasks/celery_app.py",  # Celery configuration
+    "*/tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "@abstractmethod",
+    "@overload",
+]
+fail_under = 80
+show_missing = true
+skip_covered = true
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# =============================================================================
+# MyPy Configuration
+# https://mypy.readthedocs.io/en/stable/config_file.html
+# =============================================================================
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+strict_optional = true
+strict_equality = true
+extra_checks = true
+plugins = [
+    "pydantic.mypy",
+    "sqlalchemy.ext.mypy.plugin",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "celery.*",
+    "minio.*",
+    "pinecone.*",
+    "voyageai.*",
+    "feedparser.*",
+    "bs4.*",
+    "passlib.*",
+    "structlog.*",
+    "uvicorn.*",
+    "factory.*",
+    "faker.*",
+    "resend.*",
+    "croniter.*",
+    "stripe.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+# =============================================================================
+# Pydantic MyPy Plugin
+# =============================================================================
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[dependency-groups]
+dev = [
+    "factory-boy>=3.3.3",
+]

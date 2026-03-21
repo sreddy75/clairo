@@ -1,0 +1,69 @@
+# Clairo Backend Setup - Reusable Composite Action
+# Sets up Python environment with uv for CI/CD pipelines
+
+name: 'Setup Backend'
+description: 'Set up Python environment with uv and install dependencies'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.12'
+  working-directory:
+    description: 'Working directory for backend'
+    required: false
+    default: 'backend'
+  install-dev:
+    description: 'Install development dependencies'
+    required: false
+    default: 'true'
+  install-ai:
+    description: 'Install AI dependencies'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-glob: |
+          ${{ inputs.working-directory }}/uv.lock
+          ${{ inputs.working-directory }}/pyproject.toml
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        # Build extra flags for uv sync
+        EXTRA_FLAGS=""
+        if [ "${{ inputs.install-dev }}" = "true" ]; then
+          EXTRA_FLAGS="$EXTRA_FLAGS --extra dev"
+        fi
+        if [ "${{ inputs.install-ai }}" = "true" ]; then
+          EXTRA_FLAGS="$EXTRA_FLAGS --extra ai"
+        fi
+
+        if [ -n "$EXTRA_FLAGS" ]; then
+          echo "Installing with extras:$EXTRA_FLAGS"
+          uv sync --frozen $EXTRA_FLAGS
+        else
+          echo "Installing base dependencies only"
+          uv sync --frozen
+        fi
+
+    - name: Verify installation
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "Python version: $(python --version)"
+        echo "uv version: $(uv --version)"
+        echo "Installed packages:"
+        uv pip list | head -20

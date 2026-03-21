@@ -1,0 +1,57 @@
+# Clairo Railway Configuration
+# https://docs.railway.app/reference/config-as-code
+
+# ============================================================================
+# Build Configuration
+# ============================================================================
+[build]
+# Use Dockerfile for production builds
+builder = "dockerfile"
+dockerfilePath = "backend/Dockerfile.prod"
+
+# Build context is repository root
+watchPatterns = [
+  "backend/**",
+  "infrastructure/**"
+]
+
+# ============================================================================
+# Deploy Configuration
+# ============================================================================
+[deploy]
+# Number of replicas (1 for beta, scale up later)
+numReplicas = 1
+
+# Health check configuration
+healthcheckPath = "/health/ready"
+healthcheckTimeout = 30
+startCommand = ""
+
+# Graceful shutdown: give workers time to finish in-flight tasks
+# Railway default is 0s which kills Celery mid-task
+sleepApplication = 30
+
+# Restart policy
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Resource limits (adjust based on Railway plan)
+# Uncomment and set based on your needs
+# memorySoftLimitMb = 512
+# cpuLimit = 1000  # millicores
+
+# ============================================================================
+# Environment-Specific Overrides
+# ============================================================================
+# These are set via Railway dashboard or CLI, not in this file
+# Required environment variables:
+# - DATABASE_URL
+# - REDIS_URL
+# - JWT_SECRET_KEY
+# - CLERK_SECRET_KEY
+# - ANTHROPIC_API_KEY
+# - RESEND_API_KEY
+# - STRIPE_SECRET_KEY
+# - XERO_CLIENT_ID
+# - XERO_CLIENT_SECRET
+# - SENTRY_DSN (optional)

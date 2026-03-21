@@ -1,0 +1,505 @@
+openapi: 3.1.0
+info:
+  title: Clairo Xero Reports API
+  description: API endpoints for fetching and managing Xero financial reports
+  version: 1.0.0
+  contact:
+    name: Clairo API Support
+    email: support@clairo.com.au
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development server
+  - url: https://api.clairo.com.au/api/v1
+    description: Production server
+
+tags:
+  - name: Reports
+    description: Xero financial reports operations
+
+paths:
+  /clients/{client_id}/reports:
+    get:
+      tags:
+        - Reports
+      summary: List available reports
+      description: Get list of available report types and their sync status for a client
+      operationId: listReports
+      parameters:
+        - $ref: "#/components/parameters/ClientId"
+      responses:
+        "200":
+          description: List of available reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /clients/{client_id}/reports/{report_type}:
+    get:
+      tags:
+        - Reports
+      summary: Get report
+      description: Fetch a specific report for the client. Returns cached data if fresh, otherwise fetches from Xero.
+      operationId: getReport
+      parameters:
+        - $ref: "#/components/parameters/ClientId"
+        - $ref: "#/components/parameters/ReportType"
+        - name: period
+          in: query
+          description: "Period for the report (format depends on report type: YYYY-FY, YYYY-QN, YYYY-MM, YYYY-MM-DD)"
+          required: false
+          schema:
+            type: string
+            example: "2025-FY"
+        - name: as_of_date
+          in: query
+          description: As-of date for point-in-time reports (Balance Sheet, Aged reports)
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
+        - name: periods
+          in: query
+          description: Number of comparison periods
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 1
+        - name: timeframe
+          in: query
+          description: Period interval
+          required: false
+          schema:
+            type: string
+            enum: [MONTH, QUARTER, YEAR]
+            default: MONTH
+      responses:
+        "200":
+          description: Report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+        "202":
+          description: Report is being fetched, check back shortly
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportPendingResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /clients/{client_id}/reports/{report_type}/refresh:
+    post:
+      tags:
+        - Reports
+      summary: Refresh report
+      description: Force refresh a report from Xero (subject to rate limiting)
+      operationId: refreshReport
+      parameters:
+        - $ref: "#/components/parameters/ClientId"
+        - $ref: "#/components/parameters/ReportType"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshReportRequest"
+      responses:
+        "200":
+          description: Report refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+        "202":
+          description: Refresh queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportPendingResponse"
+        "429":
+          description: Rate limit exceeded, try again later
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RateLimitResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /clients/{client_id}/reports/sync:
+    post:
+      tags:
+        - Reports
+      summary: Sync all reports
+      description: Trigger a full sync of all report types for the client
+      operationId: syncAllReports
+      parameters:
+        - $ref: "#/components/parameters/ClientId"
+      responses:
+        "202":
+          description: Sync job started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncJobResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RateLimitResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /clients/{client_id}/reports/sync/{job_id}:
+    get:
+      tags:
+        - Reports
+      summary: Get sync job status
+      description: Check the status of a report sync job
+      operationId: getSyncJobStatus
+      parameters:
+        - $ref: "#/components/parameters/ClientId"
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Sync job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncJobResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  parameters:
+    ClientId:
+      name: client_id
+      in: path
+      required: true
+      description: Client UUID
+      schema:
+        type: string
+        format: uuid
+
+    ReportType:
+      name: report_type
+      in: path
+      required: true
+      description: Type of report to fetch
+      schema:
+        type: string
+        enum:
+          - profit-and-loss
+          - balance-sheet
+          - aged-receivables
+          - aged-payables
+          - trial-balance
+          - bank-summary
+          - budget-summary
+
+  schemas:
+    ReportListResponse:
+      type: object
+      required:
+        - client_id
+        - reports
+      properties:
+        client_id:
+          type: string
+          format: uuid
+        reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportSummary"
+
+    ReportSummary:
+      type: object
+      required:
+        - report_type
+        - display_name
+        - available
+      properties:
+        report_type:
+          type: string
+          enum:
+            - profit-and-loss
+            - balance-sheet
+            - aged-receivables
+            - aged-payables
+            - trial-balance
+            - bank-summary
+            - budget-summary
+        display_name:
+          type: string
+          example: "Profit and Loss"
+        available:
+          type: boolean
+          description: Whether this report is available for the client
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+        cache_status:
+          type: string
+          enum: [fresh, stale, expired, not_synced]
+
+    ReportResponse:
+      type: object
+      required:
+        - id
+        - client_id
+        - report_type
+        - report_name
+        - fetched_at
+        - is_fresh
+      properties:
+        id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+          format: uuid
+        report_type:
+          type: string
+        report_name:
+          type: string
+          example: "Profit and Loss"
+        period_key:
+          type: string
+          example: "2025-FY"
+        period_start:
+          type: string
+          format: date
+          nullable: true
+        period_end:
+          type: string
+          format: date
+          nullable: true
+        as_of_date:
+          type: string
+          format: date
+          nullable: true
+        fetched_at:
+          type: string
+          format: date-time
+        cache_expires_at:
+          type: string
+          format: date-time
+        is_fresh:
+          type: boolean
+          description: Whether the cached data is still fresh
+        summary:
+          $ref: "#/components/schemas/ReportSummaryData"
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportRow"
+
+    ReportSummaryData:
+      type: object
+      description: Extracted key metrics (varies by report type)
+      additionalProperties: true
+      example:
+        revenue: 245000
+        net_profit: 35000
+        gross_margin_pct: 60.0
+
+    ReportRow:
+      type: object
+      required:
+        - row_type
+        - cells
+      properties:
+        row_type:
+          type: string
+          enum: [Header, Section, Row, SummaryRow]
+        title:
+          type: string
+          nullable: true
+        cells:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportCell"
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportRow"
+          description: Nested rows for Section type
+
+    ReportCell:
+      type: object
+      properties:
+        value:
+          type: string
+        attributes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              value:
+                type: string
+
+    ReportPendingResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          enum: [pending, in_progress]
+        message:
+          type: string
+          example: "Report is being fetched. Check back in a few seconds."
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+
+    RefreshReportRequest:
+      type: object
+      properties:
+        period:
+          type: string
+          description: Period to refresh
+          example: "2025-FY"
+        as_of_date:
+          type: string
+          format: date
+          description: As-of date for point-in-time reports
+
+    SyncJobResponse:
+      type: object
+      required:
+        - job_id
+        - status
+        - created_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        reports_synced:
+          type: integer
+          description: Number of reports successfully synced
+        reports_failed:
+          type: integer
+          description: Number of reports that failed to sync
+        error_message:
+          type: string
+          nullable: true
+
+    RateLimitResponse:
+      type: object
+      required:
+        - error
+        - retry_after
+      properties:
+        error:
+          type: string
+          example: "Rate limit exceeded"
+        message:
+          type: string
+          example: "Please try again in 5 minutes"
+        retry_after:
+          type: integer
+          description: Seconds until rate limit resets
+          example: 300
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: "unauthorized"
+            message: "Authentication required"
+
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: "forbidden"
+            message: "You do not have access to this client"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: "not_found"
+            message: "Client not found"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

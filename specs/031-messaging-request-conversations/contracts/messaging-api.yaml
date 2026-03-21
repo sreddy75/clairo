@@ -1,0 +1,1194 @@
+# Messaging & Conversations API
+# OpenAPI 3.1.0 Specification
+# Spec 031: Messaging & Request Conversations
+
+openapi: 3.1.0
+info:
+  title: Clairo Messaging API
+  description: |
+    REST API for messaging, conversations, and BAS approvals.
+
+    **Authentication**: Standard JWT tokens (accountant or portal client)
+    **Real-time**: See websocket-api.md for WebSocket protocol
+  version: 1.0.0
+  contact:
+    name: Clairo API Support
+    email: api@clairo.com.au
+
+servers:
+  - url: /api/v1
+    description: Main API endpoints
+
+tags:
+  - name: Conversations
+    description: Conversation management
+  - name: Messages
+    description: Message operations
+  - name: Approvals
+    description: BAS approval workflow
+  - name: Notifications
+    description: Notification preferences
+  - name: Portal Messaging
+    description: Client portal messaging endpoints
+
+paths:
+  # ============================================
+  # ACCOUNTANT CONVERSATIONS
+  # ============================================
+
+  /conversations:
+    get:
+      tags: [Conversations]
+      operationId: listConversations
+      summary: List all conversations (accountant inbox)
+      description: Returns conversations across all clients, sorted by most recent
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, resolved, archived, all]
+            default: active
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: client_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: context_type
+          in: query
+          schema:
+            type: string
+            enum: [request, bas_period, general]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationListResponse'
+
+  /conversations/{conversation_id}:
+    get:
+      tags: [Conversations]
+      operationId: getConversation
+      summary: Get conversation details
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Conversation details with recent messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Conversations]
+      operationId: updateConversation
+      summary: Update conversation (resolve, archive)
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationUpdate'
+      responses:
+        '200':
+          description: Conversation updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /conversations/{conversation_id}/messages:
+    get:
+      tags: [Messages]
+      operationId: listMessages
+      summary: List messages in conversation
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: before
+          in: query
+          description: Get messages before this ID (for pagination)
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags: [Messages]
+      operationId: sendMessage
+      summary: Send a message
+      description: Send message to conversation (also broadcasts via WebSocket)
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreate'
+      responses:
+        '201':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /conversations/{conversation_id}/messages/{message_id}/read:
+    post:
+      tags: [Messages]
+      operationId: markMessageRead
+      summary: Mark message as read
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Message marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # CLIENT-SPECIFIC CONVERSATIONS
+  # ============================================
+
+  /clients/{client_id}/conversations:
+    get:
+      tags: [Conversations]
+      operationId: listClientConversations
+      summary: List conversations for a specific client
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: context_type
+          in: query
+          schema:
+            type: string
+            enum: [request, bas_period, general]
+      responses:
+        '200':
+          description: List of client conversations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags: [Conversations]
+      operationId: createClientConversation
+      summary: Start a new conversation with client
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationCreate'
+      responses:
+        '201':
+          description: Conversation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # REQUEST CONVERSATIONS
+  # ============================================
+
+  /requests/{request_id}/conversation:
+    get:
+      tags: [Conversations]
+      operationId: getRequestConversation
+      summary: Get or create conversation for a request
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Request conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{request_id}/amendments:
+    get:
+      tags: [Conversations]
+      operationId: listRequestAmendments
+      summary: List amendments to a request
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of request amendments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AmendmentListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # BAS APPROVALS
+  # ============================================
+
+  /approvals:
+    get:
+      tags: [Approvals]
+      operationId: listApprovals
+      summary: List BAS approvals (accountant dashboard)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, retracted, all]
+            default: all
+        - name: client_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: List of approvals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalListResponse'
+
+  /approvals/summary:
+    get:
+      tags: [Approvals]
+      operationId: getApprovalSummary
+      summary: Get approval summary stats
+      responses:
+        '200':
+          description: Approval summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalSummaryResponse'
+
+  /bas/{period_id}/ready:
+    post:
+      tags: [Approvals]
+      operationId: markBASReady
+      summary: Mark BAS ready for client review
+      parameters:
+        - name: period_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: BAS marked ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bas/{period_id}/approval:
+    get:
+      tags: [Approvals]
+      operationId: getApproval
+      summary: Get approval status for BAS period
+      parameters:
+        - name: period_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Approval details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bas/{period_id}/remind:
+    post:
+      tags: [Approvals]
+      operationId: sendApprovalReminder
+      summary: Send approval reminder to client
+      parameters:
+        - name: period_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reminder sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # NOTIFICATION PREFERENCES
+  # ============================================
+
+  /settings/notifications:
+    get:
+      tags: [Notifications]
+      operationId: getNotificationPreferences
+      summary: Get notification preferences
+      responses:
+        '200':
+          description: Notification preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferencesResponse'
+
+    patch:
+      tags: [Notifications]
+      operationId: updateNotificationPreferences
+      summary: Update notification preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPreferencesUpdate'
+      responses:
+        '200':
+          description: Preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferencesResponse'
+
+  # ============================================
+  # PORTAL MESSAGING (Client-facing)
+  # ============================================
+
+  /portal/conversations:
+    get:
+      tags: [Portal Messaging]
+      operationId: listPortalConversations
+      summary: List client's conversations
+      responses:
+        '200':
+          description: Client's conversations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationListResponse'
+
+    post:
+      tags: [Portal Messaging]
+      operationId: createPortalConversation
+      summary: Start a new conversation (client)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortalConversationCreate'
+      responses:
+        '201':
+          description: Conversation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+
+  /portal/conversations/{conversation_id}/messages:
+    get:
+      tags: [Portal Messaging]
+      operationId: listPortalMessages
+      summary: List messages in conversation (client)
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags: [Portal Messaging]
+      operationId: sendPortalMessage
+      summary: Send message (client)
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreate'
+      responses:
+        '201':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /portal/bas/{period_id}/review:
+    get:
+      tags: [Portal Messaging]
+      operationId: getBASReview
+      summary: Get BAS for client review
+      parameters:
+        - name: period_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: BAS review data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BASReviewResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /portal/bas/{period_id}/approve:
+    post:
+      tags: [Portal Messaging]
+      operationId: approveBAS
+      summary: Approve BAS (client)
+      parameters:
+        - name: period_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: BAS approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '400':
+          description: BAS not ready for approval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /portal/bas/{period_id}/retract:
+    post:
+      tags: [Portal Messaging]
+      operationId: retractApproval
+      summary: Retract BAS approval (client)
+      description: Can only retract within 24 hours and if not yet lodged
+      parameters:
+        - name: period_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetractRequest'
+      responses:
+        '200':
+          description: Approval retracted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+        '400':
+          description: Cannot retract (expired or lodged)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # ============================================
+    # CONVERSATION SCHEMAS
+    # ============================================
+
+    ConversationListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationSummary'
+        total:
+          type: integer
+        unread_total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    ConversationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client:
+          $ref: '#/components/schemas/ClientBrief'
+        context_type:
+          type: string
+          enum: [request, bas_period, general]
+        context_id:
+          type: string
+          format: uuid
+          nullable: true
+        context_title:
+          type: string
+          nullable: true
+          description: Title of linked request or BAS period
+        subject:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, resolved, archived]
+        last_message:
+          $ref: '#/components/schemas/MessagePreview'
+          nullable: true
+        unread_count:
+          type: integer
+        last_message_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ConversationDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client:
+          $ref: '#/components/schemas/ClientBrief'
+        context_type:
+          type: string
+          enum: [request, bas_period, general]
+        context_id:
+          type: string
+          format: uuid
+          nullable: true
+        context:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Full context object (request or BAS details)
+        subject:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, resolved, archived]
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageResponse'
+          description: Most recent messages
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ConversationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+          format: uuid
+        context_type:
+          type: string
+          enum: [request, bas_period, general]
+        context_id:
+          type: string
+          format: uuid
+          nullable: true
+        subject:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, resolved, archived]
+        created_at:
+          type: string
+          format: date-time
+
+    ConversationCreate:
+      type: object
+      properties:
+        context_type:
+          type: string
+          enum: [request, bas_period, general]
+          default: general
+        context_id:
+          type: string
+          format: uuid
+          nullable: true
+        subject:
+          type: string
+          maxLength: 200
+        initial_message:
+          type: string
+          maxLength: 5000
+          description: Optional first message
+
+    ConversationUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, resolved, archived]
+
+    PortalConversationCreate:
+      type: object
+      properties:
+        subject:
+          type: string
+          maxLength: 200
+        message:
+          type: string
+          maxLength: 5000
+          description: Initial message content
+
+    # ============================================
+    # MESSAGE SCHEMAS
+    # ============================================
+
+    MessageListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageResponse'
+        has_more:
+          type: boolean
+
+    MessageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        conversation_id:
+          type: string
+          format: uuid
+        sender_type:
+          type: string
+          enum: [client, accountant, system]
+        sender_name:
+          type: string
+          nullable: true
+        message_type:
+          type: string
+          enum: [text, system]
+        content:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachmentResponse'
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    MessagePreview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_type:
+          type: string
+          enum: [client, accountant, system]
+        sender_name:
+          type: string
+          nullable: true
+        preview:
+          type: string
+          description: Truncated content (100 chars)
+        created_at:
+          type: string
+          format: date-time
+
+    MessageCreate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          maxLength: 5000
+        attachment_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Pre-uploaded attachment IDs
+
+    AttachmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        mime_type:
+          type: string
+        size_bytes:
+          type: integer
+        download_url:
+          type: string
+          format: uri
+
+    # ============================================
+    # APPROVAL SCHEMAS
+    # ============================================
+
+    ApprovalListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+
+    ApprovalSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client:
+          $ref: '#/components/schemas/ClientBrief'
+        period:
+          type: string
+          example: "2025-Q4"
+        status:
+          type: string
+          enum: [pending, approved, retracted]
+        due_date:
+          type: string
+          format: date
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        gst_summary:
+          $ref: '#/components/schemas/GSTSummary'
+
+    ApprovalResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        bas_period_id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, approved, retracted]
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        approved_by_name:
+          type: string
+          nullable: true
+        retracted_at:
+          type: string
+          format: date-time
+          nullable: true
+        retraction_reason:
+          type: string
+          nullable: true
+        bas_summary:
+          $ref: '#/components/schemas/GSTSummary'
+        created_at:
+          type: string
+          format: date-time
+
+    ApprovalSummaryResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        pending:
+          type: integer
+        approved:
+          type: integer
+        retracted:
+          type: integer
+        pending_due_this_week:
+          type: integer
+
+    BASReviewResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          example: "2025-Q4"
+        status:
+          type: string
+          enum: [ready_for_review, approved, lodged]
+        due_date:
+          type: string
+          format: date
+        summary:
+          $ref: '#/components/schemas/GSTSummary'
+        breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/GSTBreakdownItem'
+        approval:
+          $ref: '#/components/schemas/ApprovalResponse'
+          nullable: true
+        can_approve:
+          type: boolean
+        can_retract:
+          type: boolean
+
+    GSTSummary:
+      type: object
+      properties:
+        gst_collected:
+          type: number
+          format: decimal
+          example: 5000.00
+        gst_paid:
+          type: number
+          format: decimal
+          example: 2000.00
+        net_gst:
+          type: number
+          format: decimal
+          example: 3000.00
+        payg_withheld:
+          type: number
+          format: decimal
+          example: 1500.00
+          nullable: true
+
+    GSTBreakdownItem:
+      type: object
+      properties:
+        category:
+          type: string
+          example: "Sales"
+        amount:
+          type: number
+          format: decimal
+        gst:
+          type: number
+          format: decimal
+
+    RetractRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+
+    ReminderResponse:
+      type: object
+      properties:
+        sent:
+          type: boolean
+        sent_to:
+          type: string
+          format: email
+
+    # ============================================
+    # AMENDMENT SCHEMAS
+    # ============================================
+
+    AmendmentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AmendmentResponse'
+
+    AmendmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        field_changed:
+          type: string
+        old_value:
+          type: string
+          nullable: true
+        new_value:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        changed_by_name:
+          type: string
+        changed_at:
+          type: string
+          format: date-time
+
+    # ============================================
+    # NOTIFICATION SCHEMAS
+    # ============================================
+
+    NotificationPreferencesResponse:
+      type: object
+      properties:
+        email_new_message:
+          type: boolean
+        email_request_question:
+          type: boolean
+        email_approval_reminder:
+          type: boolean
+        email_digest_enabled:
+          type: boolean
+        email_digest_frequency:
+          type: string
+          enum: [daily, weekly]
+        dnd_enabled:
+          type: boolean
+        dnd_start_time:
+          type: string
+          example: "22:00"
+          nullable: true
+        dnd_end_time:
+          type: string
+          example: "08:00"
+          nullable: true
+
+    NotificationPreferencesUpdate:
+      type: object
+      properties:
+        email_new_message:
+          type: boolean
+        email_request_question:
+          type: boolean
+        email_approval_reminder:
+          type: boolean
+        email_digest_enabled:
+          type: boolean
+        email_digest_frequency:
+          type: string
+          enum: [daily, weekly]
+        dnd_enabled:
+          type: boolean
+        dnd_start_time:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+        dnd_end_time:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+
+    # ============================================
+    # COMMON SCHEMAS
+    # ============================================
+
+    ClientBrief:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        business_name:
+          type: string
+        contact_email:
+          type: string
+          format: email
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true

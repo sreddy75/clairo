@@ -1,0 +1,6 @@
+.vercel
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.clerk/

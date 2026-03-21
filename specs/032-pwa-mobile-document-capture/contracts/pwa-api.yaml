@@ -1,0 +1,764 @@
+openapi: 3.1.0
+info:
+  title: Clairo PWA API
+  description: API endpoints for PWA functionality - push notifications, WebAuthn, and analytics
+  version: 1.0.0
+  contact:
+    name: Clairo Team
+    email: support@clairo.com.au
+
+servers:
+  - url: https://api.clairo.com.au/api/v1
+    description: Production
+  - url: http://localhost:8000/api/v1
+    description: Development
+
+tags:
+  - name: Push Notifications
+    description: Web Push subscription management
+  - name: WebAuthn
+    description: Biometric/passkey authentication
+  - name: PWA Analytics
+    description: Installation and usage tracking
+  - name: Offline Queue
+    description: Offline upload queue management
+
+paths:
+  # ============================================================
+  # PUSH NOTIFICATIONS
+  # ============================================================
+
+  /portal/push/vapid-key:
+    get:
+      tags: [Push Notifications]
+      summary: Get VAPID public key
+      description: Returns the VAPID public key needed for push subscription
+      operationId: getVapidKey
+      security:
+        - portalAuth: []
+      responses:
+        '200':
+          description: VAPID public key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publicKey:
+                    type: string
+                    description: Base64-encoded VAPID public key
+                    example: "BEl62iUYgU..."
+
+  /portal/push/subscribe:
+    post:
+      tags: [Push Notifications]
+      summary: Register push subscription
+      description: Register a Web Push subscription for the current client
+      operationId: subscribeToPush
+      security:
+        - portalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushSubscriptionCreate'
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushSubscriptionResponse'
+        '400':
+          description: Invalid subscription data
+        '409':
+          description: Subscription already exists
+
+  /portal/push/subscriptions:
+    get:
+      tags: [Push Notifications]
+      summary: List push subscriptions
+      description: Get all push subscriptions for the current client
+      operationId: listPushSubscriptions
+      security:
+        - portalAuth: []
+      responses:
+        '200':
+          description: List of subscriptions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushSubscriptionList'
+
+  /portal/push/subscriptions/{subscriptionId}:
+    delete:
+      tags: [Push Notifications]
+      summary: Remove push subscription
+      description: Unsubscribe a device from push notifications
+      operationId: unsubscribePush
+      security:
+        - portalAuth: []
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Subscription removed
+        '404':
+          description: Subscription not found
+
+  /portal/push/test:
+    post:
+      tags: [Push Notifications]
+      summary: Send test notification
+      description: Send a test push notification to verify subscription works
+      operationId: sendTestPush
+      security:
+        - portalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subscriptionId:
+                  type: string
+                  format: uuid
+              required:
+                - subscriptionId
+      responses:
+        '200':
+          description: Test notification sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  messageId:
+                    type: string
+
+  # ============================================================
+  # WEBAUTHN (BIOMETRIC AUTHENTICATION)
+  # ============================================================
+
+  /portal/webauthn/register/options:
+    post:
+      tags: [WebAuthn]
+      summary: Get registration options
+      description: Get WebAuthn registration challenge and options
+      operationId: getWebAuthnRegisterOptions
+      security:
+        - portalAuth: []
+      responses:
+        '200':
+          description: Registration options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebAuthnRegistrationOptions'
+
+  /portal/webauthn/register/verify:
+    post:
+      tags: [WebAuthn]
+      summary: Verify registration
+      description: Verify and store WebAuthn registration response
+      operationId: verifyWebAuthnRegistration
+      security:
+        - portalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebAuthnRegistrationVerify'
+      responses:
+        '201':
+          description: Credential registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebAuthnCredentialResponse'
+        '400':
+          description: Invalid registration response
+
+  /portal/webauthn/authenticate/options:
+    post:
+      tags: [WebAuthn]
+      summary: Get authentication options
+      description: Get WebAuthn authentication challenge for biometric login
+      operationId: getWebAuthnAuthOptions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Client email to identify credentials
+              required:
+                - email
+      responses:
+        '200':
+          description: Authentication options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebAuthnAuthenticationOptions'
+        '404':
+          description: No credentials found for email
+
+  /portal/webauthn/authenticate/verify:
+    post:
+      tags: [WebAuthn]
+      summary: Verify authentication
+      description: Verify WebAuthn authentication response and issue token
+      operationId: verifyWebAuthnAuthentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebAuthnAuthenticationVerify'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT access token
+                  expiresIn:
+                    type: integer
+                    description: Token validity in seconds
+        '401':
+          description: Authentication failed
+
+  /portal/webauthn/credentials:
+    get:
+      tags: [WebAuthn]
+      summary: List credentials
+      description: Get all WebAuthn credentials for the current client
+      operationId: listWebAuthnCredentials
+      security:
+        - portalAuth: []
+      responses:
+        '200':
+          description: List of credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credentials:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebAuthnCredentialResponse'
+
+  /portal/webauthn/credentials/{credentialId}:
+    delete:
+      tags: [WebAuthn]
+      summary: Remove credential
+      description: Delete a WebAuthn credential
+      operationId: deleteWebAuthnCredential
+      security:
+        - portalAuth: []
+      parameters:
+        - name: credentialId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Credential removed
+        '404':
+          description: Credential not found
+
+  # ============================================================
+  # PWA ANALYTICS
+  # ============================================================
+
+  /portal/analytics/install:
+    post:
+      tags: [PWA Analytics]
+      summary: Track installation event
+      description: Track PWA installation prompt and install events
+      operationId: trackInstallEvent
+      security:
+        - portalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PWAInstallEvent'
+      responses:
+        '201':
+          description: Event tracked
+
+  /portal/analytics/permission:
+    post:
+      tags: [PWA Analytics]
+      summary: Track permission event
+      description: Track push notification or biometric permission grants
+      operationId: trackPermissionEvent
+      security:
+        - portalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PWAPermissionEvent'
+      responses:
+        '201':
+          description: Event tracked
+
+  # Accountant endpoint - see client PWA status
+  /clients/{clientId}/pwa-status:
+    get:
+      tags: [PWA Analytics]
+      summary: Get client PWA status
+      description: Get PWA installation and notification status for a client
+      operationId: getClientPWAStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Client PWA status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientPWAStatus'
+        '404':
+          description: Client not found
+
+  /pwa-summary:
+    get:
+      tags: [PWA Analytics]
+      summary: Get tenant PWA summary
+      description: Get PWA adoption summary for the tenant
+      operationId: getPWASummary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: PWA adoption summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PWASummary'
+
+  # ============================================================
+  # OFFLINE QUEUE STATUS
+  # ============================================================
+
+  /portal/queue/status:
+    get:
+      tags: [Offline Queue]
+      summary: Get queue status
+      description: Get status of offline upload queue from server perspective
+      operationId: getQueueStatus
+      security:
+        - portalAuth: []
+      responses:
+        '200':
+          description: Queue status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pendingUploads:
+                    type: integer
+                    description: Number of pending uploads tracked server-side
+                  lastSyncAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+
+  /portal/queue/sync:
+    post:
+      tags: [Offline Queue]
+      summary: Sync queue status
+      description: Report client-side queue status to server for tracking
+      operationId: syncQueueStatus
+      security:
+        - portalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                queuedCount:
+                  type: integer
+                uploadingCount:
+                  type: integer
+                failedCount:
+                  type: integer
+                completedCount:
+                  type: integer
+              required:
+                - queuedCount
+      responses:
+        '200':
+          description: Queue status synced
+
+components:
+  securitySchemes:
+    portalAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Portal JWT token (magic link or WebAuthn)
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Accountant JWT token
+
+  schemas:
+    # ============================================================
+    # PUSH NOTIFICATION SCHEMAS
+    # ============================================================
+
+    PushSubscriptionCreate:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          format: uri
+          description: Web Push endpoint URL
+        keys:
+          type: object
+          properties:
+            p256dh:
+              type: string
+              description: Base64-encoded P-256 public key
+            auth:
+              type: string
+              description: Base64-encoded auth secret
+          required:
+            - p256dh
+            - auth
+        userAgent:
+          type: string
+          description: Browser user agent
+        deviceName:
+          type: string
+          description: Human-readable device name
+          example: "iPhone 14 Pro"
+      required:
+        - endpoint
+        - keys
+
+    PushSubscriptionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        deviceName:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PushSubscriptionList:
+      type: object
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PushSubscriptionResponse'
+        total:
+          type: integer
+
+    # ============================================================
+    # WEBAUTHN SCHEMAS
+    # ============================================================
+
+    WebAuthnRegistrationOptions:
+      type: object
+      properties:
+        challenge:
+          type: string
+          description: Base64-encoded challenge
+        rp:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "Clairo"
+            id:
+              type: string
+              example: "clairo.com.au"
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              description: Base64-encoded user ID
+            name:
+              type: string
+            displayName:
+              type: string
+        pubKeyCredParams:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: "public-key"
+              alg:
+                type: integer
+                example: -7
+        authenticatorSelection:
+          type: object
+          properties:
+            authenticatorAttachment:
+              type: string
+              enum: [platform, cross-platform]
+            userVerification:
+              type: string
+              enum: [required, preferred, discouraged]
+            residentKey:
+              type: string
+              enum: [required, preferred, discouraged]
+        timeout:
+          type: integer
+          example: 60000
+
+    WebAuthnRegistrationVerify:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Credential ID (base64url)
+        rawId:
+          type: string
+          description: Raw credential ID (base64url)
+        response:
+          type: object
+          properties:
+            clientDataJSON:
+              type: string
+              description: Base64url-encoded client data
+            attestationObject:
+              type: string
+              description: Base64url-encoded attestation
+          required:
+            - clientDataJSON
+            - attestationObject
+        type:
+          type: string
+          example: "public-key"
+        deviceName:
+          type: string
+          description: Optional device name
+      required:
+        - id
+        - rawId
+        - response
+        - type
+
+    WebAuthnAuthenticationOptions:
+      type: object
+      properties:
+        challenge:
+          type: string
+          description: Base64-encoded challenge
+        rpId:
+          type: string
+          example: "clairo.com.au"
+        allowCredentials:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+                example: "public-key"
+        userVerification:
+          type: string
+          enum: [required, preferred, discouraged]
+        timeout:
+          type: integer
+
+    WebAuthnAuthenticationVerify:
+      type: object
+      properties:
+        id:
+          type: string
+        rawId:
+          type: string
+        response:
+          type: object
+          properties:
+            clientDataJSON:
+              type: string
+            authenticatorData:
+              type: string
+            signature:
+              type: string
+            userHandle:
+              type: string
+              nullable: true
+          required:
+            - clientDataJSON
+            - authenticatorData
+            - signature
+        type:
+          type: string
+      required:
+        - id
+        - rawId
+        - response
+        - type
+
+    WebAuthnCredentialResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        deviceName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ============================================================
+    # PWA ANALYTICS SCHEMAS
+    # ============================================================
+
+    PWAInstallEvent:
+      type: object
+      properties:
+        eventType:
+          type: string
+          enum:
+            - install_prompt_shown
+            - install_prompt_accepted
+            - install_prompt_dismissed
+            - app_installed
+        platform:
+          type: string
+          enum: [ios, android, desktop]
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - eventType
+
+    PWAPermissionEvent:
+      type: object
+      properties:
+        permissionType:
+          type: string
+          enum: [push, biometric]
+        granted:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - permissionType
+        - granted
+
+    ClientPWAStatus:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        hasPushSubscription:
+          type: boolean
+        pushSubscriptionCount:
+          type: integer
+        hasWebAuthnCredential:
+          type: boolean
+        lastNotificationSent:
+          type: string
+          format: date-time
+          nullable: true
+        lastNotificationClicked:
+          type: string
+          format: date-time
+          nullable: true
+        appInstalled:
+          type: boolean
+        installedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PWASummary:
+      type: object
+      properties:
+        totalClients:
+          type: integer
+        clientsWithApp:
+          type: integer
+        clientsWithPush:
+          type: integer
+        installRate:
+          type: number
+          format: float
+          description: Percentage of clients with app installed
+        pushOptInRate:
+          type: number
+          format: float
+          description: Percentage of app users with push enabled
+        notificationStats:
+          type: object
+          properties:
+            sentLast7Days:
+              type: integer
+            deliveryRate:
+              type: number
+              format: float
+            clickRate:
+              type: number
+              format: float

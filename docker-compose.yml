@@ -1,0 +1,236 @@
+# Clairo Docker Compose - Local Development
+# Usage: docker-compose up -d
+#
+# Environment: backend/.env is the single source of truth for all API keys/secrets.
+# This file only overrides Docker-specific settings (hostnames, ports).
+
+services:
+  # ===========================================================================
+  # PostgreSQL 16 - Primary Database
+  # ===========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: clairo-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-clairo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clairo_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-clairo}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-clairo} -d ${POSTGRES_DB:-clairo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - clairo-network
+
+  # ===========================================================================
+  # Redis 7 - Cache & Celery Broker
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: clairo-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - clairo-network
+
+  # ===========================================================================
+  # MinIO - S3-Compatible Object Storage
+  # ===========================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: clairo-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-clairo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-clairo_dev}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - clairo-network
+
+  # ===========================================================================
+  # MinIO Init - Create default bucket
+  # ===========================================================================
+  minio-init:
+    image: minio/mc:latest
+    container_name: clairo-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set clairo http://minio:9000 ${MINIO_ROOT_USER:-clairo} ${MINIO_ROOT_PASSWORD:-clairo_dev};
+      mc mb --ignore-existing clairo/${MINIO_BUCKET:-clairo-documents};
+      mc anonymous set download clairo/${MINIO_BUCKET:-clairo-documents}/public;
+      echo 'MinIO bucket initialized';
+      exit 0;
+      "
+    networks:
+      - clairo-network
+
+  # ===========================================================================
+  # FastAPI Backend
+  # ===========================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: clairo-backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      # Docker-specific overrides (hostnames differ from local dev)
+      DATABASE_URL: postgresql+asyncpg://clairo:clairo_dev@postgres:5432/clairo
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      MINIO_ENDPOINT: minio:9000
+      MINIO_EXTERNAL_ENDPOINT: localhost:9000
+      MINIO_ACCESS_KEY: clairo
+      MINIO_SECRET_KEY: clairo_dev
+      MINIO_BUCKET: clairo-documents
+      MINIO_USE_SSL: "false"
+      ENVIRONMENT: development
+      DEBUG: "true"
+      CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
+    volumes:
+      - ./backend:/app
+      - backend_cache:/root/.cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - clairo-network
+
+  # ===========================================================================
+  # Celery Worker
+  # ===========================================================================
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: clairo-celery-worker
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+    env_file:
+      - ./backend/.env
+    environment:
+      # Docker-specific overrides
+      DATABASE_URL: postgresql+asyncpg://clairo:clairo_dev@postgres:5432/clairo
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: clairo
+      MINIO_SECRET_KEY: clairo_dev
+      MINIO_BUCKET: clairo-documents
+      MINIO_USE_SSL: "false"
+      ENVIRONMENT: development
+    volumes:
+      - ./backend:/app
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.tasks.celery_app inspect ping -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+    networks:
+      - clairo-network
+
+  # ===========================================================================
+  # Celery Beat (Scheduler) - Runs periodic tasks
+  # ===========================================================================
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: clairo-celery-beat
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+    env_file:
+      - ./backend/.env
+    environment:
+      # Docker-specific overrides
+      DATABASE_URL: postgresql+asyncpg://clairo:clairo_dev@postgres:5432/clairo
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: clairo
+      MINIO_SECRET_KEY: clairo_dev
+      MINIO_BUCKET: clairo-documents
+      MINIO_USE_SSL: "false"
+      ENVIRONMENT: development
+    volumes:
+      - ./backend:/app
+    healthcheck:
+      # Disable default healthcheck for beat scheduler
+      disable: true
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - clairo-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_data:
+    name: clairo-postgres-data
+  redis_data:
+    name: clairo-redis-data
+  minio_data:
+    name: clairo-minio-data
+  backend_cache:
+    name: clairo-backend-cache
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  clairo-network:
+    name: clairo-network
+    driver: bridge

@@ -1,0 +1,1366 @@
+openapi: 3.1.0
+info:
+  title: AI Interaction Capture & Learning API
+  version: 1.0.0
+  description: |
+    API for AI interaction capture, pattern analysis, knowledge gap identification,
+    fine-tuning dataset curation, and tenant privacy settings.
+  contact:
+    name: Clairo API Support
+    email: api@clairo.com.au
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: Feedback
+    description: User feedback on AI responses
+  - name: Intelligence Dashboard
+    description: Admin intelligence metrics (admin only)
+  - name: Patterns
+    description: Query pattern analysis (admin only)
+  - name: Knowledge Gaps
+    description: Knowledge gap management (admin only)
+  - name: Fine-Tuning
+    description: Training data curation (admin only)
+  - name: Privacy
+    description: Tenant AI privacy settings
+
+paths:
+  # === USER ENDPOINTS ===
+
+  /ai/feedback/{interaction_id}:
+    post:
+      operationId: submitFeedback
+      tags: [Feedback]
+      summary: Submit feedback on AI response
+      parameters:
+        - name: interaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackRequest"
+      responses:
+        "200":
+          description: Feedback recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # === ADMIN ENDPOINTS ===
+
+  /admin/ai-intelligence/dashboard:
+    get:
+      operationId: getIntelligenceDashboard
+      tags: [Intelligence Dashboard]
+      summary: Get AI intelligence dashboard data
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, quarter]
+            default: week
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/interactions:
+    get:
+      operationId: listInteractions
+      tags: [Intelligence Dashboard]
+      summary: List AI interactions with filters
+      parameters:
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/QueryCategory"
+        - name: has_feedback
+          in: query
+          schema:
+            type: boolean
+        - name: feedback_rating
+          in: query
+          schema:
+            type: integer
+            enum: [1, 5]
+        - name: tenant_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated interaction list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InteractionListResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/interactions/{id}:
+    get:
+      operationId: getInteraction
+      tags: [Intelligence Dashboard]
+      summary: Get interaction detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Interaction detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InteractionDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/patterns:
+    get:
+      operationId: listPatterns
+      tags: [Patterns]
+      summary: List query patterns
+      parameters:
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/QueryCategory"
+        - name: min_occurrences
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [occurrence_count, avg_satisfaction, follow_up_rate]
+            default: occurrence_count
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: Paginated pattern list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatternListResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/patterns/{id}:
+    get:
+      operationId: getPattern
+      tags: [Patterns]
+      summary: Get pattern detail with sample interactions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Pattern detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatternDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    patch:
+      operationId: updatePattern
+      tags: [Patterns]
+      summary: Update pattern metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePatternRequest"
+      responses:
+        "200":
+          description: Pattern updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatternDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/gaps:
+    get:
+      operationId: listKnowledgeGaps
+      tags: [Knowledge Gaps]
+      summary: List knowledge gaps
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/GapStatus"
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/QueryCategory"
+        - name: min_priority
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: Paginated gap list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GapListResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/gaps/{id}:
+    get:
+      operationId: getKnowledgeGap
+      tags: [Knowledge Gaps]
+      summary: Get knowledge gap detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Gap detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GapDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    patch:
+      operationId: updateKnowledgeGap
+      tags: [Knowledge Gaps]
+      summary: Update gap status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGapRequest"
+      responses:
+        "200":
+          description: Gap updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GapDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/finetuning/candidates:
+    get:
+      operationId: listCandidates
+      tags: [Fine-Tuning]
+      summary: List fine-tuning candidates
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/CandidateStatus"
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/QueryCategory"
+        - name: min_quality
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: Paginated candidate list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateListResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/finetuning/candidates/{id}:
+    get:
+      operationId: getCandidate
+      tags: [Fine-Tuning]
+      summary: Get candidate detail with interaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Candidate detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/finetuning/candidates/{id}/approve:
+    post:
+      operationId: approveCandidate
+      tags: [Fine-Tuning]
+      summary: Approve candidate and create example
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApproveRequest"
+      responses:
+        "201":
+          description: Example created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExampleResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/finetuning/candidates/{id}/reject:
+    post:
+      operationId: rejectCandidate
+      tags: [Fine-Tuning]
+      summary: Reject candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectRequest"
+      responses:
+        "200":
+          description: Candidate rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/finetuning/examples:
+    get:
+      operationId: listExamples
+      tags: [Fine-Tuning]
+      summary: List approved examples
+      parameters:
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/QueryCategory"
+        - name: exported
+          in: query
+          schema:
+            type: boolean
+        - name: min_quality
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: Paginated example list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExampleListResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/finetuning/examples/{id}:
+    get:
+      operationId: getExample
+      tags: [Fine-Tuning]
+      summary: Get example detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Example detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExampleDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    patch:
+      operationId: updateExample
+      tags: [Fine-Tuning]
+      summary: Update example content
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExampleRequest"
+      responses:
+        "200":
+          description: Example updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExampleDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    delete:
+      operationId: deleteExample
+      tags: [Fine-Tuning]
+      summary: Delete example
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Example deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/finetuning/datasets:
+    get:
+      operationId: listDatasets
+      tags: [Fine-Tuning]
+      summary: List exported datasets
+      responses:
+        "200":
+          description: Dataset list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatasetListResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: exportDataset
+      tags: [Fine-Tuning]
+      summary: Export new training dataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportDatasetRequest"
+      responses:
+        "202":
+          description: Export started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportJobResponse"
+        "400":
+          description: Not enough examples
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /admin/ai-intelligence/finetuning/datasets/{id}:
+    get:
+      operationId: getDataset
+      tags: [Fine-Tuning]
+      summary: Get dataset detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Dataset detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatasetDetailResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # === TENANT SETTINGS ===
+
+  /settings/ai:
+    get:
+      operationId: getAISettings
+      tags: [Privacy]
+      summary: Get tenant AI settings
+      responses:
+        "200":
+          description: AI settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AISettingsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    patch:
+      operationId: updateAISettings
+      tags: [Privacy]
+      summary: Update tenant AI settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAISettingsRequest"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AISettingsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  schemas:
+    # Enums
+    QueryCategory:
+      type: string
+      enum: [COMPLIANCE, STRATEGY, DATA_QUALITY, WORKFLOW]
+
+    GapStatus:
+      type: string
+      enum: [IDENTIFIED, IN_PROGRESS, RESOLVED]
+
+    CandidateStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED, EXPORTED]
+
+    # Feedback
+    FeedbackRequest:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          enum: [1, 5]
+          description: 1 = thumbs down, 5 = thumbs up
+        comment:
+          type: string
+          maxLength: 1000
+
+    FeedbackResponse:
+      type: object
+      required: [interaction_id, feedback_recorded]
+      properties:
+        interaction_id:
+          type: string
+          format: uuid
+        feedback_recorded:
+          type: boolean
+        thank_you_message:
+          type: string
+
+    # Dashboard
+    DashboardResponse:
+      type: object
+      required: [summary, trends, categories, fine_tuning]
+      properties:
+        summary:
+          $ref: "#/components/schemas/DashboardSummary"
+        trends:
+          $ref: "#/components/schemas/DashboardTrends"
+        categories:
+          type: object
+          additionalProperties:
+            type: integer
+        fine_tuning:
+          $ref: "#/components/schemas/FineTuningStats"
+        knowledge_gaps:
+          type: array
+          items:
+            $ref: "#/components/schemas/GapSummary"
+          maxItems: 5
+
+    DashboardSummary:
+      type: object
+      properties:
+        total_interactions:
+          type: integer
+        interactions_with_feedback:
+          type: integer
+        feedback_rate:
+          type: number
+          format: float
+        avg_satisfaction:
+          type: number
+          format: float
+        avg_latency_ms:
+          type: integer
+
+    DashboardTrends:
+      type: object
+      properties:
+        interactions_change_pct:
+          type: number
+          format: float
+        satisfaction_change:
+          type: number
+          format: float
+        period_comparison:
+          type: string
+
+    FineTuningStats:
+      type: object
+      properties:
+        candidates_pending:
+          type: integer
+        examples_approved:
+          type: integer
+        datasets_exported:
+          type: integer
+        last_export_at:
+          type: string
+          format: date-time
+
+    # Interactions
+    InteractionListResponse:
+      type: object
+      required: [items, total, page, per_page, pages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InteractionSummary"
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        pages:
+          type: integer
+
+    InteractionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        query_text:
+          type: string
+          maxLength: 200
+        category:
+          $ref: "#/components/schemas/QueryCategory"
+        subcategory:
+          type: string
+        feedback_rating:
+          type: integer
+        response_latency_ms:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    InteractionDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        query_text:
+          type: string
+        response_text:
+          type: string
+        category:
+          $ref: "#/components/schemas/QueryCategory"
+        subcategory:
+          type: string
+        session_type:
+          type: string
+        response_latency_ms:
+          type: integer
+        confidence_score:
+          type: number
+          format: float
+        sources_count:
+          type: integer
+        feedback_rating:
+          type: integer
+        feedback_comment:
+          type: string
+        had_follow_up:
+          type: boolean
+        action_type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    # Patterns
+    PatternListResponse:
+      type: object
+      required: [items, total, page, per_page, pages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatternSummary"
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        pages:
+          type: integer
+
+    PatternSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        canonical_query:
+          type: string
+        category:
+          $ref: "#/components/schemas/QueryCategory"
+        occurrence_count:
+          type: integer
+        avg_satisfaction_score:
+          type: number
+          format: float
+        follow_up_rate:
+          type: number
+          format: float
+
+    PatternDetailResponse:
+      allOf:
+        - $ref: "#/components/schemas/PatternSummary"
+        - type: object
+          properties:
+            subcategory:
+              type: string
+            suggested_kb_article:
+              type: string
+            suggested_feature:
+              type: string
+            auto_response_candidate:
+              type: boolean
+            sample_interactions:
+              type: array
+              items:
+                $ref: "#/components/schemas/InteractionSummary"
+            first_seen_at:
+              type: string
+              format: date-time
+            last_seen_at:
+              type: string
+              format: date-time
+
+    UpdatePatternRequest:
+      type: object
+      properties:
+        suggested_kb_article:
+          type: string
+        suggested_feature:
+          type: string
+        auto_response_candidate:
+          type: boolean
+
+    # Knowledge Gaps
+    GapListResponse:
+      type: object
+      required: [items, total, page, per_page, pages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GapSummary"
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        pages:
+          type: integer
+
+    GapSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        topic:
+          type: string
+        category:
+          $ref: "#/components/schemas/QueryCategory"
+        interaction_count:
+          type: integer
+        avg_satisfaction:
+          type: number
+          format: float
+        priority_score:
+          type: number
+          format: float
+        status:
+          $ref: "#/components/schemas/GapStatus"
+
+    GapDetailResponse:
+      allOf:
+        - $ref: "#/components/schemas/GapSummary"
+        - type: object
+          properties:
+            subcategory:
+              type: string
+            sample_queries:
+              type: array
+              items:
+                type: string
+            resolution_type:
+              type: string
+            resolution_notes:
+              type: string
+            identified_at:
+              type: string
+              format: date-time
+            resolved_at:
+              type: string
+              format: date-time
+            satisfaction_after:
+              type: number
+              format: float
+            improvement_percentage:
+              type: number
+              format: float
+
+    UpdateGapRequest:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/GapStatus"
+        resolution_type:
+          type: string
+          enum: [KB_ARTICLE, FEATURE, MODEL_UPDATE, PROMPT_IMPROVEMENT]
+        resolution_notes:
+          type: string
+
+    # Fine-Tuning Candidates
+    CandidateListResponse:
+      type: object
+      required: [items, total, page, per_page, pages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CandidateSummary"
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        pages:
+          type: integer
+
+    CandidateSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        quality_score:
+          type: number
+          format: float
+        category:
+          $ref: "#/components/schemas/QueryCategory"
+        status:
+          $ref: "#/components/schemas/CandidateStatus"
+        has_positive_feedback:
+          type: boolean
+        had_action_taken:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    CandidateDetailResponse:
+      allOf:
+        - $ref: "#/components/schemas/CandidateSummary"
+        - type: object
+          properties:
+            interaction:
+              $ref: "#/components/schemas/InteractionDetailResponse"
+            no_follow_up_needed:
+              type: boolean
+            confidence_was_high:
+              type: boolean
+
+    ApproveRequest:
+      type: object
+      required: [quality_score]
+      properties:
+        quality_score:
+          type: integer
+          minimum: 1
+          maximum: 5
+        edited_response:
+          type: string
+          description: If provided, replaces original response
+        quality_notes:
+          type: string
+
+    RejectRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+
+    # Fine-Tuning Examples
+    ExampleListResponse:
+      type: object
+      required: [items, total, page, per_page, pages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExampleSummary"
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        pages:
+          type: integer
+
+    ExampleSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          $ref: "#/components/schemas/QueryCategory"
+        quality_score:
+          type: integer
+        response_was_edited:
+          type: boolean
+        exported_in_version:
+          type: string
+        curated_at:
+          type: string
+          format: date-time
+
+    ExampleResponse:
+      allOf:
+        - $ref: "#/components/schemas/ExampleSummary"
+        - type: object
+          properties:
+            user_message:
+              type: string
+              maxLength: 200
+
+    ExampleDetailResponse:
+      allOf:
+        - $ref: "#/components/schemas/ExampleSummary"
+        - type: object
+          properties:
+            system_prompt:
+              type: string
+            user_message:
+              type: string
+            ideal_response:
+              type: string
+            original_response:
+              type: string
+            quality_notes:
+              type: string
+            curated_by:
+              type: string
+              format: uuid
+
+    UpdateExampleRequest:
+      type: object
+      properties:
+        ideal_response:
+          type: string
+        quality_score:
+          type: integer
+          minimum: 1
+          maximum: 5
+        quality_notes:
+          type: string
+
+    # Datasets
+    DatasetListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DatasetSummary"
+
+    DatasetSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: string
+        total_examples:
+          type: integer
+        train_examples:
+          type: integer
+        eval_examples:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        model_id:
+          type: string
+
+    DatasetDetailResponse:
+      allOf:
+        - $ref: "#/components/schemas/DatasetSummary"
+        - type: object
+          properties:
+            category_distribution:
+              type: object
+              additionalProperties:
+                type: integer
+            source_date_start:
+              type: string
+              format: date
+            source_date_end:
+              type: string
+              format: date
+            train_s3_key:
+              type: string
+            eval_s3_key:
+              type: string
+            training_started_at:
+              type: string
+              format: date-time
+            training_completed_at:
+              type: string
+              format: date-time
+            notes:
+              type: string
+
+    ExportDatasetRequest:
+      type: object
+      required: [version]
+      properties:
+        version:
+          type: string
+          pattern: ^v\d+\.\d+\.\d+$
+        min_quality_score:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 3
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryCategory"
+          description: If empty, include all categories
+        notes:
+          type: string
+
+    ExportJobResponse:
+      type: object
+      required: [job_id, status]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, processing]
+        estimated_examples:
+          type: integer
+
+    # Privacy Settings
+    AISettingsResponse:
+      type: object
+      required: [contribute_to_training, allow_pattern_analysis, allow_anonymized_benchmarking, raw_log_retention_days]
+      properties:
+        contribute_to_training:
+          type: boolean
+        allow_pattern_analysis:
+          type: boolean
+        allow_anonymized_benchmarking:
+          type: boolean
+        raw_log_retention_days:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateAISettingsRequest:
+      type: object
+      properties:
+        contribute_to_training:
+          type: boolean
+        allow_pattern_analysis:
+          type: boolean
+        allow_anonymized_benchmarking:
+          type: boolean
+        raw_log_retention_days:
+          type: integer
+          minimum: 90
+          maximum: 2555
+
+    # Common
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Forbidden:
+      description: Admin access required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

@@ -1,0 +1,128 @@
+# Clairo Preview Deployment
+# Deploys preview environments for pull requests
+
+name: Preview Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # ============================================================================
+  # Deploy Preview to Vercel
+  # ============================================================================
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+
+    outputs:
+      preview_url: ${{ steps.deploy.outputs.preview_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment
+        working-directory: frontend
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project
+        working-directory: frontend
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Preview
+        id: deploy
+        working-directory: frontend
+        run: |
+          DEPLOYMENT_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "preview_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $DEPLOYMENT_URL"
+
+  # ============================================================================
+  # Comment Preview URL on PR
+  # ============================================================================
+  comment-preview:
+    name: Comment Preview URL
+    runs-on: ubuntu-latest
+    needs: deploy-preview
+    if: success()
+
+    steps:
+      - name: Find existing comment
+        uses: peter-evans/find-comment@v3
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- clairo-preview-comment -->'
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            <!-- clairo-preview-comment -->
+            ## 🚀 Preview Deployment Ready
+
+            | Resource | URL |
+            |----------|-----|
+            | **Preview** | ${{ needs.deploy-preview.outputs.preview_url }} |
+
+            ---
+            *Deployed from commit ${{ github.sha }}*
+
+            <details>
+            <summary>📋 Preview Checklist</summary>
+
+            - [ ] UI renders correctly
+            - [ ] Navigation works
+            - [ ] Forms submit properly
+            - [ ] No console errors
+
+            </details>
+
+  # ============================================================================
+  # Cleanup on PR Close
+  # ============================================================================
+  cleanup:
+    name: Cleanup Preview
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+
+    steps:
+      - name: Comment cleanup notice
+        uses: peter-evans/find-comment@v3
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- clairo-preview-comment -->'
+
+      - name: Update comment with cleanup notice
+        if: steps.find-comment.outputs.comment-id != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          body: |
+            <!-- clairo-preview-comment -->
+            ## 🧹 Preview Deployment Cleaned Up
+
+            The preview deployment for this PR has been cleaned up.
+
+            ---
+            *PR closed at ${{ github.event.pull_request.merged_at || github.event.pull_request.closed_at }}*

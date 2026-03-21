@@ -1,0 +1,23 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Concept 6: Clean modern monogram - stacked design -->
+  <defs>
+    <linearGradient id="stackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="85" fill="url(#stackGrad)"/>
+
+  <!-- White C letterform -->
+  <path d="M120 55
+           A45 45 0 1 0 120 145"
+        stroke="white"
+        stroke-width="18"
+        stroke-linecap="round"
+        fill="none"/>
+
+  <!-- Accent dot -->
+  <circle cx="130" cy="100" r="10" fill="white" opacity="0.9"/>
+</svg>

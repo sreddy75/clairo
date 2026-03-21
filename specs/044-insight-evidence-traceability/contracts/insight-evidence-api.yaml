@@ -1,0 +1,302 @@
+# API Contract Changes: Platform-Wide Evidence & Traceability
+# Feature: 044-insight-evidence-traceability
+# Date: 2026-02-24
+#
+# This documents the API contract changes required across P1, P2, and P3.
+# All changes are additive (backwards-compatible) — no breaking changes.
+
+openapi: "3.1.0"
+info:
+  title: Insight Evidence & Traceability API Changes
+  version: "1.0.0"
+  description: |
+    Additive changes to the existing Insights API to support evidence
+    traceability, data snapshots, and threshold transparency.
+
+paths:
+  # =====================================================
+  # EXISTING ENDPOINT — Response schema extended (P1)
+  # =====================================================
+  /api/v1/insights/{insight_id}:
+    get:
+      summary: Get insight by ID (existing — response extended)
+      description: |
+        Existing endpoint. Response now includes `data_snapshot` field
+        containing the financial context available at analysis time.
+      parameters:
+        - name: insight_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Insight with data snapshot and evidence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightResponseV2"
+
+  # =====================================================
+  # EXISTING ENDPOINT — Now captures data snapshot (P1)
+  # =====================================================
+  /api/v1/insights/{insight_id}/expand:
+    post:
+      summary: Expand insight with OPTIONS analysis (existing — enhanced)
+      description: |
+        Existing endpoint. Now captures the financial context sent to the AI
+        and stores it in `data_snapshot`. The AI prompt is updated to include
+        evidence citation instructions. Response includes the populated snapshot.
+      parameters:
+        - name: insight_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Expanded insight with evidence and snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightResponseV2"
+
+  # =====================================================
+  # NEW ENDPOINT — Threshold registry (P2)
+  # =====================================================
+  /api/v1/platform/thresholds:
+    get:
+      summary: Get platform threshold definitions
+      description: |
+        Returns the threshold rules and classification methodology for all
+        computed scores and severity labels displayed in the platform.
+        Used by frontend to render tooltip explanations.
+      responses:
+        "200":
+          description: Threshold definitions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThresholdRegistryResponse"
+
+components:
+  schemas:
+    # =====================================================
+    # Extended InsightResponse (P1)
+    # =====================================================
+    InsightResponseV2:
+      description: |
+        Extended InsightResponse with data_snapshot field.
+        All existing fields preserved, one new field added.
+      allOf:
+        - description: All existing InsightResponse fields preserved
+        - type: object
+          properties:
+            data_snapshot:
+              $ref: "#/components/schemas/DataSnapshot"
+              nullable: true
+              description: |
+                Financial context available at analysis time.
+                Null for insights generated before this feature.
+
+    # =====================================================
+    # Data Snapshot schema (P1)
+    # =====================================================
+    DataSnapshot:
+      type: object
+      description: |
+        Structured capture of the financial context available at the time
+        of AI analysis. Bounded to 50KB maximum.
+      properties:
+        version:
+          type: string
+          description: Schema version for forward compatibility
+          example: "1.0"
+        captured_at:
+          type: string
+          format: date-time
+          description: When the snapshot was taken
+        data_freshness:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last Xero sync timestamp at capture time
+        evidence_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvidenceItem"
+          description: Extracted evidence data points for frontend rendering
+        profile:
+          $ref: "#/components/schemas/SnapshotProfile"
+          nullable: true
+        financial_summary:
+          $ref: "#/components/schemas/FinancialSummary"
+          nullable: true
+        aging_summary:
+          $ref: "#/components/schemas/AgingSummary"
+          nullable: true
+        gst_summary:
+          $ref: "#/components/schemas/GSTSummary"
+          nullable: true
+        monthly_trends:
+          type: array
+          items:
+            type: object
+          nullable: true
+          description: Last 6 months trend data
+        quality_scores:
+          type: object
+          nullable: true
+          description: Quality score and dimension breakdown
+        perspectives_used:
+          type: array
+          items:
+            type: string
+          description: Agent perspectives used in analysis
+
+    # =====================================================
+    # Evidence Item (P1)
+    # =====================================================
+    EvidenceItem:
+      type: object
+      required: [source, period, metric, value, category]
+      properties:
+        source:
+          type: string
+          description: Data source name
+          example: "Profit & Loss"
+        period:
+          type: string
+          description: Reporting period or as-of date
+          example: "FY2025"
+        metric:
+          type: string
+          description: Metric label
+          example: "Total Revenue"
+        value:
+          type: string
+          description: Formatted value
+          example: "$185,000"
+        category:
+          type: string
+          enum: [financial, aging, gst, quality, trend]
+          description: Evidence category
+
+    # =====================================================
+    # Snapshot sub-schemas (P1)
+    # =====================================================
+    SnapshotProfile:
+      type: object
+      properties:
+        name:
+          type: string
+        entity_type:
+          type: string
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        gst_registered:
+          type: boolean
+        revenue_bracket:
+          type: string
+          nullable: true
+
+    FinancialSummary:
+      type: object
+      properties:
+        revenue:
+          type: number
+          nullable: true
+        expenses:
+          type: number
+          nullable: true
+        net_profit:
+          type: number
+          nullable: true
+        current_ratio:
+          type: number
+          nullable: true
+        debt_to_equity:
+          type: number
+          nullable: true
+
+    AgingSummary:
+      type: object
+      properties:
+        ar_total:
+          type: number
+          nullable: true
+        ar_overdue:
+          type: number
+          nullable: true
+        ar_overdue_pct:
+          type: number
+          nullable: true
+        ap_total:
+          type: number
+          nullable: true
+        ap_overdue:
+          type: number
+          nullable: true
+
+    GSTSummary:
+      type: object
+      properties:
+        collected:
+          type: number
+          nullable: true
+        paid:
+          type: number
+          nullable: true
+        net_position:
+          type: number
+          nullable: true
+
+    # =====================================================
+    # Threshold Registry (P2)
+    # =====================================================
+    ThresholdRegistryResponse:
+      type: object
+      properties:
+        thresholds:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThresholdRule"
+
+    ThresholdRule:
+      type: object
+      required: [metric_key, display_name, rules, description]
+      properties:
+        metric_key:
+          type: string
+          description: Unique metric identifier
+          example: "bas_variance_severity"
+        display_name:
+          type: string
+          description: Human-readable name
+          example: "BAS Variance Severity"
+        description:
+          type: string
+          description: Plain-English methodology explanation
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThresholdBand"
+
+    ThresholdBand:
+      type: object
+      required: [label, color, condition]
+      properties:
+        label:
+          type: string
+          example: "Critical"
+        color:
+          type: string
+          example: "red"
+        condition:
+          type: string
+          description: Human-readable threshold rule
+          example: ">50% change OR >$10,000 absolute change"

@@ -1,0 +1,42 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- V3: Flow diagram style - left to right data flow suggesting transformation -->
+  <defs>
+    <linearGradient id="n3Flow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#93c5fd" />
+      <stop offset="50%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="n3Main" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#1e40af" />
+    </linearGradient>
+  </defs>
+
+  <!-- C arc as container -->
+  <path d="M128 40 A60 60 0 1 0 128 160" stroke="url(#n3Main)" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+  <!-- Data source nodes (left - raw data) -->
+  <circle cx="45" cy="60" r="8" fill="#93c5fd"/>
+  <circle cx="45" cy="100" r="8" fill="#93c5fd"/>
+  <circle cx="45" cy="140" r="8" fill="#93c5fd"/>
+
+  <!-- Processing layer (middle) -->
+  <circle cx="85" cy="80" r="10" fill="#60a5fa"/>
+  <circle cx="85" cy="120" r="10" fill="#60a5fa"/>
+
+  <!-- Central insight node -->
+  <circle cx="115" cy="100" r="14" fill="url(#n3Main)"/>
+
+  <!-- Flow connections -->
+  <path d="M53 60 L75 80" stroke="url(#n3Flow)" stroke-width="2" opacity="0.7"/>
+  <path d="M53 100 L75 80" stroke="url(#n3Flow)" stroke-width="2" opacity="0.7"/>
+  <path d="M53 100 L75 120" stroke="url(#n3Flow)" stroke-width="2" opacity="0.7"/>
+  <path d="M53 140 L75 120" stroke="url(#n3Flow)" stroke-width="2" opacity="0.7"/>
+
+  <path d="M95 80 L101 100" stroke="#3b82f6" stroke-width="2.5" opacity="0.8"/>
+  <path d="M95 120 L101 100" stroke="#3b82f6" stroke-width="2.5" opacity="0.8"/>
+
+  <!-- Output clarity spark -->
+  <path d="M129 100 L148 100" stroke="url(#n3Main)" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="155" cy="100" r="6" fill="#1d4ed8"/>
+</svg>

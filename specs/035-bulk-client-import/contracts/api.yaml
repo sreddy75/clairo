@@ -1,0 +1,366 @@
+openapi: 3.1.0
+info:
+  title: Bulk Client Import API
+  version: 1.0.0
+  description: API endpoints for bulk importing Xero client organizations
+
+paths:
+  /api/v1/integrations/xero/bulk-import/initiate:
+    post:
+      operationId: initiateBulkImport
+      summary: Initiate bulk import OAuth flow
+      description: >
+        Generates a Xero OAuth authorization URL for bulk import.
+        Sets is_bulk_import=true on the OAuth state to trigger multi-org
+        processing on callback.
+      tags: [Bulk Import]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkImportInitiateRequest'
+      responses:
+        '200':
+          description: OAuth authorization URL generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportInitiateResponse'
+        '409':
+          description: A bulk import is already in progress for this tenant
+
+  /api/v1/integrations/xero/bulk-import/callback:
+    get:
+      operationId: bulkImportCallback
+      summary: Handle OAuth callback for bulk import
+      description: >
+        Processes the Xero OAuth callback, fetches all authorized organizations,
+        identifies new vs existing connections, and returns the list for configuration.
+        Does NOT create connections yet — that happens on confirm.
+      tags: [Bulk Import]
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Organizations fetched and ready for configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportCallbackResponse'
+        '400':
+          description: Invalid or expired state token
+
+  /api/v1/integrations/xero/bulk-import/confirm:
+    post:
+      operationId: confirmBulkImport
+      summary: Confirm selected organizations and start import
+      description: >
+        Creates XeroConnection records for selected organizations,
+        creates a BulkImportJob, and queues background sync for each.
+      tags: [Bulk Import]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkImportConfirmRequest'
+      responses:
+        '202':
+          description: Import job created and sync queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportJobResponse'
+        '400':
+          description: Validation error (e.g., exceeds plan limit)
+        '409':
+          description: A bulk import is already in progress
+
+  /api/v1/integrations/xero/bulk-import/{job_id}:
+    get:
+      operationId: getBulkImportStatus
+      summary: Get bulk import job status with per-org details
+      description: >
+        Returns the current status of a bulk import job including
+        overall progress and per-organization sync status.
+      tags: [Bulk Import]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status with per-org details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportJobDetailResponse'
+        '404':
+          description: Job not found
+
+  /api/v1/integrations/xero/bulk-import/{job_id}/retry:
+    post:
+      operationId: retryFailedOrgs
+      summary: Retry failed organization syncs
+      description: >
+        Re-queues sync for organizations that failed in the specified job.
+      tags: [Bulk Import]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Retry queued for failed organizations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportJobResponse'
+        '404':
+          description: Job not found
+        '400':
+          description: No failed organizations to retry
+
+  /api/v1/integrations/xero/bulk-import/jobs:
+    get:
+      operationId: listBulkImportJobs
+      summary: List bulk import jobs for the tenant
+      description: Returns paginated list of bulk import jobs ordered by creation date.
+      tags: [Bulk Import]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of bulk import jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportJobListResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    BulkImportInitiateRequest:
+      type: object
+      required:
+        - redirect_uri
+      properties:
+        redirect_uri:
+          type: string
+          description: Frontend URL to redirect back to after OAuth
+
+    BulkImportInitiateResponse:
+      type: object
+      properties:
+        auth_url:
+          type: string
+          description: Xero OAuth authorization URL to redirect the user to
+        state:
+          type: string
+          description: OAuth state token for verification
+
+    BulkImportCallbackResponse:
+      type: object
+      properties:
+        auth_event_id:
+          type: string
+          description: Groups organizations from this authorization event
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportOrganization'
+        already_connected_count:
+          type: integer
+        new_count:
+          type: integer
+        plan_limit:
+          type: integer
+          description: Maximum clients allowed on current subscription tier
+        current_client_count:
+          type: integer
+          description: Current number of connected clients
+        available_slots:
+          type: integer
+          description: How many more clients can be imported
+
+    ImportOrganization:
+      type: object
+      properties:
+        xero_tenant_id:
+          type: string
+        organization_name:
+          type: string
+        already_connected:
+          type: boolean
+          description: True if this org is already connected for this tenant
+        existing_connection_id:
+          type: string
+          format: uuid
+          nullable: true
+        match_status:
+          type: string
+          enum: [matched, suggested, unmatched]
+          nullable: true
+          description: Auto-match result against existing client records
+        matched_client_name:
+          type: string
+          nullable: true
+
+    BulkImportConfirmRequest:
+      type: object
+      required:
+        - auth_event_id
+        - organizations
+      properties:
+        auth_event_id:
+          type: string
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportOrgSelection'
+
+    ImportOrgSelection:
+      type: object
+      required:
+        - xero_tenant_id
+        - selected
+      properties:
+        xero_tenant_id:
+          type: string
+        selected:
+          type: boolean
+        connection_type:
+          type: string
+          enum: [practice, client]
+          default: client
+        assigned_user_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    BulkImportJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, in_progress, completed, partial_failure, failed, cancelled]
+        total_organizations:
+          type: integer
+        imported_count:
+          type: integer
+        failed_count:
+          type: integer
+        skipped_count:
+          type: integer
+        progress_percent:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    BulkImportJobDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/BulkImportJobResponse'
+        - type: object
+          properties:
+            organizations:
+              type: array
+              items:
+                $ref: '#/components/schemas/BulkImportOrgStatus'
+            started_at:
+              type: string
+              format: date-time
+              nullable: true
+            completed_at:
+              type: string
+              format: date-time
+              nullable: true
+
+    BulkImportOrgStatus:
+      type: object
+      properties:
+        xero_tenant_id:
+          type: string
+        organization_name:
+          type: string
+        status:
+          type: string
+          enum: [pending, importing, syncing, completed, failed, skipped]
+        connection_id:
+          type: string
+          format: uuid
+          nullable: true
+        connection_type:
+          type: string
+        assigned_user_id:
+          type: string
+          format: uuid
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        sync_started_at:
+          type: string
+          format: date-time
+          nullable: true
+        sync_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    BulkImportJobListResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkImportJobResponse'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer

@@ -1,0 +1,173 @@
+# Clairo .gitignore
+
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+# Python lib directories (but not frontend/src/lib)
+/lib/
+lib64/
+!frontend/src/lib/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# pytest
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/
+
+# =============================================================================
+# Node.js / Frontend
+# =============================================================================
+node_modules/
+.next/
+out/
+.nuxt/
+dist/
+.cache/
+*.tsbuildinfo
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.pnp.*
+
+# =============================================================================
+# Environment & Secrets
+# =============================================================================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+*.pem
+*.key
+secrets/
+
+# =============================================================================
+# IDE & Editors
+# =============================================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+# Founder/business sensitive files (equity, legal, pitch, planning)
+.project/
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# =============================================================================
+# OS Files
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# =============================================================================
+# Docker & Local Data
+# =============================================================================
+docker-compose.override.yml
+*.log
+logs/
+
+# Local database files (if running outside Docker)
+*.db
+*.sqlite
+*.sqlite3
+
+# MinIO local data
+minio_data/
+
+# Qdrant local data
+qdrant_data/
+
+# PostgreSQL local data
+postgres_data/
+
+# Redis local data
+redis_data/
+
+# =============================================================================
+# Testing & Coverage
+# =============================================================================
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# =============================================================================
+# Build & Deploy
+# =============================================================================
+*.tar.gz
+*.zip
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+
+# =============================================================================
+# Temporary Files
+# =============================================================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+
+# =============================================================================
+# Spec-Kit Output (keep memory, ignore generated)
+# =============================================================================
+.specify/out/
+
+# =============================================================================
+# Jupyter Notebooks (if used for exploration)
+# =============================================================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# =============================================================================
+# Celery
+# =============================================================================
+celerybeat-schedule
+celerybeat.pid

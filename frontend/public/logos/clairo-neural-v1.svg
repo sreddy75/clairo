@@ -1,0 +1,36 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- V1: Cleaner, more balanced neural network with stronger C -->
+  <defs>
+    <linearGradient id="n1Main" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="n1Accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa" />
+      <stop offset="100%" style="stop-color:#3b82f6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Refined C arc - thicker, more prominent -->
+  <path d="M125 35 A65 65 0 1 0 125 165" stroke="url(#n1Main)" stroke-width="12" stroke-linecap="round" fill="none"/>
+
+  <!-- Central clarity node (larger, emphasized) -->
+  <circle cx="100" cy="100" r="16" fill="url(#n1Main)"/>
+  <circle cx="100" cy="100" r="10" fill="white" opacity="0.3"/>
+
+  <!-- Input insight nodes (data sources) - arranged in a cleaner pattern -->
+  <circle cx="50" cy="65" r="10" fill="url(#n1Accent)"/>
+  <circle cx="50" cy="135" r="10" fill="url(#n1Accent)"/>
+  <circle cx="65" cy="100" r="8" fill="#93c5fd"/>
+
+  <!-- Output nodes (clarity/actions) -->
+  <circle cx="140" cy="75" r="9" fill="url(#n1Accent)"/>
+  <circle cx="140" cy="125" r="9" fill="url(#n1Accent)"/>
+
+  <!-- Connections - curved for more organic feel -->
+  <path d="M50 65 Q75 80 100 100" stroke="url(#n1Accent)" stroke-width="2.5" fill="none" opacity="0.7"/>
+  <path d="M50 135 Q75 120 100 100" stroke="url(#n1Accent)" stroke-width="2.5" fill="none" opacity="0.7"/>
+  <path d="M65 100 L100 100" stroke="#93c5fd" stroke-width="2" opacity="0.6"/>
+  <path d="M100 100 Q120 85 140 75" stroke="url(#n1Accent)" stroke-width="2.5" fill="none" opacity="0.7"/>
+  <path d="M100 100 Q120 115 140 125" stroke="url(#n1Accent)" stroke-width="2.5" fill="none" opacity="0.7"/>
+</svg>

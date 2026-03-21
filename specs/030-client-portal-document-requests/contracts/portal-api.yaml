@@ -1,0 +1,1117 @@
+# Client Portal API - Client-Facing Endpoints
+# OpenAPI 3.1.0 Specification
+# Spec 030: Client Portal Foundation + Document Requests
+
+openapi: 3.1.0
+info:
+  title: Clairo Client Portal API
+  description: |
+    Client-facing API for the Clairo portal. Enables business owners to:
+    - Authenticate via magic link (passwordless)
+    - View BAS status and dashboard metrics
+    - Respond to document requests
+    - Upload documents
+
+    **Authentication**: Magic link JWT tokens (no passwords)
+    **Scope**: Client can only access their own data
+  version: 1.0.0
+  contact:
+    name: Clairo API Support
+    email: api@clairo.com.au
+
+servers:
+  - url: /api/v1/portal
+    description: Portal API endpoints
+
+tags:
+  - name: Auth
+    description: Magic link authentication
+  - name: Dashboard
+    description: Client dashboard and metrics
+  - name: Requests
+    description: Document request responses
+  - name: Documents
+    description: Document upload and management
+
+paths:
+  # ============================================
+  # AUTHENTICATION
+  # ============================================
+
+  /auth/request-link:
+    post:
+      tags: [Auth]
+      operationId: requestMagicLink
+      summary: Request a magic link
+      description: |
+        Client enters email to receive a magic link for authentication.
+        Rate limited to 3 requests per email per hour.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MagicLinkRequest'
+      responses:
+        '200':
+          description: Magic link sent (always returns 200 to prevent email enumeration)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MagicLinkResponse'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /auth/verify:
+    post:
+      tags: [Auth]
+      operationId: verifyMagicLink
+      summary: Verify magic link token
+      description: |
+        Verify the magic link token and create a portal session.
+        Returns access token (1 hour) and refresh token (30 days).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyTokenRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Refresh access token
+      description: Use refresh token to get a new access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Logout and invalidate session
+      security:
+        - PortalAuth: []
+      responses:
+        '204':
+          description: Successfully logged out
+
+  # ============================================
+  # DASHBOARD
+  # ============================================
+
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      operationId: getDashboard
+      summary: Get client dashboard
+      description: |
+        Returns aggregated dashboard data including:
+        - Current BAS period status
+        - Pending action items count
+        - Recent activity
+        - Key metrics
+      security:
+        - PortalAuth: []
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/bas-status:
+    get:
+      tags: [Dashboard]
+      operationId: getBASStatus
+      summary: Get current BAS status
+      description: Detailed status for current and recent BAS periods
+      security:
+        - PortalAuth: []
+      responses:
+        '200':
+          description: BAS status details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BASStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard/activity:
+    get:
+      tags: [Dashboard]
+      operationId: getActivity
+      summary: Get recent activity
+      description: Recent activity feed for the client
+      security:
+        - PortalAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+      responses:
+        '200':
+          description: Activity feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================
+  # DOCUMENT REQUESTS
+  # ============================================
+
+  /requests:
+    get:
+      tags: [Requests]
+      operationId: listRequests
+      summary: List document requests
+      description: Get all document requests for this client
+      security:
+        - PortalAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, viewed, responded, complete, all]
+            default: pending
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /requests/{request_id}:
+    get:
+      tags: [Requests]
+      operationId: getRequest
+      summary: Get request details
+      description: |
+        Get details of a specific document request.
+        Automatically marks request as VIEWED if currently PENDING.
+      security:
+        - PortalAuth: []
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{request_id}/respond:
+    post:
+      tags: [Requests]
+      operationId: respondToRequest
+      summary: Submit response to request
+      description: |
+        Submit a response to a document request.
+        Can include uploaded documents and a note.
+      security:
+        - PortalAuth: []
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestResponseSubmit'
+      responses:
+        '200':
+          description: Response submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestDetailResponse'
+        '400':
+          description: Invalid response (e.g., no documents attached)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # DOCUMENTS
+  # ============================================
+
+  /documents:
+    get:
+      tags: [Documents]
+      operationId: listDocuments
+      summary: List uploaded documents
+      description: Get all documents uploaded by this client
+      security:
+        - PortalAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [bank_statement, invoice, receipt, payroll, other]
+        - name: period
+          in: query
+          description: BAS period (YYYY-QN format)
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /documents/upload:
+    post:
+      tags: [Documents]
+      operationId: uploadDocument
+      summary: Upload a document
+      description: |
+        Upload a document to the portal.
+        Supports PDF, images, and common document formats.
+        Maximum file size: 50MB.
+      security:
+        - PortalAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentUpload'
+      responses:
+        '201':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Invalid file type or size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /documents/upload-url:
+    post:
+      tags: [Documents]
+      operationId: getUploadUrl
+      summary: Get presigned upload URL
+      description: |
+        Get a presigned S3 URL for direct upload.
+        Use for large files or mobile uploads.
+      security:
+        - PortalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        '200':
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /documents/{document_id}:
+    get:
+      tags: [Documents]
+      operationId: getDocument
+      summary: Get document details
+      security:
+        - PortalAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Documents]
+      operationId: deleteDocument
+      summary: Delete a document
+      description: Only allowed if document not yet submitted in a response
+      security:
+        - PortalAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Document deleted
+        '400':
+          description: Cannot delete submitted document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /documents/{document_id}/download:
+    get:
+      tags: [Documents]
+      operationId: downloadDocument
+      summary: Get document download URL
+      security:
+        - PortalAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Download URL (expires in 15 minutes)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadUrlResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # PROFILE
+  # ============================================
+
+  /profile:
+    get:
+      tags: [Dashboard]
+      operationId: getProfile
+      summary: Get client profile
+      security:
+        - PortalAuth: []
+      responses:
+        '200':
+          description: Client profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    patch:
+      tags: [Dashboard]
+      operationId: updateProfile
+      summary: Update client profile
+      description: Update notification preferences
+      security:
+        - PortalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    PortalAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Portal session access token
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # ============================================
+    # AUTH SCHEMAS
+    # ============================================
+
+    MagicLinkRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          description: Client's email address
+          example: client@business.com.au
+
+    MagicLinkResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "If this email is registered, you'll receive a login link shortly"
+
+    VerifyTokenRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          description: Magic link JWT token
+
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh token from previous auth
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token (1 hour expiry)
+        refresh_token:
+          type: string
+          description: Refresh token (30 days expiry)
+        token_type:
+          type: string
+          enum: [bearer]
+        expires_in:
+          type: integer
+          description: Access token expiry in seconds
+          example: 3600
+        client:
+          $ref: '#/components/schemas/ClientSummary'
+
+    # ============================================
+    # DASHBOARD SCHEMAS
+    # ============================================
+
+    DashboardResponse:
+      type: object
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientSummary'
+        bas_status:
+          $ref: '#/components/schemas/BASStatusSummary'
+        action_items:
+          type: object
+          properties:
+            pending_requests:
+              type: integer
+              description: Number of pending document requests
+            overdue_requests:
+              type: integer
+              description: Number of overdue requests
+            total:
+              type: integer
+        recent_activity:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityItem'
+          maxItems: 5
+        metrics:
+          $ref: '#/components/schemas/ClientMetrics'
+
+    ClientSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        business_name:
+          type: string
+          example: "Smith's Plumbing Pty Ltd"
+        abn:
+          type: string
+          example: "12 345 678 901"
+        accountant:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "Jane Smith"
+            firm_name:
+              type: string
+              example: "Smith & Associates"
+            email:
+              type: string
+              format: email
+
+    BASStatusSummary:
+      type: object
+      properties:
+        current_period:
+          type: string
+          example: "2025-Q4"
+        status:
+          type: string
+          enum: [not_started, in_progress, ready_for_review, lodged]
+        due_date:
+          type: string
+          format: date
+          example: "2026-02-28"
+        days_until_due:
+          type: integer
+          example: 58
+
+    BASStatusResponse:
+      type: object
+      properties:
+        current:
+          $ref: '#/components/schemas/BASPeriodDetail'
+        recent:
+          type: array
+          items:
+            $ref: '#/components/schemas/BASPeriodDetail'
+          maxItems: 4
+
+    BASPeriodDetail:
+      type: object
+      properties:
+        period:
+          type: string
+          example: "2025-Q4"
+        status:
+          type: string
+          enum: [not_started, in_progress, ready_for_review, lodged]
+        due_date:
+          type: string
+          format: date
+        lodgement_date:
+          type: string
+          format: date
+          nullable: true
+        gst_collected:
+          type: number
+          format: decimal
+          nullable: true
+        gst_paid:
+          type: number
+          format: decimal
+          nullable: true
+        net_gst:
+          type: number
+          format: decimal
+          nullable: true
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [request_received, request_responded, bas_status_changed, document_uploaded]
+        title:
+          type: string
+          example: "New document request"
+        description:
+          type: string
+          example: "Bank statements requested for Q4 2025"
+        timestamp:
+          type: string
+          format: date-time
+        link:
+          type: string
+          nullable: true
+          description: Path to related resource
+
+    ActivityResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityItem'
+        total:
+          type: integer
+
+    ClientMetrics:
+      type: object
+      properties:
+        response_rate:
+          type: number
+          format: decimal
+          description: Percentage of requests responded on time
+          example: 85.5
+        avg_response_days:
+          type: number
+          format: decimal
+          description: Average days to respond to requests
+          example: 2.3
+        documents_uploaded:
+          type: integer
+          description: Total documents uploaded this year
+          example: 24
+
+    # ============================================
+    # REQUEST SCHEMAS
+    # ============================================
+
+    RequestListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        has_more:
+          type: boolean
+
+    RequestSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: "Bank Statements - Q4 2025"
+        status:
+          type: string
+          enum: [pending, viewed, responded, complete]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        is_overdue:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    RequestDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          description: Detailed description of what's needed
+        status:
+          type: string
+          enum: [pending, viewed, responded, complete]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        is_overdue:
+          type: boolean
+        expected_document_types:
+          type: array
+          items:
+            type: string
+          example: ["bank_statement", "pdf"]
+        created_at:
+          type: string
+          format: date-time
+        viewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        response:
+          $ref: '#/components/schemas/RequestResponseDetail'
+          nullable: true
+
+    RequestResponseDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        note:
+          type: string
+          nullable: true
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+        submitted_at:
+          type: string
+          format: date-time
+
+    RequestResponseSubmit:
+      type: object
+      properties:
+        document_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of uploaded documents to attach
+          minItems: 1
+        note:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: Optional note to accountant
+
+    # ============================================
+    # DOCUMENT SCHEMAS
+    # ============================================
+
+    DocumentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        has_more:
+          type: boolean
+
+    DocumentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+          example: "bank_statement_oct_2025.pdf"
+        document_type:
+          type: string
+          enum: [bank_statement, invoice, receipt, payroll, other]
+        size_bytes:
+          type: integer
+          example: 245678
+        uploaded_at:
+          type: string
+          format: date-time
+
+    DocumentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        original_filename:
+          type: string
+        document_type:
+          type: string
+          enum: [bank_statement, invoice, receipt, payroll, other]
+        mime_type:
+          type: string
+          example: "application/pdf"
+        size_bytes:
+          type: integer
+        period:
+          type: string
+          nullable: true
+          example: "2025-Q4"
+        request_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated request if uploaded for a request
+        uploaded_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, submitted, processed]
+          description: pending=not yet submitted, submitted=attached to response, processed=reviewed by accountant
+
+    DocumentUpload:
+      type: object
+      required: [file]
+      properties:
+        file:
+          type: string
+          format: binary
+          description: The file to upload (max 50MB)
+        document_type:
+          type: string
+          enum: [bank_statement, invoice, receipt, payroll, other]
+          default: other
+        period:
+          type: string
+          description: BAS period (YYYY-QN format)
+          example: "2025-Q4"
+        request_id:
+          type: string
+          format: uuid
+          description: Associated request if uploading for a request
+
+    UploadUrlRequest:
+      type: object
+      required: [filename, content_type]
+      properties:
+        filename:
+          type: string
+          example: "bank_statement.pdf"
+        content_type:
+          type: string
+          example: "application/pdf"
+        size_bytes:
+          type: integer
+          description: File size for validation
+        document_type:
+          type: string
+          enum: [bank_statement, invoice, receipt, payroll, other]
+        request_id:
+          type: string
+          format: uuid
+
+    UploadUrlResponse:
+      type: object
+      properties:
+        upload_url:
+          type: string
+          format: uri
+          description: Presigned S3 upload URL (expires in 15 minutes)
+        document_id:
+          type: string
+          format: uuid
+          description: ID to use when confirming upload
+        expires_at:
+          type: string
+          format: date-time
+
+    DownloadUrlResponse:
+      type: object
+      properties:
+        download_url:
+          type: string
+          format: uri
+          description: Presigned S3 download URL (expires in 15 minutes)
+        expires_at:
+          type: string
+          format: date-time
+
+    # ============================================
+    # PROFILE SCHEMAS
+    # ============================================
+
+    ProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        business_name:
+          type: string
+        contact_name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        notifications:
+          $ref: '#/components/schemas/NotificationPreferences'
+
+    ProfileUpdate:
+      type: object
+      properties:
+        contact_name:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 20
+        notifications:
+          $ref: '#/components/schemas/NotificationPreferences'
+
+    NotificationPreferences:
+      type: object
+      properties:
+        email_requests:
+          type: boolean
+          default: true
+          description: Email when new requests arrive
+        email_reminders:
+          type: boolean
+          default: true
+          description: Email reminder before due dates
+        email_updates:
+          type: boolean
+          default: true
+          description: Email when BAS status changes
+
+    # ============================================
+    # ERROR SCHEMA
+    # ============================================
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "invalid_token"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "The magic link has expired. Please request a new one."
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true

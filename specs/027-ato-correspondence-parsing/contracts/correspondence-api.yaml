@@ -1,0 +1,770 @@
+openapi: 3.1.0
+info:
+  title: Clairo ATO Correspondence API
+  version: 1.0.0
+  description: |
+    API for managing parsed ATO correspondence, triage queue, and semantic search.
+    Part of Spec 027: ATO Correspondence Parsing.
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  # Correspondence
+  /correspondence:
+    get:
+      summary: List ATO correspondence
+      operationId: listCorrespondence
+      tags:
+        - Correspondence
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: client_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by client
+        - name: notice_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ATONoticeType'
+          description: Filter by notice type
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/CorrespondenceStatus'
+          description: Filter by status
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: has_due_date
+          in: query
+          schema:
+            type: boolean
+          description: Filter to items with due dates
+        - name: overdue
+          in: query
+          schema:
+            type: boolean
+          description: Filter to overdue items only
+      responses:
+        '200':
+          description: List of correspondence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrespondenceListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /correspondence/{correspondence_id}:
+    get:
+      summary: Get correspondence details
+      operationId: getCorrespondence
+      tags:
+        - Correspondence
+      parameters:
+        - $ref: '#/components/parameters/CorrespondenceId'
+      responses:
+        '200':
+          description: Correspondence details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrespondenceDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update correspondence
+      operationId: updateCorrespondence
+      tags:
+        - Correspondence
+      parameters:
+        - $ref: '#/components/parameters/CorrespondenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrespondenceUpdate'
+      responses:
+        '200':
+          description: Updated correspondence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrespondenceDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /correspondence/{correspondence_id}/mark-reviewed:
+    post:
+      summary: Mark correspondence as reviewed
+      operationId: markCorrespondenceReviewed
+      tags:
+        - Correspondence
+      parameters:
+        - $ref: '#/components/parameters/CorrespondenceId'
+      responses:
+        '200':
+          description: Correspondence marked as reviewed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /correspondence/{correspondence_id}/resolve:
+    post:
+      summary: Mark correspondence as resolved
+      operationId: resolveCorrespondence
+      tags:
+        - Correspondence
+      parameters:
+        - $ref: '#/components/parameters/CorrespondenceId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: Resolution notes
+      responses:
+        '200':
+          description: Correspondence resolved
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /correspondence/{correspondence_id}/correct:
+    post:
+      summary: Correct parsed field
+      operationId: correctCorrespondence
+      tags:
+        - Correspondence
+      parameters:
+        - $ref: '#/components/parameters/CorrespondenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrectionRequest'
+      responses:
+        '200':
+          description: Correction applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrespondenceDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /correspondence/{correspondence_id}/assign-client:
+    post:
+      summary: Assign or change client
+      operationId: assignClient
+      tags:
+        - Correspondence
+      parameters:
+        - $ref: '#/components/parameters/CorrespondenceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - client_id
+              properties:
+                client_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Client assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrespondenceDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Triage Queue
+  /correspondence/triage:
+    get:
+      summary: Get triage queue
+      operationId: getTriageQueue
+      tags:
+        - Triage
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Triage queue items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriageListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /correspondence/triage/{triage_id}/assign:
+    post:
+      summary: Assign triage item to client
+      operationId: assignTriageItem
+      tags:
+        - Triage
+      parameters:
+        - name: triage_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - client_id
+              properties:
+                client_id:
+                  type: string
+                  format: uuid
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Triage item assigned
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /correspondence/triage/{triage_id}/ignore:
+    post:
+      summary: Ignore triage item
+      operationId: ignoreTriageItem
+      tags:
+        - Triage
+      parameters:
+        - name: triage_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Triage item ignored
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Search
+  /correspondence/search:
+    post:
+      summary: Semantic search correspondence
+      operationId: searchCorrespondence
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Statistics
+  /correspondence/stats:
+    get:
+      summary: Get correspondence statistics
+      operationId: getCorrespondenceStats
+      tags:
+        - Statistics
+      parameters:
+        - name: client_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter stats by client
+      responses:
+        '200':
+          description: Correspondence statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrespondenceStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /correspondence/by-client/{client_id}:
+    get:
+      summary: Get all correspondence for a client
+      operationId: getClientCorrespondence
+      tags:
+        - Correspondence
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Client's correspondence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrespondenceListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Parsing
+  /correspondence/reparse/{correspondence_id}:
+    post:
+      summary: Re-parse correspondence with latest model
+      operationId: reparseCorrespondence
+      tags:
+        - Parsing
+      parameters:
+        - $ref: '#/components/parameters/CorrespondenceId'
+      responses:
+        '202':
+          description: Re-parsing started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    format: uuid
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    CorrespondenceId:
+      name: correspondence_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    PageNumber:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PageSize:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+
+  schemas:
+    ATONoticeType:
+      type: string
+      enum:
+        - activity_statement_reminder
+        - activity_statement_confirmation
+        - activity_statement_amendment
+        - audit_notice
+        - audit_outcome
+        - information_request
+        - penalty_notice
+        - debt_notice
+        - payment_reminder
+        - payment_plan
+        - running_balance_account
+        - credit_notice
+        - tax_return_reminder
+        - tax_assessment
+        - tax_amendment
+        - superannuation_notice
+        - payg_withholding
+        - fringe_benefits_tax
+        - registration
+        - general
+        - unknown
+
+    CorrespondenceStatus:
+      type: string
+      enum:
+        - new
+        - reviewed
+        - actioned
+        - resolved
+        - ignored
+
+    MatchType:
+      type: string
+      enum:
+        - abn_exact
+        - tfn_exact
+        - name_fuzzy
+        - manual
+        - none
+
+    CorrespondenceSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+          format: uuid
+          nullable: true
+        client_name:
+          type: string
+          nullable: true
+        subject:
+          type: string
+        from_address:
+          type: string
+        received_at:
+          type: string
+          format: date-time
+        notice_type:
+          $ref: '#/components/schemas/ATONoticeType'
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        amount:
+          type: number
+          nullable: true
+        status:
+          $ref: '#/components/schemas/CorrespondenceStatus'
+        parsing_confidence:
+          type: number
+          minimum: 0
+          maximum: 100
+        match_confidence:
+          type: number
+          minimum: 0
+          maximum: 100
+        is_overdue:
+          type: boolean
+
+    CorrespondenceDetail:
+      allOf:
+        - $ref: '#/components/schemas/CorrespondenceSummary'
+        - type: object
+          properties:
+            raw_email_id:
+              type: string
+              format: uuid
+            reference_number:
+              type: string
+              nullable: true
+            required_action:
+              type: string
+              nullable: true
+            match_type:
+              $ref: '#/components/schemas/MatchType'
+            parsing_model:
+              type: string
+            parsed_at:
+              type: string
+              format: date-time
+            task_id:
+              type: string
+              format: uuid
+              nullable: true
+            insight_id:
+              type: string
+              format: uuid
+              nullable: true
+            email_body_preview:
+              type: string
+              description: First 500 characters of email body
+            has_attachments:
+              type: boolean
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+
+    CorrespondenceUpdate:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/CorrespondenceStatus'
+        client_id:
+          type: string
+          format: uuid
+
+    CorrectionRequest:
+      type: object
+      required:
+        - field_name
+        - new_value
+      properties:
+        field_name:
+          type: string
+          enum:
+            - notice_type
+            - reference_number
+            - due_date
+            - amount
+            - required_action
+        new_value:
+          type: string
+
+    CorrespondenceListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CorrespondenceSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        overdue_count:
+          type: integer
+        due_soon_count:
+          type: integer
+          description: Due within 7 days
+
+    TriageItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        correspondence_id:
+          type: string
+          format: uuid
+        subject:
+          type: string
+        from_address:
+          type: string
+        received_at:
+          type: string
+          format: date-time
+        notice_type:
+          $ref: '#/components/schemas/ATONoticeType'
+        extracted_identifier:
+          type: string
+          nullable: true
+        identifier_type:
+          type: string
+          nullable: true
+        suggested_client:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            abn:
+              type: string
+        suggested_confidence:
+          type: number
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    TriageListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriageItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    SearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 3
+        filters:
+          type: object
+          properties:
+            notice_type:
+              $ref: '#/components/schemas/ATONoticeType'
+            client_id:
+              type: string
+              format: uuid
+            from_date:
+              type: string
+              format: date
+            to_date:
+              type: string
+              format: date
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+
+    SearchResult:
+      type: object
+      properties:
+        correspondence:
+          $ref: '#/components/schemas/CorrespondenceSummary'
+        score:
+          type: number
+          description: Relevance score 0-1
+        snippet:
+          type: string
+          description: Relevant text snippet
+
+    SearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        total:
+          type: integer
+        query:
+          type: string
+
+    CorrespondenceStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        by_notice_type:
+          type: object
+          additionalProperties:
+            type: integer
+        overdue:
+          type: integer
+        due_this_week:
+          type: integer
+        due_this_month:
+          type: integer
+        triage_pending:
+          type: integer
+        avg_parsing_confidence:
+          type: number
+        avg_match_confidence:
+          type: number
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Not authenticated
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Resource not found
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Correspondence
+    description: ATO correspondence management
+  - name: Triage
+    description: Triage queue for unmatched items
+  - name: Search
+    description: Semantic search
+  - name: Statistics
+    description: Correspondence statistics
+  - name: Parsing
+    description: Parsing operations

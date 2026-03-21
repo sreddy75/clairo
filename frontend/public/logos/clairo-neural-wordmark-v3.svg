@@ -1,0 +1,44 @@
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Neural wordmark V3 - Gradient text, premium feel -->
+  <defs>
+    <linearGradient id="nw3Icon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1" />
+      <stop offset="50%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#0ea5e9" />
+    </linearGradient>
+    <linearGradient id="nw3Text" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1e293b" />
+      <stop offset="100%" style="stop-color:#334155" />
+    </linearGradient>
+    <filter id="nw3Glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- C arc with gradient -->
+  <path d="M58 20 A30 30 0 1 0 58 80" stroke="url(#nw3Icon)" stroke-width="7" stroke-linecap="round" fill="none"/>
+
+  <!-- Insight nodes constellation -->
+  <circle cx="20" cy="35" r="6" fill="#6366f1" filter="url(#nw3Glow)"/>
+  <circle cx="20" cy="65" r="6" fill="#3b82f6" filter="url(#nw3Glow)"/>
+  <circle cx="32" cy="50" r="5" fill="#0ea5e9" filter="url(#nw3Glow)"/>
+
+  <!-- Flowing connections -->
+  <path d="M20 35 Q30 42 42 50" stroke="url(#nw3Icon)" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M20 65 Q30 58 42 50" stroke="url(#nw3Icon)" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M32 50 L42 50" stroke="#0ea5e9" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- Central clarity -->
+  <circle cx="42" cy="50" r="10" fill="url(#nw3Icon)" filter="url(#nw3Glow)"/>
+  <circle cx="42" cy="50" r="5" fill="white" opacity="0.35"/>
+
+  <!-- Output pulse rings -->
+  <circle cx="42" cy="50" r="16" stroke="url(#nw3Icon)" stroke-width="1" fill="none" opacity="0.3"/>
+
+  <!-- Text -->
+  <text x="90" y="67" font-family="Inter, -apple-system, sans-serif" font-size="52" font-weight="700" fill="url(#nw3Text)">clairo</text>
+</svg>

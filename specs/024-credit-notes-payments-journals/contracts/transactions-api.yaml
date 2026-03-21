@@ -1,0 +1,987 @@
+openapi: 3.1.0
+info:
+  title: Clairo Transactions API
+  version: 1.0.0
+  description: |
+    API for accessing Xero Credit Notes, Payments, and Journals.
+    Part of Spec 024: Credit Notes, Payments & Journals.
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  # Credit Notes
+  /clients/{client_id}/credit-notes:
+    get:
+      summary: List credit notes for a client
+      operationId: listCreditNotes
+      tags:
+        - Credit Notes
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/CreditNoteType'
+          description: Filter by credit note type
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/CreditNoteStatus'
+          description: Filter by status
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter from date (inclusive)
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter to date (inclusive)
+        - name: contact_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by contact
+      responses:
+        '200':
+          description: List of credit notes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditNoteListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{client_id}/credit-notes/{credit_note_id}:
+    get:
+      summary: Get credit note details
+      operationId: getCreditNote
+      tags:
+        - Credit Notes
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: credit_note_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Credit note details with allocations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditNoteDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{client_id}/credit-notes/sync:
+    post:
+      summary: Trigger credit notes sync
+      operationId: syncCreditNotes
+      tags:
+        - Credit Notes
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '202':
+          description: Sync job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJobResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Sync already in progress
+
+  # Payments
+  /clients/{client_id}/payments:
+    get:
+      summary: List payments for a client
+      operationId: listPayments
+      tags:
+        - Payments
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/PaymentType'
+          description: Filter by payment type
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: invoice_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by linked invoice
+      responses:
+        '200':
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{client_id}/payments/{payment_id}:
+    get:
+      summary: Get payment details
+      operationId: getPayment
+      tags:
+        - Payments
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: payment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{client_id}/payments/sync:
+    post:
+      summary: Trigger payments sync
+      operationId: syncPayments
+      tags:
+        - Payments
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '202':
+          description: Sync job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJobResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Overpayments
+  /clients/{client_id}/overpayments:
+    get:
+      summary: List overpayments for a client
+      operationId: listOverpayments
+      tags:
+        - Payments
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: List of overpayments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverpaymentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Prepayments
+  /clients/{client_id}/prepayments:
+    get:
+      summary: List prepayments for a client
+      operationId: listPrepayments
+      tags:
+        - Payments
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: List of prepayments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrepaymentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Journals
+  /clients/{client_id}/journals:
+    get:
+      summary: List journals for a client
+      operationId: listJournals
+      tags:
+        - Journals
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: source_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/JournalSourceType'
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of journals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /clients/{client_id}/journals/{journal_id}:
+    get:
+      summary: Get journal details with lines
+      operationId: getJournal
+      tags:
+        - Journals
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: journal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Journal with all lines
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Manual Journals
+  /clients/{client_id}/manual-journals:
+    get:
+      summary: List manual journals
+      operationId: listManualJournals
+      tags:
+        - Journals
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ManualJournalStatus'
+      responses:
+        '200':
+          description: List of manual journals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualJournalListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /clients/{client_id}/manual-journals/{manual_journal_id}:
+    get:
+      summary: Get manual journal details
+      operationId: getManualJournal
+      tags:
+        - Journals
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+        - name: manual_journal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Manual journal with lines
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualJournalDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Sync status
+  /clients/{client_id}/transactions/sync:
+    post:
+      summary: Trigger full transactions sync
+      operationId: syncAllTransactions
+      description: Syncs credit notes, payments, overpayments, prepayments, and journals
+      tags:
+        - Sync
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '202':
+          description: Sync jobs started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsSyncResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: Get transactions sync status
+      operationId: getTransactionsSyncStatus
+      tags:
+        - Sync
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '200':
+          description: Sync status for all transaction types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsSyncStatus'
+
+components:
+  parameters:
+    ClientId:
+      name: client_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Client identifier
+
+    PageNumber:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PageSize:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+
+  schemas:
+    # Credit Note Schemas
+    CreditNoteType:
+      type: string
+      enum:
+        - ACCPAYCREDIT
+        - ACCRECCREDIT
+      description: |
+        - ACCPAYCREDIT: Accounts Payable (from supplier)
+        - ACCRECCREDIT: Accounts Receivable (to customer)
+
+    CreditNoteStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SUBMITTED
+        - AUTHORISED
+        - PAID
+        - VOIDED
+
+    CreditNoteSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        xero_credit_note_id:
+          type: string
+          format: uuid
+        credit_note_number:
+          type: string
+        type:
+          $ref: '#/components/schemas/CreditNoteType'
+        contact_name:
+          type: string
+        date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/CreditNoteStatus'
+        sub_total:
+          type: number
+          format: decimal
+        total_tax:
+          type: number
+          format: decimal
+        total:
+          type: number
+          format: decimal
+        remaining_credit:
+          type: number
+          format: decimal
+        currency_code:
+          type: string
+
+    CreditNoteDetail:
+      allOf:
+        - $ref: '#/components/schemas/CreditNoteSummary'
+        - type: object
+          properties:
+            contact_id:
+              type: string
+              format: uuid
+            due_date:
+              type: string
+              format: date
+            line_amount_types:
+              type: string
+              enum: [Exclusive, Inclusive, NoTax]
+            currency_rate:
+              type: number
+            line_items:
+              type: array
+              items:
+                $ref: '#/components/schemas/LineItem'
+            allocations:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreditNoteAllocation'
+
+    CreditNoteAllocation:
+      type: object
+      properties:
+        allocation_id:
+          type: string
+          format: uuid
+        invoice_id:
+          type: string
+          format: uuid
+        invoice_number:
+          type: string
+        amount:
+          type: number
+          format: decimal
+        date:
+          type: string
+          format: date
+
+    CreditNoteListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreditNoteSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total_pages:
+          type: integer
+
+    # Payment Schemas
+    PaymentType:
+      type: string
+      enum:
+        - ACCRECPAYMENT
+        - ACCPAYPAYMENT
+        - ARCREDITPAYMENT
+        - APCREDITPAYMENT
+
+    PaymentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        xero_payment_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        amount:
+          type: number
+          format: decimal
+        payment_type:
+          $ref: '#/components/schemas/PaymentType'
+        reference:
+          type: string
+        is_reconciled:
+          type: boolean
+        account_name:
+          type: string
+        invoice_number:
+          type: string
+          nullable: true
+
+    PaymentDetail:
+      allOf:
+        - $ref: '#/components/schemas/PaymentSummary'
+        - type: object
+          properties:
+            account_id:
+              type: string
+              format: uuid
+            account_code:
+              type: string
+            invoice_id:
+              type: string
+              format: uuid
+              nullable: true
+            credit_note_id:
+              type: string
+              format: uuid
+              nullable: true
+            currency_rate:
+              type: number
+
+    PaymentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    # Overpayment Schemas
+    OverpaymentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        xero_overpayment_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        total:
+          type: number
+          format: decimal
+        remaining_credit:
+          type: number
+          format: decimal
+        contact_name:
+          type: string
+        status:
+          type: string
+
+    OverpaymentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OverpaymentSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    # Prepayment Schemas
+    PrepaymentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        xero_prepayment_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        total:
+          type: number
+          format: decimal
+        remaining_credit:
+          type: number
+          format: decimal
+        contact_name:
+          type: string
+        status:
+          type: string
+
+    PrepaymentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrepaymentSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    # Journal Schemas
+    JournalSourceType:
+      type: string
+      enum:
+        - ACCREC
+        - ACCPAY
+        - CASHREC
+        - CASHPAID
+        - ACCPAYCREDIT
+        - ACCRECCREDIT
+        - TRANSFER
+        - MANJOURNAL
+
+    JournalSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        xero_journal_id:
+          type: string
+          format: uuid
+        journal_number:
+          type: integer
+        journal_date:
+          type: string
+          format: date
+        source_type:
+          $ref: '#/components/schemas/JournalSourceType'
+        reference:
+          type: string
+        total_debit:
+          type: number
+          format: decimal
+        total_credit:
+          type: number
+          format: decimal
+
+    JournalLine:
+      type: object
+      properties:
+        journal_line_id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        account_code:
+          type: string
+        account_name:
+          type: string
+        account_type:
+          type: string
+        description:
+          type: string
+        net_amount:
+          type: number
+          format: decimal
+        gross_amount:
+          type: number
+          format: decimal
+        tax_amount:
+          type: number
+          format: decimal
+        tax_type:
+          type: string
+        tax_name:
+          type: string
+
+    JournalDetail:
+      allOf:
+        - $ref: '#/components/schemas/JournalSummary'
+        - type: object
+          properties:
+            source_id:
+              type: string
+              format: uuid
+            lines:
+              type: array
+              items:
+                $ref: '#/components/schemas/JournalLine'
+
+    JournalListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    # Manual Journal Schemas
+    ManualJournalStatus:
+      type: string
+      enum:
+        - DRAFT
+        - POSTED
+        - DELETED
+        - VOIDED
+
+    ManualJournalSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        xero_manual_journal_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/ManualJournalStatus'
+        narration:
+          type: string
+        total_debit:
+          type: number
+          format: decimal
+        total_credit:
+          type: number
+          format: decimal
+
+    ManualJournalLine:
+      type: object
+      properties:
+        line_amount:
+          type: number
+          format: decimal
+        account_code:
+          type: string
+        account_name:
+          type: string
+        description:
+          type: string
+        tax_type:
+          type: string
+        tax_amount:
+          type: number
+          format: decimal
+
+    ManualJournalDetail:
+      allOf:
+        - $ref: '#/components/schemas/ManualJournalSummary'
+        - type: object
+          properties:
+            show_on_cash_basis_reports:
+              type: boolean
+            line_amount_types:
+              type: string
+            lines:
+              type: array
+              items:
+                $ref: '#/components/schemas/ManualJournalLine'
+
+    ManualJournalListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ManualJournalSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    # Shared Schemas
+    LineItem:
+      type: object
+      properties:
+        description:
+          type: string
+        quantity:
+          type: number
+        unit_amount:
+          type: number
+          format: decimal
+        account_code:
+          type: string
+        tax_type:
+          type: string
+        tax_amount:
+          type: number
+          format: decimal
+        line_amount:
+          type: number
+          format: decimal
+
+    SyncJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, running]
+        started_at:
+          type: string
+          format: date-time
+
+    TransactionsSyncResponse:
+      type: object
+      properties:
+        credit_notes_job_id:
+          type: string
+          format: uuid
+        payments_job_id:
+          type: string
+          format: uuid
+        journals_job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [started]
+
+    TransactionsSyncStatus:
+      type: object
+      properties:
+        credit_notes:
+          $ref: '#/components/schemas/EntitySyncStatus'
+        payments:
+          $ref: '#/components/schemas/EntitySyncStatus'
+        overpayments:
+          $ref: '#/components/schemas/EntitySyncStatus'
+        prepayments:
+          $ref: '#/components/schemas/EntitySyncStatus'
+        journals:
+          $ref: '#/components/schemas/EntitySyncStatus'
+        manual_journals:
+          $ref: '#/components/schemas/EntitySyncStatus'
+
+    EntitySyncStatus:
+      type: object
+      properties:
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [never_synced, synced, syncing, failed]
+        record_count:
+          type: integer
+        error_message:
+          type: string
+          nullable: true
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Not authenticated
+
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Not authorized to access this resource
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Resource not found
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Credit Notes
+    description: Credit note operations
+  - name: Payments
+    description: Payment operations (includes overpayments and prepayments)
+  - name: Journals
+    description: Journal operations (system and manual)
+  - name: Sync
+    description: Transaction sync operations

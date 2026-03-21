@@ -1,0 +1,28 @@
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- V10: Compass/direction - guiding financial decisions -->
+  <defs>
+    <linearGradient id="v10Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9" />
+      <stop offset="100%" style="stop-color:#2563eb" />
+    </linearGradient>
+  </defs>
+
+  <!-- Compass ring -->
+  <circle cx="40" cy="50" r="28" stroke="url(#v10Grad)" stroke-width="4" fill="none"/>
+
+  <!-- Compass needle pointing up-right (growth direction) -->
+  <polygon points="40,25 45,50 40,45 35,50" fill="url(#v10Grad)"/>
+  <polygon points="40,75 35,50 40,55 45,50" fill="#94a3b8"/>
+
+  <!-- Direction markers -->
+  <circle cx="40" cy="22" r="2" fill="url(#v10Grad)"/>
+  <circle cx="68" cy="50" r="2" fill="url(#v10Grad)"/>
+  <circle cx="40" cy="78" r="2" fill="#cbd5e1"/>
+  <circle cx="12" cy="50" r="2" fill="#cbd5e1"/>
+
+  <!-- Center pivot -->
+  <circle cx="40" cy="50" r="4" fill="url(#v10Grad)"/>
+
+  <!-- Text -->
+  <text x="85" y="66" font-family="Inter, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#0f172a">clairo</text>
+</svg>

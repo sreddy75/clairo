@@ -1,0 +1,43 @@
+{
+  "name": "Clairo Client Portal",
+  "short_name": "Clairo",
+  "description": "Respond to your accountant's document requests quickly and easily",
+  "start_url": "/portal",
+  "scope": "/portal",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "lang": "en-AU",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "View Requests",
+      "short_name": "Requests",
+      "description": "View pending document requests",
+      "url": "/portal/requests",
+      "icons": [
+        {
+          "src": "/icons/shortcut-requests.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

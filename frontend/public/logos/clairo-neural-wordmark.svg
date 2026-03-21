@@ -1,0 +1,37 @@
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Neural network wordmark - insights to clarity -->
+  <defs>
+    <linearGradient id="nwMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#1e40af" />
+    </linearGradient>
+    <linearGradient id="nwLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa" />
+      <stop offset="100%" style="stop-color:#3b82f6" />
+    </linearGradient>
+  </defs>
+
+  <!-- C arc -->
+  <path d="M55 22 A28 28 0 1 0 55 78" stroke="url(#nwMain)" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+  <!-- Input nodes -->
+  <circle cx="22" cy="35" r="5" fill="url(#nwLight)"/>
+  <circle cx="22" cy="65" r="5" fill="url(#nwLight)"/>
+  <circle cx="30" cy="50" r="4" fill="#93c5fd"/>
+
+  <!-- Connections -->
+  <path d="M22 35 Q32 42 40 50" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <path d="M22 65 Q32 58 40 50" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <line x1="30" y1="50" x2="40" y2="50" stroke="#93c5fd" stroke-width="1" opacity="0.6"/>
+
+  <!-- Central node -->
+  <circle cx="40" cy="50" r="8" fill="url(#nwMain)"/>
+  <circle cx="40" cy="50" r="4" fill="white" opacity="0.3"/>
+
+  <!-- Output -->
+  <line x1="48" y1="50" x2="60" y2="50" stroke="url(#nwMain)" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+  <circle cx="65" cy="50" r="4" fill="url(#nwMain)"/>
+
+  <!-- Text -->
+  <text x="90" y="65" font-family="Inter, SF Pro Display, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#0f172a">clairo</text>
+</svg>

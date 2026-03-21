@@ -1,0 +1,147 @@
+# Clairo Production Deployment
+# Railway (backend) and Vercel (frontend) auto-deploy from main branch.
+# This workflow validates the build and monitors deployment health.
+
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  # ============================================================================
+  # Validate - Check code quality before auto-deploy picks it up
+  # ============================================================================
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for deployable changes
+        id: check
+        run: |
+          echo "Push to main detected — Railway and Vercel will auto-deploy."
+          echo "This workflow validates the build."
+
+  # ============================================================================
+  # Monitor Backend Health (Railway auto-deploys from main)
+  # ============================================================================
+  check-backend:
+    name: Check Backend Health
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Wait for Railway auto-deploy
+        run: |
+          echo "Railway auto-deploys from main branch."
+          echo "Waiting 90 seconds for deployment to propagate..."
+          sleep 90
+
+      - name: Health check
+        run: |
+          BACKEND_URL="${{ secrets.PRODUCTION_BACKEND_URL }}"
+          if [ -z "$BACKEND_URL" ]; then
+            echo "PRODUCTION_BACKEND_URL not set — skipping health check"
+            exit 0
+          fi
+
+          for i in {1..10}; do
+            if curl -sf "${BACKEND_URL}/health" > /dev/null 2>&1; then
+              echo "Backend is healthy!"
+              exit 0
+            fi
+            echo "Waiting for backend... (attempt $i/10)"
+            sleep 15
+          done
+
+          echo "Warning: Backend health check timed out — deployment may still be in progress"
+
+  # ============================================================================
+  # Deploy Frontend to Vercel
+  # ============================================================================
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: validate
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Deploy to Vercel
+        working-directory: frontend
+        run: |
+          DEPLOYMENT_URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "Deployed to: $DEPLOYMENT_URL"
+
+  # ============================================================================
+  # Notify on Completion
+  # ============================================================================
+  notify:
+    name: Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [check-backend, deploy-frontend]
+    if: always()
+
+    steps:
+      - name: Check deployment status
+        id: status
+        run: |
+          if [ "${{ needs.check-backend.result }}" = "success" ] && \
+             [ "${{ needs.deploy-frontend.result }}" = "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update commit status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.status.outputs.status }}';
+            const state = status === 'success' ? 'success' : 'failure';
+            const description = status === 'success'
+              ? 'Production deployment healthy'
+              : 'Production deployment — check health';
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: state,
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              description: description,
+              context: 'Production Deployment'
+            });
+
+      - name: Create deployment summary
+        run: |
+          echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Deploy Method | Health |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend API | Railway auto-deploy | ${{ needs.check-backend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | Vercel CLI deploy | ${{ needs.deploy-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,42 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- V6: Gradient mesh network - premium feel -->
+  <defs>
+    <linearGradient id="n6Main" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#1e40af" />
+    </linearGradient>
+    <linearGradient id="n6Light" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa" />
+      <stop offset="100%" style="stop-color:#3b82f6" />
+    </linearGradient>
+    <radialGradient id="n6Radial" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#93c5fd;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#93c5fd;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Ambient glow behind -->
+  <circle cx="100" cy="100" r="70" fill="url(#n6Radial)"/>
+
+  <!-- Elegant thin C -->
+  <path d="M130 35 A65 65 0 1 0 130 165" stroke="url(#n6Main)" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+  <!-- Network mesh connections -->
+  <path d="M48 65 C70 75 80 90 100 100" stroke="url(#n6Light)" stroke-width="2" fill="none"/>
+  <path d="M48 135 C70 125 80 110 100 100" stroke="url(#n6Light)" stroke-width="2" fill="none"/>
+  <path d="M48 100 L100 100" stroke="#93c5fd" stroke-width="1.5" fill="none"/>
+  <path d="M48 65 L48 135" stroke="#dbeafe" stroke-width="1" fill="none" opacity="0.5"/>
+
+  <!-- Input insight nodes -->
+  <circle cx="48" cy="65" r="10" fill="url(#n6Light)"/>
+  <circle cx="48" cy="100" r="8" fill="#93c5fd"/>
+  <circle cx="48" cy="135" r="10" fill="url(#n6Light)"/>
+
+  <!-- Central clarity hub -->
+  <circle cx="100" cy="100" r="20" fill="url(#n6Main)"/>
+  <circle cx="100" cy="100" r="12" fill="white" opacity="0.15"/>
+  <circle cx="100" cy="100" r="6" fill="white" opacity="0.3"/>
+
+  <!-- Output pulse -->
+  <circle cx="100" cy="100" r="28" stroke="url(#n6Main)" stroke-width="1.5" fill="none" opacity="0.4"/>
+</svg>

@@ -1,0 +1,123 @@
+# Clairo Staging Deployment
+# Deploys to staging environment on merge to develop branch
+
+name: Deploy Staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: staging-deployment
+  cancel-in-progress: false
+
+env:
+  RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_STAGING_PROJECT_ID }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
+
+jobs:
+  # ============================================================================
+  # Deploy Backend to Railway Staging
+  # ============================================================================
+  deploy-backend-staging:
+    name: Deploy Backend (Staging)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway Staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway link --project ${{ env.RAILWAY_PROJECT_ID }}
+          railway up --service backend-api --detach
+
+          echo "Backend staging deployment initiated"
+
+  # ============================================================================
+  # Deploy Worker to Railway Staging
+  # ============================================================================
+  deploy-worker-staging:
+    name: Deploy Worker (Staging)
+    runs-on: ubuntu-latest
+    needs: deploy-backend-staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy Worker to Railway Staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway link --project ${{ env.RAILWAY_PROJECT_ID }}
+          railway up --service backend-worker --detach
+
+  # ============================================================================
+  # Deploy Frontend to Vercel Staging
+  # ============================================================================
+  deploy-frontend-staging:
+    name: Deploy Frontend (Staging)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel Environment
+        working-directory: frontend
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.STAGING_API_URL }}
+          NEXT_PUBLIC_ENVIRONMENT: staging
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Staging
+        id: deploy
+        working-directory: frontend
+        run: |
+          # Deploy with staging alias
+          DEPLOYMENT_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          vercel alias $DEPLOYMENT_URL staging.clairo.ai --token=${{ secrets.VERCEL_TOKEN }} || true
+
+          echo "Deployed to: $DEPLOYMENT_URL"
+
+  # ============================================================================
+  # Notify on Completion
+  # ============================================================================
+  notify-staging:
+    name: Staging Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-backend-staging, deploy-worker-staging, deploy-frontend-staging]
+    if: always()
+
+    steps:
+      - name: Create deployment summary
+        run: |
+          echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${{ needs.deploy-backend-staging.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Worker | ${{ needs.deploy-worker-staging.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${{ needs.deploy-frontend-staging.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Staging URLs**:" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: https://staging.clairo.ai" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: https://api-staging.clairo.ai" >> $GITHUB_STEP_SUMMARY

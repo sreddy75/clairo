@@ -1,0 +1,1 @@
+repeatedly run the command "npx tsc --noEmit" and fix the first 10 errors/issues. After each fix, run the command to test the linting for just that file to verify your fix.

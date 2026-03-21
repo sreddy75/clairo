@@ -1,0 +1,496 @@
+openapi: 3.1.0
+info:
+  title: Clairo Usage Tracking API
+  description: API endpoints for usage tracking and limit management
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  /billing/usage:
+    get:
+      summary: Get current usage metrics
+      description: Returns current usage against tier limits for the authenticated tenant
+      operationId: getUsageMetrics
+      tags:
+        - Usage
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current usage metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageMetricsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /billing/usage/history:
+    get:
+      summary: Get usage history
+      description: Returns historical usage snapshots for trend analysis
+      operationId: getUsageHistory
+      tags:
+        - Usage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: months
+          in: query
+          description: Number of months of history to retrieve
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 3
+      responses:
+        '200':
+          description: Historical usage data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageHistoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /billing/usage/alerts:
+    get:
+      summary: Get usage alerts
+      description: Returns list of usage alerts sent to the tenant
+      operationId: getUsageAlerts
+      tags:
+        - Usage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of usage alerts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageAlertsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /admin/usage/stats:
+    get:
+      summary: Get aggregate usage statistics (Admin only)
+      description: Returns aggregate usage statistics across all tenants
+      operationId: getAdminUsageStats
+      tags:
+        - Admin
+        - Usage
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Aggregate usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUsageStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/usage/opportunities:
+    get:
+      summary: Get upsell opportunities (Admin only)
+      description: Returns list of tenants approaching their limits
+      operationId: getUpsellOpportunities
+      tags:
+        - Admin
+        - Usage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: threshold
+          in: query
+          description: Minimum percentage of limit used
+          schema:
+            type: integer
+            minimum: 50
+            maximum: 100
+            default: 80
+        - name: tier
+          in: query
+          description: Filter by specific tier
+          schema:
+            type: string
+            enum: [starter, professional, growth]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: List of upsell opportunities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpsellOpportunitiesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/usage/tenant/{tenant_id}:
+    get:
+      summary: Get tenant usage details (Admin only)
+      description: Returns detailed usage for a specific tenant
+      operationId: getAdminTenantUsage
+      tags:
+        - Admin
+        - Usage
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tenant usage details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminTenantUsageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UsageMetricsResponse:
+      type: object
+      required:
+        - client_count
+        - client_limit
+        - ai_queries_month
+        - documents_month
+        - is_at_limit
+        - is_approaching_limit
+        - tier
+      properties:
+        client_count:
+          type: integer
+          description: Current active client count
+          example: 47
+        client_limit:
+          type: integer
+          nullable: true
+          description: Client limit for current tier (null = unlimited)
+          example: 100
+        client_percentage:
+          type: number
+          nullable: true
+          description: Percentage of client limit used
+          example: 47.0
+        ai_queries_month:
+          type: integer
+          description: AI queries this billing period
+          example: 234
+        documents_month:
+          type: integer
+          description: Documents processed this billing period
+          example: 89
+        is_at_limit:
+          type: boolean
+          description: Whether at client limit
+          example: false
+        is_approaching_limit:
+          type: boolean
+          description: Whether approaching limit (>=80%)
+          example: false
+        threshold_warning:
+          type: string
+          nullable: true
+          description: Warning level if applicable
+          enum: ["80%", "90%", "100%"]
+          example: null
+        tier:
+          type: string
+          description: Current subscription tier
+          example: professional
+        next_tier:
+          type: string
+          nullable: true
+          description: Next available tier for upgrade
+          example: growth
+
+    UsageSnapshotSchema:
+      type: object
+      required:
+        - id
+        - captured_at
+        - client_count
+        - ai_queries_count
+        - documents_count
+        - tier
+      properties:
+        id:
+          type: string
+          format: uuid
+        captured_at:
+          type: string
+          format: date-time
+        client_count:
+          type: integer
+        ai_queries_count:
+          type: integer
+        documents_count:
+          type: integer
+        tier:
+          type: string
+        client_limit:
+          type: integer
+          nullable: true
+
+    UsageHistoryResponse:
+      type: object
+      required:
+        - snapshots
+        - period_start
+        - period_end
+      properties:
+        snapshots:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageSnapshotSchema'
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+
+    UsageAlertSchema:
+      type: object
+      required:
+        - id
+        - alert_type
+        - billing_period
+        - threshold_percentage
+        - sent_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        alert_type:
+          type: string
+          enum: [threshold_80, threshold_90, limit_reached]
+        billing_period:
+          type: string
+          pattern: '^\d{4}-\d{2}$'
+          example: "2025-12"
+        threshold_percentage:
+          type: integer
+          enum: [80, 90, 100]
+        client_count_at_alert:
+          type: integer
+        client_limit_at_alert:
+          type: integer
+        sent_at:
+          type: string
+          format: date-time
+
+    UsageAlertsResponse:
+      type: object
+      required:
+        - alerts
+        - total
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageAlertSchema'
+        total:
+          type: integer
+
+    AdminUsageStatsResponse:
+      type: object
+      required:
+        - total_tenants
+        - total_clients
+        - average_clients_per_tenant
+        - tenants_at_limit
+        - tenants_approaching_limit
+        - tenants_by_tier
+      properties:
+        total_tenants:
+          type: integer
+          example: 150
+        total_clients:
+          type: integer
+          example: 4500
+        average_clients_per_tenant:
+          type: number
+          example: 30.0
+        tenants_at_limit:
+          type: integer
+          example: 5
+        tenants_approaching_limit:
+          type: integer
+          description: Tenants at >=80% of limit
+          example: 12
+        tenants_by_tier:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            starter: 80
+            professional: 50
+            growth: 15
+            enterprise: 5
+
+    UpsellOpportunitySchema:
+      type: object
+      required:
+        - tenant_id
+        - tenant_name
+        - owner_email
+        - current_tier
+        - client_count
+        - client_limit
+        - percentage_used
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        tenant_name:
+          type: string
+          example: "Smith & Associates"
+        owner_email:
+          type: string
+          format: email
+          example: "john@smithassociates.com.au"
+        current_tier:
+          type: string
+          example: "starter"
+        client_count:
+          type: integer
+          example: 23
+        client_limit:
+          type: integer
+          example: 25
+        percentage_used:
+          type: number
+          example: 92.0
+
+    UpsellOpportunitiesResponse:
+      type: object
+      required:
+        - opportunities
+        - total
+      properties:
+        opportunities:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpsellOpportunitySchema'
+        total:
+          type: integer
+
+    AdminTenantUsageResponse:
+      type: object
+      required:
+        - tenant_id
+        - tenant_name
+        - tier
+        - usage
+        - history
+        - alerts
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        tenant_name:
+          type: string
+        tier:
+          type: string
+        usage:
+          $ref: '#/components/schemas/UsageMetricsResponse'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageSnapshotSchema'
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageAlertSchema'
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Authentication required"
+            code: "UNAUTHORIZED"
+
+    Forbidden:
+      description: Admin access required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Admin access required"
+            code: "FORBIDDEN"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Tenant not found"
+            code: "NOT_FOUND"

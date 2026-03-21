@@ -1,0 +1,507 @@
+openapi: 3.1.0
+info:
+  title: Clairo Feedback API
+  version: 1.0.0
+  description: Voice-powered feedback portal for SME advisors and platform users
+
+paths:
+  /api/v1/feedback:
+    post:
+      summary: Create a new feedback submission
+      description: |
+        Creates a draft submission with audio file upload and type selection.
+        The audio is transcribed asynchronously and the AI conversation is initiated.
+      operationId: createSubmission
+      tags: [feedback]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [type, audio]
+              properties:
+                type:
+                  type: string
+                  enum: [feature_request, bug_enhancement]
+                  description: Submission mode
+                audio:
+                  type: string
+                  format: binary
+                  description: Audio file (MP3, M4A, WAV, WebM, max 25MB)
+      responses:
+        '201':
+          description: Submission created, transcription started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+        '400':
+          description: Invalid file format or size
+        '401':
+          description: Not authenticated
+
+    get:
+      summary: List feedback submissions
+      description: |
+        Returns submissions for the current tenant. Non-admin users see only
+        their own submissions. Admins see all submissions within the tenant.
+      operationId: listSubmissions
+      tags: [feedback]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, new, in_review, planned, in_progress, done]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [feature_request, bug_enhancement]
+        - name: mine_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Filter to current user's submissions only
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Paginated list of submissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionListResponse'
+
+  /api/v1/feedback/{submission_id}:
+    get:
+      summary: Get submission detail
+      description: Returns full submission including brief, transcript, and metadata.
+      operationId: getSubmission
+      tags: [feedback]
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      responses:
+        '200':
+          description: Full submission detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionDetailResponse'
+        '404':
+          description: Submission not found
+
+  /api/v1/feedback/{submission_id}/status:
+    patch:
+      summary: Update submission status
+      description: Move a submission to a new status (kanban column). Requires admin role.
+      operationId: updateStatus
+      tags: [feedback]
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [new, in_review, planned, in_progress, done]
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+        '403':
+          description: Not authorised (admin role required)
+
+  /api/v1/feedback/{submission_id}/conversation:
+    get:
+      summary: Get conversation messages
+      description: Returns all messages in the AI clarification conversation, ordered chronologically.
+      operationId: getConversation
+      tags: [feedback]
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      responses:
+        '200':
+          description: Conversation messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+
+  /api/v1/feedback/{submission_id}/conversation/message:
+    post:
+      summary: Send a message in the conversation
+      description: |
+        Sends a user message (text or transcribed audio) and receives the AI agent's
+        response. If the agent determines enough information has been collected, the
+        response includes the generated brief for user review.
+      operationId: sendMessage
+      tags: [feedback]
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: User's text message
+                content_type:
+                  type: string
+                  enum: [text, transcript]
+                  default: text
+      responses:
+        '200':
+          description: AI agent response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationTurnResponse'
+
+  /api/v1/feedback/{submission_id}/conversation/voice:
+    post:
+      summary: Send a voice message in the conversation
+      description: |
+        Uploads a follow-up voice recording within an active conversation.
+        The audio is transcribed and processed as a user message. Returns
+        both the transcript and the AI agent's response.
+      operationId: sendVoiceMessage
+      tags: [feedback]
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio]
+              properties:
+                audio:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Transcript and AI response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceConversationTurnResponse'
+
+  /api/v1/feedback/{submission_id}/confirm:
+    post:
+      summary: Confirm the generated brief
+      description: |
+        User confirms the AI-generated brief. Moves the submission from
+        draft to new status and marks the conversation as complete.
+      operationId: confirmBrief
+      tags: [feedback]
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                revisions:
+                  type: string
+                  description: Optional revision instructions — if provided, regenerates the brief
+      responses:
+        '200':
+          description: Brief confirmed, submission status set to new
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+
+  /api/v1/feedback/{submission_id}/export:
+    get:
+      summary: Export brief as markdown
+      description: Returns the structured brief as a markdown document formatted for speckit input.
+      operationId: exportBrief
+      tags: [feedback]
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      responses:
+        '200':
+          description: Markdown document
+          content:
+            text/markdown:
+              schema:
+                type: string
+        '400':
+          description: Brief not yet generated
+
+  /api/v1/feedback/{submission_id}/comments:
+    get:
+      summary: List comments on a submission
+      description: Returns all internal team comments. Requires admin role.
+      operationId: listComments
+      tags: [feedback]
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CommentResponse'
+                  total:
+                    type: integer
+
+    post:
+      summary: Add a comment to a submission
+      description: Adds an internal team note. Requires admin role.
+      operationId: addComment
+      tags: [feedback]
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 5000
+      responses:
+        '201':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+
+  /api/v1/feedback/stats:
+    get:
+      summary: Get submission statistics
+      description: Returns counts by status for the kanban board header. Admin sees all, non-admin sees own.
+      operationId: getStats
+      tags: [feedback]
+      responses:
+        '200':
+          description: Status counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackStats'
+
+components:
+  parameters:
+    SubmissionId:
+      name: submission_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    SubmissionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        submitter_id:
+          type: string
+          format: uuid
+        submitter_name:
+          type: string
+        title:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [feature_request, bug_enhancement]
+        status:
+          type: string
+          enum: [draft, new, in_review, planned, in_progress, done]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          nullable: true
+        conversation_complete:
+          type: boolean
+        has_brief:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SubmissionDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/SubmissionResponse'
+        - type: object
+          properties:
+            transcript:
+              type: string
+              nullable: true
+            brief_data:
+              type: object
+              nullable: true
+            brief_markdown:
+              type: string
+              nullable: true
+            audio_duration_seconds:
+              type: integer
+              nullable: true
+            message_count:
+              type: integer
+            comment_count:
+              type: integer
+
+    SubmissionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubmissionResponse'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ConversationResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageResponse'
+
+    MessageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [system, user, assistant]
+        content:
+          type: string
+        content_type:
+          type: string
+          enum: [text, transcript]
+        created_at:
+          type: string
+          format: date-time
+
+    ConversationTurnResponse:
+      type: object
+      properties:
+        user_message:
+          $ref: '#/components/schemas/MessageResponse'
+        assistant_message:
+          $ref: '#/components/schemas/MessageResponse'
+        brief_ready:
+          type: boolean
+          description: Whether the agent has generated a brief for review
+        brief_data:
+          type: object
+          nullable: true
+          description: The generated brief (if brief_ready is true)
+        brief_markdown:
+          type: string
+          nullable: true
+
+    VoiceConversationTurnResponse:
+      allOf:
+        - $ref: '#/components/schemas/ConversationTurnResponse'
+        - type: object
+          properties:
+            transcript:
+              type: string
+              description: Transcription of the uploaded voice message
+
+    CommentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        author_name:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    FeedbackStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        by_status:
+          type: object
+          properties:
+            draft:
+              type: integer
+            new:
+              type: integer
+            in_review:
+              type: integer
+            planned:
+              type: integer
+            in_progress:
+              type: integer
+            done:
+              type: integer
+        by_type:
+          type: object
+          properties:
+            feature_request:
+              type: integer
+            bug_enhancement:
+              type: integer

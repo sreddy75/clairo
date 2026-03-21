@@ -1,0 +1,28 @@
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- V5: AI Advisory - brain/neural meets financial -->
+  <defs>
+    <linearGradient id="v5Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1" />
+      <stop offset="100%" style="stop-color:#2563eb" />
+    </linearGradient>
+  </defs>
+
+  <!-- Icon: Abstract AI brain with connected nodes -->
+  <circle cx="40" cy="50" r="25" stroke="url(#v5Grad)" stroke-width="4" fill="none"/>
+
+  <!-- Neural connections inside -->
+  <circle cx="32" cy="42" r="5" fill="url(#v5Grad)"/>
+  <circle cx="48" cy="42" r="5" fill="url(#v5Grad)"/>
+  <circle cx="40" cy="58" r="5" fill="url(#v5Grad)"/>
+
+  <!-- Connection lines -->
+  <line x1="32" y1="42" x2="48" y2="42" stroke="url(#v5Grad)" stroke-width="2"/>
+  <line x1="32" y1="42" x2="40" y2="58" stroke="url(#v5Grad)" stroke-width="2"/>
+  <line x1="48" y1="42" x2="40" y2="58" stroke="url(#v5Grad)" stroke-width="2"/>
+
+  <!-- Pulse/insight emanating -->
+  <circle cx="40" cy="50" r="32" stroke="#6366f1" stroke-width="1.5" fill="none" opacity="0.3"/>
+
+  <!-- Bold modern text -->
+  <text x="85" y="66" font-family="Inter, -apple-system, sans-serif" font-size="50" font-weight="800" fill="#0f172a">clairo</text>
+</svg>

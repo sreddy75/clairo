@@ -1,0 +1,83 @@
+# Clairo Pre-commit Configuration
+# https://pre-commit.com/
+#
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # =============================================================================
+  # General Hooks
+  # =============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(\.git|node_modules|\.next|__pycache__|\.venv)/
+      - id: end-of-file-fixer
+        exclude: ^(\.git|node_modules|\.next|__pycache__|\.venv)/
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: detect-private-key
+      - id: check-case-conflict
+
+  # =============================================================================
+  # Python - Backend
+  # =============================================================================
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.3
+    hooks:
+      # Linting
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend/
+      # Formatting
+      - id: ruff-format
+        files: ^backend/
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        files: ^backend/app/
+        args: [--config-file=backend/pyproject.toml]
+        additional_dependencies:
+          - pydantic>=2.10.0
+          - pydantic-settings>=2.6.0
+          - sqlalchemy>=2.0.36
+          - fastapi>=0.115.0
+          - types-redis>=4.6.0
+          - types-passlib>=1.7.7
+          - types-python-jose>=3.3.4
+
+  # =============================================================================
+  # JavaScript/TypeScript - Frontend
+  # =============================================================================
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint
+        entry: bash -c 'cd frontend && npm run lint'
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+      - id: prettier
+        name: Prettier
+        entry: bash -c 'cd frontend && npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}"'
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
+        pass_filenames: false
+
+  # =============================================================================
+  # Commit Message (optional - for conventional commits)
+  # =============================================================================
+  # - repo: https://github.com/commitizen-tools/commitizen
+  #   rev: v4.0.0
+  #   hooks:
+  #     - id: commitizen
+  #       stages: [commit-msg]

@@ -1,0 +1,16 @@
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Clairo Wordmark with icon -->
+  <defs>
+    <linearGradient id="wordGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Icon: Stylized C with dot -->
+  <path d="M45 25 A25 25 0 1 0 45 75" stroke="url(#wordGrad)" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <circle cx="58" cy="50" r="7" fill="#60a5fa"/>
+
+  <!-- Text: clairo -->
+  <text x="85" y="65" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="url(#wordGrad)">clairo</text>
+</svg>

@@ -1,0 +1,112 @@
+"""Domain exceptions for Xero sync operations.
+
+These exceptions are raised by the service layer and should be caught
+by the API layer and converted to appropriate HTTP responses.
+"""
+
+from uuid import UUID
+
+
+class XeroSyncError(Exception):
+    """Base exception for Xero sync operations."""
+
+    def __init__(self, message: str = "Xero sync error occurred"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class XeroConnectionInactiveError(XeroSyncError):
+    """Raised when attempting to sync with an inactive connection."""
+
+    def __init__(self, connection_id: UUID):
+        self.connection_id = connection_id
+        super().__init__(
+            f"Xero connection {connection_id} is not active. "
+            "Please reconnect to Xero before syncing."
+        )
+
+
+class XeroSyncInProgressError(XeroSyncError):
+    """Raised when a sync is already in progress for the connection."""
+
+    def __init__(self, connection_id: UUID, job_id: UUID | None = None):
+        self.connection_id = connection_id
+        self.job_id = job_id
+        message = f"A sync is already in progress for connection {connection_id}"
+        if job_id:
+            message += f" (job {job_id})"
+        super().__init__(message)
+
+
+class XeroRateLimitExceededError(XeroSyncError):
+    """Raised when Xero API rate limit is exceeded."""
+
+    def __init__(
+        self,
+        wait_seconds: int,
+        limit_type: str = "minute",
+    ):
+        self.wait_seconds = wait_seconds
+        self.limit_type = limit_type
+        super().__init__(
+            f"Xero API {limit_type} rate limit exceeded. "
+            f"Please wait {wait_seconds} seconds before retrying."
+        )
+
+
+class XeroSyncJobNotFoundError(XeroSyncError):
+    """Raised when a sync job cannot be found."""
+
+    def __init__(self, job_id: UUID):
+        self.job_id = job_id
+        super().__init__(f"Sync job {job_id} not found")
+
+
+class XeroDataTransformError(XeroSyncError):
+    """Raised when Xero data cannot be transformed to Clairo format."""
+
+    def __init__(
+        self,
+        xero_id: str,
+        entity_type: str,
+        reason: str,
+    ):
+        self.xero_id = xero_id
+        self.entity_type = entity_type
+        self.reason = reason
+        super().__init__(f"Failed to transform Xero {entity_type} (ID: {xero_id}): {reason}")
+
+
+class XeroApiError(XeroSyncError):
+    """Raised when Xero API returns an error."""
+
+    def __init__(
+        self,
+        status_code: int,
+        message: str,
+        xero_error: str | None = None,
+    ):
+        self.status_code = status_code
+        self.xero_error = xero_error
+        error_msg = f"Xero API error ({status_code}): {message}"
+        if xero_error:
+            error_msg += f" - {xero_error}"
+        super().__init__(error_msg)
+
+
+class XeroTokenExpiredError(XeroSyncError):
+    """Raised when Xero tokens are expired and refresh fails."""
+
+    def __init__(self, connection_id: UUID):
+        self.connection_id = connection_id
+        super().__init__(
+            f"Xero tokens for connection {connection_id} have expired. Please reconnect to Xero."
+        )
+
+
+class XeroConnectionNotFoundError(XeroSyncError):
+    """Raised when a Xero connection cannot be found."""
+
+    def __init__(self, connection_id: UUID):
+        self.connection_id = connection_id
+        super().__init__(f"Xero connection {connection_id} not found")

@@ -1,0 +1,82 @@
+# Clairo Celery Worker Dockerfile
+# Multi-stage build for production Celery workers
+
+# ============================================================================
+# Stage 1: Builder - Install dependencies
+# ============================================================================
+FROM python:3.12-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_SYSTEM_PYTHON=1 \
+    UV_NO_CACHE=1 \
+    UV_COMPILE_BYTECODE=1
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+WORKDIR /app
+
+# Copy dependency files
+COPY backend/pyproject.toml backend/README.md ./
+
+# Install production dependencies with AI extras
+# Note: Only installing .[ai] extras, not .[dev], so dev deps are excluded
+RUN uv pip install -e ".[ai]"
+
+# Copy application code
+COPY backend/app/ ./app/
+
+# ============================================================================
+# Stage 2: Runtime - Minimal worker image
+# ============================================================================
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    # Celery configuration
+    CELERY_CONCURRENCY=4 \
+    CELERY_LOGLEVEL=INFO
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -r -u 1001 -g root clairo
+
+WORKDIR /app
+
+# Copy Python packages from builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application from builder
+COPY --from=builder /app /app
+
+# Change ownership
+RUN chown -R clairo:root /app
+
+# Switch to non-root user
+USER clairo
+
+# Health check - verify Celery worker is responding
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD celery -A app.tasks.celery_app inspect ping -d celery@$HOSTNAME || exit 1
+
+# Start Celery worker
+# --without-mingle: skip synchronizing with other workers on startup (faster boot)
+# --without-gossip: skip worker-to-worker gossip (not needed for single-worker)
+CMD celery -A app.tasks.celery_app worker \
+    --loglevel=${CELERY_LOGLEVEL} \
+    --concurrency=${CELERY_CONCURRENCY} \
+    --hostname=worker@%h \
+    --without-mingle \
+    --without-gossip

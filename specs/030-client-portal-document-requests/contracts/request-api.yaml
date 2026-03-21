@@ -1,0 +1,1655 @@
+# Document Request API - Accountant-Facing Endpoints
+# OpenAPI 3.1.0 Specification
+# Spec 030: Client Portal Foundation + Document Requests (ClientChase)
+
+openapi: 3.1.0
+info:
+  title: Clairo Document Request API
+  description: |
+    Accountant-facing API for managing document requests (ClientChase).
+    Enables accountants to:
+    - Invite clients to portal
+    - Create and send document requests (single or bulk)
+    - Track request status across portfolio
+    - Manage request templates
+    - Configure auto-reminders
+
+    **Authentication**: Standard accountant JWT tokens
+    **Multi-tenancy**: All requests scoped to tenant
+  version: 1.0.0
+  contact:
+    name: Clairo API Support
+    email: api@clairo.com.au
+
+servers:
+  - url: /api/v1
+    description: Main API endpoints
+
+tags:
+  - name: Invitations
+    description: Client portal invitations
+  - name: Templates
+    description: Document request templates
+  - name: Requests
+    description: Document request management
+  - name: Bulk
+    description: Bulk request operations
+  - name: Tracking
+    description: Request tracking dashboard
+  - name: Reminders
+    description: Auto-reminder configuration
+
+paths:
+  # ============================================
+  # CLIENT INVITATIONS
+  # ============================================
+
+  /clients/{client_id}/invite:
+    post:
+      tags: [Invitations]
+      operationId: inviteClient
+      summary: Invite client to portal
+      description: |
+        Send portal invitation email to client.
+        Creates a magic link valid for 7 days.
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+      responses:
+        '201':
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationResponse'
+        '400':
+          description: Client already has portal access or invalid email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{client_id}/invitations:
+    get:
+      tags: [Invitations]
+      operationId: listClientInvitations
+      summary: List invitations for client
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of invitations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{client_id}/portal-access:
+    get:
+      tags: [Invitations]
+      operationId: getPortalAccess
+      summary: Get client portal access status
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Portal access status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalAccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Invitations]
+      operationId: revokePortalAccess
+      summary: Revoke client portal access
+      description: Invalidates all active sessions and magic links
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Access revoked
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # TEMPLATES
+  # ============================================
+
+  /request-templates:
+    get:
+      tags: [Templates]
+      operationId: listTemplates
+      summary: List request templates
+      description: Returns system templates and custom tenant templates
+      parameters:
+        - name: include_system
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - name: document_type
+          in: query
+          schema:
+            type: string
+            enum: [bank_statement, invoice, receipt, payroll, other]
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateListResponse'
+
+    post:
+      tags: [Templates]
+      operationId: createTemplate
+      summary: Create custom template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCreate'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '400':
+          description: Invalid template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /request-templates/{template_id}:
+    get:
+      tags: [Templates]
+      operationId: getTemplate
+      summary: Get template details
+      parameters:
+        - name: template_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Templates]
+      operationId: updateTemplate
+      summary: Update custom template
+      description: Cannot update system templates
+      parameters:
+        - name: template_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateUpdate'
+      responses:
+        '200':
+          description: Template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '400':
+          description: Cannot modify system template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Templates]
+      operationId: deleteTemplate
+      summary: Delete custom template
+      description: Cannot delete system templates
+      parameters:
+        - name: template_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Template deleted
+        '400':
+          description: Cannot delete system template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # DOCUMENT REQUESTS
+  # ============================================
+
+  /clients/{client_id}/requests:
+    get:
+      tags: [Requests]
+      operationId: listClientRequests
+      summary: List requests for a client
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, pending, viewed, responded, complete, cancelled, all]
+            default: all
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountantRequestListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags: [Requests]
+      operationId: createRequest
+      summary: Create document request
+      description: Creates a new request (draft or send immediately)
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestCreate'
+      responses:
+        '201':
+          description: Request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountantRequestResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{request_id}:
+    get:
+      tags: [Requests]
+      operationId: getRequest
+      summary: Get request details
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountantRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Requests]
+      operationId: updateRequest
+      summary: Update request
+      description: Can only update draft requests
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestUpdate'
+      responses:
+        '200':
+          description: Request updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountantRequestResponse'
+        '400':
+          description: Cannot update sent request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Requests]
+      operationId: cancelRequest
+      summary: Cancel request
+      description: Cancels a pending or draft request
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Request cancelled
+        '400':
+          description: Cannot cancel completed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{request_id}/send:
+    post:
+      tags: [Requests]
+      operationId: sendRequest
+      summary: Send draft request
+      description: Sends a draft request to the client
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Request sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountantRequestResponse'
+        '400':
+          description: Request already sent or invalid state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{request_id}/complete:
+    post:
+      tags: [Requests]
+      operationId: completeRequest
+      summary: Mark request as complete
+      description: Marks a responded request as complete
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteRequest'
+      responses:
+        '200':
+          description: Request completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountantRequestResponse'
+        '400':
+          description: Request not in responded state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{request_id}/remind:
+    post:
+      tags: [Requests]
+      operationId: sendReminder
+      summary: Send manual reminder
+      description: Sends a reminder email to the client
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualReminderRequest'
+      responses:
+        '200':
+          description: Reminder sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderResponse'
+        '400':
+          description: Request not pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{request_id}/response:
+    get:
+      tags: [Requests]
+      operationId: getRequestResponse
+      summary: Get client response details
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Response details with documents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{request_id}/events:
+    get:
+      tags: [Requests]
+      operationId: getRequestEvents
+      summary: Get request event history
+      description: Full audit trail of request lifecycle
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Event history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # BULK REQUESTS
+  # ============================================
+
+  /bulk-requests:
+    post:
+      tags: [Bulk]
+      operationId: createBulkRequest
+      summary: Create bulk request
+      description: |
+        Creates document requests for multiple clients.
+        Processes in background for large batches.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkRequestCreate'
+      responses:
+        '202':
+          description: Bulk request accepted (processing in background)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkRequestResponse'
+        '400':
+          description: Invalid bulk request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags: [Bulk]
+      operationId: listBulkRequests
+      summary: List bulk requests
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed, all]
+            default: all
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: List of bulk requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkRequestListResponse'
+
+  /bulk-requests/{bulk_id}:
+    get:
+      tags: [Bulk]
+      operationId: getBulkRequest
+      summary: Get bulk request status
+      parameters:
+        - name: bulk_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Bulk request details with individual request status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkRequestDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bulk-requests/preview:
+    post:
+      tags: [Bulk]
+      operationId: previewBulkRequest
+      summary: Preview bulk request
+      description: Preview what will be sent without actually sending
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkRequestCreate'
+      responses:
+        '200':
+          description: Preview of individual requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkPreviewResponse'
+        '400':
+          description: Invalid bulk request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================
+  # TRACKING DASHBOARD
+  # ============================================
+
+  /requests/tracking:
+    get:
+      tags: [Tracking]
+      operationId: getTrackingDashboard
+      summary: Get request tracking dashboard
+      description: Aggregated view of all requests across clients
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, viewed, responded, overdue, complete, all]
+            default: all
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, normal, high, urgent]
+        - name: due_within_days
+          in: query
+          schema:
+            type: integer
+            description: Filter by due date within N days
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [due_date, created_at, status, client_name]
+            default: due_date
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Tracking dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingDashboardResponse'
+
+  /requests/tracking/summary:
+    get:
+      tags: [Tracking]
+      operationId: getTrackingSummary
+      summary: Get tracking summary stats
+      description: Summary statistics for quick overview
+      responses:
+        '200':
+          description: Summary statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingSummaryResponse'
+
+  # ============================================
+  # AUTO-REMINDERS
+  # ============================================
+
+  /requests/{request_id}/auto-remind:
+    get:
+      tags: [Reminders]
+      operationId: getAutoRemindSettings
+      summary: Get auto-remind settings
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Auto-remind settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoRemindSettings'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Reminders]
+      operationId: updateAutoRemindSettings
+      summary: Update auto-remind settings
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutoRemindUpdate'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoRemindSettings'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{request_id}/send-reminder:
+    post:
+      tags: [Reminders]
+      operationId: sendManualReminder
+      summary: Send a manual reminder
+      description: |
+        Send a manual reminder for a document request.
+        This bypasses the auto-remind schedule and sends immediately.
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reminder sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendReminderResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          description: Request not in valid state for reminder
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /settings/reminders:
+    get:
+      tags: [Reminders]
+      operationId: getTenantReminderSettings
+      summary: Get tenant-wide reminder settings
+      responses:
+        '200':
+          description: Tenant reminder settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantReminderSettings'
+
+    patch:
+      tags: [Reminders]
+      operationId: updateTenantReminderSettings
+      summary: Update tenant-wide reminder settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantReminderSettingsUpdate'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantReminderSettings'
+
+components:
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # ============================================
+    # INVITATION SCHEMAS
+    # ============================================
+
+    InviteRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          description: Client email to send invitation
+        message:
+          type: string
+          maxLength: 500
+          description: Optional personalized message
+
+    InvitationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [pending, accepted, expired, revoked]
+        sent_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    InvitationListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvitationResponse'
+        total:
+          type: integer
+
+    PortalAccessResponse:
+      type: object
+      properties:
+        has_access:
+          type: boolean
+        email:
+          type: string
+          format: email
+          nullable: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+        invitation_status:
+          type: string
+          enum: [none, pending, accepted, expired]
+
+    # ============================================
+    # TEMPLATE SCHEMAS
+    # ============================================
+
+    TemplateListResponse:
+      type: object
+      properties:
+        system:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateResponse'
+          description: Built-in system templates
+        custom:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateResponse'
+          description: Tenant's custom templates
+
+    TemplateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Bank Statements"
+        description_template:
+          type: string
+          example: "Please upload bank statements for {period}"
+        expected_document_types:
+          type: array
+          items:
+            type: string
+          example: ["bank_statement", "pdf"]
+        default_priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        default_due_days:
+          type: integer
+          description: Default days from send date
+          example: 7
+        is_system:
+          type: boolean
+          description: True if system template (read-only)
+        created_at:
+          type: string
+          format: date-time
+        usage_count:
+          type: integer
+          description: Times this template has been used
+
+    TemplateCreate:
+      type: object
+      required: [name, description_template]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description_template:
+          type: string
+          maxLength: 2000
+          description: "Use {period}, {client_name} for variables"
+        expected_document_types:
+          type: array
+          items:
+            type: string
+            enum: [bank_statement, invoice, receipt, payroll, other]
+        default_priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        default_due_days:
+          type: integer
+          minimum: 1
+          maximum: 90
+          default: 7
+
+    TemplateUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description_template:
+          type: string
+          maxLength: 2000
+        expected_document_types:
+          type: array
+          items:
+            type: string
+        default_priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        default_due_days:
+          type: integer
+          minimum: 1
+          maximum: 90
+
+    # ============================================
+    # REQUEST SCHEMAS
+    # ============================================
+
+    RequestCreate:
+      type: object
+      required: [title]
+      properties:
+        template_id:
+          type: string
+          format: uuid
+          description: Use template to pre-fill fields
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        due_date:
+          type: string
+          format: date
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        expected_document_types:
+          type: array
+          items:
+            type: string
+        auto_remind:
+          type: boolean
+          default: true
+        send_immediately:
+          type: boolean
+          default: false
+          description: If true, sends immediately; otherwise creates as draft
+
+    RequestUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        due_date:
+          type: string
+          format: date
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        expected_document_types:
+          type: array
+          items:
+            type: string
+        auto_remind:
+          type: boolean
+
+    AccountantRequestListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountantRequestSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    AccountantRequestSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client:
+          $ref: '#/components/schemas/ClientBrief'
+        title:
+          type: string
+        status:
+          type: string
+          enum: [draft, pending, viewed, responded, complete, cancelled]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        is_overdue:
+          type: boolean
+        reminder_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AccountantRequestResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client:
+          $ref: '#/components/schemas/ClientBrief'
+        template_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, pending, viewed, responded, complete, cancelled]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        is_overdue:
+          type: boolean
+        expected_document_types:
+          type: array
+          items:
+            type: string
+        auto_remind:
+          type: boolean
+        reminder_count:
+          type: integer
+        last_reminder_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        viewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        response:
+          $ref: '#/components/schemas/ResponseSummary'
+          nullable: true
+
+    ClientBrief:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        business_name:
+          type: string
+        contact_email:
+          type: string
+          format: email
+
+    CompleteRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          maxLength: 500
+          description: Optional note when completing
+
+    ManualReminderRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 500
+          description: Custom message for this reminder
+
+    ReminderResponse:
+      type: object
+      properties:
+        sent:
+          type: boolean
+        reminder_count:
+          type: integer
+        next_auto_reminder:
+          type: string
+          format: date-time
+          nullable: true
+
+    ResponseSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        note:
+          type: string
+          nullable: true
+        document_count:
+          type: integer
+        submitted_at:
+          type: string
+          format: date-time
+
+    ResponseDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+          nullable: true
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentDetail'
+        submitted_at:
+          type: string
+          format: date-time
+
+    DocumentDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        document_type:
+          type: string
+        mime_type:
+          type: string
+        size_bytes:
+          type: integer
+        download_url:
+          type: string
+          format: uri
+          description: Presigned URL for download
+
+    EventListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestEvent'
+
+    RequestEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [created, sent, viewed, reminder_sent, responded, completed, cancelled]
+        description:
+          type: string
+        actor_type:
+          type: string
+          enum: [system, accountant, client]
+        actor_name:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+
+    # ============================================
+    # BULK REQUEST SCHEMAS
+    # ============================================
+
+    BulkRequestCreate:
+      type: object
+      required: [client_ids]
+      properties:
+        client_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 500
+        template_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+          description: "Use {client_name} for personalization"
+        description:
+          type: string
+          maxLength: 2000
+          description: "Use {client_name}, {period} for personalization"
+        due_date:
+          type: string
+          format: date
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+          default: normal
+        auto_remind:
+          type: boolean
+          default: true
+
+    BulkRequestResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        client_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    BulkRequestListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkRequestSummary'
+        total:
+          type: integer
+
+    BulkRequestSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        client_count:
+          type: integer
+        success_count:
+          type: integer
+        failed_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    BulkRequestDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        client_count:
+          type: integer
+        success_count:
+          type: integer
+        failed_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkRequestItem'
+          description: Individual request status
+
+    BulkRequestItem:
+      type: object
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientBrief'
+        request_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [pending, sent, failed]
+        error:
+          type: string
+          nullable: true
+
+    BulkPreviewResponse:
+      type: object
+      properties:
+        preview:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkPreviewItem'
+        total_count:
+          type: integer
+        valid_count:
+          type: integer
+        invalid_count:
+          type: integer
+
+    BulkPreviewItem:
+      type: object
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientBrief'
+        title:
+          type: string
+          description: Personalized title
+        description:
+          type: string
+          description: Personalized description
+        valid:
+          type: boolean
+        validation_error:
+          type: string
+          nullable: true
+
+    # ============================================
+    # TRACKING SCHEMAS
+    # ============================================
+
+    TrackingDashboardResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountantRequestSummary'
+        summary:
+          $ref: '#/components/schemas/TrackingSummaryResponse'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    TrackingSummaryResponse:
+      type: object
+      properties:
+        total_requests:
+          type: integer
+        by_status:
+          type: object
+          properties:
+            draft:
+              type: integer
+            pending:
+              type: integer
+            viewed:
+              type: integer
+            responded:
+              type: integer
+            complete:
+              type: integer
+            cancelled:
+              type: integer
+        overdue_count:
+          type: integer
+        due_this_week:
+          type: integer
+        response_rate:
+          type: number
+          format: decimal
+          description: Percentage of requests responded
+        avg_response_days:
+          type: number
+          format: decimal
+
+    # ============================================
+    # REMINDER SCHEMAS
+    # ============================================
+
+    AutoRemindSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        reminder_count:
+          type: integer
+        last_reminder_at:
+          type: string
+          format: date-time
+          nullable: true
+        next_reminder_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AutoRemindUpdate:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+
+    TenantReminderSettings:
+      type: object
+      properties:
+        auto_remind_enabled:
+          type: boolean
+        reminder_schedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReminderScheduleItem'
+        max_reminders:
+          type: integer
+        reminder_time:
+          type: string
+          description: Time of day to send reminders (HH:MM in tenant timezone)
+          example: "09:00"
+
+    TenantReminderSettingsUpdate:
+      type: object
+      properties:
+        auto_remind_enabled:
+          type: boolean
+        reminder_schedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReminderScheduleItem'
+        max_reminders:
+          type: integer
+          minimum: 1
+          maximum: 10
+        reminder_time:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+
+    ReminderScheduleItem:
+      type: object
+      properties:
+        days_before_due:
+          type: integer
+          nullable: true
+          description: Days before due date (positive) or null for after
+        days_after_due:
+          type: integer
+          nullable: true
+          description: Days after due date or null for before
+        template:
+          type: string
+          enum: [reminder_3_days, reminder_1_day, overdue_1_day, overdue_3_days, overdue_7_days]
+
+    SendReminderResponse:
+      type: object
+      description: Response after sending a manual reminder
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        reminder_count:
+          type: integer
+          description: Total number of reminders sent for this request
+        last_reminder_at:
+          type: string
+          format: date-time
+          description: Timestamp of this reminder
+
+    # ============================================
+    # ERROR SCHEMA
+    # ============================================
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true

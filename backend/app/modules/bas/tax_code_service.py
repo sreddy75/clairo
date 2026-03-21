@@ -1,0 +1,1229 @@
+"""Tax code resolution service for BAS preparation.
+
+Spec 046: AI Tax Code Resolution for BAS Preparation.
+
+Detects excluded transactions, generates AI-powered tax code suggestions
+using a 4-tier confidence waterfall, and manages the accountant review workflow.
+"""
+
+import logging
+from datetime import UTC, datetime
+from decimal import Decimal
+from typing import Any
+from uuid import UUID
+
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.modules.bas.calculator import TAX_TYPE_MAPPING, GSTCalculator
+from app.modules.bas.exceptions import (
+    InvalidTaxTypeError,
+    SessionNotEditableForSuggestionsError,
+    SuggestionAlreadyResolvedError,
+    SuggestionNotFoundError,
+)
+from app.modules.bas.models import (
+    BASSession,
+    ConfidenceTier,
+    TaxCodeSuggestion,
+)
+from app.modules.bas.repository import BASRepository
+from app.modules.bas.schemas import VALID_TAX_TYPES
+
+logger = logging.getLogger(__name__)
+
+# Tax types that should be treated as excluded/unmapped
+EXCLUDED_TAX_TYPES = {"BASEXCLUDED", "NONE", "NONGST", ""}
+
+
+class TaxCodeService:
+    """Service for tax code suggestion and resolution."""
+
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.repo = BASRepository(session)
+
+    # =========================================================================
+    # Detection & Suggestion Generation
+    # =========================================================================
+
+    async def detect_and_generate(
+        self,
+        session_id: UUID,
+        tenant_id: UUID,
+    ) -> dict[str, Any]:
+        """Detect excluded items and generate suggestions.
+
+        Returns breakdown of generated suggestions by tier.
+        """
+        bas_session = await self._get_editable_session(session_id, tenant_id)
+        period = bas_session.period
+
+        # Run calculator to get excluded items
+        calculator = GSTCalculator(self.session)
+        gst_result = await calculator.calculate(
+            connection_id=period.connection_id,
+            start_date=period.start_date,
+            end_date=period.end_date,
+        )
+
+        excluded = gst_result.excluded_items
+        if not excluded:
+            return {
+                "generated": 0,
+                "skipped_already_resolved": 0,
+                "breakdown": {},
+            }
+
+        # Enrich excluded items with contact names and dates
+        enriched = await self._enrich_excluded_items(excluded, period.connection_id, tenant_id)
+
+        # Build account lookup for Tier 1
+        accounts_map = await self._build_accounts_map(period.connection_id)
+
+        # Generate suggestions with tiered waterfall
+        suggestions_data = []
+        unclassified_indices: list[int] = []  # Track items needing LLM
+        breakdown = {
+            "account_default": 0,
+            "client_history": 0,
+            "tenant_history": 0,
+            "llm_classification": 0,
+            "no_suggestion": 0,
+        }
+
+        for item in enriched:
+            suggestion = self._build_suggestion_record(item, session_id, tenant_id)
+
+            # Tier 1: Account default
+            result = self._suggest_from_account_default(item.get("account_code"), accounts_map)
+            if result:
+                suggestion.update(
+                    {
+                        "suggested_tax_type": result[0],
+                        "confidence_score": result[1],
+                        "confidence_tier": ConfidenceTier.ACCOUNT_DEFAULT,
+                        "suggestion_basis": result[2],
+                    }
+                )
+                breakdown["account_default"] += 1
+            else:
+                # Tier 2: Client history
+                result = await self._suggest_from_client_history(
+                    item.get("account_code"), period.connection_id
+                )
+                if result:
+                    suggestion.update(
+                        {
+                            "suggested_tax_type": result[0],
+                            "confidence_score": result[1],
+                            "confidence_tier": ConfidenceTier.CLIENT_HISTORY,
+                            "suggestion_basis": result[2],
+                        }
+                    )
+                    breakdown["client_history"] += 1
+                else:
+                    # Tier 3: Tenant history
+                    result = await self._suggest_from_tenant_history(
+                        item.get("account_code"), tenant_id
+                    )
+                    if result:
+                        suggestion.update(
+                            {
+                                "suggested_tax_type": result[0],
+                                "confidence_score": result[1],
+                                "confidence_tier": ConfidenceTier.TENANT_HISTORY,
+                                "suggestion_basis": result[2],
+                            }
+                        )
+                        breakdown["tenant_history"] += 1
+                    else:
+                        # Track for LLM classification
+                        unclassified_indices.append(len(suggestions_data))
+
+            suggestions_data.append(suggestion)
+
+        # Tier 4: LLM classification for remaining unclassified items
+        if unclassified_indices:
+            items_for_llm = [enriched[idx] for idx in unclassified_indices if idx < len(enriched)]
+            if items_for_llm:
+                llm_results = await self.suggest_from_llm(items_for_llm, accounts_map)
+                for i, idx in enumerate(unclassified_indices):
+                    if i < len(llm_results) and llm_results[i].get("suggested_tax_type"):
+                        suggestions_data[idx].update(llm_results[i])
+                        breakdown["llm_classification"] += 1
+                    else:
+                        breakdown["no_suggestion"] += 1
+
+        # Bulk insert (idempotent via ON CONFLICT DO NOTHING)
+        created = await self.repo.bulk_create_suggestions(suggestions_data)
+
+        # Count already-resolved items that were skipped
+        skipped = len(suggestions_data) - created
+
+        # Audit log
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=session_id,
+            event_type="tax_code_suggestions_generated",
+            event_description=f"Generated {created} tax code suggestions ({skipped} already resolved)",
+            is_system_action=True,
+            event_metadata={
+                "generated": created,
+                "skipped": skipped,
+                "breakdown": breakdown,
+            },
+        )
+
+        return {
+            "generated": created,
+            "skipped_already_resolved": skipped,
+            "breakdown": breakdown,
+        }
+
+    # =========================================================================
+    # Summary
+    # =========================================================================
+
+    async def get_summary(self, session_id: UUID, tenant_id: UUID) -> dict[str, Any]:
+        """Get suggestion summary for the exclusion banner."""
+        return await self.repo.get_suggestion_summary(session_id, tenant_id)
+
+    # =========================================================================
+    # Recalculation
+    # =========================================================================
+
+    async def apply_and_recalculate(
+        self,
+        session_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+    ) -> dict[str, Any]:
+        """Apply approved suggestions as overrides and recalculate BAS.
+
+        1. Creates TaxCodeOverride records for approved/overridden suggestions
+        2. Builds override lookup dict
+        3. Recalculates BAS with overrides applied
+        4. Returns before/after comparison
+        """
+        bas_session = await self._get_editable_session(session_id, tenant_id)
+        period = bas_session.period
+
+        # Get approved/overridden suggestions that need overrides
+        suggestions = await self.repo.list_suggestions(session_id, tenant_id, status=None)
+        to_apply = [
+            s for s in suggestions if s.status in ("approved", "overridden") and s.applied_tax_type
+        ]
+
+        if not to_apply:
+            from app.modules.bas.exceptions import NoApprovedSuggestionsError
+
+            raise NoApprovedSuggestionsError()
+
+        # Create overrides for items that don't have one yet
+        applied_count = 0
+        for s in to_apply:
+            existing = await self.repo.get_active_override(
+                period.connection_id,
+                str(s.source_type.value if hasattr(s.source_type, "value") else s.source_type),
+                s.source_id,
+                s.line_item_index,
+                tenant_id,
+            )
+            if not existing:
+                await self.repo.create_override(
+                    {
+                        "tenant_id": tenant_id,
+                        "connection_id": period.connection_id,
+                        "source_type": s.source_type,
+                        "source_id": s.source_id,
+                        "line_item_index": s.line_item_index,
+                        "original_tax_type": s.original_tax_type,
+                        "override_tax_type": s.applied_tax_type,
+                        "applied_by": user_id,
+                        "applied_at": datetime.now(UTC),
+                        "suggestion_id": s.id,
+                    }
+                )
+                applied_count += 1
+
+        # Get before values (current calculation)
+        before = {}
+        if bas_session.calculation:
+            calc = bas_session.calculation
+            before = {
+                "g1_total_sales": float(calc.g1_total_sales or 0),
+                "field_1a_gst_on_sales": float(calc.field_1a_gst_on_sales or 0),
+                "g11_non_capital_purchases": float(calc.g11_non_capital_purchases or 0),
+                "field_1b_gst_on_purchases": float(calc.field_1b_gst_on_purchases or 0),
+                "g10_capital_purchases": float(calc.g10_capital_purchases or 0),
+                "net_gst": float(calc.gst_payable or 0),
+            }
+
+        # Build overrides dict and recalculate
+        active_overrides = await self.repo.get_active_overrides(period.connection_id, tenant_id)
+        overrides_dict: dict[tuple[str, str, int], str] = {}
+        for o in active_overrides:
+            key = (
+                str(o.source_type.value if hasattr(o.source_type, "value") else o.source_type),
+                str(o.source_id),
+                o.line_item_index,
+            )
+            overrides_dict[key] = o.override_tax_type
+
+        calculator = GSTCalculator(self.session, overrides=overrides_dict)
+        gst_result = await calculator.calculate(
+            connection_id=period.connection_id,
+            start_date=period.start_date,
+            end_date=period.end_date,
+        )
+
+        # Save the new calculation via repo.upsert_calculation
+        await self.repo.upsert_calculation(
+            tenant_id=tenant_id,
+            session_id=session_id,
+            g1_total_sales=gst_result.g1_total_sales,
+            g2_export_sales=gst_result.g2_export_sales,
+            g3_gst_free_sales=gst_result.g3_gst_free_sales,
+            g10_capital_purchases=gst_result.g10_capital_purchases,
+            g11_non_capital_purchases=gst_result.g11_non_capital_purchases,
+            field_1a_gst_on_sales=gst_result.field_1a_gst_on_sales,
+            field_1b_gst_on_purchases=gst_result.field_1b_gst_on_purchases,
+            w1_total_wages=Decimal("0"),
+            w2_amount_withheld=Decimal("0"),
+            gst_payable=gst_result.gst_payable,
+            total_payable=gst_result.gst_payable,
+            calculation_duration_ms=0,
+            transaction_count=gst_result.transaction_count,
+            invoice_count=gst_result.invoice_count,
+            pay_run_count=0,
+        )
+
+        # Build after values
+        after = {
+            "g1_total_sales": float(gst_result.g1_total_sales),
+            "field_1a_gst_on_sales": float(gst_result.field_1a_gst_on_sales),
+            "g11_non_capital_purchases": float(gst_result.g11_non_capital_purchases),
+            "field_1b_gst_on_purchases": float(gst_result.field_1b_gst_on_purchases),
+            "g10_capital_purchases": float(gst_result.g10_capital_purchases),
+            "net_gst": float(gst_result.gst_payable),
+        }
+
+        # Build comparison dict
+        recalculation = {}
+        for key in after:
+            recalculation[f"{key}_before"] = Decimal(str(before.get(key, 0)))
+            recalculation[f"{key}_after"] = Decimal(str(after[key]))
+
+        # Audit log
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=session_id,
+            event_type="bas_recalculated_after_resolution",
+            event_description=f"BAS recalculated after applying {applied_count} tax code resolutions",
+            performed_by=user_id,
+            event_metadata={
+                "applied_count": applied_count,
+                "before": before,
+                "after": after,
+            },
+        )
+
+        return {
+            "applied_count": applied_count,
+            "recalculation": recalculation,
+        }
+
+    # =========================================================================
+    # Resolution Actions
+    # =========================================================================
+
+    async def approve_suggestion(
+        self,
+        suggestion_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+        notes: str | None = None,
+    ) -> TaxCodeSuggestion:
+        """Approve a suggestion — apply the suggested tax code."""
+        suggestion = await self._get_pending_suggestion(suggestion_id, tenant_id)
+        await self._get_editable_session(suggestion.session_id, tenant_id)
+
+        suggestion.status = "approved"
+        suggestion.applied_tax_type = suggestion.suggested_tax_type
+        suggestion.resolved_by = user_id
+        suggestion.resolved_at = datetime.now(UTC)
+
+        await self.repo.update_suggestion(suggestion)
+
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=suggestion.session_id,
+            event_type="tax_code_suggestion_approved",
+            event_description=f"Approved tax code suggestion: {suggestion.original_tax_type} → {suggestion.applied_tax_type}",
+            performed_by=user_id,
+            event_metadata={
+                "suggestion_id": str(suggestion.id),
+                "original_tax_type": suggestion.original_tax_type,
+                "suggested_tax_type": suggestion.suggested_tax_type,
+                "applied_tax_type": suggestion.applied_tax_type,
+                "confidence_score": float(suggestion.confidence_score)
+                if suggestion.confidence_score
+                else None,
+                "confidence_tier": str(suggestion.confidence_tier)
+                if suggestion.confidence_tier
+                else None,
+                "notes": notes,
+            },
+        )
+
+        return suggestion
+
+    async def reject_suggestion(
+        self,
+        suggestion_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+        reason: str | None = None,
+    ) -> TaxCodeSuggestion:
+        """Reject a suggestion — transaction remains excluded."""
+        suggestion = await self._get_pending_suggestion(suggestion_id, tenant_id)
+        await self._get_editable_session(suggestion.session_id, tenant_id)
+
+        suggestion.status = "rejected"
+        suggestion.resolved_by = user_id
+        suggestion.resolved_at = datetime.now(UTC)
+
+        await self.repo.update_suggestion(suggestion)
+
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=suggestion.session_id,
+            event_type="tax_code_suggestion_rejected",
+            event_description=f"Rejected tax code suggestion for {suggestion.original_tax_type}",
+            performed_by=user_id,
+            event_metadata={
+                "suggestion_id": str(suggestion.id),
+                "suggested_tax_type": suggestion.suggested_tax_type,
+                "reason": reason,
+            },
+        )
+
+        return suggestion
+
+    async def override_suggestion(
+        self,
+        suggestion_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+        tax_type: str,
+        reason: str | None = None,
+    ) -> TaxCodeSuggestion:
+        """Override a suggestion with a different tax code."""
+        tax_type = tax_type.upper()
+        if tax_type not in VALID_TAX_TYPES:
+            raise InvalidTaxTypeError(tax_type)
+
+        suggestion = await self._get_pending_suggestion(suggestion_id, tenant_id)
+        await self._get_editable_session(suggestion.session_id, tenant_id)
+
+        suggestion.status = "overridden"
+        suggestion.applied_tax_type = tax_type
+        suggestion.resolved_by = user_id
+        suggestion.resolved_at = datetime.now(UTC)
+
+        await self.repo.update_suggestion(suggestion)
+
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=suggestion.session_id,
+            event_type="tax_code_suggestion_overridden",
+            event_description=f"Overrode tax code: {suggestion.suggested_tax_type} → {tax_type}",
+            performed_by=user_id,
+            event_metadata={
+                "suggestion_id": str(suggestion.id),
+                "suggested_tax_type": suggestion.suggested_tax_type,
+                "override_tax_type": tax_type,
+                "reason": reason,
+            },
+        )
+
+        return suggestion
+
+    async def dismiss_suggestion(
+        self,
+        suggestion_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+        reason: str | None = None,
+    ) -> TaxCodeSuggestion:
+        """Dismiss — confirm the transaction should remain excluded."""
+        suggestion = await self._get_pending_suggestion(suggestion_id, tenant_id)
+        await self._get_editable_session(suggestion.session_id, tenant_id)
+
+        suggestion.status = "dismissed"
+        suggestion.resolved_by = user_id
+        suggestion.resolved_at = datetime.now(UTC)
+        suggestion.dismissal_reason = reason
+
+        await self.repo.update_suggestion(suggestion)
+
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=suggestion.session_id,
+            event_type="tax_code_transaction_dismissed",
+            event_description=f"Dismissed transaction (confirmed exclusion): {suggestion.original_tax_type}",
+            performed_by=user_id,
+            event_metadata={
+                "suggestion_id": str(suggestion.id),
+                "original_tax_type": suggestion.original_tax_type,
+                "reason": reason,
+            },
+        )
+
+        return suggestion
+
+    async def bulk_approve(
+        self,
+        session_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+        min_confidence: float | None = None,
+        confidence_tier: str | None = None,
+    ) -> dict[str, Any]:
+        """Bulk approve pending suggestions matching criteria."""
+        await self._get_editable_session(session_id, tenant_id)
+
+        suggestions = await self.repo.get_pending_suggestions_for_bulk(
+            session_id, tenant_id, min_confidence, confidence_tier
+        )
+
+        now = datetime.now(UTC)
+        approved_ids = []
+        for s in suggestions:
+            s.status = "approved"
+            s.applied_tax_type = s.suggested_tax_type
+            s.resolved_by = user_id
+            s.resolved_at = now
+            approved_ids.append(s.id)
+
+        await self.session.flush()
+
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=session_id,
+            event_type="tax_code_bulk_approved",
+            event_description=f"Bulk approved {len(approved_ids)} tax code suggestions",
+            performed_by=user_id,
+            event_metadata={
+                "count": len(approved_ids),
+                "min_confidence": min_confidence,
+                "confidence_tier": confidence_tier,
+            },
+        )
+
+        return {
+            "approved_count": len(approved_ids),
+            "suggestion_ids": approved_ids,
+        }
+
+    # =========================================================================
+    # Tier Suggestion Methods
+    # =========================================================================
+
+    def _suggest_from_account_default(
+        self,
+        account_code: str | None,
+        accounts_map: dict[str, dict[str, Any]],
+    ) -> tuple[str, Decimal, str] | None:
+        """Tier 1: Suggest from XeroAccount.default_tax_type."""
+        if not account_code or account_code not in accounts_map:
+            return None
+
+        account = accounts_map[account_code]
+        default_type = (account.get("default_tax_type") or "").upper()
+
+        if not default_type or default_type in EXCLUDED_TAX_TYPES:
+            return None
+
+        if (
+            default_type not in TAX_TYPE_MAPPING
+            or TAX_TYPE_MAPPING[default_type]["field"] == "excluded"
+        ):
+            return None
+
+        account_name = account.get("account_name", account_code)
+        return (
+            default_type,
+            Decimal("0.95"),
+            f"Account {account_code} ({account_name}) has default tax type {default_type}",
+        )
+
+    async def _suggest_from_client_history(
+        self,
+        account_code: str | None,
+        connection_id: UUID,
+    ) -> tuple[str, Decimal, str] | None:
+        """Tier 2: Suggest from same-client historical patterns."""
+        if not account_code:
+            return None
+
+        return await self._query_historical_patterns(
+            account_code,
+            scope_column="connection_id",
+            scope_value=str(connection_id),
+            min_pct=0.90,
+            confidence_range=(Decimal("0.85"), Decimal("0.95")),
+            tier_label="prior transactions",
+        )
+
+    async def _suggest_from_tenant_history(
+        self,
+        account_code: str | None,
+        tenant_id: UUID,
+    ) -> tuple[str, Decimal, str] | None:
+        """Tier 3: Suggest from cross-client patterns within tenant."""
+        if not account_code:
+            return None
+
+        return await self._query_historical_patterns(
+            account_code,
+            scope_column="tenant_id",
+            scope_value=str(tenant_id),
+            min_pct=0.85,
+            confidence_range=(Decimal("0.70"), Decimal("0.85")),
+            tier_label="transactions across your practice",
+        )
+
+    async def _query_historical_patterns(
+        self,
+        account_code: str,
+        scope_column: str,
+        scope_value: str,
+        min_pct: float,
+        confidence_range: tuple[Decimal, Decimal],
+        tier_label: str,
+    ) -> tuple[str, Decimal, str] | None:
+        """Query historical tax_type patterns for an account_code.
+
+        Uses jsonb_array_elements to extract line item tax types from
+        both invoices and bank transactions. scope_column is always
+        'connection_id' or 'tenant_id' (internal, not user input).
+        """
+        # scope_column is always a known column name, never user input
+        if scope_column not in ("connection_id", "tenant_id"):
+            return None
+
+        # Build two separate queries for invoices and bank transactions
+        # using parameterized scope_value
+        invoice_sql = text(
+            f"SELECT upper(li.value ->> 'tax_type') AS tax_type "  # noqa: S608
+            f"FROM xero_invoices i, jsonb_array_elements(i.line_items) li "
+            f"WHERE li.value ->> 'account_code' = :account_code "
+            f"AND li.value ->> 'tax_type' IS NOT NULL "
+            f"AND upper(li.value ->> 'tax_type') NOT IN ('BASEXCLUDED','NONE','NONGST','') "
+            f"AND i.{scope_column} = :scope_value"
+        )
+        txn_sql = text(
+            f"SELECT upper(li.value ->> 'tax_type') AS tax_type "  # noqa: S608
+            f"FROM xero_bank_transactions i, jsonb_array_elements(i.line_items) li "
+            f"WHERE li.value ->> 'account_code' = :account_code "
+            f"AND li.value ->> 'tax_type' IS NOT NULL "
+            f"AND upper(li.value ->> 'tax_type') NOT IN ('BASEXCLUDED','NONE','NONGST','') "
+            f"AND i.{scope_column} = :scope_value"
+        )
+
+        params = {"account_code": account_code, "scope_value": scope_value}
+
+        # Collect all tax types
+        inv_result = await self.session.execute(invoice_sql, params)
+        txn_result = await self.session.execute(txn_sql, params)
+
+        from collections import Counter
+
+        counts: Counter[str] = Counter()
+        for row in inv_result:
+            counts[row.tax_type] += 1
+        for row in txn_result:
+            counts[row.tax_type] += 1
+
+        total = sum(counts.values())
+        if total == 0:
+            return None
+
+        # Get dominant type
+        dominant_type, dominant_count = counts.most_common(1)[0]
+        pct = dominant_count / total
+
+        if pct < min_pct:
+            return None
+
+        if (
+            dominant_type not in TAX_TYPE_MAPPING
+            or TAX_TYPE_MAPPING[dominant_type]["field"] == "excluded"
+        ):
+            return None
+
+        lo, hi = confidence_range
+        confidence = lo + (hi - lo) * Decimal(str(pct))
+
+        return (
+            dominant_type,
+            confidence,
+            f"{int(pct * 100)}% of {tier_label} on account {account_code} used {dominant_type} ({dominant_count} of {total} matches)",
+        )
+
+    # =========================================================================
+    # Helper Methods
+    # =========================================================================
+
+    async def _get_editable_session(self, session_id: UUID, tenant_id: UUID) -> BASSession:
+        """Get a BAS session and verify it's editable."""
+        from app.modules.bas.exceptions import SessionNotFoundError
+
+        bas_session = await self.repo.get_session(session_id)
+        if not bas_session:
+            raise SessionNotFoundError(str(session_id))
+
+        if not bas_session.is_editable:
+            raise SessionNotEditableForSuggestionsError(str(session_id), bas_session.status)
+
+        return bas_session
+
+    async def _get_pending_suggestion(
+        self, suggestion_id: UUID, tenant_id: UUID
+    ) -> TaxCodeSuggestion:
+        """Get a suggestion and verify it's still pending."""
+        suggestion = await self.repo.get_suggestion(suggestion_id, tenant_id)
+        if not suggestion:
+            raise SuggestionNotFoundError(str(suggestion_id))
+        if suggestion.status != "pending":
+            raise SuggestionAlreadyResolvedError(str(suggestion_id), str(suggestion.status))
+        return suggestion
+
+    async def _build_accounts_map(self, connection_id: UUID) -> dict[str, dict[str, Any]]:
+        """Build in-memory lookup of account_code → account info."""
+        from sqlalchemy import select as sa_select
+
+        from app.modules.integrations.xero.models import XeroAccount
+
+        result = await self.session.execute(
+            sa_select(XeroAccount).where(
+                XeroAccount.connection_id == connection_id,
+                XeroAccount.is_active.is_(True),
+            )
+        )
+        accounts = result.scalars().all()
+
+        return {
+            a.account_code: {
+                "account_name": a.account_name,
+                "default_tax_type": a.default_tax_type,
+                "account_type": a.account_type,
+                "account_class": str(a.account_class) if a.account_class else None,
+            }
+            for a in accounts
+            if a.account_code
+        }
+
+    async def _enrich_excluded_items(
+        self,
+        excluded: list[dict[str, Any]],
+        connection_id: UUID,
+        _tenant_id: UUID,
+    ) -> list[dict[str, Any]]:
+        """Enrich excluded items with contact names and dates from source records."""
+        from app.modules.integrations.xero.models import XeroBankTransaction, XeroInvoice
+
+        # Collect source IDs by type
+        invoice_ids = {UUID(i["source_id"]) for i in excluded if i["source_type"] == "invoice"}
+        txn_ids = {UUID(i["source_id"]) for i in excluded if i["source_type"] == "bank_transaction"}
+
+        # Fetch invoices
+        invoice_map: dict[str, dict] = {}
+        if invoice_ids:
+            from sqlalchemy import select as sa_select
+
+            result = await self.session.execute(
+                sa_select(XeroInvoice).where(XeroInvoice.id.in_(invoice_ids))
+            )
+            for inv in result.scalars():
+                invoice_map[str(inv.id)] = {
+                    "contact_name": inv.contact_name if hasattr(inv, "contact_name") else None,
+                    "transaction_date": inv.issue_date,
+                }
+
+        # Fetch bank transactions
+        txn_map: dict[str, dict] = {}
+        if txn_ids:
+            from sqlalchemy import select as sa_select
+
+            result = await self.session.execute(
+                sa_select(XeroBankTransaction).where(XeroBankTransaction.id.in_(txn_ids))
+            )
+            for txn in result.scalars():
+                txn_map[str(txn.id)] = {
+                    "contact_name": txn.contact_name if hasattr(txn, "contact_name") else None,
+                    "transaction_date": txn.transaction_date,
+                }
+
+        # Build accounts map for account names
+        accounts_map = await self._build_accounts_map(connection_id)
+
+        # Enrich
+        for item in excluded:
+            source_data = invoice_map.get(item["source_id"]) or txn_map.get(item["source_id"]) or {}
+            item["contact_name"] = source_data.get("contact_name")
+            item["transaction_date"] = source_data.get("transaction_date")
+
+            acct_code = item.get("account_code")
+            if acct_code and acct_code in accounts_map:
+                item["account_name"] = accounts_map[acct_code]["account_name"]
+            else:
+                item["account_name"] = None
+
+        return excluded
+
+    def _build_suggestion_record(
+        self,
+        item: dict[str, Any],
+        session_id: UUID,
+        tenant_id: UUID,
+    ) -> dict[str, Any]:
+        """Build a TaxCodeSuggestion dict from an excluded item."""
+        return {
+            "tenant_id": tenant_id,
+            "session_id": session_id,
+            "source_type": item["source_type"],
+            "source_id": item["source_id"],
+            "line_item_index": item["line_item_index"],
+            "line_item_id": item.get("line_item_id"),
+            "original_tax_type": item["tax_type"],
+            "account_code": item.get("account_code"),
+            "account_name": item.get("account_name"),
+            "description": item.get("description"),
+            "line_amount": item.get("line_amount"),
+            "tax_amount": item.get("tax_amount"),
+            "contact_name": item.get("contact_name"),
+            "transaction_date": item.get("transaction_date"),
+            "status": "pending",
+        }
+
+    # =========================================================================
+    # Conflict Detection (US5)
+    # =========================================================================
+
+    async def detect_conflicts(
+        self,
+        connection_id: UUID,
+        tenant_id: UUID,
+    ) -> list[dict[str, Any]]:
+        """Detect re-sync conflicts for active overrides.
+
+        Compares override's original_tax_type with current Xero line item tax_type.
+        """
+        from app.modules.integrations.xero.models import XeroBankTransaction, XeroInvoice
+
+        active_overrides = await self.repo.get_active_overrides(connection_id, tenant_id)
+        if not active_overrides:
+            return []
+
+        conflicts = []
+        for override in active_overrides:
+            source_type = str(
+                override.source_type.value
+                if hasattr(override.source_type, "value")
+                else override.source_type
+            )
+
+            # Load source entity
+            current_tax_type = None
+            if source_type == "invoice":
+                from sqlalchemy import select as sa_select
+
+                result = await self.session.execute(
+                    sa_select(XeroInvoice).where(XeroInvoice.id == override.source_id)
+                )
+                entity = result.scalar_one_or_none()
+                if (
+                    entity
+                    and entity.line_items
+                    and len(entity.line_items) > override.line_item_index
+                ):
+                    item = entity.line_items[override.line_item_index]
+                    current_tax_type = (item.get("tax_type") or item.get("TaxType", "")).upper()
+
+            elif source_type == "bank_transaction":
+                from sqlalchemy import select as sa_select
+
+                result = await self.session.execute(
+                    sa_select(XeroBankTransaction).where(
+                        XeroBankTransaction.id == override.source_id
+                    )
+                )
+                entity = result.scalar_one_or_none()
+                if (
+                    entity
+                    and entity.line_items
+                    and len(entity.line_items) > override.line_item_index
+                ):
+                    item = entity.line_items[override.line_item_index]
+                    current_tax_type = (item.get("tax_type") or item.get("TaxType", "")).upper()
+
+            if current_tax_type is None:
+                continue
+
+            original = override.original_tax_type.upper()
+            applied = override.override_tax_type.upper()
+
+            if current_tax_type == original:
+                # Xero unchanged — override still valid
+                continue
+            elif current_tax_type == applied:
+                # Xero now matches our override — clear it
+                override.is_active = False
+                await self.session.flush()
+            else:
+                # Xero changed to something different — conflict
+                if not override.conflict_detected:
+                    override.conflict_detected = True
+                    override.xero_new_tax_type = current_tax_type
+                    await self.session.flush()
+
+                    await self.repo.create_audit_log(
+                        tenant_id=tenant_id,
+                        session_id=override.suggestion.session_id if override.suggestion else None,
+                        event_type="tax_code_conflict_detected",
+                        event_description=(
+                            f"Re-sync conflict: override {applied} vs Xero {current_tax_type}"
+                        ),
+                        is_system_action=True,
+                        event_metadata={
+                            "override_id": str(override.id),
+                            "override_tax_type": applied,
+                            "xero_new_tax_type": current_tax_type,
+                            "original_tax_type": original,
+                        },
+                    )
+
+                conflicts.append(
+                    {
+                        "override_id": str(override.id),
+                        "source_type": source_type,
+                        "source_id": str(override.source_id),
+                        "line_item_index": override.line_item_index,
+                        "override_tax_type": applied,
+                        "xero_new_tax_type": current_tax_type,
+                        "description": override.suggestion.description
+                        if override.suggestion
+                        else None,
+                        "line_amount": (
+                            float(override.suggestion.line_amount)
+                            if override.suggestion and override.suggestion.line_amount
+                            else None
+                        ),
+                        "account_code": (
+                            override.suggestion.account_code if override.suggestion else None
+                        ),
+                        "detected_at": override.updated_at.isoformat()
+                        if override.updated_at
+                        else None,
+                    }
+                )
+
+        return conflicts
+
+    async def resolve_conflict(
+        self,
+        override_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+        resolution: str,
+        reason: str | None = None,
+    ) -> dict[str, Any]:
+        """Resolve a re-sync conflict."""
+        from app.modules.bas.exceptions import OverrideNotFoundError
+
+        override = await self.repo.get_override(override_id, tenant_id)
+        if not override:
+            raise OverrideNotFoundError(str(override_id))
+
+        if resolution == "keep_override":
+            override.conflict_detected = False
+            override.xero_new_tax_type = None
+            override.conflict_resolved_at = datetime.now(UTC)
+            applied_tax_type = override.override_tax_type
+        elif resolution == "accept_xero":
+            override.is_active = False
+            override.conflict_resolved_at = datetime.now(UTC)
+            applied_tax_type = override.xero_new_tax_type or override.original_tax_type
+        else:
+            raise ValueError(f"Invalid resolution: {resolution}")
+
+        await self.session.flush()
+
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=override.suggestion.session_id if override.suggestion else None,
+            event_type="tax_code_conflict_detected",
+            event_description=f"Conflict resolved: {resolution}",
+            performed_by=user_id,
+            event_metadata={
+                "override_id": str(override.id),
+                "resolution": resolution,
+                "applied_tax_type": applied_tax_type,
+                "reason": reason,
+            },
+        )
+
+        return {
+            "override_id": str(override.id),
+            "resolution": resolution,
+            "applied_tax_type": applied_tax_type,
+        }
+
+    async def get_conflicts(
+        self,
+        connection_id: UUID,
+        tenant_id: UUID,
+    ) -> dict[str, Any]:
+        """Get active conflicts for a connection."""
+        overrides = await self.repo.get_active_overrides(connection_id, tenant_id)
+        conflicts = [
+            {
+                "override_id": str(o.id),
+                "source_type": str(
+                    o.source_type.value if hasattr(o.source_type, "value") else o.source_type
+                ),
+                "source_id": str(o.source_id),
+                "line_item_index": o.line_item_index,
+                "override_tax_type": o.override_tax_type,
+                "xero_new_tax_type": o.xero_new_tax_type,
+                "description": o.suggestion.description if o.suggestion else None,
+                "line_amount": float(o.suggestion.line_amount)
+                if o.suggestion and o.suggestion.line_amount
+                else None,
+                "account_code": o.suggestion.account_code if o.suggestion else None,
+                "detected_at": o.updated_at.isoformat() if o.updated_at else None,
+            }
+            for o in overrides
+            if o.conflict_detected
+        ]
+        return {"conflicts": conflicts, "total": len(conflicts)}
+
+    # =========================================================================
+    # LLM Classification (US6)
+    # =========================================================================
+
+    async def suggest_from_llm(
+        self,
+        items: list[dict[str, Any]],
+        accounts_map: dict[str, dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Tier 4: Classify transactions using Claude.
+
+        Batches items into a single LLM call and returns suggestions
+        with confidence in the 0.60-0.80 range.
+        """
+        if not items:
+            return []
+
+        try:
+            import anthropic
+        except ImportError:
+            logger.warning("anthropic SDK not available, skipping LLM classification")
+            return [
+                {
+                    "suggested_tax_type": None,
+                    "confidence_score": None,
+                    "suggestion_basis": "LLM classification unavailable",
+                }
+                for _ in items
+            ]
+
+        # Build context for each item
+        item_descriptions = []
+        for i, item in enumerate(items):
+            acct = accounts_map.get(item.get("account_code", ""), {})
+            item_descriptions.append(
+                f"Item {i + 1}: description='{item.get('description', 'N/A')}', "
+                f"amount=${item.get('line_amount', 0)}, "
+                f"account_code={item.get('account_code', 'N/A')}, "
+                f"account_name={acct.get('account_name', 'N/A')}, "
+                f"account_type={acct.get('account_type', 'N/A')}"
+            )
+
+        valid_types = ", ".join(sorted(VALID_TAX_TYPES))
+        prompt = f"""You are an Australian tax accountant classifying transactions for BAS (Business Activity Statement) preparation.
+
+For each transaction below, determine the most appropriate Xero tax type from this list:
+{valid_types}
+
+Context:
+- OUTPUT = GST-inclusive sales (10% GST)
+- INPUT = GST-inclusive purchases (10% GST claimable)
+- CAPEXINPUT = Capital equipment purchases (GST claimable)
+- EXEMPTOUTPUT/EXEMPTINCOME = GST-free sales
+- EXEMPTEXPENSES = GST-free purchases
+- EXEMPTEXPORT = Export sales (GST-free)
+
+Transactions to classify:
+{chr(10).join(item_descriptions)}
+
+Respond with a JSON array. For each item:
+{{"item": 1, "tax_type": "INPUT", "confidence": 0.8, "reasoning": "Office supplies are typically GST-inclusive purchases"}}
+
+If you cannot classify with reasonable confidence, set tax_type to null and confidence to 0."""
+
+        try:
+            client = anthropic.Anthropic()
+            response = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1024,
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            # Parse response
+            import json
+
+            response_text = response.content[0].text
+            # Extract JSON array from response
+            start = response_text.find("[")
+            end = response_text.rfind("]") + 1
+            if start >= 0 and end > start:
+                classifications = json.loads(response_text[start:end])
+            else:
+                classifications = []
+
+            results = []
+            for i, _item in enumerate(items):
+                classification = next((c for c in classifications if c.get("item") == i + 1), {})
+                tax_type = classification.get("tax_type")
+                raw_confidence = classification.get("confidence", 0)
+                reasoning = classification.get("reasoning", "")
+
+                # Map to 0.60-0.80 range
+                if tax_type and raw_confidence > 0.5:
+                    mapped_confidence = Decimal("0.60") + Decimal(
+                        str(min(raw_confidence, 1.0))
+                    ) * Decimal("0.20")
+                    results.append(
+                        {
+                            "suggested_tax_type": tax_type.upper()
+                            if tax_type in VALID_TAX_TYPES or tax_type.upper() in VALID_TAX_TYPES
+                            else None,
+                            "confidence_score": mapped_confidence,
+                            "confidence_tier": ConfidenceTier.LLM_CLASSIFICATION,
+                            "suggestion_basis": f"AI classification: {reasoning}",
+                        }
+                    )
+                else:
+                    results.append(
+                        {
+                            "suggested_tax_type": None,
+                            "confidence_score": None,
+                            "confidence_tier": None,
+                            "suggestion_basis": "Could not classify with sufficient confidence",
+                        }
+                    )
+
+            return results
+
+        except Exception as e:
+            logger.warning(f"LLM classification failed: {e}")
+            return [
+                {
+                    "suggested_tax_type": None,
+                    "confidence_score": None,
+                    "confidence_tier": None,
+                    "suggestion_basis": f"LLM classification failed: {e!s}",
+                }
+                for _ in items
+            ]
+
+    # =========================================================================
+    # Client Classification LLM Mapping (Spec 047)
+    # =========================================================================
+
+    async def suggest_from_client_input(
+        self,
+        items: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Map client-classified transactions to BAS tax codes via LLM.
+
+        Enhanced prompt includes the client's category selection and/or
+        free-text description for more accurate mapping.
+        """
+        if not items:
+            return []
+
+        try:
+            import anthropic
+        except ImportError:
+            logger.warning("anthropic SDK not available for client classification mapping")
+            return [
+                {"suggested_tax_type": item.get("typical_tax_type"), "confidence": 0.6}
+                for item in items
+            ]
+
+        prompt_lines = [
+            "You are an experienced Australian BAS tax accountant.",
+            "The business owner has classified their own transactions. Map each to the correct Xero tax type.",
+            "",
+            "Valid Xero tax types: OUTPUT (GST on Income), INPUT (GST on Expenses), INPUTTAXED (Input Taxed),",
+            "EXEMPTOUTPUT (GST Free Income), EXEMPTEXPENSES (GST Free Expenses), BASEXCLUDED (BAS Excluded),",
+            "GSTONIMPORTS (GST on Imports), OUTPUT2 (GST on Income 2), INPUT2 (GST on Expenses 2).",
+            "",
+            'For each transaction, return a JSON array with {"tax_type": "...", "confidence": 0.0-1.0}.',
+            "",
+            "Transactions:",
+        ]
+
+        for i, item in enumerate(items):
+            client_info = ""
+            if item.get("client_category"):
+                client_info += f"Client classified as: {item['client_category']}. "
+            if item.get("client_description"):
+                client_info += f'Client says: "{item["client_description"]}". '
+            if item.get("typical_tax_type"):
+                client_info += f"Category typically maps to: {item['typical_tax_type']}. "
+
+            prompt_lines.append(
+                f"{i + 1}. Description: {item.get('description', 'N/A')}, "
+                f"Amount: ${item.get('line_amount', '0')}, "
+                f"Account: {item.get('account_code', 'N/A')}. "
+                f"{client_info}"
+            )
+
+        prompt = "\n".join(prompt_lines)
+
+        try:
+            client = anthropic.Anthropic()
+            response = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1024,
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            text = response.content[0].text
+            start = text.find("[")
+            end = text.rfind("]") + 1
+            if start >= 0 and end > start:
+                import json
+
+                results = json.loads(text[start:end])
+                return [
+                    {
+                        "suggested_tax_type": r.get("tax_type"),
+                        "confidence": r.get("confidence", 0.7),
+                    }
+                    for r in results
+                ]
+        except Exception:
+            logger.warning("LLM client classification mapping failed", exc_info=True)
+
+        # Fallback
+        return [
+            {"suggested_tax_type": item.get("typical_tax_type"), "confidence": 0.6}
+            for item in items
+        ]

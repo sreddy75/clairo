@@ -1,0 +1,709 @@
+openapi: 3.1.0
+info:
+  title: Clairo Onboarding API
+  description: API endpoints for the onboarding flow feature
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: Onboarding
+    description: Onboarding flow endpoints
+  - name: Import
+    description: Bulk client import endpoints
+
+paths:
+  /onboarding/progress:
+    get:
+      tags: [Onboarding]
+      summary: Get onboarding progress
+      description: Returns the current onboarding progress for the authenticated tenant
+      operationId: getOnboardingProgress
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Onboarding progress retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingProgressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No onboarding progress found (new tenant)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /onboarding/start:
+    post:
+      tags: [Onboarding]
+      summary: Start onboarding
+      description: Initialize onboarding progress for a new tenant
+      operationId: startOnboarding
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Onboarding started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingProgressResponse'
+        '400':
+          description: Onboarding already started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/tier:
+    post:
+      tags: [Onboarding]
+      summary: Select subscription tier
+      description: Record tier selection and create Stripe checkout session with trial
+      operationId: selectTier
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TierSelectionRequest'
+      responses:
+        '200':
+          description: Tier selected, checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TierSelectionResponse'
+        '400':
+          description: Invalid tier or already selected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/payment-complete:
+    post:
+      tags: [Onboarding]
+      summary: Mark payment setup complete
+      description: Called after Stripe checkout success to update onboarding progress
+      operationId: paymentComplete
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCompleteRequest'
+      responses:
+        '200':
+          description: Payment setup marked complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingProgressResponse'
+        '400':
+          description: Invalid session or already complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/xero/connect:
+    post:
+      tags: [Onboarding]
+      summary: Initiate Xero OAuth
+      description: Start Xero OAuth flow and return authorization URL
+      operationId: connectXero
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: OAuth URL generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XeroConnectResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/xero/callback:
+    get:
+      tags: [Onboarding]
+      summary: Xero OAuth callback
+      description: Handle Xero OAuth callback and update onboarding progress
+      operationId: xeroCallback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to onboarding next step
+        '400':
+          description: OAuth error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /onboarding/xero/skip:
+    post:
+      tags: [Onboarding]
+      summary: Skip Xero connection
+      description: Skip Xero connection step (with warning)
+      operationId: skipXero
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Xero connection skipped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingProgressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/clients/available:
+    get:
+      tags: [Import]
+      summary: Get available clients for import
+      description: Returns list of XPM/Xero clients available for import
+      operationId: getAvailableClients
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search filter for client name
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+      responses:
+        '200':
+          description: Available clients retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableClientsResponse'
+        '400':
+          description: Xero not connected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/clients/import:
+    post:
+      tags: [Import]
+      summary: Start bulk client import
+      description: Start background job to import selected clients
+      operationId: startBulkImport
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkImportRequest'
+      responses:
+        '202':
+          description: Import job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportJobResponse'
+        '400':
+          description: Invalid client IDs or tier limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/import/{job_id}:
+    get:
+      tags: [Import]
+      summary: Get import job status
+      description: Get progress of a bulk import job
+      operationId: getImportJobStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Import job status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportJobResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/import/{job_id}/retry:
+    post:
+      tags: [Import]
+      summary: Retry failed imports
+      description: Retry importing clients that failed in a previous job
+      operationId: retryFailedImports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Retry job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkImportJobResponse'
+        '400':
+          description: No failed imports to retry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/tour/complete:
+    post:
+      tags: [Onboarding]
+      summary: Mark tour complete
+      description: Mark product tour as completed
+      operationId: completeTour
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Tour marked complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingProgressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/tour/skip:
+    post:
+      tags: [Onboarding]
+      summary: Skip tour
+      description: Skip the product tour
+      operationId: skipTour
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Tour skipped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingProgressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /onboarding/checklist/dismiss:
+    post:
+      tags: [Onboarding]
+      summary: Dismiss checklist
+      description: Permanently hide the onboarding checklist
+      operationId: dismissChecklist
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Checklist dismissed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingProgressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          additionalProperties: true
+
+    OnboardingProgressResponse:
+      type: object
+      required:
+        - id
+        - status
+        - current_step
+        - started_at
+        - checklist
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/OnboardingStatus'
+        current_step:
+          type: string
+          enum: [tier_selection, connect_xero, import_clients, product_tour, complete]
+        started_at:
+          type: string
+          format: date-time
+        tier_selected_at:
+          type: string
+          format: date-time
+          nullable: true
+        payment_setup_at:
+          type: string
+          format: date-time
+          nullable: true
+        xero_connected_at:
+          type: string
+          format: date-time
+          nullable: true
+        clients_imported_at:
+          type: string
+          format: date-time
+          nullable: true
+        tour_completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        xero_skipped:
+          type: boolean
+        tour_skipped:
+          type: boolean
+        checklist:
+          $ref: '#/components/schemas/OnboardingChecklist'
+
+    OnboardingStatus:
+      type: string
+      enum:
+        - started
+        - tier_selected
+        - payment_setup
+        - xero_connected
+        - clients_imported
+        - tour_completed
+        - completed
+        - skipped_xero
+
+    OnboardingChecklist:
+      type: object
+      required:
+        - items
+        - completed_count
+        - total_count
+        - dismissed
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistItem'
+        completed_count:
+          type: integer
+        total_count:
+          type: integer
+        dismissed:
+          type: boolean
+
+    ChecklistItem:
+      type: object
+      required:
+        - id
+        - label
+        - completed
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        completed:
+          type: boolean
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TierSelectionRequest:
+      type: object
+      required:
+        - tier
+      properties:
+        tier:
+          type: string
+          enum: [starter, professional, growth, enterprise]
+
+    TierSelectionResponse:
+      type: object
+      required:
+        - checkout_url
+        - session_id
+      properties:
+        checkout_url:
+          type: string
+          format: uri
+          description: Stripe Checkout URL
+        session_id:
+          type: string
+          description: Stripe Checkout session ID
+
+    PaymentCompleteRequest:
+      type: object
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: string
+          description: Stripe Checkout session ID
+
+    XeroConnectResponse:
+      type: object
+      required:
+        - authorization_url
+      properties:
+        authorization_url:
+          type: string
+          format: uri
+          description: Xero OAuth authorization URL
+
+    AvailableClientsResponse:
+      type: object
+      required:
+        - clients
+        - total
+        - source_type
+        - tier_limit
+        - current_count
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailableClient'
+        total:
+          type: integer
+          description: Total available clients
+        source_type:
+          type: string
+          enum: [xpm, xero_accounting]
+        tier_limit:
+          type: integer
+          description: Client limit for current tier
+        current_count:
+          type: integer
+          description: Current imported client count
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    AvailableClient:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: XPM/Xero client ID
+        name:
+          type: string
+        email:
+          type: string
+          nullable: true
+        abn:
+          type: string
+          nullable: true
+        status:
+          type: string
+        already_imported:
+          type: boolean
+          description: Whether this client is already in Clairo
+
+    BulkImportRequest:
+      type: object
+      required:
+        - client_ids
+      properties:
+        client_ids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 250
+          description: List of XPM/Xero client IDs to import
+
+    BulkImportJobResponse:
+      type: object
+      required:
+        - id
+        - status
+        - total_clients
+        - imported_count
+        - failed_count
+        - progress_percent
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/BulkImportJobStatus'
+        source_type:
+          type: string
+          enum: [xpm, xero_accounting]
+        total_clients:
+          type: integer
+        imported_count:
+          type: integer
+        failed_count:
+          type: integer
+        progress_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        imported_clients:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportedClient'
+        failed_clients:
+          type: array
+          items:
+            $ref: '#/components/schemas/FailedClient'
+
+    BulkImportJobStatus:
+      type: string
+      enum:
+        - pending
+        - in_progress
+        - completed
+        - partial_failure
+        - failed
+        - cancelled
+
+    ImportedClient:
+      type: object
+      required:
+        - xero_id
+        - client_id
+        - name
+      properties:
+        xero_id:
+          type: string
+        client_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        transactions_synced:
+          type: integer
+
+    FailedClient:
+      type: object
+      required:
+        - xero_id
+        - name
+        - error
+      properties:
+        xero_id:
+          type: string
+        name:
+          type: string
+        error:
+          type: string

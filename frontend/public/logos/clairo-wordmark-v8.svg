@@ -1,0 +1,30 @@
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- V8: Crystal/prism - clarity through complexity (tax clarity) -->
+  <defs>
+    <linearGradient id="v8Grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="v8Grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa" />
+      <stop offset="100%" style="stop-color:#3b82f6" />
+    </linearGradient>
+    <linearGradient id="v8Grad3" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#93c5fd" />
+      <stop offset="100%" style="stop-color:#60a5fa" />
+    </linearGradient>
+  </defs>
+
+  <!-- Crystal/prism shape -->
+  <polygon points="40,15 60,50 40,85 20,50" fill="url(#v8Grad1)"/>
+  <polygon points="40,15 60,50 40,50" fill="url(#v8Grad2)"/>
+  <polygon points="40,15 20,50 40,50" fill="url(#v8Grad3)"/>
+
+  <!-- Light refraction lines -->
+  <line x1="62" y1="45" x2="75" y2="35" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
+  <line x1="62" y1="50" x2="78" y2="50" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+  <line x1="62" y1="55" x2="75" y2="65" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Modern text -->
+  <text x="95" y="66" font-family="Inter, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#0f172a">clairo</text>
+</svg>

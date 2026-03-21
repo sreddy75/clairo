@@ -1,0 +1,22 @@
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- V2: Sleek modern wordmark with gradient C and integrated AI spark -->
+  <defs>
+    <linearGradient id="v2Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1" />
+      <stop offset="50%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#0ea5e9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Icon: Modern C with integrated sparkle -->
+  <path d="M50 25 A25 25 0 1 0 50 75" stroke="url(#v2Grad)" stroke-width="8" stroke-linecap="round" fill="none"/>
+
+  <!-- AI Spark integrated into C opening -->
+  <path d="M58 50 L68 42 M58 50 L68 58 M58 50 L72 50" stroke="url(#v2Grad)" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Modern lowercase text with letter spacing -->
+  <text x="95" y="67" font-family="SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif" font-size="52" font-weight="600" letter-spacing="2" fill="#1e293b">clairo</text>
+
+  <!-- Subtle underline accent -->
+  <line x1="95" y1="78" x2="180" y2="78" stroke="url(#v2Grad)" stroke-width="3" stroke-linecap="round"/>
+</svg>

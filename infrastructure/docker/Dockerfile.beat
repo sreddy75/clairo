@@ -1,0 +1,75 @@
+# Clairo Celery Beat Dockerfile
+# Multi-stage build for production Celery beat scheduler
+
+# ============================================================================
+# Stage 1: Builder - Install dependencies
+# ============================================================================
+FROM python:3.12-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_SYSTEM_PYTHON=1 \
+    UV_NO_CACHE=1 \
+    UV_COMPILE_BYTECODE=1
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+WORKDIR /app
+
+# Copy dependency files
+COPY backend/pyproject.toml backend/README.md ./
+
+# Install production dependencies (AI not needed for scheduler)
+# Note: Only installing base deps, not .[dev], so dev deps are excluded
+RUN uv pip install -e "."
+
+# Copy application code
+COPY backend/app/ ./app/
+
+# ============================================================================
+# Stage 2: Runtime - Minimal beat image
+# ============================================================================
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    CELERY_LOGLEVEL=INFO
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -r -u 1001 -g root clairo
+
+WORKDIR /app
+
+# Copy Python packages from builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application from builder
+COPY --from=builder /app /app
+
+# Change ownership
+RUN chown -R clairo:root /app
+
+# Switch to non-root user
+USER clairo
+
+# No health check for beat - it's a single process scheduler
+# Railway will restart if the process exits
+
+# Start Celery beat scheduler with RedBeat (Redis-backed schedule)
+# No --schedule flag needed: RedBeat stores schedule in Redis,
+# avoiding data loss on Railway's ephemeral filesystem.
+CMD celery -A app.tasks.celery_app beat \
+    --loglevel=${CELERY_LOGLEVEL} \
+    --pidfile=/tmp/celerybeat.pid

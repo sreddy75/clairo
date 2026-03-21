@@ -1,0 +1,45 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- PWA Icon - Clairo brand -->
+  <defs>
+    <linearGradient id="iconMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6" />
+      <stop offset="100%" style="stop-color:#1e40af" />
+    </linearGradient>
+    <linearGradient id="iconLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa" />
+      <stop offset="100%" style="stop-color:#3b82f6" />
+    </linearGradient>
+    <radialGradient id="iconRadial" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#93c5fd;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#93c5fd;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+
+  <!-- Ambient glow -->
+  <circle cx="256" cy="256" r="180" fill="url(#iconRadial)"/>
+
+  <!-- Elegant thin C -->
+  <path d="M333 90 A167 167 0 1 0 333 422" stroke="url(#iconMain)" stroke-width="26" stroke-linecap="round" fill="none"/>
+
+  <!-- Network mesh connections -->
+  <path d="M123 167 C180 193 205 231 256 256" stroke="url(#iconLight)" stroke-width="5" fill="none"/>
+  <path d="M123 345 C180 319 205 281 256 256" stroke="url(#iconLight)" stroke-width="5" fill="none"/>
+  <path d="M123 256 L256 256" stroke="#93c5fd" stroke-width="4" fill="none"/>
+  <path d="M123 167 L123 345" stroke="#dbeafe" stroke-width="3" fill="none" opacity="0.5"/>
+
+  <!-- Input insight nodes -->
+  <circle cx="123" cy="167" r="26" fill="url(#iconLight)"/>
+  <circle cx="123" cy="256" r="21" fill="#93c5fd"/>
+  <circle cx="123" cy="345" r="26" fill="url(#iconLight)"/>
+
+  <!-- Central clarity hub -->
+  <circle cx="256" cy="256" r="51" fill="url(#iconMain)"/>
+  <circle cx="256" cy="256" r="31" fill="white" opacity="0.15"/>
+  <circle cx="256" cy="256" r="15" fill="white" opacity="0.3"/>
+
+  <!-- Output pulse -->
+  <circle cx="256" cy="256" r="72" stroke="url(#iconMain)" stroke-width="4" fill="none" opacity="0.4"/>
+</svg>

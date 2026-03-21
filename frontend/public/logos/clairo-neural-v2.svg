@@ -1,0 +1,36 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- V2: Minimal elegant - fewer nodes, stronger visual hierarchy -->
+  <defs>
+    <linearGradient id="n2Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb" />
+      <stop offset="100%" style="stop-color:#1e40af" />
+    </linearGradient>
+    <filter id="n2Glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Bold C arc -->
+  <path d="M130 38 A62 62 0 1 0 130 162" stroke="url(#n2Grad)" stroke-width="14" stroke-linecap="round" fill="none"/>
+
+  <!-- Central node with glow - the "clarity" moment -->
+  <circle cx="100" cy="100" r="18" fill="url(#n2Grad)" filter="url(#n2Glow)"/>
+
+  <!-- Three input nodes (representing different data/insight sources) -->
+  <circle cx="52" cy="72" r="11" fill="#3b82f6"/>
+  <circle cx="52" cy="128" r="11" fill="#3b82f6"/>
+  <circle cx="72" cy="100" r="9" fill="#60a5fa"/>
+
+  <!-- Elegant curved connections -->
+  <path d="M52 72 Q76 86 100 100" stroke="#60a5fa" stroke-width="3" fill="none" opacity="0.8"/>
+  <path d="M52 128 Q76 114 100 100" stroke="#60a5fa" stroke-width="3" fill="none" opacity="0.8"/>
+  <path d="M72 100 L100 100" stroke="#93c5fd" stroke-width="2.5" opacity="0.7"/>
+
+  <!-- Single output ray - representing unified clarity -->
+  <path d="M118 100 L145 100" stroke="url(#n2Grad)" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+  <circle cx="152" cy="100" r="8" fill="url(#n2Grad)"/>
+</svg>

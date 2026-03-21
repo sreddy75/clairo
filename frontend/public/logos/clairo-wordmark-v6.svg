@@ -1,0 +1,30 @@
+<svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- V6: Lighthouse/beacon - guiding through tax complexity -->
+  <defs>
+    <linearGradient id="v6Grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#1d4ed8" />
+      <stop offset="100%" style="stop-color:#3b82f6" />
+    </linearGradient>
+    <linearGradient id="v6Glow" x1="50%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:0" />
+      <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:0.6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Lighthouse tower -->
+  <path d="M35 75 L30 35 Q30 30 35 30 L45 30 Q50 30 50 35 L45 75 Z" fill="url(#v6Grad)"/>
+
+  <!-- Light beam emanating -->
+  <path d="M40 28 L25 15 L55 15 Z" fill="url(#v6Glow)"/>
+  <path d="M40 28 L20 20 L60 20 Z" fill="url(#v6Glow)" opacity="0.5"/>
+
+  <!-- Light source -->
+  <circle cx="40" cy="30" r="6" fill="#fbbf24"/>
+  <circle cx="40" cy="30" r="9" stroke="#fbbf24" stroke-width="2" fill="none" opacity="0.5"/>
+
+  <!-- Base -->
+  <rect x="25" y="75" width="30" height="5" rx="2" fill="url(#v6Grad)"/>
+
+  <!-- Text -->
+  <text x="80" y="66" font-family="Inter, -apple-system, sans-serif" font-size="50" font-weight="700" fill="#0f172a">clairo</text>
+</svg>

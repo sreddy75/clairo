@@ -1,0 +1,594 @@
+openapi: 3.0.3
+info:
+  title: Clairo Subscription API
+  description: |
+    API for subscription management and feature gating.
+
+    ## Authentication
+    All endpoints require Clerk JWT authentication.
+
+    ## Feature Gating
+    Some endpoints are gated by tier. Requests to gated features
+    from insufficient tiers return 403 with upgrade information.
+  version: 1.0.0
+  contact:
+    name: Clairo Support
+    email: support@clairo.com.au
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: subscription
+    description: Subscription management endpoints
+  - name: billing
+    description: Billing and payment endpoints
+  - name: features
+    description: Feature access and tier information
+
+paths:
+  /subscription:
+    get:
+      tags: [subscription]
+      summary: Get current subscription
+      description: Returns the current tenant's subscription details
+      operationId: getSubscription
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /subscription/checkout:
+    post:
+      tags: [subscription]
+      summary: Create checkout session
+      description: |
+        Creates a Stripe Checkout session for subscribing to a tier.
+        Returns a URL to redirect the user to Stripe's hosted checkout.
+      operationId: createCheckoutSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutRequest'
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /subscription/portal:
+    post:
+      tags: [subscription]
+      summary: Create billing portal session
+      description: |
+        Creates a Stripe Customer Portal session for self-service
+        subscription management (update payment method, cancel, etc.)
+      operationId: createPortalSession
+      responses:
+        '200':
+          description: Portal session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalResponse'
+        '400':
+          description: No active subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /subscription/upgrade:
+    post:
+      tags: [subscription]
+      summary: Upgrade subscription tier
+      description: |
+        Immediately upgrades to a higher tier with prorated charge.
+        Only available for active subscribers.
+      operationId: upgradeSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeRequest'
+      responses:
+        '200':
+          description: Upgrade successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          description: Invalid upgrade (same or lower tier)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /subscription/downgrade:
+    post:
+      tags: [subscription]
+      summary: Schedule subscription downgrade
+      description: |
+        Schedules a downgrade to take effect at the next billing cycle.
+        Current access is retained until period end.
+      operationId: downgradeSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DowngradeRequest'
+      responses:
+        '200':
+          description: Downgrade scheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          description: Invalid downgrade or client limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /subscription/cancel:
+    post:
+      tags: [subscription]
+      summary: Cancel subscription
+      description: |
+        Cancels the subscription at the end of the current billing period.
+        Access is retained until period end.
+      operationId: cancelSubscription
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+      responses:
+        '200':
+          description: Cancellation scheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          description: No active subscription to cancel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /features:
+    get:
+      tags: [features]
+      summary: Get feature access
+      description: |
+        Returns the current tenant's tier and feature access status.
+        Used by frontend to render appropriate UI.
+      operationId: getFeatures
+      responses:
+        '200':
+          description: Feature access information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeaturesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /features/tiers:
+    get:
+      tags: [features]
+      summary: List available tiers
+      description: |
+        Returns all available subscription tiers with their features
+        and pricing. Used for pricing page and upgrade prompts.
+      operationId: listTiers
+      responses:
+        '200':
+          description: List of tiers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TiersResponse'
+
+  /billing/events:
+    get:
+      tags: [billing]
+      summary: List billing events
+      description: |
+        Returns billing events for the current tenant.
+        Paginated and sorted by date descending.
+      operationId: listBillingEvents
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of billing events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingEventsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /webhooks/stripe:
+    post:
+      tags: [billing]
+      summary: Stripe webhook handler
+      description: |
+        Receives webhook events from Stripe.
+        Must be configured in Stripe Dashboard.
+      operationId: stripeWebhook
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [success, already_processed]
+        '400':
+          description: Invalid signature or payload
+
+components:
+  schemas:
+    SubscriptionTier:
+      type: string
+      enum: [starter, professional, growth, enterprise]
+      description: Subscription pricing tier
+
+    SubscriptionStatus:
+      type: string
+      enum: [trial, active, past_due, cancelled, suspended, grandfathered]
+      description: Subscription payment status
+
+    SubscriptionResponse:
+      type: object
+      required:
+        - tier
+        - status
+        - features
+      properties:
+        tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        status:
+          $ref: '#/components/schemas/SubscriptionStatus'
+        stripe_customer_id:
+          type: string
+          nullable: true
+        current_period_end:
+          type: string
+          format: date-time
+          nullable: true
+        scheduled_change:
+          type: object
+          nullable: true
+          properties:
+            new_tier:
+              $ref: '#/components/schemas/SubscriptionTier'
+            effective_date:
+              type: string
+              format: date-time
+        features:
+          $ref: '#/components/schemas/TierFeatures'
+        usage:
+          $ref: '#/components/schemas/UsageInfo'
+
+    TierFeatures:
+      type: object
+      required:
+        - max_clients
+        - ai_insights
+        - client_portal
+        - custom_triggers
+        - api_access
+        - knowledge_base
+        - magic_zone
+      properties:
+        max_clients:
+          type: integer
+          nullable: true
+          description: Client limit (null = unlimited)
+        ai_insights:
+          type: string
+          enum: [basic, full]
+        client_portal:
+          type: boolean
+        custom_triggers:
+          type: boolean
+        api_access:
+          type: boolean
+        knowledge_base:
+          type: boolean
+        magic_zone:
+          type: boolean
+
+    UsageInfo:
+      type: object
+      required:
+        - client_count
+        - client_limit
+        - is_at_limit
+        - is_approaching_limit
+      properties:
+        client_count:
+          type: integer
+        client_limit:
+          type: integer
+          nullable: true
+        is_at_limit:
+          type: boolean
+        is_approaching_limit:
+          type: boolean
+        percentage_used:
+          type: number
+          format: float
+
+    CheckoutRequest:
+      type: object
+      required:
+        - tier
+      properties:
+        tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        success_url:
+          type: string
+          format: uri
+          description: URL to redirect after successful payment
+        cancel_url:
+          type: string
+          format: uri
+          description: URL to redirect if user cancels
+
+    CheckoutResponse:
+      type: object
+      required:
+        - checkout_url
+        - session_id
+      properties:
+        checkout_url:
+          type: string
+          format: uri
+          description: Stripe Checkout URL to redirect user
+        session_id:
+          type: string
+          description: Stripe Checkout session ID
+
+    PortalResponse:
+      type: object
+      required:
+        - portal_url
+      properties:
+        portal_url:
+          type: string
+          format: uri
+          description: Stripe Customer Portal URL
+
+    UpgradeRequest:
+      type: object
+      required:
+        - new_tier
+      properties:
+        new_tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+
+    DowngradeRequest:
+      type: object
+      required:
+        - new_tier
+      properties:
+        new_tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+
+    CancelRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Optional cancellation reason
+        feedback:
+          type: string
+          description: Optional feedback
+
+    FeaturesResponse:
+      type: object
+      required:
+        - tier
+        - features
+        - can_access
+      properties:
+        tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        features:
+          $ref: '#/components/schemas/TierFeatures'
+        can_access:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: Map of feature name to access boolean
+
+    TierInfo:
+      type: object
+      required:
+        - name
+        - display_name
+        - price_monthly
+        - features
+      properties:
+        name:
+          $ref: '#/components/schemas/SubscriptionTier'
+        display_name:
+          type: string
+        price_monthly:
+          type: integer
+          description: Price in cents (AUD)
+        price_id:
+          type: string
+          description: Stripe price ID
+        features:
+          $ref: '#/components/schemas/TierFeatures'
+        highlights:
+          type: array
+          items:
+            type: string
+          description: Marketing feature highlights
+
+    TiersResponse:
+      type: object
+      required:
+        - tiers
+      properties:
+        tiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TierInfo'
+
+    BillingEvent:
+      type: object
+      required:
+        - id
+        - event_type
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        amount_cents:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+          default: aud
+        status:
+          type: string
+          enum: [pending, processed, failed]
+        created_at:
+          type: string
+          format: date-time
+
+    BillingEventsResponse:
+      type: object
+      required:
+        - events
+        - total
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/BillingEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Error:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Machine-readable error code
+        details:
+          type: object
+          additionalProperties: true
+
+    FeatureGatedError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            feature:
+              type: string
+              description: Name of the gated feature
+            required_tier:
+              $ref: '#/components/schemas/SubscriptionTier'
+            current_tier:
+              $ref: '#/components/schemas/SubscriptionTier'
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    FeatureGated:
+      description: Feature not available in current tier
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FeatureGatedError'
+
+  securitySchemes:
+    ClerkAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Clerk JWT token
+
+security:
+  - ClerkAuth: []

@@ -1,0 +1,86 @@
+# Docker ignore file for BASwise
+# Prevents unnecessary files from being copied into Docker images
+
+# Version control
+.git/
+.gitignore
+.github/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node.js
+node_modules/
+.next/
+out/
+.nuxt/
+*.tsbuildinfo
+.npm
+
+# Environment files (use Docker secrets instead)
+.env
+.env.*
+*.pem
+*.key
+secrets/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+test-results/
+playwright-report/
+
+# Specs and docs (not needed in runtime)
+specs/
+docs/
+*.md
+!README.md
+
+# Local data
+minio_data/
+qdrant_data/
+postgres_data/
+redis_data/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Build artifacts
+dist/
+build/
