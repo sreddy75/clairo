@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { chatStream, listMessages } from '@/lib/api/tax-planning';
 import { cn } from '@/lib/utils';
-import type { TaxPlanMessage, TaxScenario } from '@/types/tax-planning';
+import type { CitationVerification, TaxPlanMessage, TaxScenario } from '@/types/tax-planning';
+
+import { CitationBadge } from './CitationBadge';
 
 interface ScenarioChatProps {
   planId: string;
@@ -24,6 +26,7 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [thinkingText, setThinkingText] = useState('');
+  const pendingVerificationRef = useRef<CitationVerification | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -100,8 +103,13 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
               onScenarioCreated(event.scenario as TaxScenario);
             }
             break;
+          case 'verification':
+            if (event.data) {
+              pendingVerificationRef.current = event.data;
+            }
+            break;
           case 'done':
-            // Add final assistant message
+            // Add final assistant message with verification data
             if (fullContent) {
               const assistantMsg: TaxPlanMessage = {
                 id: event.message_id || `msg-${Date.now()}`,
@@ -109,8 +117,10 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
                 content: fullContent,
                 scenario_ids: event.scenarios_created || [],
                 created_at: new Date().toISOString(),
+                citation_verification: pendingVerificationRef.current,
               };
               setMessages((prev) => [...prev, assistantMsg]);
+              pendingVerificationRef.current = null;
             }
             setStreamingContent('');
             break;
@@ -244,7 +254,7 @@ function MessageBubble({ message }: { message: TaxPlanMessage }) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex flex-col', isUser ? 'items-end' : 'items-start')}>
       <div
         className={cn(
           'max-w-[85%] rounded-lg px-3 py-2 text-sm',
@@ -259,6 +269,9 @@ function MessageBubble({ message }: { message: TaxPlanMessage }) {
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
         )}
       </div>
+      {!isUser && message.citation_verification && (
+        <CitationBadge verification={message.citation_verification} />
+      )}
     </div>
   );
 }

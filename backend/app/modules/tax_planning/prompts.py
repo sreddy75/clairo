@@ -21,6 +21,8 @@ Entity Type: {entity_type}
 ## Existing Scenarios
 {scenario_history}
 
+{reference_material}
+
 ## Instructions
 When the user describes a scenario:
 1. Analyse the tax implications for this entity type
@@ -35,6 +37,12 @@ When the user describes a scenario:
    - Compliance notes with ATO ruling or ITAA section references
    - Cash flow impact (net of tax saving and outlay)
 5. If asked to "compare all options", produce a ranked summary
+
+## Citation Rules
+When your advice aligns with a reference from the Reference Material section, cite it inline using [Source: IDENTIFIER] where IDENTIFIER is the ruling number (e.g., TR 98/1), legislation section (e.g., s82KZM ITAA 1936), or document title.
+At the end of your response, include a ## Sources section listing all cited references with their full titles.
+If no reference material is available or no reference supports a specific claim, state that it is based on general tax knowledge.
+Citations reference publicly available ATO guidance for informational purposes.
 
 Always output amounts in AUD. All outputs are estimates only — not formal tax advice.
 
@@ -105,6 +113,45 @@ CALCULATE_TAX_TOOL = {
         ],
     },
 }
+
+
+def format_reference_material(chunks: list[dict]) -> str:
+    """Format retrieved knowledge base chunks as numbered references for the system prompt.
+
+    Args:
+        chunks: List of retrieved chunks, each with keys:
+            title, source_type, ruling_number, section_ref, text, relevance_score
+
+    Returns:
+        Formatted reference material block, or empty placeholder if no chunks.
+    """
+    if not chunks:
+        return "## Reference Material\nNo reference material available for this query."
+
+    max_chunks = 5
+    max_text_chars = 2000  # ~500 tokens
+
+    lines = ["## Reference Material"]
+    for i, chunk in enumerate(chunks[:max_chunks], 1):
+        identifier = (
+            chunk.get("ruling_number")
+            or chunk.get("section_ref")
+            or chunk.get("title", "Unknown source")
+        )
+        title = chunk.get("title", "")
+        text = chunk.get("text", "")
+        if len(text) > max_text_chars:
+            text = text[:max_text_chars] + "..."
+
+        source_type = chunk.get("source_type", "")
+        superseded = chunk.get("is_superseded", False)
+        superseded_note = " (Note: this ruling has been superseded — check for current version)" if superseded else ""
+
+        lines.append(f"\n[{i}] {title} ({identifier}){superseded_note}")
+        lines.append(f"Source type: {source_type}")
+        lines.append(text)
+
+    return "\n".join(lines)
 
 
 def format_financial_context(

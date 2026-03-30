@@ -531,6 +531,19 @@ export async function triggerTpbTreasuryIngestion(
   return apiClient.handleResponse<IngestionTriggerResponse>(response);
 }
 
+export async function triggerTaxPlanningTopicsIngestion(
+  token: string,
+): Promise<IngestionTriggerResponse> {
+  const response = await apiClient.post(`${ADMIN_BASE}/ingest/tax-planning-topics`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({}),
+  });
+  return apiClient.handleResponse<IngestionTriggerResponse>(response);
+}
+
 // =============================================================================
 // Ingestion Task Status Polling
 // =============================================================================

@@ -1991,6 +1991,50 @@ async def trigger_tpb_treasury_ingestion(
     )
 
 
+@router.post(
+    "/ingest/tax-planning-topics",
+    response_model=AdminIngestionJobResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def trigger_tax_planning_topics_ingestion(
+    db: DbSession,
+) -> AdminIngestionJobResponse:
+    """Trigger ingestion of ATO tax planning topic pages.
+
+    Auto-creates the 'ATO Tax Planning Topics' source (idempotent) and
+    dispatches the generic ingest_source task to scrape ~16 key ATO
+    guidance pages covering tax planning strategies.
+
+    Returns a 202 Accepted with the background job details.
+    """
+    from app.tasks.knowledge import _get_or_create_source, ingest_source
+
+    source = await _get_or_create_source(db, "tax_planning_topics")
+
+    from app.modules.knowledge.models import IngestionJob
+    from app.modules.knowledge.repository import IngestionJobRepository
+
+    job_repo = IngestionJobRepository(db)
+    job = IngestionJob(
+        source_id=source.id,
+        status="pending",
+        triggered_by="manual",
+    )
+    job = await job_repo.create(job)
+    await db.commit()
+
+    task = ingest_source.delay(str(source.id), str(job.id))
+
+    return AdminIngestionJobResponse(
+        data={
+            "job_id": task.id,
+            "source_type": "tax_planning_topics",
+            "status": "pending",
+            "message": "ATO Tax Planning Topics ingestion queued.",
+        }
+    )
+
+
 @router.get("/ingest/status/{task_id}")
 async def get_ingestion_task_status(task_id: str) -> dict:
     """Get the live status of a Celery ingestion task.

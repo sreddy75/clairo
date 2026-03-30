@@ -30,6 +30,7 @@ import {
   triggerAtoLegalDbIngestion,
   triggerCaseLawIngestion,
   triggerLegislationIngestion,
+  triggerTaxPlanningTopicsIngestion,
   triggerTpbTreasuryIngestion,
 } from '@/lib/api/knowledge';
 import { JOB_STATUS_CONFIG, type JobStatus } from '@/types/knowledge';
@@ -38,7 +39,7 @@ import { useJobs } from '../hooks/use-jobs';
 
 import { JobDetailModal } from './job-detail-modal';
 
-type IngestionSource = 'legislation' | 'case_law' | 'ato_legal_db' | 'tpb_treasury';
+type IngestionSource = 'legislation' | 'case_law' | 'ato_legal_db' | 'tpb_treasury' | 'tax_planning_topics';
 
 interface IngestionAction {
   key: IngestionSource;
@@ -77,6 +78,13 @@ const INGESTION_ACTIONS: IngestionAction[] = [
     icon: BookOpen,
     trigger: (token, devMode) => triggerTpbTreasuryIngestion(token, devMode),
   },
+  {
+    key: 'tax_planning_topics',
+    label: 'Tax Planning Topics',
+    description: 'Ingest ~16 key ATO guidance pages for tax planning (instant asset write-off, prepaid expenses, Div 7A, CGT concessions, etc.)',
+    icon: Scale,
+    trigger: (token) => triggerTaxPlanningTopicsIngestion(token),
+  },
 ];
 
 const FRESHNESS_CONFIG: Record<string, { icon: typeof Scale; color: string }> = {
@@ -85,6 +93,7 @@ const FRESHNESS_CONFIG: Record<string, { icon: typeof Scale; color: string }> = 
   case_law: { icon: Gavel, color: 'purple' },
   ato_rss: { icon: Database, color: 'green' },
   tpb_treasury: { icon: BookOpen, color: 'teal' },
+  tax_planning_topics: { icon: Scale, color: 'emerald' },
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -92,6 +101,7 @@ const SOURCE_LABELS: Record<string, string> = {
   legislation: 'Australian Legislation',
   case_law: 'Case Law',
   tpb_treasury: 'TPB & Treasury',
+  tax_planning_topics: 'Tax Planning Topics',
 };
 
 interface ActiveJob {

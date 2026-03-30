@@ -241,5 +241,17 @@ class TaxPlanMessage(BaseModel, TenantMixin):
         server_default="{}",
     )
 
+    # RAG context — which knowledge chunks informed this response
+    source_chunks_used: Mapped[list[dict] | None] = mapped_column(
+        JSONB,
+        nullable=True,
+    )
+
+    # Citation verification result for this response
+    citation_verification: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+    )
+
     # Relationships
     tax_plan: Mapped["TaxPlan"] = relationship(back_populates="messages")

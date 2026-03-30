@@ -3,6 +3,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -103,6 +104,32 @@ class TaxScenarioListResponse(BaseModel):
     total: int
 
 
+VerificationStatus = Literal[
+    "verified", "partially_verified", "unverified", "no_citations"
+]
+
+
+class SourceChunkRef(BaseModel):
+    """Reference to a knowledge base chunk used in RAG retrieval."""
+
+    chunk_id: str
+    source_type: str
+    title: str
+    ruling_number: str | None = None
+    section_ref: str | None = None
+    relevance_score: float
+
+
+class CitationVerificationResult(BaseModel):
+    """Result of verifying citations in an AI response."""
+
+    total_citations: int
+    verified_count: int
+    unverified_count: int
+    verification_rate: float
+    status: VerificationStatus
+
+
 class TaxPlanMessageResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -111,6 +138,8 @@ class TaxPlanMessageResponse(BaseModel):
     content: str
     scenario_ids: list[uuid.UUID]
     created_at: datetime
+    source_chunks_used: list[SourceChunkRef] | None = None
+    citation_verification: CitationVerificationResult | None = None
 
 
 class MessageListResponse(BaseModel):

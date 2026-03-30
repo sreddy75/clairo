@@ -395,6 +395,158 @@ class TaxPlanningService:
         return await self.message_repo.list_by_plan(plan_id, tenant_id, page, page_size)
 
     # ------------------------------------------------------------------
+    # RAG Retrieval
+    # ------------------------------------------------------------------
+
+    _CONVERSATIONAL_PATTERNS = {
+        "thanks", "thank you", "ok", "okay", "got it", "sure", "yes", "no",
+        "hi", "hello", "hey", "cheers", "great", "good", "cool", "noted",
+    }
+
+    async def _retrieve_tax_knowledge(
+        self,
+        query: str,
+        entity_type: str,
+    ) -> tuple[list[dict], str]:
+        """Retrieve relevant knowledge base content for a tax planning query.
+
+        Returns:
+            Tuple of (raw_chunks, formatted_reference_material).
+            Empty list and empty-KB message if retrieval fails or is skipped.
+        """
+        from app.modules.tax_planning.prompts import format_reference_material
+
+        # Skip retrieval for conversational messages
+        if len(query.strip()) < 10 or query.strip().lower().rstrip("!.?") in self._CONVERSATIONAL_PATTERNS:
+            return [], format_reference_material([])
+
+        try:
+            from app.modules.knowledge.schemas import (
+                KnowledgeSearchFilters,
+                KnowledgeSearchRequest,
+            )
+            from app.modules.knowledge.service import KnowledgeService
+
+            knowledge_service = KnowledgeService(self.session, self.settings)
+
+            # Build metadata filters based on entity type
+            entity_filter = {
+                "company": ["company"],
+                "individual": ["sole_trader", "individual"],
+                "trust": ["trust"],
+                "partnership": ["partnership"],
+            }.get(entity_type, [])
+
+            search_request = KnowledgeSearchRequest(
+                query=query,
+                filters=KnowledgeSearchFilters(
+                    entity_types=entity_filter or None,
+                    exclude_superseded=True,
+                ),
+                limit=8,
+            )
+
+            response = await knowledge_service.search_knowledge(search_request)
+            results = response.get("results", [])
+
+            # Take top 5 after reranking
+            chunks = []
+            for result in results[:5]:
+                chunks.append({
+                    "chunk_id": str(result.get("chunk_id", "")),
+                    "source_type": result.get("source_type", ""),
+                    "title": result.get("title", ""),
+                    "ruling_number": result.get("ruling_number"),
+                    "section_ref": result.get("section_ref"),
+                    "text": result.get("text", ""),
+                    "relevance_score": result.get("relevance_score", 0.0),
+                    "is_superseded": result.get("is_superseded", False),
+                })
+
+            logger.info(
+                "RAG retrieval: query=%s entity=%s results=%d",
+                query[:80],
+                entity_type,
+                len(chunks),
+            )
+
+            return chunks, format_reference_material(chunks)
+
+        except Exception as e:
+            logger.warning("RAG retrieval failed, proceeding without references: %s", e)
+            return [], format_reference_material([])
+
+    def _build_citation_verification(
+        self,
+        response_content: str,
+        retrieved_chunks: list[dict],
+    ) -> dict:
+        """Verify citations in the response against retrieved chunks.
+
+        Returns a citation verification result dict.
+        """
+        import re
+
+        if not response_content or not retrieved_chunks:
+            return {
+                "total_citations": 0,
+                "verified_count": 0,
+                "unverified_count": 0,
+                "verification_rate": 0.0,
+                "status": "no_citations",
+            }
+
+        # Extract citations: [Source: ...] patterns
+        citation_pattern = r'\[Source:\s*([^\]]+)\]'
+        citations = re.findall(citation_pattern, response_content)
+
+        if not citations:
+            return {
+                "total_citations": 0,
+                "verified_count": 0,
+                "unverified_count": 0,
+                "verification_rate": 0.0,
+                "status": "no_citations",
+            }
+
+        # Build a set of identifiers from retrieved chunks
+        chunk_identifiers = set()
+        for chunk in retrieved_chunks:
+            if chunk.get("ruling_number"):
+                chunk_identifiers.add(chunk["ruling_number"].lower().strip())
+            if chunk.get("section_ref"):
+                chunk_identifiers.add(chunk["section_ref"].lower().strip())
+            if chunk.get("title"):
+                chunk_identifiers.add(chunk["title"].lower().strip())
+
+        # Verify each citation
+        verified_count = 0
+        for citation in citations:
+            citation_lower = citation.lower().strip()
+            if any(identifier in citation_lower or citation_lower in identifier
+                   for identifier in chunk_identifiers):
+                verified_count += 1
+
+        total = len(citations)
+        unverified = total - verified_count
+        rate = verified_count / total if total > 0 else 0.0
+
+        if rate >= 0.9:
+            status = "verified"
+        elif rate >= 0.5:
+            status = "partially_verified"
+        else:
+            status = "unverified"
+
+        return {
+            "total_citations": total,
+            "verified_count": verified_count,
+            "unverified_count": unverified,
+            "verification_rate": rate,
+            "status": status,
+        }
+
+    # ------------------------------------------------------------------
     # AI Chat
     # ------------------------------------------------------------------
 
@@ -434,6 +586,11 @@ class TaxPlanningService:
             }
         )
 
+        # RAG retrieval
+        retrieved_chunks, reference_material = await self._retrieve_tax_knowledge(
+            message, plan.entity_type,
+        )
+
         # Call AI agent
         api_key = self.settings.anthropic.api_key.get_secret_value()
         agent = TaxPlanningAgent(api_key=api_key)
@@ -447,7 +604,17 @@ class TaxPlanningService:
             conversation_history=conversation_history,
             existing_scenarios=scenarios,
             rate_configs=rate_configs,
+            reference_material=reference_material,
         )
+
+        # Citation verification
+        citation_verification = self._build_citation_verification(
+            response.content, retrieved_chunks,
+        )
+        source_chunks_used = [
+            {k: v for k, v in chunk.items() if k != "text" and k != "is_superseded"}
+            for chunk in retrieved_chunks
+        ] or None
 
         # Create scenario records
         created_scenarios = []
@@ -471,7 +638,7 @@ class TaxPlanningService:
             created_scenarios.append(scenario)
             scenario_ids.append(scenario.id)
 
-        # Save assistant message
+        # Save assistant message with RAG metadata
         assistant_msg = await self.message_repo.create(
             {
                 "tenant_id": tenant_id,
@@ -481,6 +648,8 @@ class TaxPlanningService:
                 "scenario_ids": scenario_ids,
                 "token_count": len(response.content) // 4,
                 "metadata_": response.token_usage,
+                "source_chunks_used": source_chunks_used,
+                "citation_verification": citation_verification,
             }
         )
 
@@ -525,6 +694,11 @@ class TaxPlanningService:
             }
         )
 
+        # RAG retrieval
+        retrieved_chunks, reference_material = await self._retrieve_tax_knowledge(
+            message, plan.entity_type,
+        )
+
         api_key = self.settings.anthropic.api_key.get_secret_value()
         agent = TaxPlanningAgent(api_key=api_key)
 
@@ -540,6 +714,7 @@ class TaxPlanningService:
             conversation_history=conversation_history,
             existing_scenarios=scenarios,
             rate_configs=rate_configs,
+            reference_material=reference_material,
         ):
             if event["type"] == "content":
                 full_content += event.get("content", "")
@@ -565,8 +740,16 @@ class TaxPlanningService:
 
             yield event
 
-        # Save assistant message after streaming completes
+        # Citation verification and save assistant message
         if full_content:
+            citation_verification = self._build_citation_verification(
+                full_content, retrieved_chunks,
+            )
+            source_chunks_used = [
+                {k: v for k, v in chunk.items() if k != "text" and k != "is_superseded"}
+                for chunk in retrieved_chunks
+            ] or None
+
             await self.message_repo.create(
                 {
                     "tenant_id": tenant_id,
@@ -575,8 +758,16 @@ class TaxPlanningService:
                     "content": full_content,
                     "scenario_ids": created_scenario_ids,
                     "token_count": len(full_content) // 4,
+                    "source_chunks_used": source_chunks_used,
+                    "citation_verification": citation_verification,
                 }
             )
+
+            # Yield verification event for frontend
+            yield {
+                "type": "verification",
+                "data": citation_verification,
+            }
 
     # ------------------------------------------------------------------
     # Helpers

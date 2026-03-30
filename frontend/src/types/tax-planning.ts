@@ -99,12 +99,33 @@ export interface TaxScenario {
   created_at: string;
 }
 
+export interface SourceChunkRef {
+  chunk_id: string;
+  source_type: string;
+  title: string;
+  ruling_number: string | null;
+  section_ref: string | null;
+  relevance_score: number;
+}
+
+export type VerificationStatus = 'verified' | 'partially_verified' | 'unverified' | 'no_citations';
+
+export interface CitationVerification {
+  total_citations: number;
+  verified_count: number;
+  unverified_count: number;
+  verification_rate: number;
+  status: VerificationStatus;
+}
+
 export interface TaxPlanMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   scenario_ids: string[];
   created_at: string;
+  source_chunks_used?: SourceChunkRef[] | null;
+  citation_verification?: CitationVerification | null;
 }
 
 export interface TaxPlan {
@@ -235,7 +256,7 @@ export interface XeroChanges {
 }
 
 // SSE event types for streaming chat
-export type ChatStreamEventType = 'thinking' | 'content' | 'scenario' | 'done' | 'error';
+export type ChatStreamEventType = 'thinking' | 'content' | 'scenario' | 'verification' | 'done' | 'error';
 
 export interface ChatStreamEvent {
   type: ChatStreamEventType;
@@ -244,4 +265,5 @@ export interface ChatStreamEvent {
   message_id?: string;
   scenarios_created?: string[];
   error?: string;
+  data?: CitationVerification;
 }

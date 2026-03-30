@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Source definitions for Spec 045 ingestion tasks.
 # Each maps to a KnowledgeSource row (get-or-created on first use).
-_SPEC045_SOURCES: dict[str, dict[str, str]] = {
+_SPEC045_SOURCES: dict[str, dict[str, str | dict]] = {
     "ato_legal_db": {
         "name": "ATO Legal Database",
         "source_type": "ato_legal_db",
@@ -56,6 +56,48 @@ _SPEC045_SOURCES: dict[str, dict[str, str]] = {
         "base_url": "https://www.ato.gov.au",
         "collection_name": "compliance_knowledge",
     },
+    "tax_planning_topics": {
+        "name": "ATO Tax Planning Topics",
+        "source_type": "ato_web",
+        "base_url": "https://www.ato.gov.au",
+        "collection_name": "compliance_knowledge",
+        "scrape_config": {
+            "urls": [
+                # Instant asset write-off
+                "https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-expenses-and-allowances/simpler-depreciation-for-small-business/instant-asset-write-off",
+                # Prepaid expenses
+                "https://www.ato.gov.au/forms-and-instructions/deductions-for-prepaid-expenses-2025",
+                # Division 7A
+                "https://www.ato.gov.au/businesses-and-organisations/corporate-tax-measures-and-assurance/private-company-benefits-division-7a-dividends",
+                "https://www.ato.gov.au/tax-rates-and-codes/division-7a-benchmark-interest-rate",
+                # Small business entity concessions
+                "https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/incentives-and-concessions",
+                # CGT small business concessions
+                "https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/incentives-and-concessions/small-business-cgt-concessions",
+                # FBT exemptions and concessions
+                "https://www.ato.gov.au/businesses-and-organisations/hiring-and-paying-your-workers/fringe-benefits-tax/exemptions-concessions-and-other-ways-to-reduce-fbt",
+                # Superannuation contributions
+                "https://www.ato.gov.au/individuals-and-families/super-for-individuals-and-families/super/growing-and-keeping-track-of-your-super/caps-limits-and-tax-on-super-contributions",
+                # Loss carry-back
+                "https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/losses/loss-carry-back-tax-offset",
+                # Company tax rates / base rate entity
+                "https://www.ato.gov.au/tax-rates-and-codes/company-tax-rate-changes",
+                # Trust distributions / Section 100A
+                "https://www.ato.gov.au/businesses-and-organisations/trusts/trust-income-losses-and-capital-gains/trust-taxation-reimbursement-agreement",
+                # R&D Tax Incentive
+                "https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/incentives-and-concessions/research-and-development-tax-incentive-and-concessions",
+                # PAYG instalment variations
+                "https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/payg-instalments/how-to-vary-your-payg-instalments",
+                # Simpler depreciation for SBE
+                "https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-expenses-and-allowances/simpler-depreciation-for-small-business",
+                # General deductions guide
+                "https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions/deductions-you-can-claim",
+                # Small business benchmarks
+                "https://www.ato.gov.au/businesses-and-organisations/corporate-tax-measures-and-assurance/small-business-benchmarks/about-small-business-benchmarks",
+            ],
+            "max_depth": 1,
+        },
+    },
 }
 
 
@@ -83,6 +125,7 @@ async def _get_or_create_source(db, source_key: str) -> "KnowledgeSource":
         source_type=config["source_type"],
         base_url=config["base_url"],
         collection_name=config["collection_name"],
+        scrape_config=config.get("scrape_config", {}),
         is_active=True,
     )
     source = await repo.create(source)

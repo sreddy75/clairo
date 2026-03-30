@@ -17,6 +17,7 @@ from app.modules.tax_planning.prompts import (
     CALCULATE_TAX_TOOL,
     TAX_PLANNING_SYSTEM_PROMPT,
     format_financial_context,
+    format_reference_material,
     format_scenario_history,
 )
 from app.modules.tax_planning.tax_calculator import calculate_tax_position
@@ -57,6 +58,7 @@ class TaxPlanningAgent:
         conversation_history: list[dict[str, str]],
         existing_scenarios: list,
         rate_configs: dict[str, dict],
+        reference_material: str | None = None,
     ) -> AgentResponse:
         """Process a user message and generate scenario responses.
 
@@ -69,6 +71,7 @@ class TaxPlanningAgent:
             entity_type,
             financial_year,
             existing_scenarios,
+            reference_material=reference_material,
         )
 
         messages = self._build_messages(conversation_history, message)
@@ -143,6 +146,7 @@ class TaxPlanningAgent:
         conversation_history: list[dict[str, str]],
         existing_scenarios: list,
         rate_configs: dict[str, dict],
+        reference_material: str | None = None,
     ) -> AsyncGenerator[dict[str, Any], None]:
         """Stream a response with SSE events.
 
@@ -154,6 +158,7 @@ class TaxPlanningAgent:
             entity_type,
             financial_year,
             existing_scenarios,
+            reference_material=reference_material,
         )
         messages = self._build_messages(conversation_history, message)
         scenarios: list[dict[str, Any]] = []
@@ -221,6 +226,7 @@ class TaxPlanningAgent:
         entity_type: str,
         financial_year: str,
         existing_scenarios: list,
+        reference_material: str | None = None,
     ) -> str:
         financial_context = format_financial_context(
             financials,
@@ -228,12 +234,14 @@ class TaxPlanningAgent:
             entity_type,
         )
         scenario_history = format_scenario_history(existing_scenarios)
+        ref_material = reference_material or format_reference_material([])
 
         return TAX_PLANNING_SYSTEM_PROMPT.format(
             financial_context=financial_context,
             financial_year=financial_year,
             entity_type=entity_type,
             scenario_history=scenario_history,
+            reference_material=ref_material,
         )
 
     def _build_messages(
