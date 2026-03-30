@@ -47,6 +47,7 @@ export type Tab =
   | 'bas'
   | 'quality'
   | 'insights'
+  | 'tax-planning'
   | 'contacts'
   | 'invoices'
   | 'transactions'
@@ -282,6 +283,7 @@ export function LedgerCardsHeader({
     { id: 'overview', label: 'Dashboard' },
     { id: 'bas', label: 'BAS', badge: counts.criticalIssues },
     { id: 'insights', label: 'Insights' },
+    { id: 'tax-planning', label: 'Tax Planning' },
   ];
 
   // "Data" dropdown - merges Contacts + Financial Data

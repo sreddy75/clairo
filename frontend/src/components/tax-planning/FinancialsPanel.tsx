@@ -1,0 +1,233 @@
+'use client';
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { formatCurrency, formatRelativeTime } from '@/lib/formatters';
+import { cn } from '@/lib/utils';
+import type { DataSource, FinancialsData } from '@/types/tax-planning';
+
+interface FinancialsPanelProps {
+  financials: FinancialsData;
+  dataSource: DataSource;
+  xeroFetchedAt: string | null;
+  onRefreshXero?: () => Promise<void>;
+  onEdit?: () => void;
+}
+
+export function FinancialsPanel({
+  financials,
+  dataSource,
+  xeroFetchedAt,
+  onRefreshXero,
+  onEdit,
+}: FinancialsPanelProps) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+
+  const handleRefresh = async () => {
+    if (!onRefreshXero) return;
+    setRefreshing(true);
+    try {
+      await onRefreshXero();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
+  };
+
+  const sourceLabel = dataSource === 'xero'
+    ? 'From Xero'
+    : dataSource === 'xero_with_adjustments'
+      ? 'Xero + Adjustments'
+      : 'Manual Entry';
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold">Financials</CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              {sourceLabel}
+            </Badge>
+            {onEdit && (
+              <Button variant="ghost" size="sm" onClick={onEdit}>
+                Edit
+              </Button>
+            )}
+            {dataSource !== 'manual' && onRefreshXero && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={refreshing}
+              >
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            )}
+          </div>
+        </div>
+        {xeroFetchedAt && (
+          <p className="text-xs text-muted-foreground">
+            Last synced {formatRelativeTime(xeroFetchedAt)}
+          </p>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Income */}
+        <Section
+          title="Income"
+          items={[
+            { label: 'Revenue', value: financials.income.revenue },
+            { label: 'Other Income', value: financials.income.other_income },
+          ]}
+          total={financials.income.total_income}
+          totalLabel="Total Income"
+          breakdown={financials.income.breakdown}
+          expanded={expandedSections.has('income')}
+          onToggle={() => toggleSection('income')}
+          positive
+        />
+
+        {/* Expenses */}
+        <Section
+          title="Expenses"
+          items={[
+            { label: 'Cost of Sales', value: financials.expenses.cost_of_sales },
+            { label: 'Operating Expenses', value: financials.expenses.operating_expenses },
+          ]}
+          total={financials.expenses.total_expenses}
+          totalLabel="Total Expenses"
+          breakdown={financials.expenses.breakdown}
+          expanded={expandedSections.has('expenses')}
+          onToggle={() => toggleSection('expenses')}
+        />
+
+        {/* Net */}
+        <div className="border-t pt-3">
+          <div className="flex items-center justify-between font-semibold">
+            <span>Net Profit</span>
+            <span className="tabular-nums">
+              {formatCurrency(financials.income.total_income - financials.expenses.total_expenses)}
+            </span>
+          </div>
+        </div>
+
+        {/* Credits */}
+        {(financials.credits.payg_instalments > 0 ||
+          financials.credits.payg_withholding > 0 ||
+          financials.credits.franking_credits > 0) && (
+          <div className="border-t pt-3 space-y-1.5">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Tax Credits
+            </p>
+            {financials.credits.payg_instalments > 0 && (
+              <SummaryRow label="PAYG Instalments" value={financials.credits.payg_instalments} />
+            )}
+            {financials.credits.payg_withholding > 0 && (
+              <SummaryRow label="PAYG Withholding" value={financials.credits.payg_withholding} />
+            )}
+            {financials.credits.franking_credits > 0 && (
+              <SummaryRow label="Franking Credits" value={financials.credits.franking_credits} />
+            )}
+          </div>
+        )}
+
+        {/* Adjustments */}
+        {financials.adjustments.length > 0 && (
+          <div className="border-t pt-3 space-y-1.5">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Adjustments
+            </p>
+            {financials.adjustments.map((adj, i) => (
+              <SummaryRow
+                key={i}
+                label={`${adj.description} (${adj.type === 'add_back' ? '+' : '-'})`}
+                value={adj.type === 'add_back' ? adj.amount : -adj.amount}
+              />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Section({
+  title,
+  items,
+  total,
+  totalLabel,
+  breakdown,
+  expanded,
+  onToggle,
+  positive,
+}: {
+  title: string;
+  items: { label: string; value: number }[];
+  total: number;
+  totalLabel: string;
+  breakdown?: { category: string; amount: number }[];
+  expanded: boolean;
+  onToggle: () => void;
+  positive?: boolean;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {title}
+        </p>
+        {breakdown && breakdown.length > 0 && (
+          <button
+            onClick={onToggle}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            {expanded ? 'Hide detail' : 'Show detail'}
+          </button>
+        )}
+      </div>
+      {items.map((item) => (
+        <SummaryRow key={item.label} label={item.label} value={item.value} />
+      ))}
+      {expanded && breakdown && breakdown.length > 0 && (
+        <div className="ml-4 space-y-1 border-l pl-3">
+          {breakdown.map((item, i) => (
+            <SummaryRow key={i} label={item.category} value={item.amount} muted />
+          ))}
+        </div>
+      )}
+      <div className={cn('flex items-center justify-between font-medium', positive && 'text-emerald-700 dark:text-emerald-400')}>
+        <span>{totalLabel}</span>
+        <span className="tabular-nums">{formatCurrency(total)}</span>
+      </div>
+    </div>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  muted,
+}: {
+  label: string;
+  value: number;
+  muted?: boolean;
+}) {
+  return (
+    <div className={cn('flex items-center justify-between text-sm', muted && 'text-muted-foreground text-xs')}>
+      <span>{label}</span>
+      <span className="tabular-nums">{formatCurrency(value)}</span>
+    </div>
+  );
+}

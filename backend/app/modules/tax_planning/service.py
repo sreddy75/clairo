@@ -1,0 +1,725 @@
+"""Service layer for Tax Planning module.
+
+Orchestrates Xero data pull, tax calculation, plan CRUD, and AI chat.
+"""
+
+import logging
+import uuid
+from datetime import UTC, datetime
+from decimal import Decimal
+from typing import Any
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config import Settings
+from app.modules.integrations.xero.models import XeroConnection
+from app.modules.integrations.xero.service import XeroReportService
+from app.modules.tax_planning.exceptions import (
+    NoXeroConnectionError,
+    TaxPlanExistsError,
+    TaxPlanNotFoundError,
+    TaxRateConfigNotFoundError,
+    TaxScenarioNotFoundError,
+    XeroPullError,
+)
+from app.modules.tax_planning.models import TaxPlan
+from app.modules.tax_planning.repository import (
+    TaxPlanMessageRepository,
+    TaxPlanRepository,
+    TaxRateConfigRepository,
+    TaxScenarioRepository,
+)
+from app.modules.tax_planning.schemas import (
+    FinancialsInput,
+    TaxPlanCreate,
+    TaxPlanUpdate,
+)
+from app.modules.tax_planning.tax_calculator import calculate_tax_position
+
+logger = logging.getLogger(__name__)
+
+
+class TaxPlanningService:
+    def __init__(self, session: AsyncSession, settings: Settings) -> None:
+        self.session = session
+        self.settings = settings
+        self.plan_repo = TaxPlanRepository(session)
+        self.scenario_repo = TaxScenarioRepository(session)
+        self.message_repo = TaxPlanMessageRepository(session)
+        self.rate_repo = TaxRateConfigRepository(session)
+
+    # ------------------------------------------------------------------
+    # Plan CRUD
+    # ------------------------------------------------------------------
+
+    async def create_plan(self, tenant_id: uuid.UUID, data: TaxPlanCreate) -> TaxPlan:
+        """Create a new tax plan. Raises TaxPlanExistsError if one already exists."""
+        existing = await self.plan_repo.get_by_client_fy(
+            xero_connection_id=data.xero_connection_id,
+            financial_year=data.financial_year,
+            tenant_id=tenant_id,
+        )
+
+        if existing and not data.replace_existing:
+            raise TaxPlanExistsError(existing.id)
+
+        if existing and data.replace_existing:
+            await self.plan_repo.delete(existing)
+
+        plan = await self.plan_repo.create(
+            {
+                "tenant_id": tenant_id,
+                "xero_connection_id": data.xero_connection_id,
+                "financial_year": data.financial_year,
+                "entity_type": data.entity_type.value,
+                "status": "draft",
+                "data_source": data.data_source.value,
+            }
+        )
+        return plan
+
+    async def get_plan(self, plan_id: uuid.UUID, tenant_id: uuid.UUID) -> TaxPlan:
+        plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
+        if not plan:
+            raise TaxPlanNotFoundError(plan_id)
+        return plan
+
+    async def get_plan_for_connection(
+        self,
+        xero_connection_id: uuid.UUID,
+        financial_year: str,
+        tenant_id: uuid.UUID,
+    ) -> TaxPlan | None:
+        return await self.plan_repo.get_by_client_fy(xero_connection_id, financial_year, tenant_id)
+
+    async def list_plans(
+        self,
+        tenant_id: uuid.UUID,
+        status: str | None = None,
+        financial_year: str | None = None,
+        search: str | None = None,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> tuple[list[TaxPlan], int]:
+        return await self.plan_repo.list_by_tenant(
+            tenant_id, status, financial_year, search, page, page_size
+        )
+
+    async def update_plan(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        data: TaxPlanUpdate,
+    ) -> TaxPlan:
+        plan = await self.get_plan(plan_id, tenant_id)
+        update_data = data.model_dump(exclude_unset=True)
+        return await self.plan_repo.update(plan, update_data)
+
+    async def delete_plan(self, plan_id: uuid.UUID, tenant_id: uuid.UUID) -> None:
+        plan = await self.get_plan(plan_id, tenant_id)
+        await self.plan_repo.delete(plan)
+
+    # ------------------------------------------------------------------
+    # Financials: Xero pull
+    # ------------------------------------------------------------------
+
+    async def pull_xero_financials(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        force_refresh: bool = False,
+    ) -> dict[str, Any]:
+        """Pull P&L from Xero and calculate tax position."""
+        plan = await self.get_plan(plan_id, tenant_id)
+
+        if not plan.xero_connection_id:
+            raise NoXeroConnectionError()
+
+        try:
+            report_service = XeroReportService(self.session, self.settings)
+            report_data = await report_service.get_report(
+                connection_id=plan.xero_connection_id,
+                report_type="profit_and_loss",
+                period_key=f"{plan.financial_year[:4]}-FY",
+                force_refresh=force_refresh,
+            )
+        except Exception as e:
+            logger.error("Xero P&L pull failed", exc_info=True)
+            raise XeroPullError(str(e)) from e
+
+        # Transform Xero summary into financials_data format
+        summary = report_data.get("summary") or {}
+        rows = report_data.get("rows", [])
+
+        financials_data = self._transform_xero_to_financials(summary, rows)
+        now = datetime.now(UTC)
+
+        await self.plan_repo.update(
+            plan,
+            {
+                "financials_data": financials_data,
+                "xero_report_fetched_at": now,
+                "data_source": "xero",
+            },
+        )
+
+        # Calculate tax position
+        tax_position = await self._calculate_and_save_position(plan)
+
+        fetched_at = report_data.get("fetched_at")
+        is_stale = report_data.get("is_stale", False)
+
+        return {
+            "financials_data": financials_data,
+            "tax_position": tax_position,
+            "data_freshness": {
+                "fetched_at": str(fetched_at) if fetched_at else str(now),
+                "is_fresh": not is_stale,
+                "cache_age_minutes": None,
+            },
+        }
+
+    def _transform_xero_to_financials(self, summary: dict, rows: list) -> dict[str, Any]:
+        """Transform Xero P&L summary data into financials_data JSONB format."""
+        revenue = float(summary.get("revenue", 0))
+        other_income = float(summary.get("other_income", 0))
+        total_income = float(summary.get("total_income", 0)) or (revenue + other_income)
+        cost_of_sales = float(summary.get("cost_of_sales", 0))
+        operating_expenses = float(summary.get("operating_expenses", 0))
+        total_expenses = float(summary.get("total_expenses", 0)) or (
+            cost_of_sales + operating_expenses
+        )
+
+        # Extract line-item breakdown from rows
+        income_breakdown = self._extract_breakdown(rows, "income")
+        expense_breakdown = self._extract_breakdown(rows, "expense")
+
+        return {
+            "income": {
+                "revenue": revenue,
+                "other_income": other_income,
+                "total_income": total_income,
+                "breakdown": income_breakdown,
+            },
+            "expenses": {
+                "cost_of_sales": cost_of_sales,
+                "operating_expenses": operating_expenses,
+                "total_expenses": total_expenses,
+                "breakdown": expense_breakdown,
+            },
+            "credits": {
+                "payg_instalments": 0,
+                "payg_withholding": 0,
+                "franking_credits": 0,
+            },
+            "adjustments": [],
+            "turnover": total_income,
+            "months_data_available": 12,
+            "is_annualised": False,
+        }
+
+    def _extract_breakdown(self, rows: list, section_type: str) -> list[dict[str, Any]]:
+        """Extract line-item breakdown from Xero report rows."""
+        breakdown: list[dict[str, Any]] = []
+        income_titles = {"income", "revenue", "trading income", "other income", "other revenue"}
+        expense_titles = {
+            "less cost of sales",
+            "cost of sales",
+            "cost of goods sold",
+            "less operating expenses",
+            "operating expenses",
+            "expenses",
+        }
+
+        target_titles = income_titles if section_type == "income" else expense_titles
+
+        for row in rows:
+            if row.get("RowType") == "Section":
+                title = (row.get("Title") or "").lower().strip()
+                if title in target_titles:
+                    for sub_row in row.get("Rows", []):
+                        if sub_row.get("RowType") == "Row":
+                            cells = sub_row.get("Cells", [])
+                            if len(cells) >= 2:
+                                name = cells[0].get("Value", "")
+                                value = cells[1].get("Value", "0")
+                                try:
+                                    amount = float(value.replace(",", ""))
+                                except (ValueError, AttributeError):
+                                    amount = 0
+                                if name and amount != 0:
+                                    breakdown.append({"category": name, "amount": amount})
+
+        return breakdown
+
+    # ------------------------------------------------------------------
+    # Financials: Manual entry
+    # ------------------------------------------------------------------
+
+    async def save_manual_financials(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        data: FinancialsInput,
+    ) -> dict[str, Any]:
+        """Save manually entered financials and calculate tax position."""
+        plan = await self.get_plan(plan_id, tenant_id)
+
+        # Build financials_data from input
+        income = data.income
+        expenses = data.expenses
+        credits = data.credits
+
+        total_income = float(
+            Decimal(str(income.get("revenue", 0))) + Decimal(str(income.get("other_income", 0)))
+        )
+        total_expenses = float(
+            Decimal(str(expenses.get("cost_of_sales", 0)))
+            + Decimal(str(expenses.get("operating_expenses", 0)))
+        )
+
+        financials_data: dict[str, Any] = {
+            "income": {
+                "revenue": float(income.get("revenue", 0)),
+                "other_income": float(income.get("other_income", 0)),
+                "total_income": total_income,
+                "breakdown": income.get("breakdown", []),
+            },
+            "expenses": {
+                "cost_of_sales": float(expenses.get("cost_of_sales", 0)),
+                "operating_expenses": float(expenses.get("operating_expenses", 0)),
+                "total_expenses": total_expenses,
+                "breakdown": expenses.get("breakdown", []),
+            },
+            "credits": {
+                "payg_instalments": float(credits.get("payg_instalments", 0)),
+                "payg_withholding": float(credits.get("payg_withholding", 0)),
+                "franking_credits": float(credits.get("franking_credits", 0)),
+            },
+            "adjustments": [adj.model_dump() for adj in data.adjustments],
+            "turnover": float(data.turnover),
+            "months_data_available": 12,
+            "is_annualised": False,
+        }
+
+        new_source = "manual"
+        if plan.data_source == "xero":
+            new_source = "xero_with_adjustments"
+
+        await self.plan_repo.update(
+            plan,
+            {"financials_data": financials_data, "data_source": new_source},
+        )
+
+        tax_position = await self._calculate_and_save_position(
+            plan, has_help_debt=data.has_help_debt
+        )
+
+        return {
+            "financials_data": financials_data,
+            "tax_position": tax_position,
+        }
+
+    # ------------------------------------------------------------------
+    # Tax calculation
+    # ------------------------------------------------------------------
+
+    async def _calculate_and_save_position(
+        self,
+        plan: TaxPlan,
+        has_help_debt: bool = False,
+    ) -> dict[str, Any]:
+        """Load rate configs and calculate tax position."""
+        rate_configs = await self._load_rate_configs(plan.financial_year)
+
+        tax_position = calculate_tax_position(
+            entity_type=plan.entity_type,
+            financials_data=plan.financials_data,
+            rate_configs=rate_configs,
+            has_help_debt=has_help_debt,
+        )
+
+        await self.plan_repo.update(plan, {"tax_position": tax_position})
+
+        # Transition draft → in_progress
+        if plan.status == "draft":
+            await self.plan_repo.update(plan, {"status": "in_progress"})
+
+        return tax_position
+
+    async def _load_rate_configs(self, financial_year: str) -> dict[str, dict]:
+        """Load all rate configs for a financial year as a dict keyed by rate_type."""
+        configs = await self.rate_repo.get_rates_for_year(financial_year)
+        if not configs:
+            raise TaxRateConfigNotFoundError(financial_year)
+
+        result: dict[str, dict] = {"_financial_year": financial_year}  # type: ignore[dict-item]
+        for config in configs:
+            result[config.rate_type] = config.rates_data
+
+        return result
+
+    # ------------------------------------------------------------------
+    # Scenarios
+    # ------------------------------------------------------------------
+
+    async def list_scenarios(self, plan_id: uuid.UUID, tenant_id: uuid.UUID) -> list:
+        await self.get_plan(plan_id, tenant_id)  # Verify access
+        return await self.scenario_repo.list_by_plan(plan_id, tenant_id)
+
+    async def delete_scenario(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        scenario_id: uuid.UUID,
+    ) -> None:
+        await self.get_plan(plan_id, tenant_id)  # Verify access
+        scenario = await self.scenario_repo.get_by_id(scenario_id, tenant_id)
+        if not scenario or scenario.tax_plan_id != plan_id:
+            raise TaxScenarioNotFoundError(scenario_id)
+        await self.scenario_repo.delete(scenario)
+
+    # ------------------------------------------------------------------
+    # Messages
+    # ------------------------------------------------------------------
+
+    async def list_messages(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> tuple[list, int]:
+        await self.get_plan(plan_id, tenant_id)  # Verify access
+        return await self.message_repo.list_by_plan(plan_id, tenant_id, page, page_size)
+
+    # ------------------------------------------------------------------
+    # AI Chat
+    # ------------------------------------------------------------------
+
+    async def send_chat_message(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        message: str,
+    ) -> dict[str, Any]:
+        """Send a message to the AI agent and get scenario responses."""
+        from app.modules.tax_planning.agent import TaxPlanningAgent
+
+        plan = await self.get_plan(plan_id, tenant_id)
+        if not plan.financials_data:
+            from app.core.exceptions import ValidationError
+
+            raise ValidationError("Load financials before using AI chat")
+
+        # Load context
+        rate_configs = await self._load_rate_configs(plan.financial_year)
+        recent_messages = await self.message_repo.get_recent_messages(plan_id, max_tokens=8000)
+        scenarios = await self.scenario_repo.list_by_plan(plan_id, tenant_id)
+
+        conversation_history = [
+            {"role": msg.role, "content": msg.content} for msg in recent_messages
+        ]
+
+        # Save user message
+        await self.message_repo.create(
+            {
+                "tenant_id": tenant_id,
+                "tax_plan_id": plan_id,
+                "role": "user",
+                "content": message,
+                "scenario_ids": [],
+                "token_count": len(message) // 4,
+            }
+        )
+
+        # Call AI agent
+        api_key = self.settings.anthropic.api_key.get_secret_value()
+        agent = TaxPlanningAgent(api_key=api_key)
+
+        response = await agent.process_message(
+            message=message,
+            plan_financials=plan.financials_data,
+            plan_tax_position=plan.tax_position,
+            entity_type=plan.entity_type,
+            financial_year=plan.financial_year,
+            conversation_history=conversation_history,
+            existing_scenarios=scenarios,
+            rate_configs=rate_configs,
+        )
+
+        # Create scenario records
+        created_scenarios = []
+        scenario_ids = []
+        for scenario_data in response.scenarios:
+            sort_order = await self.scenario_repo.get_next_sort_order(plan_id)
+            scenario = await self.scenario_repo.create(
+                {
+                    "tenant_id": tenant_id,
+                    "tax_plan_id": plan_id,
+                    "title": scenario_data["scenario_title"],
+                    "description": scenario_data.get("description", ""),
+                    "assumptions": scenario_data.get("assumptions", {}),
+                    "impact_data": scenario_data.get("impact_data", {}),
+                    "risk_rating": scenario_data.get("risk_rating", "moderate"),
+                    "compliance_notes": scenario_data.get("compliance_notes"),
+                    "cash_flow_impact": scenario_data.get("cash_flow_impact"),
+                    "sort_order": sort_order,
+                }
+            )
+            created_scenarios.append(scenario)
+            scenario_ids.append(scenario.id)
+
+        # Save assistant message
+        assistant_msg = await self.message_repo.create(
+            {
+                "tenant_id": tenant_id,
+                "tax_plan_id": plan_id,
+                "role": "assistant",
+                "content": response.content,
+                "scenario_ids": scenario_ids,
+                "token_count": len(response.content) // 4,
+                "metadata_": response.token_usage,
+            }
+        )
+
+        return {
+            "message": assistant_msg,
+            "scenarios_created": created_scenarios,
+            "updated_tax_position": None,
+        }
+
+    async def send_chat_message_streaming(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        message: str,
+    ) -> Any:
+        """Stream AI response via SSE events."""
+        from app.modules.tax_planning.agent import TaxPlanningAgent
+
+        plan = await self.get_plan(plan_id, tenant_id)
+        if not plan.financials_data:
+            from app.core.exceptions import ValidationError
+
+            raise ValidationError("Load financials before using AI chat")
+
+        rate_configs = await self._load_rate_configs(plan.financial_year)
+        recent_messages = await self.message_repo.get_recent_messages(plan_id, max_tokens=8000)
+        scenarios = await self.scenario_repo.list_by_plan(plan_id, tenant_id)
+
+        conversation_history = [
+            {"role": msg.role, "content": msg.content} for msg in recent_messages
+        ]
+
+        # Save user message
+        await self.message_repo.create(
+            {
+                "tenant_id": tenant_id,
+                "tax_plan_id": plan_id,
+                "role": "user",
+                "content": message,
+                "scenario_ids": [],
+                "token_count": len(message) // 4,
+            }
+        )
+
+        api_key = self.settings.anthropic.api_key.get_secret_value()
+        agent = TaxPlanningAgent(api_key=api_key)
+
+        full_content = ""
+        created_scenario_ids: list[uuid.UUID] = []
+
+        async for event in agent.process_message_streaming(
+            message=message,
+            plan_financials=plan.financials_data,
+            plan_tax_position=plan.tax_position,
+            entity_type=plan.entity_type,
+            financial_year=plan.financial_year,
+            conversation_history=conversation_history,
+            existing_scenarios=scenarios,
+            rate_configs=rate_configs,
+        ):
+            if event["type"] == "content":
+                full_content += event.get("content", "")
+            elif event["type"] == "scenario":
+                scenario_data = event["scenario"]
+                sort_order = await self.scenario_repo.get_next_sort_order(plan_id)
+                scenario = await self.scenario_repo.create(
+                    {
+                        "tenant_id": tenant_id,
+                        "tax_plan_id": plan_id,
+                        "title": scenario_data["scenario_title"],
+                        "description": scenario_data.get("description", ""),
+                        "assumptions": scenario_data.get("assumptions", {}),
+                        "impact_data": scenario_data.get("impact_data", {}),
+                        "risk_rating": scenario_data.get("risk_rating", "moderate"),
+                        "compliance_notes": scenario_data.get("compliance_notes"),
+                        "cash_flow_impact": scenario_data.get("cash_flow_impact"),
+                        "sort_order": sort_order,
+                    }
+                )
+                created_scenario_ids.append(scenario.id)
+                event["scenario"]["id"] = str(scenario.id)
+
+            yield event
+
+        # Save assistant message after streaming completes
+        if full_content:
+            await self.message_repo.create(
+                {
+                    "tenant_id": tenant_id,
+                    "tax_plan_id": plan_id,
+                    "role": "assistant",
+                    "content": full_content,
+                    "scenario_ids": created_scenario_ids,
+                    "token_count": len(full_content) // 4,
+                }
+            )
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    async def get_client_name(self, xero_connection_id: uuid.UUID, tenant_id: uuid.UUID) -> str:
+        """Get the organisation name from the XeroConnection."""
+        result = await self.session.execute(
+            select(XeroConnection).where(
+                XeroConnection.id == xero_connection_id,
+                XeroConnection.tenant_id == tenant_id,
+            )
+        )
+        connection = result.scalar_one_or_none()
+        return connection.organization_name if connection else ""
+
+    # ------------------------------------------------------------------
+    # PDF Export
+    # ------------------------------------------------------------------
+
+    async def export_plan_pdf(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        include_scenarios: bool = True,
+        include_conversation: bool = False,
+    ) -> bytes:
+        """Generate a PDF export of the tax plan."""
+        from pathlib import Path
+
+        import weasyprint
+        from jinja2 import Environment, FileSystemLoader
+
+        plan = await self.get_plan(plan_id, tenant_id)
+        if not plan.tax_position:
+            from app.modules.tax_planning.exceptions import TaxPlanExportError
+
+            raise TaxPlanExportError()
+
+        client_name = await self.get_client_name(plan.xero_connection_id, tenant_id)
+
+        # Load scenarios and messages if needed
+        scenarios = []
+        if include_scenarios:
+            scenarios = await self.scenario_repo.list_by_plan(plan_id, tenant_id)
+
+        messages_list = []
+        if include_conversation:
+            msgs, _ = await self.message_repo.list_by_plan(
+                plan_id, tenant_id, page=1, page_size=200
+            )
+            messages_list = msgs
+
+        # Load tenant for practice name
+        practice_name = "Your Practice"  # Default
+        try:
+            from app.modules.auth.models import Tenant
+
+            result = await self.session.execute(select(Tenant).where(Tenant.id == tenant_id))
+            tenant = result.scalar_one_or_none()
+            if tenant and tenant.name:
+                practice_name = tenant.name
+        except Exception:
+            pass
+
+        entity_type_labels = {
+            "company": "Company",
+            "individual": "Individual / Sole Trader",
+            "trust": "Trust",
+            "partnership": "Partnership",
+        }
+
+        # Render template
+        template_dir = Path(__file__).parent / "templates"
+        env = Environment(loader=FileSystemLoader(str(template_dir)), autoescape=True)
+        template = env.get_template("tax_plan_export.html")
+
+        # Make tax_position a namespace-like dict for Jinja dot access
+        class DotDict(dict):
+            __getattr__ = dict.get
+
+        tax_pos = DotDict(plan.tax_position)
+        tax_pos["credits_applied"] = DotDict(plan.tax_position.get("credits_applied", {}))
+        tax_pos["offsets"] = DotDict(plan.tax_position.get("offsets", {}))
+
+        html = template.render(
+            practice_name=practice_name,
+            client_name=client_name,
+            financial_year=plan.financial_year,
+            entity_type_label=entity_type_labels.get(plan.entity_type, plan.entity_type),
+            tax_position=tax_pos,
+            scenarios=scenarios,
+            include_scenarios=include_scenarios,
+            messages=messages_list,
+            include_conversation=include_conversation,
+            generated_date=datetime.now(UTC).strftime("%d %B %Y"),
+        )
+
+        pdf_bytes = weasyprint.HTML(string=html).write_pdf()
+        return pdf_bytes
+
+    # ------------------------------------------------------------------
+    # Xero change detection (for US5 resume)
+    # ------------------------------------------------------------------
+
+    async def check_xero_changes(self, plan_id: uuid.UUID, tenant_id: uuid.UUID) -> dict | None:
+        """Compare stored financials with current Xero data."""
+        plan = await self.get_plan(plan_id, tenant_id)
+
+        if not plan.xero_connection_id or plan.data_source == "manual":
+            return None
+
+        if not plan.financials_data:
+            return None
+
+        try:
+            report_service = XeroReportService(self.session, self.settings)
+            report_data = await report_service.get_report(
+                connection_id=plan.xero_connection_id,
+                report_type="profit_and_loss",
+                period_key=f"{plan.financial_year[:4]}-FY",
+                force_refresh=False,
+            )
+        except Exception:
+            return None
+
+        summary = report_data.get("summary") or {}
+        stored_income = plan.financials_data.get("income", {})
+        stored_expenses = plan.financials_data.get("expenses", {})
+
+        changes: dict[str, dict] = {}
+        field_map = {
+            "revenue": ("income", "revenue"),
+            "other_income": ("income", "other_income"),
+            "cost_of_sales": ("expenses", "cost_of_sales"),
+            "operating_expenses": ("expenses", "operating_expenses"),
+        }
+
+        for xero_key, (section, field) in field_map.items():
+            current_val = float(summary.get(xero_key, 0))
+            stored_section = stored_income if section == "income" else stored_expenses
+            stored_val = float(stored_section.get(field, 0))
+            if abs(current_val - stored_val) > 0.01:
+                changes[field] = {"old": stored_val, "new": current_val}
+
+        return changes if changes else None

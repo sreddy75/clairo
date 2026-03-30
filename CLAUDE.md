@@ -48,6 +48,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 (2 new tables: `classification_requests`, `client_classifications`) (047-client-transaction-classification)
 - Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, anthropic SDK, OpenAI Whisper API (transcription), React 18 + shadcn/ui (048-voice-feedback-portal)
 - PostgreSQL 16 (3 new tables: `feedback_submissions`, `feedback_messages`, `feedback_comments`), MinIO (audio file storage) (048-voice-feedback-portal)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, anthropic SDK (Claude Sonnet for AI scenarios), weasyprint (PDF), Jinja2 (PDF templates), React 18 + shadcn/ui (049-ai-tax-planning)
+- PostgreSQL 16 (4 new tables: `tax_rate_configs`, `tax_plans`, `tax_scenarios`, `tax_plan_messages`) (049-ai-tax-planning)
 
 ## Recent Changes
 - 046-ai-tax-code-resolution: Added Python 3.12+ (backend), TypeScript/Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Celery, Anthropic SDK (Claude Sonnet for LLM tier), React 18 + shadcn/ui

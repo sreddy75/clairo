@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 2cm; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11pt; color: #1a1a1a; line-height: 1.5; }
+  h1 { font-size: 18pt; margin-bottom: 4pt; color: #111; }
+  h2 { font-size: 14pt; margin-top: 20pt; margin-bottom: 8pt; color: #333; border-bottom: 1px solid #e5e5e5; padding-bottom: 4pt; }
+  h3 { font-size: 12pt; margin-top: 14pt; margin-bottom: 6pt; color: #444; }
+  .header { margin-bottom: 20pt; }
+  .header .practice { font-size: 13pt; font-weight: 600; color: #555; }
+  .header .date { font-size: 9pt; color: #888; }
+  .client-info { background: #f8f8f8; padding: 12pt; border-radius: 4pt; margin-bottom: 16pt; }
+  .client-info p { margin: 2pt 0; }
+  .label { font-weight: 600; color: #555; }
+  table { width: 100%; border-collapse: collapse; margin: 8pt 0; }
+  th { background: #f5f5f5; text-align: left; padding: 6pt 8pt; font-size: 10pt; font-weight: 600; color: #555; border-bottom: 2px solid #ddd; }
+  td { padding: 6pt 8pt; border-bottom: 1px solid #eee; font-size: 10pt; }
+  .amount { text-align: right; font-variant-numeric: tabular-nums; }
+  .total-row td { font-weight: 600; border-top: 2px solid #ddd; }
+  .highlight { background: #f0fdf4; }
+  .risk-conservative { color: #15803d; }
+  .risk-moderate { color: #b45309; }
+  .risk-aggressive { color: #dc2626; }
+  .net-position { font-size: 16pt; font-weight: 700; text-align: center; padding: 12pt; margin: 12pt 0; border-radius: 4pt; }
+  .net-positive { background: #fef3c7; color: #92400e; }
+  .net-negative { background: #dcfce7; color: #166534; }
+  .disclaimer { margin-top: 24pt; padding: 12pt; background: #f8f8f8; border: 1px solid #e5e5e5; border-radius: 4pt; font-size: 9pt; color: #666; }
+  .footer { margin-top: 20pt; font-size: 8pt; color: #aaa; text-align: center; border-top: 1px solid #e5e5e5; padding-top: 8pt; }
+  .scenario-card { border: 1px solid #e5e5e5; border-radius: 4pt; padding: 12pt; margin-bottom: 10pt; page-break-inside: avoid; }
+  .scenario-title { font-weight: 600; font-size: 11pt; }
+  .compliance-note { background: #fffbeb; border: 1px solid #fde68a; padding: 8pt; border-radius: 4pt; margin-top: 6pt; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="practice">{{ practice_name }}</div>
+  <h1>Tax Planning Summary</h1>
+  <div class="date">Prepared {{ generated_date }}</div>
+</div>
+
+<!-- Client Info -->
+<div class="client-info">
+  <p><span class="label">Client:</span> {{ client_name }}</p>
+  <p><span class="label">Financial Year:</span> {{ financial_year }}</p>
+  <p><span class="label">Entity Type:</span> {{ entity_type_label }}</p>
+</div>
+
+<!-- Tax Position -->
+<h2>Estimated Tax Position</h2>
+
+{% if tax_position %}
+<div class="net-position {{ 'net-negative' if tax_position.net_position < 0 else 'net-positive' }}">
+  {% if tax_position.net_position < 0 %}
+    Estimated Refund: ${{ "{:,.2f}".format(tax_position.net_position | abs) }}
+  {% else %}
+    Estimated Tax Payable: ${{ "{:,.2f}".format(tax_position.net_position) }}
+  {% endif %}
+</div>
+
+<table>
+  <tr><td>Taxable Income</td><td class="amount">${{ "{:,.2f}".format(tax_position.taxable_income) }}</td></tr>
+  <tr><td>Gross Tax</td><td class="amount">${{ "{:,.2f}".format(tax_position.gross_tax) }}</td></tr>
+  {% if tax_position.offsets and tax_position.offsets.get('lito', 0) > 0 %}
+  <tr><td>Low Income Tax Offset (LITO)</td><td class="amount">-${{ "{:,.2f}".format(tax_position.offsets.lito) }}</td></tr>
+  {% endif %}
+  {% if tax_position.medicare_levy > 0 %}
+  <tr><td>Medicare Levy</td><td class="amount">${{ "{:,.2f}".format(tax_position.medicare_levy) }}</td></tr>
+  {% endif %}
+  {% if tax_position.help_repayment > 0 %}
+  <tr><td>HELP Repayment</td><td class="amount">${{ "{:,.2f}".format(tax_position.help_repayment) }}</td></tr>
+  {% endif %}
+  <tr class="total-row"><td>Total Tax Payable</td><td class="amount">${{ "{:,.2f}".format(tax_position.total_tax_payable) }}</td></tr>
+  {% if tax_position.credits_applied and tax_position.credits_applied.total > 0 %}
+  <tr><td>Less: PAYG Credits</td><td class="amount">-${{ "{:,.2f}".format(tax_position.credits_applied.total) }}</td></tr>
+  {% endif %}
+  <tr class="total-row"><td><strong>Net Position</strong></td><td class="amount"><strong>${{ "{:,.2f}".format(tax_position.net_position) }}</strong></td></tr>
+</table>
+<p style="font-size: 9pt; color: #888;">Effective tax rate: {{ "{:.1f}".format(tax_position.effective_rate_pct) }}% | Method: {{ tax_position.calculation_method }}</p>
+{% endif %}
+
+<!-- Scenarios -->
+{% if scenarios and include_scenarios %}
+<h2>Tax Strategies Modelled</h2>
+
+{% for scenario in scenarios %}
+<div class="scenario-card">
+  <div class="scenario-title">{{ loop.index }}. {{ scenario.title }}</div>
+  <span class="risk-{{ scenario.risk_rating.value if scenario.risk_rating.value is defined else scenario.risk_rating }}">
+    Risk: {{ scenario.risk_rating.value if scenario.risk_rating.value is defined else scenario.risk_rating }}
+  </span>
+  <p>{{ scenario.description }}</p>
+
+  {% if scenario.impact_data %}
+  <table>
+    <tr>
+      <th></th><th class="amount">Before</th><th class="amount">After</th><th class="amount">Change</th>
+    </tr>
+    <tr>
+      <td>Taxable Income</td>
+      <td class="amount">${{ "{:,.2f}".format(scenario.impact_data.before.taxable_income) }}</td>
+      <td class="amount">${{ "{:,.2f}".format(scenario.impact_data.after.taxable_income) }}</td>
+      <td class="amount">${{ "{:,.2f}".format(scenario.impact_data.change.taxable_income_change) }}</td>
+    </tr>
+    <tr>
+      <td>Tax Payable</td>
+      <td class="amount">${{ "{:,.2f}".format(scenario.impact_data.before.tax_payable) }}</td>
+      <td class="amount">${{ "{:,.2f}".format(scenario.impact_data.after.tax_payable) }}</td>
+      <td class="amount highlight"><strong>${{ "{:,.2f}".format(scenario.impact_data.change.tax_saving) }}</strong> saving</td>
+    </tr>
+  </table>
+  {% endif %}
+
+  {% if scenario.compliance_notes %}
+  <div class="compliance-note">
+    <strong>Compliance Notes:</strong> {{ scenario.compliance_notes }}
+  </div>
+  {% endif %}
+</div>
+{% endfor %}
+
+<!-- Comparison -->
+{% if scenarios | length > 1 %}
+<h3>Scenario Comparison</h3>
+<table>
+  <tr>
+    <th>Scenario</th><th class="amount">Tax Saving</th><th class="amount">Cash Flow</th><th>Risk</th>
+  </tr>
+  {% for scenario in scenarios %}
+  <tr>
+    <td>{{ scenario.title }}</td>
+    <td class="amount">${{ "{:,.2f}".format(scenario.impact_data.change.tax_saving if scenario.impact_data else 0) }}</td>
+    <td class="amount">{{ "${:,.2f}".format(scenario.cash_flow_impact) if scenario.cash_flow_impact else '-' }}</td>
+    <td class="risk-{{ scenario.risk_rating.value if scenario.risk_rating.value is defined else scenario.risk_rating }}">
+      {{ scenario.risk_rating.value if scenario.risk_rating.value is defined else scenario.risk_rating }}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endif %}
+
+<!-- Conversation -->
+{% if messages and include_conversation %}
+<h2>Conversation History</h2>
+{% for msg in messages %}
+<p><strong>{{ 'Accountant' if msg.role == 'user' else 'AI Assistant' }}:</strong> {{ msg.content }}</p>
+{% endfor %}
+{% endif %}
+
+<!-- Disclaimer -->
+<div class="disclaimer">
+  <strong>Disclaimer:</strong> This document is an estimate prepared for discussion purposes only.
+  It does not constitute formal tax advice. The figures shown are based on information available at the
+  time of preparation and may change. Please consult your tax professional for specific advice regarding
+  your circumstances.
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  {{ practice_name }} | Prepared with Clairo | {{ generated_date }}
+</div>
+
+</body>
+</html>
