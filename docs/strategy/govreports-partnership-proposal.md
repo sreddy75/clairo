@@ -19,7 +19,7 @@ Your API services include **13 capabilities**: 8 ATO form types and 5 ATO Online
 
 > **The proposition in one sentence:**
 >
-> Clairo doesn't just lodge forms through GovReports. It consumes the entire GovReports API surface — across all four platform layers, dozens of workflows, and every practice it onboards. Every feature we ship drives more volume through your infrastructure. And we build it all — zero engineering effort on your side.
+> Clairo doesn't just lodge forms through GovReports. It consumes the entire GovReports API surface — across all four platform layers, dozens of workflows, and every practice it onboards. Every feature we ship drives more volume through your infrastructure. Every practice we onboard becomes a paying GovReports subscriber. And we build it all — zero engineering effort on your side.
 
 ---
 
@@ -180,25 +180,30 @@ We're not asking GovReports to bet on market projections. We're asking you to lo
 
 ## Proposed Partnership Structure
 
-We're early-stage and transparent about that. We propose a structure where your costs align with our actual traction — not our projections.
+We're early-stage and transparent about that. But the economics of this partnership are already clear, because **you've already signalled how you value referrals**. GovReports has indicated willingness to pay a referral fee for each accountant that subscribes through our platform. That's revenue sharing — and it tells us we're aligned on the core premise: Clairo drives paying subscribers to GovReports.
 
-### Option A: Phased Ramp Tied to Milestones (Recommended)
+The question is how to structure this so the referral relationship and API access work together rather than against each other. Here are three options:
 
-| Phase | Timeline | API Fee | Trigger |
-|-------|----------|---------|---------|
-| **Pilot** | 0–12 months | $0 | Build + first practices onboarded |
-| **Growth** | 12–24 months | Reduced rate | Agreed practice milestone |
-| **Scale** | 24+ months | Full commercial rate | Full Partner API terms |
+### Option A: Referral Fee Offsets API Access (Recommended)
 
-**The principle:** GovReports invests nothing upfront. Clairo does all the engineering. As we demonstrate real traction with real practices, the commercial relationship formalises. If we don't deliver, you've lost nothing.
+GovReports grants Partner API access. Referral fees for each practice Clairo onboards accumulate and are credited against the Partner API cost. Once the API cost is covered, Clairo begins receiving referral fees as cash.
 
-### Option B: Revenue Share Per Transaction
+| Element | How It Works |
+|---------|-------------|
+| **API Access** | Partner API from day one. Clairo builds the integration, handles all support. |
+| **Referral Fees** | Per-practice fee credited to a GovReports account. Offsets the Partner API cost. |
+| **Break-Even** | Once referral credits cover the API cost, the fee is paid. Everything after is net positive for both sides. |
+| **GovReports Risk** | **Zero.** If Clairo doesn't onboard enough practices, GovReports simply pays less in referral fees. The API access costs them nothing in net terms because subscriber revenue exceeds it from the first few practices. |
 
-Per-lodgement or per-API-call fee that scales directly with actual usage. Aligns incentives perfectly — GovReports earns proportionally to the value Clairo delivers.
+**Why this works:** It uses GovReports' own referral model as the commercial mechanism. No new fee structure to negotiate — just an offset arrangement using terms you've already proposed. Both sides have skin in the game, and costs align with actual results.
 
-### Option C: Hybrid — Developer API Now, Partner at Milestone
+### Option B: Referral Fee Replaces API Fee
 
-Start on Developer API (practices maintain GovReports subscriptions, generating direct revenue for you from day one). Upgrade to Partner API at a defined milestone. Lowest risk for GovReports — immediate revenue, zero downside.
+No upfront API fee. Clairo gets Partner API access. GovReports pays referral fees per subscriber. The API access is the "investment" and the referral fee is the "return." Each practice Clairo brings in pays GovReports a subscription ($500–800/year) *far exceeding* the referral fee. GovReports is net positive on every single referral.
+
+### Option C: Phased Ramp with Referral Credit
+
+Pilot phase (0–12 months): Partner API access at $0 while Clairo builds and onboards initial practices. Growth phase: referral fees begin, credited against a reduced API rate. Scale phase: full commercial terms, referral fees paid as cash. **Lowest risk for GovReports** — subscriber revenue from day one, API cost deferred until traction is proven.
 
 ---
 
