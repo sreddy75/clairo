@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency, formatRelativeTime } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import type { DataSource, FinancialsData } from '@/types/tax-planning';

@@ -1,12 +1,12 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import {
   Form,
   FormControl,
@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import type { FinancialsInput } from '@/types/tax-planning';
 
@@ -188,6 +189,7 @@ function CurrencyField({
                 step="0.01"
                 className="pl-7 tabular-nums"
                 {...field}
+                value={typeof field.value === 'number' ? field.value : 0}
                 onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
               />
             </div>

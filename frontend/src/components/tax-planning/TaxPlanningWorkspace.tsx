@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { useCallback, useEffect, useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -12,12 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ComparisonTable } from './ComparisonTable';
-import { FinancialsPanel } from './FinancialsPanel';
-import { ManualEntryForm } from './ManualEntryForm';
-import { ScenarioCard } from './ScenarioCard';
-import { ScenarioChat } from './ScenarioChat';
-import { TaxPositionCard } from './TaxPositionCard';
 import {
   createTaxPlan,
   deleteScenario,
@@ -32,8 +27,14 @@ import type {
   EntityType,
   FinancialsInput,
   TaxPlan,
-  TaxScenario,
 } from '@/types/tax-planning';
+
+import { ComparisonTable } from './ComparisonTable';
+import { FinancialsPanel } from './FinancialsPanel';
+import { ManualEntryForm } from './ManualEntryForm';
+import { ScenarioCard } from './ScenarioCard';
+import { ScenarioChat } from './ScenarioChat';
+import { TaxPositionCard } from './TaxPositionCard';
 
 interface TaxPlanningWorkspaceProps {
   connectionId: string;
@@ -123,7 +124,7 @@ export function TaxPlanningWorkspace({
       // Auto-pull financials from Xero
       if (connectionId) {
         try {
-          const result = await pullXeroFinancials(token, newPlan.id);
+          await pullXeroFinancials(token, newPlan.id);
           const updated = await getTaxPlan(token, newPlan.id);
           setPlan(updated);
         } catch {

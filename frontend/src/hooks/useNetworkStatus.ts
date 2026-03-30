@@ -10,6 +10,19 @@
 
 import { useSyncExternalStore } from 'react';
 
+interface NetworkInformation extends EventTarget {
+  effectiveType?: string;
+  type?: string;
+  downlink?: number;
+  rtt?: number;
+}
+
+interface NavigatorWithConnection extends Navigator {
+  connection?: NetworkInformation;
+  mozConnection?: NetworkInformation;
+  webkitConnection?: NetworkInformation;
+}
+
 interface NetworkState {
   /** Whether the device is online */
   isOnline: boolean;
@@ -41,16 +54,14 @@ function getNetworkState(): NetworkState {
     };
   }
 
-  const connection =
-    (navigator as any).connection ||
-    (navigator as any).mozConnection ||
-    (navigator as any).webkitConnection;
+  const nav = navigator as NavigatorWithConnection;
+  const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
 
   const effectiveType = connection?.effectiveType ?? null;
   const isSlow =
     effectiveType === '2g' ||
     effectiveType === 'slow-2g' ||
-    (connection?.rtt && connection.rtt > 500);
+    (connection?.rtt != null && connection.rtt > 500);
 
   const newState: NetworkState = {
     isOnline: navigator.onLine,
@@ -79,10 +90,8 @@ function subscribe(callback: () => void): () => void {
   window.addEventListener('online', callback);
   window.addEventListener('offline', callback);
 
-  const connection =
-    (navigator as any).connection ||
-    (navigator as any).mozConnection ||
-    (navigator as any).webkitConnection;
+  const nav = navigator as NavigatorWithConnection;
+  const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
 
   if (connection) {
     connection.addEventListener('change', callback);

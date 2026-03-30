@@ -1,14 +1,15 @@
 'use client';
 
+import { useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useAuth } from '@clerk/nextjs';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 import { chatStream, listMessages } from '@/lib/api/tax-planning';
-import type { ChatStreamEvent, TaxPlanMessage, TaxScenario } from '@/types/tax-planning';
+import { cn } from '@/lib/utils';
+import type { TaxPlanMessage, TaxScenario } from '@/types/tax-planning';
 
 interface ScenarioChatProps {
   planId: string;

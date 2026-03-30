@@ -43,10 +43,10 @@ import {
   type Tab,
 } from '@/components/client-detail';
 import { InsightsDashboard } from '@/components/insights';
-import { TaxPlanningWorkspace } from '@/components/tax-planning/TaxPlanningWorkspace';
 import { SyncPhaseIndicator } from '@/components/integrations/xero';
 import { InviteToPortalModal } from '@/components/portal';
 import { QualityScoreCard, QualityIssuesList } from '@/components/quality';
+import { TaxPlanningWorkspace } from '@/components/tax-planning/TaxPlanningWorkspace';
 import { Card } from '@/components/ui/card';
 import {
   dismissInsight,
