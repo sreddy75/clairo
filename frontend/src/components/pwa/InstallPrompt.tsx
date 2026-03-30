@@ -54,6 +54,7 @@ export function InstallPrompt({
     const dismissed = localStorage.getItem(STORAGE_KEY) === 'dismissed';
     const isStandaloneMode =
       window.matchMedia('(display-mode: standalone)').matches ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Safari-specific standalone property
       (window.navigator as any).standalone === true;
 
     setIsStandalone(isStandaloneMode);
@@ -72,6 +73,7 @@ export function InstallPrompt({
 
     // Detect iOS
     const iOS =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- IE-specific MSStream property
       /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(iOS);
 

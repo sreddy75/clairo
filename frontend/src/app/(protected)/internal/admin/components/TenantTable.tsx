@@ -159,7 +159,8 @@ export function TenantTable({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchInput]); // Intentionally excluding params to avoid infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally excluding params/onParamsChange to avoid infinite loop
+  }, [searchInput]);
 
   const handleSort = useCallback(
     (field: TenantSortField) => {

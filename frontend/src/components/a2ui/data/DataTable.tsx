@@ -63,7 +63,7 @@ export function DataTable({
   data: propData,
 }: A2UIDataTableProps) {
   const boundData = useA2UIData<Record<string, unknown>[]>(dataBinding);
-  const data = propData || boundData || [];
+  const data = useMemo(() => propData || boundData || [], [propData, boundData]);
 
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);

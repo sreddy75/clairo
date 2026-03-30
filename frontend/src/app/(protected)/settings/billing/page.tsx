@@ -57,6 +57,7 @@ export default function BillingSettingsPage() {
     if (isLoaded) {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchData uses getToken which is stable from Clerk
   }, [isLoaded]);
 
   const handleUpgrade = async (currentTier: SubscriptionTier) => {

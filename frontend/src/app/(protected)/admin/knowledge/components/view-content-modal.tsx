@@ -45,6 +45,7 @@ export function ViewContentModal({
       setAllContent([]);
       loadContent(0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadContent is defined after this hook, only re-run on open/sourceId change
   }, [isOpen, sourceId]);
 
   const loadContent = async (pageNum: number) => {

@@ -1,7 +1,7 @@
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Sora, Plus_Jakarta_Sans } from 'next/font/google';
 
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AnalyticsProvider } from '@/lib/analytics';
 
 import { Providers } from './providers';

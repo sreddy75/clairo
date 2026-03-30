@@ -101,7 +101,7 @@ export function ClassificationRequestButton({
     } finally {
       setSending(false);
     }
-  }, [connectionId, sessionId, message, emailOverride]);
+  }, [connectionId, sessionId, message, emailOverride, getToken]);
 
   // Show status badge if request already exists
   if (existingRequest && existingRequest.status !== "cancelled" && existingRequest.status !== "expired") {

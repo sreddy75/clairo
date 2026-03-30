@@ -38,6 +38,7 @@ export default function UsageHistoryPage() {
     if (isLoaded) {
       fetchHistory(months);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchHistory depends on getToken which is stable
   }, [isLoaded, months]);
 
   const formatDate = (dateString: string) => {

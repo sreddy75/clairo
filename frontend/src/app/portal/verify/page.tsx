@@ -76,7 +76,7 @@ function VerifyContent() {
     };
 
     verifyToken();
-  }, [token, router]);
+  }, [token, router, redirectTo]);
 
   // Verifying state
   if (state === 'verifying') {

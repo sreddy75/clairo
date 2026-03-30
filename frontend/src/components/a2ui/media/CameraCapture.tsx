@@ -132,6 +132,7 @@ export function CameraCapture({
       <Card id={id} className="overflow-hidden">
         <CardContent className="p-0">
           <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element -- base64 data URI from camera capture */}
             <img
               src={previewImage}
               alt="Captured"
@@ -246,6 +247,7 @@ export function CameraCapture({
           {multiPage && capturedImages.length > 0 && (
             <div className="flex gap-2 mt-4 overflow-x-auto max-w-full">
               {capturedImages.map((img, index) => (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   key={index}
                   src={img}
