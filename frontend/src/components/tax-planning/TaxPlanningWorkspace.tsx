@@ -67,6 +67,7 @@ export function TaxPlanningWorkspace({
   const [creating, setCreating] = useState(false);
   const [selectedEntityType, setSelectedEntityType] = useState<EntityType>('company');
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [showCreateNew, setShowCreateNew] = useState(false);
 
   // Load existing plan for this connection + FY
   const loadPlan = useCallback(async () => {
@@ -118,8 +119,10 @@ export function TaxPlanningWorkspace({
         financial_year: CURRENT_FY,
         entity_type: selectedEntityType,
         data_source: 'xero',
-        replace_existing: !!plan,
+        replace_existing: !!plan || showCreateNew,
       });
+
+      setShowCreateNew(false);
 
       // Auto-pull financials from Xero
       if (connectionId) {
@@ -201,16 +204,20 @@ export function TaxPlanningWorkspace({
     );
   }
 
-  // No plan exists — show creation UI
-  if (!plan) {
+  // No plan exists or user wants to start fresh — show creation UI
+  if (!plan || showCreateNew) {
     return (
       <div className="mx-auto max-w-lg py-12">
         <Card>
           <CardContent className="space-y-6 p-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold">Start Tax Plan</h3>
+              <h3 className="text-lg font-semibold">
+                {showCreateNew ? 'New Tax Plan' : 'Start Tax Plan'}
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Create a tax plan for {clientName} — FY {CURRENT_FY}
+                {showCreateNew
+                  ? `Start a fresh tax plan for ${clientName} — FY ${CURRENT_FY}. The existing plan will be replaced.`
+                  : `Create a tax plan for ${clientName} — FY ${CURRENT_FY}`}
               </p>
             </div>
 
@@ -260,8 +267,17 @@ export function TaxPlanningWorkspace({
               onClick={handleCreatePlan}
               disabled={creating}
             >
-              {creating ? 'Creating...' : 'Create Tax Plan'}
+              {creating ? 'Creating...' : showCreateNew ? 'Replace & Create New Plan' : 'Create Tax Plan'}
             </Button>
+            {showCreateNew && (
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => setShowCreateNew(false)}
+              >
+                Cancel
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -310,6 +326,13 @@ export function TaxPlanningWorkspace({
               Export PDF
             </Button>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCreateNew(true)}
+          >
+            New Plan
+          </Button>
         </div>
       </div>
 

@@ -108,7 +108,7 @@ export async function pullXeroFinancials(
   const response = await apiClient.post(
     `${BASE}/${planId}/financials/pull-xero`,
     {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ force_refresh: forceRefresh }),
     },
   );
