@@ -1,0 +1,169 @@
+"""System prompts for the Tax Planning AI agent."""
+
+from app.modules.tax_planning.models import TaxScenario
+
+TAX_PLANNING_SYSTEM_PROMPT = """You are a tax planning specialist for Australian taxation, assisting accountants during EOFY tax planning sessions.
+
+## Your Role
+- Model tax scenarios with accurate calculations using the calculate_tax_position tool
+- Provide compliance notes with ATO ruling references
+- Rate each strategy's risk level (conservative, moderate, aggressive)
+- Flag Part IVA (anti-avoidance) risk where sole purpose is tax reduction
+- You do NOT provide tax advice — you provide information and calculations for the accountant's professional judgement
+
+## Client Context
+{financial_context}
+
+## Tax Rates
+Financial Year: {financial_year}
+Entity Type: {entity_type}
+
+## Existing Scenarios
+{scenario_history}
+
+## Instructions
+When the user describes a scenario:
+1. Analyse the tax implications for this entity type
+2. Call the calculate_tax_position tool to get accurate before/after numbers
+3. Generate 1-3 strategy options (unless asked for a specific comparison)
+4. For each option provide:
+   - A short title (max 60 chars)
+   - Description of the strategy
+   - Key assumptions
+   - Tax impact (use the tool result — never invent numbers)
+   - Risk rating: conservative (standard practice), moderate (common but ATO may review), aggressive (technically legal but Part IVA risk)
+   - Compliance notes with ATO ruling or ITAA section references
+   - Cash flow impact (net of tax saving and outlay)
+5. If asked to "compare all options", produce a ranked summary
+
+Always output amounts in AUD. All outputs are estimates only — not formal tax advice.
+
+IMPORTANT: You MUST call the calculate_tax_position tool for every scenario to get accurate tax figures. Never estimate or calculate tax amounts yourself."""
+
+
+CALCULATE_TAX_TOOL = {
+    "name": "calculate_tax_position",
+    "description": "Calculate the Australian tax position for modified financials. Call this tool to get accurate before/after tax figures for a scenario. Modify the financials_data to reflect the scenario (e.g., increase expenses for a prepayment) and the tool returns the new tax position.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "scenario_title": {
+                "type": "string",
+                "description": "Short title for this scenario (max 60 chars)",
+            },
+            "description": {
+                "type": "string",
+                "description": "Full description of the tax strategy",
+            },
+            "modified_income": {
+                "type": "object",
+                "description": "Modified income figures. Include revenue and other_income.",
+                "properties": {
+                    "revenue": {"type": "number"},
+                    "other_income": {"type": "number"},
+                },
+            },
+            "modified_expenses": {
+                "type": "object",
+                "description": "Modified expense figures. Include cost_of_sales and operating_expenses.",
+                "properties": {
+                    "cost_of_sales": {"type": "number"},
+                    "operating_expenses": {"type": "number"},
+                },
+            },
+            "modified_turnover": {
+                "type": "number",
+                "description": "Modified turnover (if changed by scenario)",
+            },
+            "assumptions": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Key assumptions for this scenario",
+            },
+            "risk_rating": {
+                "type": "string",
+                "enum": ["conservative", "moderate", "aggressive"],
+                "description": "Risk level of this strategy",
+            },
+            "compliance_notes": {
+                "type": "string",
+                "description": "Compliance warnings and ATO ruling references",
+            },
+            "cash_flow_impact_explanation": {
+                "type": "string",
+                "description": "Explain the net cash flow impact (outlay minus tax saving)",
+            },
+        },
+        "required": [
+            "scenario_title",
+            "description",
+            "modified_income",
+            "modified_expenses",
+            "assumptions",
+            "risk_rating",
+            "compliance_notes",
+        ],
+    },
+}
+
+
+def format_financial_context(
+    financials_data: dict,
+    tax_position: dict | None,
+    entity_type: str,
+) -> str:
+    """Format financial data for the system prompt."""
+    if not financials_data:
+        return "No financial data loaded yet."
+
+    income = financials_data.get("income", {})
+    expenses = financials_data.get("expenses", {})
+    credits = financials_data.get("credits", {})
+
+    lines = [
+        f"Entity Type: {entity_type}",
+        f"Revenue: ${income.get('revenue', 0):,.2f}",
+        f"Other Income: ${income.get('other_income', 0):,.2f}",
+        f"Total Income: ${income.get('total_income', 0):,.2f}",
+        f"Cost of Sales: ${expenses.get('cost_of_sales', 0):,.2f}",
+        f"Operating Expenses: ${expenses.get('operating_expenses', 0):,.2f}",
+        f"Total Expenses: ${expenses.get('total_expenses', 0):,.2f}",
+        f"Net Profit: ${income.get('total_income', 0) - expenses.get('total_expenses', 0):,.2f}",
+        f"Turnover: ${financials_data.get('turnover', 0):,.2f}",
+    ]
+
+    if credits.get("payg_instalments", 0) > 0:
+        lines.append(f"PAYG Instalments Paid: ${credits['payg_instalments']:,.2f}")
+    if credits.get("payg_withholding", 0) > 0:
+        lines.append(f"PAYG Withholding: ${credits['payg_withholding']:,.2f}")
+
+    if tax_position:
+        lines.extend(
+            [
+                "",
+                "--- Current Tax Position ---",
+                f"Taxable Income: ${tax_position.get('taxable_income', 0):,.2f}",
+                f"Total Tax Payable: ${tax_position.get('total_tax_payable', 0):,.2f}",
+                f"Credits Applied: ${tax_position.get('credits_applied', {}).get('total', 0):,.2f}",
+                f"Net Position: ${tax_position.get('net_position', 0):,.2f}",
+                f"Effective Rate: {tax_position.get('effective_rate_pct', 0):.1f}%",
+            ]
+        )
+
+    return "\n".join(lines)
+
+
+def format_scenario_history(scenarios: list[TaxScenario]) -> str:
+    """Format existing scenarios for context injection."""
+    if not scenarios:
+        return "No scenarios modelled yet."
+
+    lines = []
+    for i, s in enumerate(scenarios, 1):
+        change = s.impact_data.get("change", {})
+        lines.append(
+            f"{i}. {s.title} — Tax saving: ${change.get('tax_saving', 0):,.2f}, "
+            f"Risk: {s.risk_rating.value if hasattr(s.risk_rating, 'value') else s.risk_rating}"
+        )
+
+    return "\n".join(lines)

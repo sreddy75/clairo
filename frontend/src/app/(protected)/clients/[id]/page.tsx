@@ -43,6 +43,7 @@ import {
   type Tab,
 } from '@/components/client-detail';
 import { InsightsDashboard } from '@/components/insights';
+import { TaxPlanningWorkspace } from '@/components/tax-planning/TaxPlanningWorkspace';
 import { SyncPhaseIndicator } from '@/components/integrations/xero';
 import { InviteToPortalModal } from '@/components/portal';
 import { QualityScoreCard, QualityIssuesList } from '@/components/quality';
@@ -229,7 +230,7 @@ export default function ClientDetailPage() {
 
   // Get initial tab from URL query param
   const tabFromUrl = searchParams.get('tab') as Tab | null;
-  const validTabs: Tab[] = ['overview', 'bas', 'quality', 'insights', 'contacts', 'invoices', 'transactions', 'employees'];
+  const validTabs: Tab[] = ['overview', 'bas', 'quality', 'insights', 'tax-planning', 'contacts', 'invoices', 'transactions', 'employees'];
   const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'overview';
 
   // Client state
@@ -1060,6 +1061,13 @@ export default function ClientDetailPage() {
             />
           )}
         </>
+      )}
+
+      {activeTab === 'tax-planning' && client && (
+        <TaxPlanningWorkspace
+          connectionId={client.id}
+          clientName={client.organization_name}
+        />
       )}
 
       {activeTab === 'contacts' && (

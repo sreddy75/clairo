@@ -298,6 +298,10 @@ def register_routes(app: FastAPI) -> None:
     with contextlib.suppress(ImportError):
         from app.modules.admin.models import FeatureFlagOverride  # noqa: F401
 
+    # Pre-import tax planning models for Alembic migration discovery
+    with contextlib.suppress(ImportError):
+        from app.modules.tax_planning.models import TaxPlan, TaxPlanMessage, TaxRateConfig, TaxScenario  # noqa: F401
+
     # Include module routers
     try:
         from app.modules.auth.router import router as auth_router
@@ -462,6 +466,15 @@ def register_routes(app: FastAPI) -> None:
         logger.info("Productivity router registered at /api/v1/productivity")
     except Exception as e:
         logger.warning("Productivity router registration skipped", error=str(e))
+
+    # Tax Planning router (Spec 049 - AI Tax Planning & Advisory)
+    try:
+        from app.modules.tax_planning.router import router as tax_planning_router
+
+        app.include_router(tax_planning_router, prefix="/api/v1", tags=["tax-planning"])
+        logger.info("Tax Planning router registered at /api/v1/tax-plans")
+    except Exception as e:
+        logger.warning("Tax Planning router registration skipped", error=str(e))
 
     # Portal routers (Spec 030 - Client Portal Foundation + Document Requests)
     try:

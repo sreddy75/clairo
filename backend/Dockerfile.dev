@@ -18,6 +18,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     # Build tools for some Python packages
     gcc \
+    # WeasyPrint system dependencies (PDF generation)
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libffi-dev \
+    shared-mime-info \
     # Clean up
     && rm -rf /var/lib/apt/lists/*
 
