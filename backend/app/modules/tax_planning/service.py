@@ -421,13 +421,17 @@ class TaxPlanningService:
             return [], format_reference_material([])
 
         try:
+            from app.core.pinecone_service import PineconeService
+            from app.core.voyage import VoyageService
             from app.modules.knowledge.schemas import (
                 KnowledgeSearchFilters,
                 KnowledgeSearchRequest,
             )
             from app.modules.knowledge.service import KnowledgeService
 
-            knowledge_service = KnowledgeService(self.session, self.settings)
+            pinecone = PineconeService(self.settings.pinecone)
+            voyage = VoyageService(self.settings.voyage)
+            knowledge_service = KnowledgeService(self.session, pinecone, voyage)
 
             # Build metadata filters based on entity type
             entity_filter = {
