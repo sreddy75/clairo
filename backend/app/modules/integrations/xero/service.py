@@ -4258,6 +4258,67 @@ class XeroReportService:
         # Default: return None to let API use defaults
         return None, None
 
+    # =========================================================================
+    # Bank Data Methods (Spec 049 — FR-015 to FR-018)
+    # =========================================================================
+
+    async def get_bank_balances(
+        self,
+        connection_id: UUID,
+    ) -> list[dict[str, Any]]:
+        """Get per-account bank balances from the Bank Summary report.
+
+        Uses the existing report cache pipeline. Returns per-account
+        opening/closing balances from the most recent Bank Summary.
+
+        Args:
+            connection_id: The Xero connection ID.
+
+        Returns:
+            List of per-account balance dicts.
+        """
+        from app.modules.integrations.xero.transformers import BankSummaryTransformer
+
+        report_data = await self.get_report(
+            connection_id=connection_id,
+            report_type="bank_summary",
+            period_key="current",
+        )
+        rows_data = report_data.get("rows_data", [])
+        if not rows_data:
+            return []
+        return BankSummaryTransformer.extract_per_account_summary(rows_data)
+
+    async def get_last_reconciliation_date(
+        self,
+        connection_id: UUID,
+    ) -> "date | None":
+        """Derive the last bank reconciliation date from synced transactions.
+
+        Queries the most recent reconciled bank transaction date across
+        all bank accounts for the given connection.
+
+        Args:
+            connection_id: The Xero connection ID.
+
+        Returns:
+            The date of the most recent reconciled transaction, or None.
+        """
+        from sqlalchemy import func, select
+
+        from app.modules.integrations.xero.models import XeroBankTransaction
+
+        result = await self.session.execute(
+            select(func.max(XeroBankTransaction.transaction_date)).where(
+                XeroBankTransaction.connection_id == connection_id,
+                XeroBankTransaction.is_reconciled.is_(True),
+            )
+        )
+        max_date = result.scalar_one_or_none()
+        if max_date is None:
+            return None
+        return max_date.date() if hasattr(max_date, "date") else max_date
+
     async def _call_xero_report_api(
         self,
         client: XeroClient,

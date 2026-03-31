@@ -1586,6 +1586,12 @@ class XeroBankTransaction(Base, TimestampMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+    is_reconciled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
 
     # Relationships
     tenant: Mapped["Tenant"] = relationship("Tenant", lazy="joined")
@@ -1599,6 +1605,12 @@ class XeroBankTransaction(Base, TimestampMixin):
             name="uq_xero_transaction_connection_txn",
         ),
         Index("ix_xero_transactions_tenant_date", "tenant_id", "transaction_date"),
+        Index(
+            "ix_xero_transactions_reconciled_date",
+            "xero_bank_account_id",
+            "is_reconciled",
+            "transaction_date",
+        ),
     )
 
     def __repr__(self) -> str:

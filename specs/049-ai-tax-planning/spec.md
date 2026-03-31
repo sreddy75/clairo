@@ -18,6 +18,13 @@
 - Q: What level of detail does the manual entry form capture? → A: Hybrid — summary totals by tax-relevant category as the primary view, with optional line-item breakdown per category for accountants who want more granularity.
 - Q: Should there be AI scenario usage limits per plan or tenant? → A: No limits for Phase 1 MVP. Monitor costs manually during trial period.
 
+### Session 2026-04-01 (Accountant Feedback)
+
+- Enhancement: Display last bank reconciliation date from Xero in the Financials card and pass as AI context (FR-015)
+- Enhancement: Pull and display current bank statement balance alongside P&L data (FR-016)
+- Enhancement: Retrieve unreconciled bank transactions for GST estimation and forward income/expense projection (FR-017)
+- Enhancement: Display period coverage in the Financials summary card for immediate data currency visibility (FR-018)
+
 ---
 
 ## Strategic Context
@@ -66,6 +73,10 @@ As an accountant, I want to pull a client's Profit & Loss from Xero into the tax
 3. **Given** a client whose Xero data was last synced more than 24 hours ago, **When** I start a tax plan, **Then** the system triggers a fresh sync before populating figures, with a loading indicator.
 
 4. **Given** a client with no Xero connection, **When** I start a tax plan, **Then** the system presents a manual entry form with all required fields, with a prompt to connect Xero.
+
+5. **Given** a client with a connected Xero organisation, **When** I start a new tax plan, **Then** the system automatically detects the last bank reconciliation date from Xero and displays it in the Financials card (e.g., "Reconciled to 31 Dec 2024"), and passes this date as context to the AI agent so it can interpret the period covered without asking the accountant.
+
+6. **Given** a client with a connected Xero organisation, **When** the Xero P&L is pulled, **Then** the system also retrieves and displays the current bank statement balance from Xero in the Financials card alongside the P&L figures.
 
 ---
 
@@ -175,6 +186,10 @@ As an accountant, I want to save a tax plan and come back to it later so I can w
 - **FR-012**: System MUST apply the correct company tax rate based on entity type and aggregated turnover (small business entity test).
 - **FR-013**: System MUST clearly label all outputs as estimates with appropriate disclaimers (not formal tax advice).
 - **FR-014**: System MUST respect multi-tenancy — tax plans are scoped to `tenant_id` and visible only to the creating practice.
+- **FR-015**: System MUST retrieve the bank reconciliation date from Xero bank accounts and display it in the Financials card (e.g., "Reconciled to 31 Dec 2024"). This date MUST be passed as context to the AI agent so it can correctly interpret the period covered by the financial data without asking the accountant.
+- **FR-016**: System MUST retrieve and display the current bank statement balance from Xero in the Financials card, enabling the AI agent to factor in the client's cash position when modelling tax strategies and cash flow impacts.
+- **FR-017**: System MUST retrieve unreconciled bank transactions from Xero for the current BAS quarter and use them to: (a) estimate GST collected and GST paid for BAS forecasting, and (b) generate a forward projection of income and expenses to year-end. All estimates derived from unreconciled transactions MUST be clearly labelled as provisional.
+- **FR-018**: System MUST display the period covered by the financial data in the Financials summary card (e.g., "1 Jul 2025 – 31 Dec 2025 — Reconciled to 31 Dec 2025") so accountants can immediately identify data currency without needing to ask or investigate.
 
 ### Key Entities
 

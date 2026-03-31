@@ -85,6 +85,13 @@ export function FinancialsPanel({
         )}
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Period Coverage (FR-018) */}
+        {financials.period_coverage && (
+          <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            {financials.period_coverage}
+          </div>
+        )}
+
         {/* Income */}
         <Section
           title="Income"
@@ -157,6 +164,50 @@ export function FinancialsPanel({
                 value={adj.type === 'add_back' ? adj.amount : -adj.amount}
               />
             ))}
+          </div>
+        )}
+
+        {/* Bank Position (FR-016) */}
+        {financials.total_bank_balance != null && (
+          <div className="border-t pt-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Bank Position
+              </p>
+              {financials.last_reconciliation_date && (
+                <span className="text-xs text-muted-foreground">
+                  Reconciled to {new Date(financials.last_reconciliation_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+              )}
+            </div>
+            {financials.bank_balances?.map((acct, i) => (
+              <SummaryRow key={i} label={acct.account_name} value={acct.closing_balance} />
+            ))}
+            <div className="flex items-center justify-between font-medium">
+              <span>Total Bank Balance</span>
+              <span className="tabular-nums">{formatCurrency(financials.total_bank_balance)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Unreconciled Summary (FR-017) */}
+        {financials.unreconciled_summary && financials.unreconciled_summary.transaction_count > 0 && (
+          <div className="border-t pt-3 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Unreconciled ({financials.unreconciled_summary.quarter})
+              </p>
+              <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
+                Provisional
+              </Badge>
+            </div>
+            <SummaryRow label="Income" value={financials.unreconciled_summary.unreconciled_income} />
+            <SummaryRow label="Expenses" value={financials.unreconciled_summary.unreconciled_expenses} />
+            <SummaryRow label="Est. GST Collected" value={financials.unreconciled_summary.gst_collected_estimate} />
+            <SummaryRow label="Est. GST Paid" value={financials.unreconciled_summary.gst_paid_estimate} />
+            <p className="text-xs text-muted-foreground">
+              {financials.unreconciled_summary.transaction_count} unreconciled transactions
+            </p>
           </div>
         )}
       </CardContent>

@@ -197,6 +197,34 @@ def format_financial_context(
             ]
         )
 
+    # Bank context (FR-015, FR-016, FR-017, FR-018)
+    period_coverage = financials_data.get("period_coverage")
+    if period_coverage:
+        lines.extend(["", "--- Data Currency ---", f"Period: {period_coverage}"])
+
+    recon_date = financials_data.get("last_reconciliation_date")
+    if recon_date:
+        lines.append(f"Last Bank Reconciliation: {recon_date}")
+
+    total_bank = financials_data.get("total_bank_balance")
+    if total_bank is not None:
+        lines.extend(["", "--- Bank Position ---", f"Total Bank Balance: ${total_bank:,.2f}"])
+        for acct in financials_data.get("bank_balances", []):
+            lines.append(f"  {acct['account_name']}: ${acct['closing_balance']:,.2f}")
+
+    unrecon = financials_data.get("unreconciled_summary")
+    if unrecon and unrecon.get("transaction_count", 0) > 0:
+        lines.extend([
+            "",
+            f"--- Unreconciled Transactions ({unrecon.get('quarter', 'current quarter')}) [PROVISIONAL] ---",
+            f"Count: {unrecon['transaction_count']}",
+            f"Unreconciled Income: ${unrecon.get('unreconciled_income', 0):,.2f}",
+            f"Unreconciled Expenses: ${unrecon.get('unreconciled_expenses', 0):,.2f}",
+            f"Estimated GST Collected: ${unrecon.get('gst_collected_estimate', 0):,.2f}",
+            f"Estimated GST Paid: ${unrecon.get('gst_paid_estimate', 0):,.2f}",
+            "Note: These are provisional estimates from unreconciled transactions.",
+        ])
+
     return "\n".join(lines)
 
 

@@ -300,7 +300,12 @@ def register_routes(app: FastAPI) -> None:
 
     # Pre-import tax planning models for Alembic migration discovery
     with contextlib.suppress(ImportError):
-        from app.modules.tax_planning.models import TaxPlan, TaxPlanMessage, TaxRateConfig, TaxScenario  # noqa: F401
+        from app.modules.tax_planning.models import (  # noqa: F401
+            TaxPlan,
+            TaxPlanMessage,
+            TaxRateConfig,
+            TaxScenario,
+        )
 
     # Include module routers
     try:

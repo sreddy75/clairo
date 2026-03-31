@@ -562,6 +562,99 @@
 
 ---
 
+## Phase 8: Bank Reconciliation, Balances & Data Currency (FR-015 to FR-018)
+
+**Purpose**: Pull bank reconciliation dates, account balances, and unreconciled transactions from Xero. Display data currency in the Financials card. Pass bank context to the AI agent for cash-aware scenario modelling.
+
+**Context**: Xero Bank Summary report is already fetched and cached (raw `rows_data` has per-account balances), but the transformer only extracts totals. `XeroBankTransaction` model is missing `is_reconciled` — the Xero API returns it but we drop it during sync. No bank data is currently pulled in the tax planning flow.
+
+### Backend — Xero Integration Layer
+
+- [ ] T040 [P] Add `is_reconciled` column to `XeroBankTransaction` model
+  - File: `backend/app/modules/integrations/xero/models.py`
+  - Add `is_reconciled: Mapped[bool] = mapped_column(Boolean, default=False)` to `XeroBankTransaction`
+  - Add index: `ix_xero_bank_transactions_reconciled` on `(xero_bank_account_id, is_reconciled, transaction_date)` for efficient reconciliation date queries
+  - Create Alembic migration: `uv run alembic revision --autogenerate -m "add is_reconciled to xero_bank_transactions"`
+  - Run: `uv run alembic upgrade head`
+
+- [ ] T041 [P] Update `BankTransactionTransformer` to extract `IsReconciled`
+  - File: `backend/app/modules/integrations/xero/transformers.py`
+  - In `BankTransactionTransformer.transform()` (~line 340): add `"is_reconciled": raw.get("IsReconciled", False)` to the returned dict
+  - Verify: next bank transaction sync will populate the new field
+
+- [ ] T042 [P] Extract per-account bank balances from Bank Summary report
+  - File: `backend/app/modules/integrations/xero/transformers.py`
+  - Add method `BankSummaryTransformer.extract_per_account_summary(rows_data: list) -> list[dict]`
+  - Parse individual `Row` entries (not just `SummaryRow`) from the cached Bank Summary
+  - Return list of `{ account_name, account_id, opening_balance, cash_received, cash_spent, closing_balance }`
+  - The raw row data is already stored in `XeroReport.rows_data` JSONB — just needs parsing
+
+- [ ] T043 Add bank data retrieval methods to `XeroReportService`
+  - File: `backend/app/modules/integrations/xero/service.py`
+  - `async def get_bank_balances(self, connection_id: UUID) -> list[dict]`
+    - Fetch Bank Summary report (uses existing cache pipeline)
+    - Call `BankSummaryTransformer.extract_per_account_summary()` on `rows_data`
+    - Return per-account balances with total
+  - `async def get_last_reconciliation_date(self, connection_id: UUID, session: AsyncSession) -> date | None`
+    - Query: `SELECT MAX(transaction_date) FROM xero_bank_transactions WHERE xero_connection_id = :id AND is_reconciled = true`
+    - Return the date, or None if no reconciled transactions exist
+
+### Backend — Tax Planning Service
+
+- [ ] T044 Extend `pull_xero_financials` to fetch bank context (FR-015, FR-016, FR-018)
+  - File: `backend/app/modules/tax_planning/service.py`
+  - After pulling P&L, also:
+    1. Call `XeroReportService.get_bank_balances(connection_id)` → store in `financials_data["bank_balances"]`
+    2. Call `XeroReportService.get_last_reconciliation_date(connection_id, session)` → store in `financials_data["last_reconciliation_date"]`
+    3. Compute `financials_data["period_coverage"]` string (e.g., "1 Jul 2025 – 31 Dec 2025 — Reconciled to 31 Dec 2025")
+    4. Sum closing balances for `financials_data["total_bank_balance"]`
+  - Return bank context in the response alongside existing financials + tax_position
+
+- [ ] T045 Add unreconciled transaction retrieval for GST estimation (FR-017)
+  - File: `backend/app/modules/tax_planning/service.py`
+  - New method: `async def _get_unreconciled_summary(self, connection_id: UUID, quarter_start: date, quarter_end: date) -> dict`
+    - Query `XeroBankTransaction` where `is_reconciled = false` and `transaction_date` within the current BAS quarter
+    - Aggregate: total unreconciled income, total unreconciled expenses, estimated GST collected (sum tax_amount on RECEIVE), estimated GST paid (sum tax_amount on SPEND), transaction count
+    - Return dict with `gst_collected_estimate`, `gst_paid_estimate`, `unreconciled_income`, `unreconciled_expenses`, `transaction_count`, `is_provisional: true`
+  - Call from `pull_xero_financials` → store in `financials_data["unreconciled_summary"]`
+
+- [ ] T046 Pass bank context to AI agent (FR-015, FR-016)
+  - File: `backend/app/modules/tax_planning/prompts.py`
+  - Update `format_financial_context()` to include:
+    - Bank balances (total and per-account) if available
+    - Last reconciliation date
+    - Period coverage string
+    - Unreconciled summary (labelled as provisional estimates)
+  - AI can now reference cash position and data currency without asking the accountant
+
+### Frontend
+
+- [ ] T047 Update TypeScript types for bank context
+  - File: `frontend/src/types/tax-planning.ts`
+  - Add to `FinancialsData` interface: `bank_balances?: BankAccountBalance[]`, `total_bank_balance?: number`, `last_reconciliation_date?: string`, `period_coverage?: string`, `unreconciled_summary?: UnreconciledSummary`
+  - Add `BankAccountBalance` interface: `account_name, opening_balance, closing_balance, cash_received, cash_spent`
+  - Add `UnreconciledSummary` interface: `gst_collected_estimate, gst_paid_estimate, unreconciled_income, unreconciled_expenses, transaction_count, is_provisional`
+
+- [ ] T048 Update FinancialsPanel to display bank context (FR-015, FR-016, FR-018)
+  - File: `frontend/src/components/tax-planning/FinancialsPanel.tsx`
+  - Add **period coverage banner** at top of card: "1 Jul 2025 – 31 Dec 2025 — Reconciled to 31 Dec 2025" (FR-018)
+  - Add **Bank Position section** below expenses: total bank balance with per-account breakdown (collapsible)
+  - Add **Unreconciled Summary section** (if available): GST estimates, income/expense projections — clearly badged as "Provisional" with amber indicator (FR-017)
+  - Use `formatCurrency` from `@/lib/formatters`, `Badge` from shadcn/ui for provisional labels
+
+- [ ] T049 Run validation for FR-015 to FR-018
+  - Verify: pull Xero financials shows reconciliation date in Financials card
+  - Verify: bank balances displayed alongside P&L
+  - Verify: unreconciled summary shows with provisional badge
+  - Verify: AI agent references cash position and reconciliation date in responses
+  - Verify: period coverage string shown at top of Financials card
+  - Run: `cd backend && uv run ruff check . && uv run pytest`
+  - Run: `cd frontend && npm run lint && npx tsc --noEmit`
+
+**Checkpoint**: FR-015 to FR-018 complete. Financials card shows data currency, bank balances, and provisional GST estimates. AI agent is bank-context-aware.
+
+---
+
 ## Phase FINAL: PR & Merge
 
 - [ ] TFINAL-1 Ensure all tests pass

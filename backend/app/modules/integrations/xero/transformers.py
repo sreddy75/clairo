@@ -388,6 +388,7 @@ class BankTransactionTransformer:
             "total_amount": total_amount,
             "line_items": line_items if line_items else None,
             "xero_updated_at": xero_updated_at,
+            "is_reconciled": xero_transaction.get("IsReconciled", False),
         }
 
     @staticmethod
@@ -1234,6 +1235,45 @@ class BankSummaryTransformer(XeroReportTransformer):
             "net_movement": float(net_movement),
             "account_count": account_count,
         }
+
+    @classmethod
+    def extract_per_account_summary(
+        cls,
+        rows: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Extract per-bank-account balances from Bank Summary rows.
+
+        Args:
+            rows: Rows array from Xero Bank Summary report response.
+
+        Returns:
+            List of dicts with per-account opening/closing balances.
+        """
+        accounts = []
+        for row in rows:
+            if row.get("RowType") != "Row":
+                continue
+            cells = row.get("Cells", [])
+            if len(cells) < 5:
+                continue
+            # Cell 0 = account name (may contain AccountID in Attributes)
+            account_cell = cells[0]
+            account_name = account_cell.get("Value", "Unknown")
+            account_id = None
+            for attr in account_cell.get("Attributes", []):
+                if attr.get("Id") == "account" or attr.get("Name") == "account":
+                    account_id = attr.get("Value")
+                    break
+
+            accounts.append({
+                "account_name": account_name,
+                "account_id": account_id,
+                "opening_balance": float(cls.parse_decimal(cells[1].get("Value"))),
+                "cash_received": float(cls.parse_decimal(cells[2].get("Value"))),
+                "cash_spent": float(cls.parse_decimal(cells[3].get("Value"))),
+                "closing_balance": float(cls.parse_decimal(cells[4].get("Value"))),
+            })
+        return accounts
 
 
 # =============================================================================

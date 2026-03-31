@@ -155,6 +155,35 @@ class TaxPlanningService:
         financials_data = self._transform_xero_to_financials(summary, rows)
         now = datetime.now(UTC)
 
+        # Fetch bank context (FR-015, FR-016, FR-017, FR-018)
+        try:
+            bank_balances = await report_service.get_bank_balances(plan.xero_connection_id)
+            recon_date = await report_service.get_last_reconciliation_date(
+                plan.xero_connection_id,
+            )
+            unreconciled = await self._get_unreconciled_summary(
+                plan.xero_connection_id, plan.financial_year
+            )
+
+            total_bank_balance = sum(a["closing_balance"] for a in bank_balances)
+            recon_date_str = recon_date.isoformat() if recon_date else None
+
+            # Build period coverage string
+            fy_start_year = int(plan.financial_year[:4])
+            period_start = f"1 Jul {fy_start_year}"
+            if recon_date:
+                period_coverage = f"{period_start} – {recon_date.strftime('%-d %b %Y')} — Reconciled to {recon_date.strftime('%-d %b %Y')}"
+            else:
+                period_coverage = f"{period_start} – current (no reconciliation data)"
+
+            financials_data["bank_balances"] = bank_balances
+            financials_data["total_bank_balance"] = total_bank_balance
+            financials_data["last_reconciliation_date"] = recon_date_str
+            financials_data["period_coverage"] = period_coverage
+            financials_data["unreconciled_summary"] = unreconciled
+        except Exception:
+            logger.warning("Bank context fetch failed, proceeding without", exc_info=True)
+
         await self.plan_repo.update(
             plan,
             {
@@ -252,6 +281,99 @@ class TaxPlanningService:
                                     breakdown.append({"category": name, "amount": amount})
 
         return breakdown
+
+    async def _get_unreconciled_summary(
+        self,
+        connection_id: uuid.UUID,
+        financial_year: str,
+    ) -> dict[str, Any]:
+        """Aggregate unreconciled bank transactions for GST estimation (FR-017).
+
+        Returns provisional estimates of GST collected/paid and
+        income/expenses from unreconciled transactions in the current
+        BAS quarter.
+        """
+        from decimal import Decimal
+
+        from sqlalchemy import case, func, select
+
+        from app.modules.integrations.xero.models import XeroBankTransaction
+
+        # Determine current quarter boundaries within the FY
+        fy_start_year = int(financial_year[:4])
+        now = datetime.now(UTC)
+        # Australian BAS quarters: Jul-Sep, Oct-Dec, Jan-Mar, Apr-Jun
+        month = now.month
+        if month in (7, 8, 9):
+            q_start = datetime(fy_start_year, 7, 1, tzinfo=UTC)
+            q_end = datetime(fy_start_year, 9, 30, tzinfo=UTC)
+        elif month in (10, 11, 12):
+            q_start = datetime(fy_start_year, 10, 1, tzinfo=UTC)
+            q_end = datetime(fy_start_year, 12, 31, tzinfo=UTC)
+        elif month in (1, 2, 3):
+            q_start = datetime(fy_start_year + 1, 1, 1, tzinfo=UTC)
+            q_end = datetime(fy_start_year + 1, 3, 31, tzinfo=UTC)
+        else:
+            q_start = datetime(fy_start_year + 1, 4, 1, tzinfo=UTC)
+            q_end = datetime(fy_start_year + 1, 6, 30, tzinfo=UTC)
+
+        result = await self.session.execute(
+            select(
+                func.count(XeroBankTransaction.id).label("count"),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (XeroBankTransaction.transaction_type == "receive", XeroBankTransaction.total_amount),
+                            else_=Decimal("0"),
+                        )
+                    ),
+                    Decimal("0"),
+                ).label("income"),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (XeroBankTransaction.transaction_type == "spend", XeroBankTransaction.total_amount),
+                            else_=Decimal("0"),
+                        )
+                    ),
+                    Decimal("0"),
+                ).label("expenses"),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (XeroBankTransaction.transaction_type == "receive", XeroBankTransaction.tax_amount),
+                            else_=Decimal("0"),
+                        )
+                    ),
+                    Decimal("0"),
+                ).label("gst_collected"),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (XeroBankTransaction.transaction_type == "spend", XeroBankTransaction.tax_amount),
+                            else_=Decimal("0"),
+                        )
+                    ),
+                    Decimal("0"),
+                ).label("gst_paid"),
+            ).where(
+                XeroBankTransaction.connection_id == connection_id,
+                XeroBankTransaction.is_reconciled.is_(False),
+                XeroBankTransaction.transaction_date >= q_start,
+                XeroBankTransaction.transaction_date <= q_end,
+            )
+        )
+        row = result.one()
+
+        return {
+            "transaction_count": row.count,
+            "unreconciled_income": float(row.income),
+            "unreconciled_expenses": float(row.expenses),
+            "gst_collected_estimate": float(row.gst_collected),
+            "gst_paid_estimate": float(row.gst_paid),
+            "quarter": f"{q_start.strftime('%b %Y')} – {q_end.strftime('%b %Y')}",
+            "is_provisional": True,
+        }
 
     # ------------------------------------------------------------------
     # Financials: Manual entry

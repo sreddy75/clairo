@@ -42,6 +42,31 @@ export interface FinancialsData {
   turnover: number;
   months_data_available: number;
   is_annualised: boolean;
+  // Bank context (FR-015 to FR-018)
+  bank_balances?: BankAccountBalance[];
+  total_bank_balance?: number;
+  last_reconciliation_date?: string;
+  period_coverage?: string;
+  unreconciled_summary?: UnreconciledSummary;
+}
+
+export interface BankAccountBalance {
+  account_name: string;
+  account_id?: string;
+  opening_balance: number;
+  cash_received: number;
+  cash_spent: number;
+  closing_balance: number;
+}
+
+export interface UnreconciledSummary {
+  transaction_count: number;
+  unreconciled_income: number;
+  unreconciled_expenses: number;
+  gst_collected_estimate: number;
+  gst_paid_estimate: number;
+  quarter: string;
+  is_provisional: boolean;
 }
 
 export interface TaxPosition {
