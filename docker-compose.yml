@@ -150,7 +150,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile.dev
     container_name: clairo-celery-worker
-    command: celery -A app.tasks.celery_app worker --loglevel=info
+    command: celery -A app.tasks.celery_app worker --loglevel=info -Q clairo-default
     env_file:
       - ./backend/.env
     environment:

@@ -79,4 +79,5 @@ CMD celery -A app.tasks.celery_app worker \
     --concurrency=${CELERY_CONCURRENCY} \
     --hostname=worker@%h \
     --without-mingle \
-    --without-gossip
+    --without-gossip \
+    -Q ${CELERY_QUEUES:-clairo-default}
