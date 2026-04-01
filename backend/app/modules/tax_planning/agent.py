@@ -25,7 +25,7 @@ from app.modules.tax_planning.tax_calculator import calculate_tax_position
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "claude-sonnet-4-20250514"
-MAX_TOKENS = 4000
+MAX_TOKENS = 12000
 
 
 @dataclass

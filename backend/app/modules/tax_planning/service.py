@@ -795,7 +795,7 @@ class TaxPlanningService:
 
         # Load context
         rate_configs = await self._load_rate_configs(plan.financial_year)
-        recent_messages = await self.message_repo.get_recent_messages(plan_id, max_tokens=8000)
+        recent_messages = await self.message_repo.get_recent_messages(plan_id, max_tokens=24000)
         scenarios = await self.scenario_repo.list_by_plan(plan_id, tenant_id)
 
         conversation_history = self._build_conversation_history(recent_messages)
@@ -906,7 +906,7 @@ class TaxPlanningService:
             raise ValidationError("Load financials before using AI chat")
 
         rate_configs = await self._load_rate_configs(plan.financial_year)
-        recent_messages = await self.message_repo.get_recent_messages(plan_id, max_tokens=8000)
+        recent_messages = await self.message_repo.get_recent_messages(plan_id, max_tokens=24000)
         scenarios = await self.scenario_repo.list_by_plan(plan_id, tenant_id)
 
         conversation_history = self._build_conversation_history(recent_messages)
