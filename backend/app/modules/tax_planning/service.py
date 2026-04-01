@@ -760,6 +760,7 @@ class TaxPlanningService:
         plan_id: uuid.UUID,
         tenant_id: uuid.UUID,
         message: str,
+        file: Any | None = None,
     ) -> dict[str, Any]:
         """Send a message to the AI agent and get scenario responses."""
         from app.modules.tax_planning.agent import TaxPlanningAgent
@@ -770,14 +771,34 @@ class TaxPlanningService:
 
             raise ValidationError("Load financials before using AI chat")
 
+        # Process file attachment
+        attachment = None
+        attachment_metadata: dict[str, Any] = {}
+        if file and file.filename:
+            from app.modules.tax_planning.file_processor import process_chat_attachment
+
+            attachment = await process_chat_attachment(
+                file,
+                tenant_id,
+                plan_id,
+                f"msg-{uuid.uuid4().hex[:12]}",
+            )
+            attachment_metadata = {
+                "attachment": {
+                    "object_key": attachment.object_key,
+                    "filename": attachment.filename,
+                    "media_type": attachment.media_type,
+                    "category": attachment.category,
+                    "size_bytes": attachment.size_bytes,
+                }
+            }
+
         # Load context
         rate_configs = await self._load_rate_configs(plan.financial_year)
         recent_messages = await self.message_repo.get_recent_messages(plan_id, max_tokens=8000)
         scenarios = await self.scenario_repo.list_by_plan(plan_id, tenant_id)
 
-        conversation_history = [
-            {"role": msg.role, "content": msg.content} for msg in recent_messages
-        ]
+        conversation_history = self._build_conversation_history(recent_messages)
 
         # Save user message
         await self.message_repo.create(
@@ -788,6 +809,7 @@ class TaxPlanningService:
                 "content": message,
                 "scenario_ids": [],
                 "token_count": len(message) // 4,
+                "metadata_": attachment_metadata,
             }
         )
 
@@ -811,6 +833,7 @@ class TaxPlanningService:
             existing_scenarios=scenarios,
             rate_configs=rate_configs,
             reference_material=reference_material,
+            content_blocks=attachment.content_blocks if attachment else None,
         )
 
         # Citation verification
@@ -871,6 +894,7 @@ class TaxPlanningService:
         plan_id: uuid.UUID,
         tenant_id: uuid.UUID,
         message: str,
+        attachment: Any | None = None,
     ) -> Any:
         """Stream AI response via SSE events."""
         from app.modules.tax_planning.agent import TaxPlanningAgent
@@ -885,9 +909,20 @@ class TaxPlanningService:
         recent_messages = await self.message_repo.get_recent_messages(plan_id, max_tokens=8000)
         scenarios = await self.scenario_repo.list_by_plan(plan_id, tenant_id)
 
-        conversation_history = [
-            {"role": msg.role, "content": msg.content} for msg in recent_messages
-        ]
+        conversation_history = self._build_conversation_history(recent_messages)
+
+        # Build attachment metadata for persistence
+        attachment_metadata: dict[str, Any] = {}
+        if attachment:
+            attachment_metadata = {
+                "attachment": {
+                    "object_key": attachment.object_key,
+                    "filename": attachment.filename,
+                    "media_type": attachment.media_type,
+                    "category": attachment.category,
+                    "size_bytes": attachment.size_bytes,
+                }
+            }
 
         # Save user message
         await self.message_repo.create(
@@ -898,6 +933,7 @@ class TaxPlanningService:
                 "content": message,
                 "scenario_ids": [],
                 "token_count": len(message) // 4,
+                "metadata_": attachment_metadata,
             }
         )
 
@@ -923,6 +959,7 @@ class TaxPlanningService:
             existing_scenarios=scenarios,
             rate_configs=rate_configs,
             reference_material=reference_material,
+            content_blocks=attachment.content_blocks if attachment else None,
         ):
             if event["type"] == "content":
                 full_content += event.get("content", "")
@@ -981,6 +1018,34 @@ class TaxPlanningService:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _build_conversation_history(
+        messages: list[Any],
+    ) -> list[dict[str, Any]]:
+        """Build conversation history with multimodal content blocks.
+
+        For messages with file attachments stored in metadata_, reconstructs
+        the content as Anthropic-compatible content blocks. For plain text
+        messages, uses a simple string.
+        """
+        from app.modules.tax_planning.file_processor import (
+            build_content_blocks_from_metadata,
+        )
+
+        history: list[dict[str, Any]] = []
+        for msg in messages:
+            metadata = getattr(msg, "metadata_", None) or {}
+            attachment_blocks = build_content_blocks_from_metadata(metadata)
+
+            if attachment_blocks and msg.role == "user":
+                # Multimodal message: file blocks + text
+                content_parts = attachment_blocks + [{"type": "text", "text": msg.content}]
+                history.append({"role": msg.role, "content": content_parts})
+            else:
+                history.append({"role": msg.role, "content": msg.content})
+
+        return history
 
     async def get_client_name(self, xero_connection_id: uuid.UUID, tenant_id: uuid.UUID) -> str:
         """Get the organisation name from the XeroConnection."""

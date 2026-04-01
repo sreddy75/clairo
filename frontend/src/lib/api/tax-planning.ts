@@ -175,15 +175,22 @@ export async function* chatStream(
   token: string,
   planId: string,
   message: string,
+  file?: File | null,
 ): AsyncGenerator<ChatStreamEvent> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+  const formData = new FormData();
+  formData.append('message', message);
+  if (file) {
+    formData.append('file', file);
+  }
+
   const response = await fetch(`${apiUrl}${BASE}/${planId}/chat/stream`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message }),
+    body: formData,
   });
 
   if (!response.ok) {

@@ -55,10 +55,11 @@ class TaxPlanningAgent:
         plan_tax_position: dict | None,
         entity_type: str,
         financial_year: str,
-        conversation_history: list[dict[str, str]],
+        conversation_history: list[dict[str, Any]],
         existing_scenarios: list,
         rate_configs: dict[str, dict],
         reference_material: str | None = None,
+        content_blocks: list[dict[str, Any]] | None = None,
     ) -> AgentResponse:
         """Process a user message and generate scenario responses.
 
@@ -74,7 +75,7 @@ class TaxPlanningAgent:
             reference_material=reference_material,
         )
 
-        messages = self._build_messages(conversation_history, message)
+        messages = self._build_messages(conversation_history, message, content_blocks)
         scenarios: list[dict[str, Any]] = []
 
         # Tool-use loop
@@ -143,10 +144,11 @@ class TaxPlanningAgent:
         plan_tax_position: dict | None,
         entity_type: str,
         financial_year: str,
-        conversation_history: list[dict[str, str]],
+        conversation_history: list[dict[str, Any]],
         existing_scenarios: list,
         rate_configs: dict[str, dict],
         reference_material: str | None = None,
+        content_blocks: list[dict[str, Any]] | None = None,
     ) -> AsyncGenerator[dict[str, Any], None]:
         """Stream a response with SSE events.
 
@@ -160,7 +162,7 @@ class TaxPlanningAgent:
             existing_scenarios,
             reference_material=reference_material,
         )
-        messages = self._build_messages(conversation_history, message)
+        messages = self._build_messages(conversation_history, message, content_blocks)
         scenarios: list[dict[str, Any]] = []
 
         yield {"type": "thinking", "content": "Analysing scenario..."}
@@ -246,13 +248,21 @@ class TaxPlanningAgent:
 
     def _build_messages(
         self,
-        conversation_history: list[dict[str, str]],
+        conversation_history: list[dict[str, Any]],
         new_message: str,
+        content_blocks: list[dict[str, Any]] | None = None,
     ) -> list[dict[str, Any]]:
         messages: list[dict[str, Any]] = []
         for msg in conversation_history:
             messages.append({"role": msg["role"], "content": msg["content"]})
-        messages.append({"role": "user", "content": new_message})
+
+        # Build new user message — multimodal if content_blocks provided
+        if content_blocks:
+            user_content = content_blocks + [{"type": "text", "text": new_message}]
+            messages.append({"role": "user", "content": user_content})
+        else:
+            messages.append({"role": "user", "content": new_message})
+
         return messages
 
     def _execute_tool(

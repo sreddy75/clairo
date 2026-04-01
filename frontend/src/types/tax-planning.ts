@@ -143,6 +143,13 @@ export interface CitationVerification {
   status: VerificationStatus;
 }
 
+export interface ChatAttachment {
+  filename: string;
+  media_type: string;
+  category: 'image' | 'pdf' | 'csv' | 'excel' | 'text';
+  size_bytes: number;
+}
+
 export interface TaxPlanMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -151,6 +158,7 @@ export interface TaxPlanMessage {
   created_at: string;
   source_chunks_used?: SourceChunkRef[] | null;
   citation_verification?: CitationVerification | null;
+  attachment?: ChatAttachment | null;
 }
 
 export interface TaxPlan {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@clerk/nextjs';
+import { FileText, Paperclip, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -9,9 +10,28 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { chatStream, listMessages } from '@/lib/api/tax-planning';
 import { cn } from '@/lib/utils';
-import type { CitationVerification, TaxPlanMessage, TaxScenario } from '@/types/tax-planning';
+import type { ChatAttachment, CitationVerification, TaxPlanMessage, TaxScenario } from '@/types/tax-planning';
 
 import { CitationBadge } from './CitationBadge';
+
+const ACCEPTED_FILE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'text/csv',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+].join(',');
+
+const ACCEPTED_EXTENSIONS = '.png,.jpg,.jpeg,.webp,.gif,.pdf,.csv,.xlsx,.txt';
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
 
 interface ScenarioChatProps {
   planId: string;
@@ -26,9 +46,11 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [thinkingText, setThinkingText] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const pendingVerificationRef = useRef<CitationVerification | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -63,14 +85,41 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
     }
   }, [input]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading || disabled) return;
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File too large. Maximum size is 10MB.');
+        return;
+      }
+      setSelectedFile(file);
+    }
+    e.target.value = '';
+  };
 
-    const userMessage = input.trim();
+  const handleSend = async () => {
+    if ((!input.trim() && !selectedFile) || isLoading || disabled) return;
+
+    const userMessage = input.trim() || (selectedFile ? `[Attached: ${selectedFile.name}]` : '');
+    const fileToSend = selectedFile;
     setInput('');
+    setSelectedFile(null);
     setIsLoading(true);
     setStreamingContent('');
     setThinkingText('');
+
+    // Build optimistic attachment info
+    const attachment: ChatAttachment | undefined = fileToSend
+      ? {
+          filename: fileToSend.name,
+          media_type: fileToSend.type,
+          category: fileToSend.type.startsWith('image/') ? 'image' :
+                    fileToSend.type === 'application/pdf' ? 'pdf' :
+                    fileToSend.type === 'text/csv' ? 'csv' :
+                    fileToSend.type.includes('spreadsheet') ? 'excel' : 'text',
+          size_bytes: fileToSend.size,
+        }
+      : undefined;
 
     // Add user message optimistically
     const tempUserMsg: TaxPlanMessage = {
@@ -79,6 +128,7 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
       content: userMessage,
       scenario_ids: [],
       created_at: new Date().toISOString(),
+      attachment,
     };
     setMessages((prev) => [...prev, tempUserMsg]);
 
@@ -88,7 +138,7 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
 
       let fullContent = '';
 
-      for await (const event of chatStream(token, planId, userMessage)) {
+      for await (const event of chatStream(token, planId, userMessage, fileToSend)) {
         switch (event.type) {
           case 'thinking':
             setThinkingText(event.content || '');
@@ -219,9 +269,43 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
           <div ref={messagesEndRef} />
         </div>
 
+        {/* File preview */}
+        {selectedFile && (
+          <div className="border-t px-3 pt-2">
+            <div className="inline-flex items-center gap-2 rounded-md bg-muted/50 px-2.5 py-1.5 text-xs">
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="max-w-[200px] truncate">{selectedFile.name}</span>
+              <span className="text-muted-foreground">{formatFileSize(selectedFile.size)}</span>
+              <button
+                onClick={() => setSelectedFile(null)}
+                className="ml-1 rounded-sm hover:bg-muted"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Input */}
         <div className="border-t p-3">
           <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={`${ACCEPTED_FILE_TYPES},${ACCEPTED_EXTENSIONS}`}
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="shrink-0 px-2"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={disabled || isLoading}
+              title="Attach file (image, PDF, Excel, CSV)"
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
             <textarea
               ref={textareaRef}
               value={input}
@@ -238,7 +322,7 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
             />
             <Button
               onClick={handleSend}
-              disabled={!input.trim() || isLoading || disabled}
+              disabled={(!input.trim() && !selectedFile) || isLoading || disabled}
               size="sm"
             >
               Send
@@ -247,6 +331,20 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function AttachmentBadge({ attachment }: { attachment: ChatAttachment }) {
+  const icon = attachment.category === 'image' ? '🖼' :
+               attachment.category === 'pdf' ? '📄' :
+               attachment.category === 'csv' || attachment.category === 'excel' ? '📊' : '📎';
+
+  return (
+    <div className="inline-flex items-center gap-1.5 rounded bg-primary-foreground/10 px-2 py-1 text-xs mb-1">
+      <span>{icon}</span>
+      <span className="max-w-[180px] truncate">{attachment.filename}</span>
+      <span className="text-primary-foreground/60">{formatFileSize(attachment.size_bytes)}</span>
+    </div>
   );
 }
 
@@ -263,6 +361,9 @@ function MessageBubble({ message }: { message: TaxPlanMessage }) {
             : 'bg-muted/50 prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-table:my-2 prose-li:my-0.5 prose-td:px-2 prose-td:py-1 prose-th:px-2 prose-th:py-1 prose-table:text-xs',
         )}
       >
+        {isUser && message.attachment && (
+          <AttachmentBadge attachment={message.attachment} />
+        )}
         {isUser ? (
           message.content
         ) : (

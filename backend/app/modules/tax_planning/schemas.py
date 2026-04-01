@@ -3,9 +3,9 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.modules.tax_planning.models import (
     DataSource,
@@ -104,9 +104,7 @@ class TaxScenarioListResponse(BaseModel):
     total: int
 
 
-VerificationStatus = Literal[
-    "verified", "partially_verified", "unverified", "no_citations"
-]
+VerificationStatus = Literal["verified", "partially_verified", "unverified", "no_citations"]
 
 
 class SourceChunkRef(BaseModel):
@@ -130,6 +128,15 @@ class CitationVerificationResult(BaseModel):
     status: VerificationStatus
 
 
+class ChatAttachmentInfo(BaseModel):
+    """Attachment metadata returned in chat message responses."""
+
+    filename: str
+    media_type: str
+    category: str
+    size_bytes: int
+
+
 class TaxPlanMessageResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -140,6 +147,20 @@ class TaxPlanMessageResponse(BaseModel):
     created_at: datetime
     source_chunks_used: list[SourceChunkRef] | None = None
     citation_verification: CitationVerificationResult | None = None
+    attachment: ChatAttachmentInfo | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def extract_attachment(cls, data: Any) -> Any:
+        """Extract attachment info from metadata_ JSONB."""
+        if hasattr(data, "metadata_"):
+            metadata = data.metadata_ or {}
+            att = metadata.get("attachment")
+            if att and not getattr(data, "attachment", None):
+                # Set as a dict so Pydantic can parse it
+                if hasattr(data, "__dict__"):
+                    data.__dict__["attachment"] = att
+        return data
 
 
 class MessageListResponse(BaseModel):

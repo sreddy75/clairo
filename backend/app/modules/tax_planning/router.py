@@ -6,7 +6,7 @@ Domain exceptions are caught and converted to HTTPException responses.
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
@@ -16,7 +16,6 @@ from app.modules.auth.models import PracticeUser
 from app.modules.auth.permissions import Permission, require_permission
 from app.modules.tax_planning.models import TaxPlan
 from app.modules.tax_planning.schemas import (
-    ChatMessageRequest,
     ChatResponse,
     FinancialsInput,
     FinancialsPullResponse,
@@ -206,13 +205,19 @@ async def save_manual_financials(
 @router.post("/{plan_id}/chat", response_model=ChatResponse)
 async def send_chat_message(
     plan_id: uuid.UUID,
-    data: ChatMessageRequest,
+    message: str = Form(..., min_length=1, max_length=2000),
+    file: UploadFile | None = File(None),
     current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
     service: TaxPlanningService = Depends(_get_service),
 ):
-    """Send a message to the tax planning AI."""
+    """Send a message to the tax planning AI with optional file attachment."""
     try:
-        result = await service.send_chat_message(plan_id, current_user.tenant_id, data.message)
+        result = await service.send_chat_message(
+            plan_id,
+            current_user.tenant_id,
+            message,
+            file=file,
+        )
         return ChatResponse(
             message=TaxPlanMessageResponse.model_validate(result["message"]),
             scenarios_created=[
@@ -227,19 +232,41 @@ async def send_chat_message(
 @router.post("/{plan_id}/chat/stream")
 async def send_chat_message_stream(
     plan_id: uuid.UUID,
-    data: ChatMessageRequest,
+    message: str = Form(..., min_length=1, max_length=2000),
+    file: UploadFile | None = File(None),
     current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
     service: TaxPlanningService = Depends(_get_service),
 ):
-    """Send a message with streaming SSE response."""
+    """Send a message with streaming SSE response, with optional file attachment."""
     import json as json_lib
 
     from starlette.responses import StreamingResponse
 
+    # Process file before entering the generator (UploadFile may close)
+    attachment_data = None
+    if file and file.filename:
+        try:
+            from app.modules.tax_planning.file_processor import process_chat_attachment
+
+            attachment_data = await process_chat_attachment(
+                file,
+                current_user.tenant_id,
+                plan_id,
+                f"msg-{uuid.uuid4().hex[:12]}",
+            )
+        except ValueError as e:
+            return StreamingResponse(
+                iter([f"data: {json_lib.dumps({'type': 'error', 'error': str(e)})}\n\n"]),
+                media_type="text/event-stream",
+            )
+
     async def generate_events():
         try:
             async for event in service.send_chat_message_streaming(
-                plan_id, current_user.tenant_id, data.message
+                plan_id,
+                current_user.tenant_id,
+                message,
+                attachment=attachment_data,
             ):
                 yield f"data: {json_lib.dumps(event, default=str)}\n\n"
         except DomainError as e:
