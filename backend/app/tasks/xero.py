@@ -2573,7 +2573,7 @@ async def _finalize_sync_job_async(
 #   Quality score needs bank_transactions (Phase 2) for completeness checks.
 # Phase 3 complete: insights + triggers (proactive insights, data triggers)
 PHASE_POST_SYNC_TASKS: dict[int, list[str]] = {
-    2: ["quality_score", "bas_calculation", "aggregation"],
+    2: ["quality_score", "bas_calculation", "aggregation", "tax_plan_refresh"],
     3: ["insights", "triggers"],
 }
 
@@ -2662,6 +2662,14 @@ async def _dispatch_post_sync_tasks(
                 from app.tasks.triggers import evaluate_data_triggers
 
                 evaluate_data_triggers.delay(
+                    connection_id=str(connection_id),
+                    tenant_id=str(tenant_id),
+                    post_sync_task_id=str(post_sync_task.id),
+                )
+            elif task_type == "tax_plan_refresh":
+                from app.tasks.reports import invalidate_report_cache
+
+                invalidate_report_cache.delay(
                     connection_id=str(connection_id),
                     tenant_id=str(tenant_id),
                     post_sync_task_id=str(post_sync_task.id),

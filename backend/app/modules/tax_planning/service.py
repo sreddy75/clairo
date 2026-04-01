@@ -83,7 +83,53 @@ class TaxPlanningService:
         plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
         if not plan:
             raise TaxPlanNotFoundError(plan_id)
+
+        # Lazy auto-refresh: if Xero data has been synced since the last
+        # P&L fetch, transparently pull fresh financials before returning.
+        if await self._is_plan_data_stale(plan):
+            try:
+                logger.info(
+                    "Auto-refreshing stale P&L for plan %s (FY %s)",
+                    plan.id,
+                    plan.financial_year,
+                )
+                await self.pull_xero_financials(
+                    plan_id=plan.id,
+                    tenant_id=tenant_id,
+                    force_refresh=True,
+                )
+                # Re-fetch to get updated financials_data
+                plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
+            except Exception:
+                logger.warning(
+                    "Auto-refresh failed for plan %s, returning stale data",
+                    plan.id,
+                    exc_info=True,
+                )
+
         return plan
+
+    async def _is_plan_data_stale(self, plan: TaxPlan) -> bool:
+        """Check if a plan's P&L data is stale relative to the last Xero sync.
+
+        Returns True if:
+        - Plan is Xero-sourced and active (not finalised)
+        - Connection has been synced after the plan's last P&L fetch
+        """
+        if plan.data_source != "xero" or plan.status == "finalised":
+            return False
+        if not plan.xero_connection_id:
+            return False
+
+        connection = await self.session.get(XeroConnection, plan.xero_connection_id)
+        if not connection or not connection.last_full_sync_at:
+            return False
+
+        # No P&L data yet — definitely stale
+        if not plan.xero_report_fetched_at:
+            return True
+
+        return connection.last_full_sync_at > plan.xero_report_fetched_at
 
     async def get_plan_for_connection(
         self,
@@ -323,7 +369,10 @@ class TaxPlanningService:
                 func.coalesce(
                     func.sum(
                         case(
-                            (XeroBankTransaction.transaction_type == "receive", XeroBankTransaction.total_amount),
+                            (
+                                XeroBankTransaction.transaction_type == "receive",
+                                XeroBankTransaction.total_amount,
+                            ),
                             else_=Decimal("0"),
                         )
                     ),
@@ -332,7 +381,10 @@ class TaxPlanningService:
                 func.coalesce(
                     func.sum(
                         case(
-                            (XeroBankTransaction.transaction_type == "spend", XeroBankTransaction.total_amount),
+                            (
+                                XeroBankTransaction.transaction_type == "spend",
+                                XeroBankTransaction.total_amount,
+                            ),
                             else_=Decimal("0"),
                         )
                     ),
@@ -341,7 +393,10 @@ class TaxPlanningService:
                 func.coalesce(
                     func.sum(
                         case(
-                            (XeroBankTransaction.transaction_type == "receive", XeroBankTransaction.tax_amount),
+                            (
+                                XeroBankTransaction.transaction_type == "receive",
+                                XeroBankTransaction.tax_amount,
+                            ),
                             else_=Decimal("0"),
                         )
                     ),
@@ -350,7 +405,10 @@ class TaxPlanningService:
                 func.coalesce(
                     func.sum(
                         case(
-                            (XeroBankTransaction.transaction_type == "spend", XeroBankTransaction.tax_amount),
+                            (
+                                XeroBankTransaction.transaction_type == "spend",
+                                XeroBankTransaction.tax_amount,
+                            ),
                             else_=Decimal("0"),
                         )
                     ),
@@ -521,8 +579,22 @@ class TaxPlanningService:
     # ------------------------------------------------------------------
 
     _CONVERSATIONAL_PATTERNS = {
-        "thanks", "thank you", "ok", "okay", "got it", "sure", "yes", "no",
-        "hi", "hello", "hey", "cheers", "great", "good", "cool", "noted",
+        "thanks",
+        "thank you",
+        "ok",
+        "okay",
+        "got it",
+        "sure",
+        "yes",
+        "no",
+        "hi",
+        "hello",
+        "hey",
+        "cheers",
+        "great",
+        "good",
+        "cool",
+        "noted",
     }
 
     async def _retrieve_tax_knowledge(
@@ -539,7 +611,10 @@ class TaxPlanningService:
         from app.modules.tax_planning.prompts import format_reference_material
 
         # Skip retrieval for conversational messages
-        if len(query.strip()) < 10 or query.strip().lower().rstrip("!.?") in self._CONVERSATIONAL_PATTERNS:
+        if (
+            len(query.strip()) < 10
+            or query.strip().lower().rstrip("!.?") in self._CONVERSATIONAL_PATTERNS
+        ):
             return [], format_reference_material([])
 
         try:
@@ -578,16 +653,18 @@ class TaxPlanningService:
             # Take top 5 after reranking
             chunks = []
             for result in results[:5]:
-                chunks.append({
-                    "chunk_id": str(result.get("chunk_id", "")),
-                    "source_type": result.get("source_type", ""),
-                    "title": result.get("title", ""),
-                    "ruling_number": result.get("ruling_number"),
-                    "section_ref": result.get("section_ref"),
-                    "text": result.get("text", ""),
-                    "relevance_score": result.get("relevance_score", 0.0),
-                    "is_superseded": result.get("is_superseded", False),
-                })
+                chunks.append(
+                    {
+                        "chunk_id": str(result.get("chunk_id", "")),
+                        "source_type": result.get("source_type", ""),
+                        "title": result.get("title", ""),
+                        "ruling_number": result.get("ruling_number"),
+                        "section_ref": result.get("section_ref"),
+                        "text": result.get("text", ""),
+                        "relevance_score": result.get("relevance_score", 0.0),
+                        "is_superseded": result.get("is_superseded", False),
+                    }
+                )
 
             logger.info(
                 "RAG retrieval: query=%s entity=%s results=%d",
@@ -623,7 +700,7 @@ class TaxPlanningService:
             }
 
         # Extract citations: [Source: ...] patterns
-        citation_pattern = r'\[Source:\s*([^\]]+)\]'
+        citation_pattern = r"\[Source:\s*([^\]]+)\]"
         citations = re.findall(citation_pattern, response_content)
 
         if not citations:
@@ -649,8 +726,10 @@ class TaxPlanningService:
         verified_count = 0
         for citation in citations:
             citation_lower = citation.lower().strip()
-            if any(identifier in citation_lower or citation_lower in identifier
-                   for identifier in chunk_identifiers):
+            if any(
+                identifier in citation_lower or citation_lower in identifier
+                for identifier in chunk_identifiers
+            ):
                 verified_count += 1
 
         total = len(citations)
@@ -714,7 +793,8 @@ class TaxPlanningService:
 
         # RAG retrieval
         retrieved_chunks, reference_material = await self._retrieve_tax_knowledge(
-            message, plan.entity_type,
+            message,
+            plan.entity_type,
         )
 
         # Call AI agent
@@ -735,7 +815,8 @@ class TaxPlanningService:
 
         # Citation verification
         citation_verification = self._build_citation_verification(
-            response.content, retrieved_chunks,
+            response.content,
+            retrieved_chunks,
         )
         source_chunks_used = [
             {k: v for k, v in chunk.items() if k != "text" and k != "is_superseded"}
@@ -822,7 +903,8 @@ class TaxPlanningService:
 
         # RAG retrieval
         retrieved_chunks, reference_material = await self._retrieve_tax_knowledge(
-            message, plan.entity_type,
+            message,
+            plan.entity_type,
         )
 
         api_key = self.settings.anthropic.api_key.get_secret_value()
@@ -869,7 +951,8 @@ class TaxPlanningService:
         # Citation verification and save assistant message
         if full_content:
             citation_verification = self._build_citation_verification(
-                full_content, retrieved_chunks,
+                full_content,
+                retrieved_chunks,
             )
             source_chunks_used = [
                 {k: v for k, v in chunk.items() if k != "text" and k != "is_superseded"}

@@ -90,6 +90,31 @@ class TaxPlanRepository:
         await self.session.refresh(plan)
         return plan
 
+    async def list_by_connection(
+        self,
+        xero_connection_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        active_only: bool = True,
+    ) -> list[TaxPlan]:
+        """Return all tax plans for a Xero connection.
+
+        Args:
+            xero_connection_id: The Xero connection ID.
+            tenant_id: Tenant ID for RLS.
+            active_only: If True, exclude finalised plans (default True).
+
+        Returns:
+            List of matching TaxPlan records.
+        """
+        query = select(TaxPlan).where(
+            TaxPlan.xero_connection_id == xero_connection_id,
+            TaxPlan.tenant_id == tenant_id,
+        )
+        if active_only:
+            query = query.where(TaxPlan.status.in_(["draft", "in_progress"]))
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
     async def delete(self, plan: TaxPlan) -> None:
         await self.session.delete(plan)
         await self.session.flush()

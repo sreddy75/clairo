@@ -363,3 +363,124 @@ async def _sync_single_report_async(
 
     finally:
         await session.close()
+
+
+# =============================================================================
+# Post-Sync Report Cache Invalidation
+# =============================================================================
+
+
+@celery_app.task(  # type: ignore[misc]
+    name="app.tasks.reports.invalidate_report_cache",
+    bind=True,
+    max_retries=2,
+    default_retry_delay=10,
+    autoretry_for=(ConnectionError, TimeoutError),
+    retry_backoff=True,
+    retry_jitter=True,
+)
+def invalidate_report_cache(
+    self: Task,
+    connection_id: str,
+    tenant_id: str,
+    post_sync_task_id: str | None = None,
+) -> dict[str, Any]:
+    """Invalidate cached Xero reports for a connection after data sync.
+
+    Triggered as a post-sync task after Xero data sync phase 2 completes.
+    Sets cache_expires_at = now() so the next read fetches fresh data.
+
+    Tax plan auto-refresh on load (lazy) handles the actual P&L re-pull
+    when the accountant opens the plan — no eager fetching needed here.
+
+    Args:
+        connection_id: Xero connection ID.
+        tenant_id: Tenant ID for RLS context.
+        post_sync_task_id: Optional PostSyncTask ID for status tracking.
+
+    Returns:
+        Dict with invalidation results.
+    """
+    import asyncio
+
+    return asyncio.run(
+        _invalidate_report_cache_async(
+            self,
+            UUID(connection_id),
+            UUID(tenant_id),
+            post_sync_task_id,
+        )
+    )
+
+
+async def _invalidate_report_cache_async(
+    task: Task,
+    connection_id: UUID,
+    tenant_id: UUID,
+    post_sync_task_id: str | None = None,
+) -> dict[str, Any]:
+    """Async implementation of report cache invalidation."""
+    if post_sync_task_id:
+        from app.tasks.xero import _update_post_sync_task_status
+
+        await _update_post_sync_task_status(post_sync_task_id, "in_progress")
+
+    session = await _get_async_session()
+
+    try:
+        await _set_tenant_context(session, tenant_id)
+
+        from app.modules.integrations.xero.repository import XeroReportRepository
+
+        report_repo = XeroReportRepository(session)
+        invalidated = await report_repo.invalidate_by_connection(connection_id)
+        await session.commit()
+
+        logger.info(
+            "Invalidated %d cached reports for connection %s",
+            invalidated,
+            connection_id,
+        )
+
+        result = {
+            "connection_id": str(connection_id),
+            "status": "completed",
+            "reports_invalidated": invalidated,
+        }
+
+        if post_sync_task_id:
+            from app.tasks.xero import _update_post_sync_task_status
+
+            await _update_post_sync_task_status(
+                post_sync_task_id,
+                "completed",
+                result_summary=result,
+            )
+
+        return result
+
+    except Exception as e:
+        logger.error(
+            "Report cache invalidation failed for connection %s: %s",
+            connection_id,
+            e,
+        )
+        await session.rollback()
+
+        if post_sync_task_id:
+            from app.tasks.xero import _update_post_sync_task_status
+
+            await _update_post_sync_task_status(
+                post_sync_task_id,
+                "failed",
+                error_message=str(e),
+            )
+
+        return {
+            "connection_id": str(connection_id),
+            "status": "failed",
+            "error_message": str(e),
+        }
+
+    finally:
+        await session.close()

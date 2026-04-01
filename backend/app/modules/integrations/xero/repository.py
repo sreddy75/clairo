@@ -1916,6 +1916,30 @@ class XeroReportRepository:
         result = await self.session.execute(query)
         return result.rowcount
 
+    async def invalidate_by_connection(self, connection_id: UUID) -> int:
+        """Expire all cached reports for a connection by setting cache_expires_at to now.
+
+        This forces subsequent reads to bypass cache and fetch fresh data
+        from Xero, without deleting the rows (preserving audit history).
+
+        Args:
+            connection_id: The XeroConnection ID.
+
+        Returns:
+            Number of records invalidated.
+        """
+        now = datetime.now(UTC)
+        stmt = (
+            update(XeroReport)
+            .where(
+                XeroReport.connection_id == connection_id,
+                XeroReport.cache_expires_at > now,
+            )
+            .values(cache_expires_at=now)
+        )
+        result = await self.session.execute(stmt)
+        return result.rowcount
+
     async def get_stale_reports(
         self,
         connection_id: UUID,
