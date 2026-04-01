@@ -40,6 +40,7 @@ DEFAULT_EXCLUDE_PATHS = [
     "/api/v1/auth/invitations/token",  # Public invitation lookup
     "/api/v1/admin/knowledge",  # Knowledge base admin endpoints (dev only - add auth later)
     "/api/v1/features/tiers",  # Public pricing tiers endpoint
+    "/api/v1/public/stats",  # Public landing page stats
     "/api/v1/webhooks/stripe",  # Stripe webhooks (billing)
     "/api/v1/integrations/xero/webhooks",  # Xero webhooks (HMAC-SHA256 verified)
     # Client portal uses magic link auth, not Clerk JWT

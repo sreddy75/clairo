@@ -288,6 +288,61 @@ def register_routes(app: FastAPI) -> None:
             "checks": checks,
         }
 
+    @app.get("/api/v1/public/stats", tags=["public"])
+    async def public_stats() -> dict[str, Any]:
+        """Public platform stats for the landing page.
+
+        Returns aggregate counts — no auth required, no tenant-scoped data.
+        """
+        try:
+            from sqlalchemy import text
+
+            from app.database import get_db_context
+
+            async with get_db_context() as db:
+                clients_result = await db.execute(
+                    text("SELECT count(*) FROM xero_connections WHERE status = 'active'")
+                )
+                clients_managed = clients_result.scalar_one()
+
+                tenants_result = await db.execute(
+                    text("SELECT count(*) FROM tenants")
+                )
+                practices = tenants_result.scalar_one()
+
+                tax_plans_result = await db.execute(
+                    text("SELECT count(*) FROM tax_plans")
+                )
+                tax_plans = tax_plans_result.scalar_one()
+
+                # Count BAS periods generated (any status)
+                bas_result = await db.execute(
+                    text("SELECT count(*) FROM bas_periods")
+                )
+                bas_generated = bas_result.scalar_one()
+
+                # Count AI scenarios modelled
+                scenarios_result = await db.execute(
+                    text("SELECT count(*) FROM tax_scenarios")
+                )
+                scenarios = scenarios_result.scalar_one()
+
+            return {
+                "clients_managed": clients_managed,
+                "practices": practices,
+                "tax_plans": tax_plans,
+                "bas_generated": bas_generated,
+                "scenarios_modelled": scenarios,
+            }
+        except Exception:
+            return {
+                "clients_managed": 0,
+                "practices": 0,
+                "tax_plans": 0,
+                "bas_generated": 0,
+                "scenarios_modelled": 0,
+            }
+
     # Pre-import notification models so SQLAlchemy can resolve relationships
     # when auth models are loaded (PracticeUser.notifications references Notification)
     with contextlib.suppress(ImportError):
