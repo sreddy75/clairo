@@ -88,8 +88,15 @@ export function TaxPlanningWorkspace({
         );
 
         if (existingPlan) {
-          const fullPlan = await getTaxPlan(token, existingPlan.id);
-          setPlan(fullPlan);
+          try {
+            const fullPlan = await getTaxPlan(token, existingPlan.id);
+            setPlan(fullPlan);
+          } catch (planErr) {
+            // GET plan failed (e.g., Xero token expired during auto-refresh)
+            // Still show the plan with whatever data the list had
+            console.warn('Failed to load full plan, using list data:', planErr);
+            setPlan(existingPlan as unknown as TaxPlan);
+          }
         }
       } catch (listErr) {
         // If listing fails (e.g., no plans yet), that's OK — show creation UI
@@ -140,8 +147,15 @@ export function TaxPlanningWorkspace({
         setPlan(newPlan);
         setShowManualEntry(true);
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to create tax plan');
+    } catch (e: unknown) {
+      const apiErr = e as { status?: number };
+      if (apiErr.status === 409) {
+        // Plan already exists — reload to show it
+        setError(null);
+        await loadPlan();
+      } else {
+        setError(e instanceof Error ? e.message : 'Failed to create tax plan');
+      }
     } finally {
       setCreating(false);
     }
