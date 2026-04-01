@@ -177,7 +177,10 @@ class TaxPlanningService:
         force_refresh: bool = False,
     ) -> dict[str, Any]:
         """Pull P&L from Xero and calculate tax position."""
-        plan = await self.get_plan(plan_id, tenant_id)
+        # Use repo directly to avoid get_plan's auto-refresh (which calls us)
+        plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
+        if not plan:
+            raise TaxPlanNotFoundError(plan_id)
 
         if not plan.xero_connection_id:
             raise NoXeroConnectionError()
