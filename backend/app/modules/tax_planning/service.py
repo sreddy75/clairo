@@ -86,8 +86,9 @@ class TaxPlanningService:
 
         # Lazy auto-refresh: if Xero data has been synced since the last
         # P&L fetch, transparently pull fresh financials before returning.
-        if await self._is_plan_data_stale(plan):
-            try:
+        # Entire block is best-effort — any failure returns stale data.
+        try:
+            if await self._is_plan_data_stale(plan):
                 logger.info(
                     "Auto-refreshing stale P&L for plan %s (FY %s)",
                     plan.id,
@@ -98,18 +99,20 @@ class TaxPlanningService:
                     tenant_id=tenant_id,
                     force_refresh=True,
                 )
-                # Re-fetch to get updated financials_data
+                await self.session.commit()
+                plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
+        except Exception:
+            logger.warning(
+                "Auto-refresh failed for plan %s, returning stale data",
+                plan.id,
+                exc_info=True,
+            )
+            try:
+                await self.session.rollback()
                 plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
             except Exception:
-                logger.warning(
-                    "Auto-refresh failed for plan %s, returning stale data",
-                    plan.id,
-                    exc_info=True,
-                )
-                # Rollback the failed transaction so the session is usable
-                await self.session.rollback()
-                # Re-fetch plan with clean session
-                plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
+                # Session completely broken — return whatever we have
+                logger.warning("Session recovery failed, returning cached plan object")
 
         return plan
 
