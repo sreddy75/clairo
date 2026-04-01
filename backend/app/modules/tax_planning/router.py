@@ -251,6 +251,7 @@ async def send_chat_message_stream(
             attachment_data = await process_chat_attachment(
                 file,
                 current_user.tenant_id,
+                "tax-planning",
                 plan_id,
                 f"msg-{uuid.uuid4().hex[:12]}",
             )

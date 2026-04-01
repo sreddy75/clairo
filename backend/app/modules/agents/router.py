@@ -162,13 +162,30 @@ async def agent_chat_stream(
     Conversations are automatically saved per client for history viewing.
     Supports optional file attachments (images, PDFs, Excel, CSV).
     """
-    # Parse UUIDs from form fields
-    parsed_connection_id = UUID(connection_id) if connection_id else None
-    parsed_conversation_id = UUID(conversation_id) if conversation_id else None
+
+    logger.info(
+        "agent_chat_stream called: query=%s, connection_id=%s, conversation_id=%s, file=%s",
+        query[:50] if query else None,
+        connection_id,
+        conversation_id,
+        file.filename if file else None,
+    )
+
+    # Parse UUIDs from form fields (guard against empty strings and "null")
+    def _parse_uuid(val: str | None) -> UUID | None:
+        if not val or val in ("null", "undefined", ""):
+            return None
+        try:
+            return UUID(val)
+        except (ValueError, AttributeError):
+            return None
+
+    parsed_connection_id = _parse_uuid(connection_id)
+    parsed_conversation_id = _parse_uuid(conversation_id)
 
     # Process file attachment before entering the generator
     attachment_data = None
-    if file and file.filename:
+    if file and file.filename and file.size and file.size > 0:
         try:
             from app.core.file_processor import process_chat_attachment
 

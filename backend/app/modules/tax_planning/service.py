@@ -780,6 +780,7 @@ class TaxPlanningService:
             attachment = await process_chat_attachment(
                 file,
                 tenant_id,
+                "tax-planning",
                 plan_id,
                 f"msg-{uuid.uuid4().hex[:12]}",
             )

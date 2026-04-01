@@ -191,25 +191,33 @@ async def process_chat_attachment(
     if size == 0:
         raise ValueError("File is empty.")
 
-    # Store in MinIO
+    # Store in MinIO (best-effort — skip if unavailable in prod)
     ext = Path(file.filename or "file").suffix.lower() or ".bin"
     object_key = f"{module}/{tenant_id}/{context_id}/chat/{message_id}{ext}"
 
-    minio_client, bucket = _get_minio_client()
-    minio_client.put_object(
-        bucket,
-        object_key,
-        io.BytesIO(data),
-        size,
-        content_type=content_type,
-    )
-
-    logger.info(
-        "Stored chat attachment: %s (%s, %d bytes)",
-        object_key,
-        content_type,
-        size,
-    )
+    try:
+        minio_client, bucket = _get_minio_client()
+        minio_client.put_object(
+            bucket,
+            object_key,
+            io.BytesIO(data),
+            size,
+            content_type=content_type,
+        )
+        logger.info(
+            "Stored chat attachment: %s (%s, %d bytes)",
+            object_key,
+            content_type,
+            size,
+        )
+    except Exception:
+        logger.warning(
+            "MinIO unavailable, skipping file storage for %s (%d bytes). "
+            "File content will still be sent to Claude.",
+            file.filename,
+            size,
+        )
+        object_key = ""  # No storage key — file not persisted
 
     # Build Anthropic content blocks
     content_blocks: list[dict[str, Any]] = []
