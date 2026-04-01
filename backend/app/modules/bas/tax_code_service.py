@@ -19,12 +19,15 @@ from app.modules.bas.calculator import TAX_TYPE_MAPPING, GSTCalculator
 from app.modules.bas.exceptions import (
     InvalidTaxTypeError,
     SessionNotEditableForSuggestionsError,
+    SplitAmountMismatchError,
+    SplitOverrideNotFoundError,
     SuggestionAlreadyResolvedError,
     SuggestionNotFoundError,
 )
 from app.modules.bas.models import (
     BASSession,
     ConfidenceTier,
+    TaxCodeOverride,
     TaxCodeSuggestion,
 )
 from app.modules.bas.repository import BASRepository
@@ -347,7 +350,7 @@ class TaxCodeService:
     ) -> TaxCodeSuggestion:
         """Approve a suggestion — apply the suggested tax code."""
         suggestion = await self._get_pending_suggestion(suggestion_id, tenant_id)
-        await self._get_editable_session(suggestion.session_id, tenant_id)
+        bas_session = await self._get_editable_session(suggestion.session_id, tenant_id)
 
         suggestion.status = "approved"
         suggestion.applied_tax_type = suggestion.suggested_tax_type
@@ -355,6 +358,29 @@ class TaxCodeService:
         suggestion.resolved_at = datetime.now(UTC)
 
         await self.repo.update_suggestion(suggestion)
+
+        # Create the TaxCodeOverride immediately so sync works without requiring Apply & Recalculate first.
+        source_type = str(suggestion.source_type.value if hasattr(suggestion.source_type, "value") else suggestion.source_type)
+        existing = await self.repo.get_active_override(
+            bas_session.period.connection_id,
+            source_type,
+            suggestion.source_id,
+            suggestion.line_item_index,
+            tenant_id,
+        )
+        if not existing:
+            await self.repo.create_override({
+                "tenant_id": tenant_id,
+                "connection_id": bas_session.period.connection_id,
+                "source_type": suggestion.source_type,
+                "source_id": suggestion.source_id,
+                "line_item_index": suggestion.line_item_index,
+                "original_tax_type": suggestion.original_tax_type,
+                "override_tax_type": suggestion.applied_tax_type,
+                "applied_by": user_id,
+                "applied_at": datetime.now(UTC),
+                "suggestion_id": suggestion.id,
+            })
 
         await self.repo.create_audit_log(
             tenant_id=tenant_id,
@@ -466,8 +492,31 @@ class TaxCodeService:
         if tax_type not in VALID_TAX_TYPES:
             raise InvalidTaxTypeError(tax_type)
 
-        suggestion = await self._get_pending_suggestion(suggestion_id, tenant_id)
-        await self._get_editable_session(suggestion.session_id, tenant_id)
+        # Allow re-overriding already-approved/overridden suggestions (e.g. to
+        # correct a tax code after a failed Xero write-back).
+        suggestion = await self.repo.get_suggestion(suggestion_id, tenant_id)
+        if not suggestion:
+            raise SuggestionNotFoundError(str(suggestion_id))
+        bas_session = await self._get_editable_session(suggestion.session_id, tenant_id)
+
+        # Deactivate any existing active override for this suggestion so we can
+        # create a fresh one with the new tax type immediately below.
+        if suggestion.status in ("approved", "overridden"):
+            from sqlalchemy import and_, update
+
+            from app.modules.bas.models import TaxCodeOverride
+
+            await self.repo.session.execute(
+                update(TaxCodeOverride)
+                .where(
+                    and_(
+                        TaxCodeOverride.suggestion_id == suggestion_id,
+                        TaxCodeOverride.is_active.is_(True),
+                    )
+                )
+                .values(is_active=False)
+            )
+            await self.repo.session.flush()
 
         suggestion.status = "overridden"
         suggestion.applied_tax_type = tax_type
@@ -475,6 +524,20 @@ class TaxCodeService:
         suggestion.resolved_at = datetime.now(UTC)
 
         await self.repo.update_suggestion(suggestion)
+
+        # Create the new override immediately so sync works without requiring Apply & Recalculate first.
+        await self.repo.create_override({
+            "tenant_id": tenant_id,
+            "connection_id": bas_session.period.connection_id,
+            "source_type": suggestion.source_type,
+            "source_id": suggestion.source_id,
+            "line_item_index": suggestion.line_item_index,
+            "original_tax_type": suggestion.original_tax_type,
+            "override_tax_type": tax_type,
+            "applied_by": user_id,
+            "applied_at": datetime.now(UTC),
+            "suggestion_id": suggestion.id,
+        })
 
         await self.repo.create_audit_log(
             tenant_id=tenant_id,
@@ -555,7 +618,7 @@ class TaxCodeService:
         confidence_tier: str | None = None,
     ) -> dict[str, Any]:
         """Bulk approve pending suggestions matching criteria."""
-        await self._get_editable_session(session_id, tenant_id)
+        bas_session = await self._get_editable_session(session_id, tenant_id)
 
         suggestions = await self.repo.get_pending_suggestions_for_bulk(
             session_id, tenant_id, min_confidence, confidence_tier
@@ -571,6 +634,30 @@ class TaxCodeService:
             approved_ids.append(s.id)
 
         await self.session.flush()
+
+        # Create TaxCodeOverride for each approved suggestion immediately so sync
+        # works without requiring Apply & Recalculate first.
+        connection_id = bas_session.period.connection_id
+        for s in suggestions:
+            if not s.applied_tax_type:
+                continue
+            source_type = str(s.source_type.value if hasattr(s.source_type, "value") else s.source_type)
+            existing = await self.repo.get_active_override(
+                connection_id, source_type, s.source_id, s.line_item_index, tenant_id
+            )
+            if not existing:
+                await self.repo.create_override({
+                    "tenant_id": tenant_id,
+                    "connection_id": connection_id,
+                    "source_type": s.source_type,
+                    "source_id": s.source_id,
+                    "line_item_index": s.line_item_index,
+                    "original_tax_type": s.original_tax_type,
+                    "override_tax_type": s.applied_tax_type,
+                    "applied_by": user_id,
+                    "applied_at": now,
+                    "suggestion_id": s.id,
+                })
 
         await self.repo.create_audit_log(
             tenant_id=tenant_id,
@@ -1310,3 +1397,146 @@ If you cannot classify with reasonable confidence, set tax_type to null and conf
             {"suggested_tax_type": item.get("typical_tax_type"), "confidence": 0.6}
             for item in items
         ]
+
+    # =========================================================================
+    # Split management (Spec 049 line-items extension)
+    # =========================================================================
+
+    async def _validate_split_balance(
+        self,
+        source_id: UUID,
+        tenant_id: UUID,
+        db: AsyncSession,
+    ) -> None:
+        """Raise SplitAmountMismatchError if new-split line_amounts don't sum to transaction total.
+
+        Only sums is_new_split=True overrides — edit/delete overrides on existing
+        line items don't change the transaction total.
+        """
+        repo = BASRepository(db)
+        total = await repo.get_bank_transaction_total(source_id, tenant_id)
+        if total is None:
+            return  # transaction not found — let the caller handle
+        overrides = await repo.get_overrides_for_transaction(source_id, tenant_id)
+        split_total = sum(
+            (o.line_amount for o in overrides if o.line_amount is not None and o.is_new_split),
+            Decimal("0"),
+        )
+        if split_total != Decimal("0") and split_total != total:
+            raise SplitAmountMismatchError(expected=total, actual=split_total)
+
+    async def create_split_override(
+        self,
+        source_id: UUID,
+        connection_id: UUID,
+        line_item_index: int,
+        override_tax_type: str,
+        applied_by: UUID,
+        tenant_id: UUID,
+        db: AsyncSession,
+        line_amount: Decimal | None = None,
+        line_description: str | None = None,
+        line_account_code: str | None = None,
+        is_new_split: bool = True,
+        is_deleted: bool = False,
+    ) -> TaxCodeOverride:
+        """Create or upsert a line item override on a bank transaction.
+
+        Handles three cases:
+        - is_new_split=True: append a new line item (line_amount required).
+        - is_new_split=False, is_deleted=False: edit an existing original line item.
+        - is_new_split=False, is_deleted=True: mark an original for deletion from payload.
+
+        Upserts if an active override already exists at the same line_item_index
+        (e.g. from the suggestion-approval workflow) to avoid unique constraint violations.
+        """
+        if override_tax_type not in VALID_TAX_TYPES:
+            raise InvalidTaxTypeError(override_tax_type)
+
+        repo = BASRepository(db)
+
+        # Upsert: check for an existing active override at this index
+        existing = await repo.get_active_override(
+            connection_id, "bank_transaction", source_id, line_item_index, tenant_id
+        )
+        if existing is not None:
+            existing.override_tax_type = override_tax_type
+            existing.is_new_split = is_new_split
+            existing.is_deleted = is_deleted
+            existing.writeback_status = "pending_sync"
+            if line_amount is not None:
+                existing.line_amount = line_amount
+            if line_description is not None:
+                existing.line_description = line_description
+            if line_account_code is not None:
+                existing.line_account_code = line_account_code
+            await db.flush()
+            return existing
+
+        override = await repo.create_override(
+            {
+                "tenant_id": tenant_id,
+                "connection_id": connection_id,
+                "source_type": "bank_transaction",
+                "source_id": source_id,
+                "line_item_index": line_item_index,
+                "original_tax_type": override_tax_type,
+                "override_tax_type": override_tax_type,
+                "applied_by": applied_by,
+                "applied_at": datetime.now(UTC),
+                "suggestion_id": None,
+                "is_new_split": is_new_split,
+                "is_deleted": is_deleted,
+                "line_amount": line_amount,
+                "line_description": line_description,
+                "line_account_code": line_account_code,
+                "writeback_status": "pending_sync",
+            }
+        )
+        return override
+
+    async def update_split_override(
+        self,
+        override_id: UUID,
+        tenant_id: UUID,
+        db: AsyncSession,
+        override_tax_type: str | None = None,
+        line_amount: Decimal | None = None,
+        line_description: str | None = None,
+        line_account_code: str | None = None,
+        is_deleted: bool | None = None,
+    ) -> TaxCodeOverride:
+        """Update fields on an existing split or tax code override."""
+        repo = BASRepository(db)
+        override = await repo.get_override(override_id, tenant_id)
+        if override is None:
+            raise SplitOverrideNotFoundError(override_id)
+        if override_tax_type is not None:
+            if override_tax_type not in VALID_TAX_TYPES:
+                raise InvalidTaxTypeError(override_tax_type)
+            override.override_tax_type = override_tax_type
+        if line_amount is not None:
+            override.line_amount = line_amount
+        if line_description is not None:
+            override.line_description = line_description
+        if line_account_code is not None:
+            override.line_account_code = line_account_code
+        if is_deleted is not None:
+            override.is_deleted = is_deleted
+        await db.flush()
+        return override
+
+    async def delete_split_override(
+        self,
+        override_id: UUID,
+        tenant_id: UUID,
+        db: AsyncSession,
+    ) -> None:
+        """Deactivate a split override and re-validate balance."""
+        repo = BASRepository(db)
+        override = await repo.get_override(override_id, tenant_id)
+        if override is None:
+            raise SplitOverrideNotFoundError(override_id)
+        source_id = override.source_id
+        override.is_active = False
+        await db.flush()

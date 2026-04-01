@@ -76,7 +76,7 @@ The AI handles the translation to tax codes. The accountant handles the approval
 
 **FR-6**: When the client submits their classifications, the accountant receives a notification (in-app + email).
 
-**FR-7**: The accountant sees a review screen showing: transaction details, client's description, AI's suggested tax code, and approve/override controls.
+**FR-7**: The accountant reviews client classifications inline within the existing `TaxCodeResolutionPanel` (no separate review screen). When a classification request exists, a "Client Said" column is added to the suggestion table showing the client's input (category, free-text description, or "Personal expense" / "Needs help" flags) alongside the AI-suggested tax code and approve/override controls. A compact summary line ("N classified by client · N reviewed") replaces the standalone `ClassificationReview` component. This eliminates duplicate display of the same transactions across separate tables.
 
 ### Client Side (Magic Link Flow)
 

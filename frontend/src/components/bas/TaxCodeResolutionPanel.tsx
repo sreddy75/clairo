@@ -10,26 +10,45 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { AIDisclaimer } from '@/components/ui/AIDisclaimer';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type {
   TaxCodeSuggestion,
   TaxCodeSuggestionSummary,
+  WritebackJobDetailResponse,
+  WritebackJobResponse,
+  WritebackSkipReason,
 } from '@/lib/bas';
 import {
   approveSuggestion,
   bulkApproveSuggestions,
   dismissSuggestion,
   generateTaxCodeSuggestions,
+  getWritebackJob,
   listTaxCodeSuggestions,
   overrideSuggestion,
   recalculateBASWithSuggestions,
   rejectSuggestion,
+  retryWritebackJob,
 } from '@/lib/bas';
 
 import { ClassificationRequestButton } from './ClassificationRequestButton';
-import { ClassificationReview } from './ClassificationReview';
+import { SyncToXeroButton } from './SyncToXeroButton';
 import { TaxCodeBulkActions } from './TaxCodeBulkActions';
 import { TaxCodeSuggestionCard } from './TaxCodeSuggestionCard';
+import { TransactionLineItemGroup } from './TransactionLineItemGroup';
+
+const XERO_SKIP_LABELS: Record<WritebackSkipReason, string> = {
+  voided: 'Voided',
+  deleted: 'Deleted',
+  period_locked: 'Period locked',
+  reconciled: 'Reconciled',
+  authorised_locked: 'Has payment',
+  credit_note_applied: 'Credit applied',
+  invalid_tax_type: 'Invalid code',
+  conflict_changed: 'Modified in Xero since last sync',
+};
 
 interface TaxCodeResolutionPanelProps {
   connectionId: string;
@@ -37,6 +56,13 @@ interface TaxCodeResolutionPanelProps {
   getToken: () => Promise<string | null>;
   onSummaryChange?: (summary: TaxCodeSuggestionSummary) => void;
   onRecalculated?: () => void;
+  /** Called after any action that creates/modifies overrides — parent should refresh the session to get fresh approved_unsynced_count. */
+  onSessionUpdated?: () => void;
+  completedWritebackJob?: WritebackJobDetailResponse | null;
+  activeWritebackJobId?: string | null;
+  approvedUnsyncedCount?: number;
+  onJobCreated?: (job: WritebackJobResponse) => void;
+  onJobComplete?: (job: WritebackJobDetailResponse) => void;
 }
 
 export function TaxCodeResolutionPanel({
@@ -45,6 +71,12 @@ export function TaxCodeResolutionPanel({
   getToken,
   onSummaryChange,
   onRecalculated,
+  onSessionUpdated,
+  completedWritebackJob,
+  activeWritebackJobId,
+  approvedUnsyncedCount = 0,
+  onJobCreated,
+  onJobComplete,
 }: TaxCodeResolutionPanelProps) {
   const [suggestions, setSuggestions] = useState<TaxCodeSuggestion[]>([]);
   const [summary, setSummary] = useState<TaxCodeSuggestionSummary | null>(null);
@@ -58,10 +90,49 @@ export function TaxCodeResolutionPanel({
     transaction_count: number;
   } | null>(null);
   const [showReview, setShowReview] = useState(false);
+  // suggestion_id → "Client Said" display text (populated when a classification request exists)
+  const [classifMap, setClassifMap] = useState<Map<string, string | null>>(new Map());
+  // Controlled accordion — always start with all sections open
+  const [openSections, setOpenSections] = useState<string[]>(['high', 'review', 'manual', 'resolved']);
+
+  // Auto-open resolved section when sync-relevant state changes
+  useEffect(() => {
+    if (approvedUnsyncedCount > 0 || activeWritebackJobId || completedWritebackJob) {
+      setOpenSections((prev) => (prev.includes('resolved') ? prev : [...prev, 'resolved']));
+    }
+  }, [approvedUnsyncedCount, activeWritebackJobId, completedWritebackJob]);
+
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  // IDs of approved/overridden suggestions that were included in the last recalculation.
+  // Banner shows when any approved suggestion is NOT in this set.
+  const [recalculatedIds, setRecalculatedIds] = useState<Set<string>>(new Set());
 
   // Use refs for callbacks to avoid dependency loops
   const onSummaryChangeRef = useRef(onSummaryChange);
   onSummaryChangeRef.current = onSummaryChange;
+  const onJobCompleteRef = useRef(onJobComplete);
+  onJobCompleteRef.current = onJobComplete;
+
+  // Poll active writeback job until it finishes
+  useEffect(() => {
+    if (!activeWritebackJobId) return;
+    let active = true;
+    async function poll() {
+      const token = await getToken();
+      if (!token || !active) return;
+      try {
+        const data = await getWritebackJob(token, connectionId, sessionId, activeWritebackJobId!);
+        if (!active) return;
+        if (data.status !== 'in_progress' && data.status !== 'pending') {
+          onJobCompleteRef.current?.(data);
+        }
+      } catch { /* transient — ignore */ }
+    }
+    poll();
+    const interval = setInterval(poll, 2000);
+    return () => { active = false; clearInterval(interval); };
+  }, [activeWritebackJobId, connectionId, sessionId, getToken]);
 
   const loadSuggestions = useCallback(async () => {
     try {
@@ -72,7 +143,7 @@ export function TaxCodeResolutionPanel({
       setSummary(data.summary);
       onSummaryChangeRef.current?.(data.summary);
 
-      // Check for pending classification request
+      // Check for classification request and load merged data
       try {
         const statusRes = await fetch(
           `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/classification/request`,
@@ -83,6 +154,29 @@ export function TaxCodeResolutionPanel({
           setClassificationStatus(statusData);
           if (statusData.status === 'submitted' || statusData.status === 'reviewing') {
             setShowReview(true);
+          }
+
+          // Load full review data to build "Client Said" map for the merged table
+          const reviewRes = await fetch(
+            `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/classification/review`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (reviewRes.ok) {
+            const reviewData = await reviewRes.json();
+            const map = new Map<string, string | null>();
+            for (const item of reviewData.classifications ?? []) {
+              if (item.suggestion_id) {
+                const categoryLabel: string | null =
+                  item.client_category_label?.replace(/\s*\(please describe\)/i, '').trim() || null;
+                const text: string | null = item.client_is_personal
+                  ? 'Personal expense'
+                  : item.client_needs_help
+                    ? (item.client_description?.trim() || 'Needs help')
+                    : (item.client_description?.trim() || categoryLabel);
+                map.set(item.suggestion_id, text);
+              }
+            }
+            setClassifMap(map);
           }
         }
       } catch {
@@ -129,7 +223,9 @@ export function TaxCodeResolutionPanel({
     const token = await getToken();
     if (!token) return;
     await approveSuggestion(token, connectionId, sessionId, id);
+
     await loadSuggestions();
+    onSessionUpdated?.();
   }
 
   async function handleReject(id: string) {
@@ -143,7 +239,9 @@ export function TaxCodeResolutionPanel({
     const token = await getToken();
     if (!token) return;
     await overrideSuggestion(token, connectionId, sessionId, id, taxType);
+
     await loadSuggestions();
+    onSessionUpdated?.();
   }
 
   async function handleDismiss(id: string) {
@@ -157,15 +255,42 @@ export function TaxCodeResolutionPanel({
     const token = await getToken();
     if (!token) return;
     await bulkApproveSuggestions(token, connectionId, sessionId, 0.9);
+
     await loadSuggestions();
+    onSessionUpdated?.();
+  }
+
+  async function handleRetry() {
+    if (!completedWritebackJob || !onJobCreated) return;
+    setIsRetrying(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const newJob = await retryWritebackJob(token, connectionId, sessionId, completedWritebackJob.id);
+      onJobCreated({ id: newJob.id } as WritebackJobResponse);
+    } finally {
+      setIsRetrying(false);
+    }
+  }
+
+  function handleSplitsChanged() {
+    // Splits affect BAS amounts — clear the recalculated snapshot so the banner reappears.
+    setRecalculatedIds(new Set());
   }
 
   async function handleRecalculate() {
     const token = await getToken();
     if (!token) return;
     await recalculateBASWithSuggestions(token, connectionId, sessionId);
+    // Snapshot which suggestion IDs were applied so the banner clears correctly.
+    setRecalculatedIds(new Set(
+      suggestions
+        .filter((s) => s.status === 'approved' || s.status === 'overridden')
+        .map((s) => s.id),
+    ));
     await loadSuggestions();
     onRecalculated?.();
+    onSessionUpdated?.();
   }
 
   if (isLoading || isGenerating) {
@@ -206,9 +331,69 @@ export function TaxCodeResolutionPanel({
   );
   const resolved = suggestions.filter((s) => s.status !== 'pending');
 
-  // Check if there are approved items not yet applied (no recalculation done)
-  const hasApprovedNotApplied =
-    suggestions.some((s) => s.status === 'approved' || s.status === 'overridden');
+  // Banner shows when any approved/overridden suggestion hasn't been included in a recalculation yet.
+  const hasApprovedNotApplied = suggestions.some(
+    (s) => (s.status === 'approved' || s.status === 'overridden') && !recalculatedIds.has(s.id),
+  );
+
+  // Build lookup: local_document_id → writeback item (for sync status badges)
+  const syncMap = new Map<string, { status: string; skip_reason: string | null; error_detail: string | null }>();
+  if (completedWritebackJob) {
+    for (const item of completedWritebackJob.items) {
+      syncMap.set(item.local_document_id, { status: item.status, skip_reason: item.skip_reason, error_detail: item.error_detail ?? null });
+    }
+  }
+
+  function xeroSyncBadgeFor(suggestion: TaxCodeSuggestion) {
+    if (activeWritebackJobId && (suggestion.status === 'approved' || suggestion.status === 'overridden')) {
+      return (
+        <Badge className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-200 flex items-center gap-1">
+          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+          Syncing…
+        </Badge>
+      );
+    }
+    const sync = syncMap.get(suggestion.source_id);
+    if (!sync) return null;
+    if (sync.status === 'success') {
+      return (
+        <Badge className="text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 border-emerald-200">
+          Xero ✓
+        </Badge>
+      );
+    }
+    if (sync.status === 'skipped') {
+      const label = sync.skip_reason ? (XERO_SKIP_LABELS[sync.skip_reason as WritebackSkipReason] ?? sync.skip_reason) : 'Skipped';
+      return (
+        <Badge className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-200" title={label}>
+          ⚠ {label}
+        </Badge>
+      );
+    }
+    if (sync.status === 'failed') {
+      const errorMsg = sync.error_detail
+        ? sync.error_detail.replace(/^A validation exception occurred:\s*/i, '')
+        : 'Xero sync failed';
+      return (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex flex-col items-start gap-0.5 cursor-default">
+                <Badge className="text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200">
+                  Xero ✗
+                </Badge>
+                <span className="text-[9px] text-red-600 leading-tight max-w-[11rem] truncate">{errorMsg}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="max-w-xs text-xs">
+              {errorMsg}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className="space-y-3">
@@ -239,17 +424,16 @@ export function TaxCodeResolutionPanel({
         </div>
       )}
 
-      {/* Client classification review */}
-      {showReview && (
-        <ClassificationReview
-          connectionId={connectionId}
-          sessionId={sessionId}
-          getToken={getToken}
-          onComplete={() => {
-            setShowReview(false);
-            loadSuggestions();
-          }}
-        />
+      {/* Client classification summary — compact info line (full detail merged into table below) */}
+      {showReview && classificationStatus && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+          <CheckCircle2 className="w-3.5 h-3.5 text-status-success shrink-0" />
+          <span>
+            <strong className="text-foreground">{classificationStatus.classified_count}</strong> classified by client
+            {' · '}
+            <strong className="text-foreground">{classificationStatus.classified_count}</strong> reviewed — client notes shown in table below
+          </span>
+        </div>
       )}
 
       {/* Bulk actions bar */}
@@ -273,31 +457,14 @@ export function TaxCodeResolutionPanel({
       )}
 
       <div className="max-h-[600px] overflow-y-auto">
-        <Accordion type="multiple" defaultValue={['high', 'review', 'manual']}>
+        <Accordion type="multiple" value={openSections} onValueChange={setOpenSections}>
           {highConfidence.length > 0 && (
             <AccordionItem value="high">
               <AccordionTrigger className="text-sm font-medium py-2">
                 High Confidence ({highConfidence.length})
               </AccordionTrigger>
               <AccordionContent>
-                <div className="border border-border rounded-lg overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider">
-                        <th className="px-3 py-1.5 text-left font-medium">Date</th>
-                        <th className="px-3 py-1.5 text-right font-medium">Amount</th>
-                        <th className="px-3 py-1.5 text-left font-medium">Description</th>
-                        <th className="px-3 py-1.5 text-left font-medium">Suggestion</th>
-                        <th className="px-3 py-1.5 text-right font-medium">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {highConfidence.map((s) => (
-                        <TaxCodeSuggestionCard key={s.id} suggestion={s} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <SuggestionTable suggestions={highConfidence} classifMap={classifMap} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} />
               </AccordionContent>
             </AccordionItem>
           )}
@@ -308,24 +475,7 @@ export function TaxCodeResolutionPanel({
                 Needs Review ({needsReview.length})
               </AccordionTrigger>
               <AccordionContent>
-                <div className="border border-border rounded-lg overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider">
-                        <th className="px-3 py-1.5 text-left font-medium">Date</th>
-                        <th className="px-3 py-1.5 text-right font-medium">Amount</th>
-                        <th className="px-3 py-1.5 text-left font-medium">Description</th>
-                        <th className="px-3 py-1.5 text-left font-medium">Suggestion</th>
-                        <th className="px-3 py-1.5 text-right font-medium">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {needsReview.map((s) => (
-                        <TaxCodeSuggestionCard key={s.id} suggestion={s} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <SuggestionTable suggestions={needsReview} classifMap={classifMap} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} />
               </AccordionContent>
             </AccordionItem>
           )}
@@ -336,51 +486,53 @@ export function TaxCodeResolutionPanel({
                 Manual Required ({manual.length})
               </AccordionTrigger>
               <AccordionContent>
-                <div className="border border-border rounded-lg overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider">
-                        <th className="px-3 py-1.5 text-left font-medium">Date</th>
-                        <th className="px-3 py-1.5 text-right font-medium">Amount</th>
-                        <th className="px-3 py-1.5 text-left font-medium">Description</th>
-                        <th className="px-3 py-1.5 text-left font-medium">Suggestion</th>
-                        <th className="px-3 py-1.5 text-right font-medium">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {manual.map((s) => (
-                        <TaxCodeSuggestionCard key={s.id} suggestion={s} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <SuggestionTable suggestions={manual} classifMap={classifMap} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} />
               </AccordionContent>
             </AccordionItem>
           )}
 
-          {resolved.length > 0 && (
+          {(resolved.length > 0 || activeWritebackJobId || completedWritebackJob || approvedUnsyncedCount > 0) && (
             <AccordionItem value="resolved">
               <AccordionTrigger className="text-sm font-medium py-2 text-muted-foreground">
                 Resolved ({resolved.length})
               </AccordionTrigger>
               <AccordionContent>
-                <div className="border border-border rounded-lg overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider">
-                        <th className="px-3 py-1.5 text-left font-medium">Date</th>
-                        <th className="px-3 py-1.5 text-right font-medium">Amount</th>
-                        <th className="px-3 py-1.5 text-left font-medium">Description</th>
-                        <th className="px-3 py-1.5 text-left font-medium">Result</th>
-                        <th className="px-3 py-1.5 text-right font-medium">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {resolved.map((s) => (
-                        <TaxCodeSuggestionCard key={s.id} suggestion={s} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} />
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="space-y-2">
+                  {/* Sync button — shown when there are approved overrides ready to write back */}
+                  {!activeWritebackJobId && approvedUnsyncedCount > 0 && onJobCreated && (
+                    <div className="flex items-center justify-between py-1 px-1">
+                      <span className="text-xs text-muted-foreground">
+                        {approvedUnsyncedCount} override{approvedUnsyncedCount !== 1 ? 's' : ''} ready to sync to Xero
+                      </span>
+                      <SyncToXeroButton
+                        connectionId={connectionId}
+                        sessionId={sessionId}
+                        approvedUnsyncedCount={approvedUnsyncedCount}
+                        isJobInProgress={false}
+                        getToken={getToken}
+                        onJobCreated={onJobCreated}
+                      />
+                    </div>
+                  )}
+                  {resolved.length > 0 && (
+                    <SuggestionTable suggestions={resolved} classifMap={classifMap} xeroSyncBadgeFor={xeroSyncBadgeFor} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} />
+                  )}
+                  {/* Compact retry row below table — only shown when previous sync had failures */}
+                  {completedWritebackJob && !activeWritebackJobId && completedWritebackJob.failed_count > 0 && (
+                    <div className="flex items-center gap-3 text-xs px-1 text-muted-foreground">
+                      <span className="text-red-600">{completedWritebackJob.failed_count} failed to sync</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 text-xs"
+                        disabled={isRetrying}
+                        onClick={handleRetry}
+                      >
+                        {isRetrying ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                        Retry failed
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -395,6 +547,123 @@ export function TaxCodeResolutionPanel({
           All excluded transactions resolved. BAS is ready for approval.
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Internal helper — unified suggestion table with optional Client Said column
+// ---------------------------------------------------------------------------
+
+interface SuggestionTableProps {
+  suggestions: TaxCodeSuggestion[];
+  classifMap: Map<string, string | null>;
+  xeroSyncBadgeFor?: (s: TaxCodeSuggestion) => React.ReactNode;
+  onApprove: (id: string) => Promise<void>;
+  onReject: (id: string) => Promise<void>;
+  onOverride: (id: string, taxType: string) => Promise<void>;
+  onDismiss: (id: string) => Promise<void>;
+  getToken?: () => Promise<string | null>;
+  connectionId?: string;
+  sessionId?: string;
+  completedWritebackJobId?: string | null;
+  syncMap?: Map<string, { status: string; skip_reason: string | null; error_detail: string | null }>;
+  onSplitsChanged?: () => void;
+}
+
+function SuggestionTable({
+  suggestions,
+  classifMap,
+  xeroSyncBadgeFor,
+  onApprove,
+  onReject,
+  onOverride,
+  onDismiss,
+  getToken,
+  connectionId,
+  sessionId,
+  completedWritebackJobId,
+  syncMap,
+  onSplitsChanged,
+}: SuggestionTableProps) {
+  const hasClientSaid = classifMap.size > 0;
+  const colCount = hasClientSaid ? 6 : 5;
+
+  // Group suggestions by source_id to support multi-line-item bank transactions
+  const grouped = new Map<string, TaxCodeSuggestion[]>();
+  for (const s of suggestions) {
+    const existing = grouped.get(s.source_id);
+    if (existing) {
+      existing.push(s);
+    } else {
+      grouped.set(s.source_id, [s]);
+    }
+  }
+
+  return (
+    <div className="border border-border rounded-lg overflow-hidden">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider">
+            <th className="px-3 py-1.5 text-left font-medium">Date</th>
+            <th className="px-3 py-1.5 text-right font-medium">Amount</th>
+            <th className="px-3 py-1.5 text-left font-medium">Description</th>
+            {hasClientSaid && <th className="px-3 py-1.5 text-left font-medium">Client Said</th>}
+            <th className="px-3 py-1.5 text-left font-medium">Tax Code</th>
+            <th className="px-3 py-1.5 text-right font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {Array.from(grouped.values()).map((group) => {
+            if (group.length === 0) return null;
+            const first = group[0]!;
+            const isBankTxn = first.source_type === 'bank_transaction';
+            const isMultiLine = group.length > 1;
+
+            // Use TransactionLineItemGroup for bank transactions or multi-line groups
+            if ((isBankTxn || isMultiLine) && getToken && connectionId && sessionId) {
+              const syncEntry = syncMap?.get(first.source_id);
+              return (
+                <TransactionLineItemGroup
+                  key={first.source_id}
+                  suggestions={group}
+                  connectionId={connectionId}
+                  sessionId={sessionId}
+                  getToken={getToken}
+                  onApprove={onApprove}
+                  onReject={onReject}
+                  onOverride={onOverride}
+                  onDismiss={onDismiss}
+                  showClientSaidCol={hasClientSaid}
+                  clientSaidMap={classifMap}
+                  xeroSyncBadgeFor={xeroSyncBadgeFor}
+                  colCount={colCount}
+                  completedWritebackJobId={completedWritebackJobId}
+                  syncSkipReason={syncEntry?.skip_reason ?? null}
+                  onSplitsChanged={onSplitsChanged}
+                />
+              );
+            }
+
+            // Single non-bank suggestion — render directly
+            return (
+              <TaxCodeSuggestionCard
+                key={first.id}
+                suggestion={first}
+                onApprove={onApprove}
+                onReject={onReject}
+                onOverride={onOverride}
+                onDismiss={onDismiss}
+                showClientSaidCol={hasClientSaid}
+                clientSaid={classifMap.get(first.id) ?? null}
+                xeroSyncBadge={xeroSyncBadgeFor?.(first)}
+                getToken={getToken}
+                connectionId={connectionId}
+              />
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

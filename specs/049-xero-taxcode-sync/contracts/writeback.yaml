@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: Xero Tax Code Write-Back API
+  version: "1.0"
+  description: |
+    Endpoints for syncing approved tax code overrides back to Xero.
+    All endpoints require Clerk JWT authentication (accountant/tax agent role).
+    All resources are scoped to the authenticated tenant.
+
+tags:
+  - name: writeback
+    description: Xero write-back operations
+  - name: writeback-items
+    description: Per-document write-back item detail
+
+paths:
+  /api/v1/bas/sessions/{session_id}/writeback:
+    post:
+      summary: Initiate Sync to Xero
+      operationId: initiateWriteback
+      tags: [writeback]
+      description: |
+        Triggers a write-back job for all approved, unsynced TaxCodeOverride records
+        in the BAS session. Enqueues a Celery task and returns the job record immediately.
+        Idempotent: if a job is already in_progress for this session, returns 409.
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Write-back job accepted and enqueued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WritebackJobResponse"
+        "400":
+          description: No approved unsynced overrides exist, or session not in valid state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Write-back job already in progress for this session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/bas/sessions/{session_id}/writeback/jobs:
+    get:
+      summary: List Write-Back Jobs for Session
+      operationId: listWritebackJobs
+      tags: [writeback]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of writeback jobs for this session, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WritebackJobResponse"
+
+  /api/v1/bas/sessions/{session_id}/writeback/jobs/{job_id}:
+    get:
+      summary: Get Write-Back Job Status
+      operationId: getWritebackJob
+      tags: [writeback]
+      description: |
+        Returns current job status including per-item results.
+        Poll this endpoint at 2-second intervals while status is `in_progress`.
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Job status with item details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WritebackJobDetailResponse"
+        "404":
+          description: Job not found
+
+  /api/v1/bas/sessions/{session_id}/writeback/jobs/{job_id}/retry:
+    post:
+      summary: Retry Failed Items
+      operationId: retryFailedItems
+      tags: [writeback]
+      description: |
+        Creates a new write-back job containing only the items that failed in the
+        specified job. Items that succeeded or were skipped are NOT retried.
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Retry job accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WritebackJobResponse"
+        "400":
+          description: No failed items to retry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Another write-back job is already in progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    WritebackJobResponse:
+      type: object
+      required: [id, session_id, status, total_count, succeeded_count, skipped_count, failed_count, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        triggered_by:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, partial]
+        total_count:
+          type: integer
+        succeeded_count:
+          type: integer
+        skipped_count:
+          type: integer
+        failed_count:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration_seconds:
+          type: integer
+          nullable: true
+        error_detail:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    WritebackJobDetailResponse:
+      allOf:
+        - $ref: "#/components/schemas/WritebackJobResponse"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/WritebackItemResponse"
+
+    WritebackItemResponse:
+      type: object
+      required: [id, source_type, xero_document_id, status, line_item_indexes, before_tax_types, after_tax_types]
+      properties:
+        id:
+          type: string
+          format: uuid
+        source_type:
+          type: string
+          enum: [invoice, bank_transaction, credit_note]
+        xero_document_id:
+          type: string
+          description: Xero's UUID for the document
+        line_item_indexes:
+          type: array
+          items:
+            type: integer
+          description: Which line items were changed
+        before_tax_types:
+          type: object
+          additionalProperties:
+            type: string
+          description: "Map of line_item_index → original TaxType"
+          example: {"1": "NONE", "3": "BASEXCLUDED"}
+        after_tax_types:
+          type: object
+          additionalProperties:
+            type: string
+          description: "Map of line_item_index → new TaxType"
+          example: {"1": "INPUT", "3": "INPUT"}
+        status:
+          type: string
+          enum: [pending, in_progress, success, skipped, failed]
+        skip_reason:
+          type: string
+          enum: [voided, deleted, period_locked, reconciled, conflict_changed, credit_note_applied]
+          nullable: true
+        error_detail:
+          type: string
+          nullable: true
+        xero_http_status:
+          type: integer
+          nullable: true
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

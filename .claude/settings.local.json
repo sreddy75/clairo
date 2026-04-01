@@ -285,5 +285,9 @@
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "postgres",
+    "shadcn"
+  ]
 }

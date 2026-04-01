@@ -58,7 +58,6 @@ class BillingEvent(Base):
         PGUUID(as_uuid=True),
         ForeignKey("tenants.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     stripe_event_id: Mapped[str] = mapped_column(
         String(255),
@@ -68,7 +67,6 @@ class BillingEvent(Base):
     event_type: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
-        index=True,
     )
     event_data: Mapped[dict] = mapped_column(
         JSONB,
@@ -103,7 +101,6 @@ class BillingEvent(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        index=True,
     )
 
     # Relationships
@@ -159,7 +156,6 @@ class UsageSnapshot(Base):
         PGUUID(as_uuid=True),
         ForeignKey("tenants.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     captured_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -235,7 +231,6 @@ class UsageAlert(Base):
         PGUUID(as_uuid=True),
         ForeignKey("tenants.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     alert_type: Mapped[UsageAlertType] = mapped_column(
         Enum(

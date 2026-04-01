@@ -15,7 +15,10 @@ from app.modules.auth import models as auth_models  # noqa: F401
 from app.modules.bas import models as bas_models  # noqa: F401
 from app.modules.billing import models as billing_models  # noqa: F401
 from app.modules.insights import models as insight_models  # noqa: F401
-from app.modules.integrations.xero import models as xero_models  # noqa: F401
+from app.modules.integrations.xero import (
+    models as xero_models,  # noqa: F401
+    writeback_models as xero_writeback_models,  # noqa: F401
+)
 from app.modules.knowledge import models as knowledge_models  # noqa: F401
 from app.modules.notifications import models as notification_models  # noqa: F401
 
@@ -40,6 +43,7 @@ from app.tasks import (
     tax_planning,  # noqa: F401  Multi-agent tax planning pipeline
     triggers,  # noqa: F401  Automated trigger execution
     xero,  # noqa: F401
+    xero_writeback,  # noqa: F401  Xero tax code write-back (Spec 049)
 )
 
 # Import tasks from subdirectories

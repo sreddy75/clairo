@@ -28,6 +28,8 @@ from app.modules.bas.exceptions import (
     LodgementAlreadyRecordedError,
     LodgementNotAllowedError,
     SessionNotFoundError,
+    SplitAmountMismatchError,
+    SplitOverrideNotFoundError,
 )
 from app.modules.bas.lodgement_service import LodgementService
 from app.modules.bas.schemas import (
@@ -63,10 +65,15 @@ from app.modules.bas.schemas import (
     RequestChangesRequest,
     ResolveConflictRequest,
     ResolveConflictResponse,
+    SplitCreateRequest,
+    SplitUpdateRequest,
     SuggestionResolutionResponse,
+    TaxCodeOverrideWithSplitResponse,
     TaxCodeSuggestionListResponse,
     TaxCodeSuggestionSummaryResponse,
+    TransactionSplitsResponse,
     VarianceAnalysisResponse,
+    XeroLineItemView,
 )
 from app.modules.bas.service import BASService
 from app.modules.bas.tax_code_service import TaxCodeService
@@ -1479,3 +1486,528 @@ async def export_classification_audit(
         content=__import__("json").dumps(rows, default=str),
         media_type="application/json",
     )
+
+
+# =============================================================================
+# Write-Back Endpoints (Spec 049)
+# =============================================================================
+
+
+@router.post(
+    "/{connection_id}/bas/sessions/{session_id}/writeback",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Trigger Xero tax code write-back for a BAS session",
+)
+async def trigger_writeback(
+    connection_id: UUID,
+    session_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Trigger write-back of all approved, unsynced tax code overrides to Xero.
+
+    Returns a 202 with the created job record. The actual Xero API calls
+    happen asynchronously via Celery.
+    """
+    from app.modules.integrations.xero.exceptions import WritebackError
+    from app.modules.integrations.xero.writeback_schemas import WritebackJobResponse
+    from app.modules.integrations.xero.writeback_service import XeroWritebackService
+
+    await verify_connection_access(connection_id, session, user)
+    service = XeroWritebackService(session)
+
+    try:
+        job = await service.initiate_writeback(
+            session_id=session_id,
+            triggered_by=user.id,
+            tenant_id=user.tenant_id,
+        )
+        await session.commit()
+        return WritebackJobResponse.model_validate(job)
+    except WritebackError as e:
+        if e.code == "job_in_progress":
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=e.message)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+
+
+@router.get(
+    "/{connection_id}/bas/sessions/{session_id}/writeback/jobs",
+    summary="List write-back jobs for a BAS session",
+)
+async def list_writeback_jobs(
+    connection_id: UUID,
+    session_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """List all write-back jobs for a BAS session, newest first."""
+    from app.modules.integrations.xero.writeback_repository import XeroWritebackRepository
+    from app.modules.integrations.xero.writeback_schemas import WritebackJobResponse
+
+    await verify_connection_access(connection_id, session, user)
+    repo = XeroWritebackRepository(session)
+    jobs = await repo.list_jobs_for_session(session_id, user.tenant_id)
+    return [WritebackJobResponse.model_validate(j) for j in jobs]
+
+
+@router.get(
+    "/{connection_id}/bas/sessions/{session_id}/writeback/jobs/{job_id}",
+    summary="Get write-back job detail with items",
+)
+async def get_writeback_job(
+    connection_id: UUID,
+    session_id: UUID,
+    job_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Get write-back job detail including all items."""
+    from uuid import UUID as _UUID
+
+    from sqlalchemy import select
+
+    from app.modules.bas.models import TaxCodeSuggestion
+    from app.modules.integrations.xero.exceptions import WritebackJobNotFoundError
+    from app.modules.integrations.xero.writeback_schemas import (
+        WritebackJobDetailResponse,
+        WritebackTransactionContext,
+    )
+    from app.modules.integrations.xero.writeback_service import XeroWritebackService
+
+    await verify_connection_access(connection_id, session, user)
+    service = XeroWritebackService(session)
+
+    try:
+        job = await service.get_job(job_id, user.tenant_id)
+    except WritebackJobNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+    # Build response base
+    response = WritebackJobDetailResponse.model_validate(job)
+
+    # Enrich items with transaction context from TaxCodeSuggestion
+    if job.items:
+        local_doc_ids = [item.local_document_id for item in job.items]
+        rows = (
+            await session.execute(
+                select(
+                    TaxCodeSuggestion.source_id,
+                    TaxCodeSuggestion.contact_name,
+                    TaxCodeSuggestion.transaction_date,
+                    TaxCodeSuggestion.description,
+                    TaxCodeSuggestion.line_amount,
+                ).where(
+                    TaxCodeSuggestion.source_id.in_(local_doc_ids),
+                    TaxCodeSuggestion.tenant_id == user.tenant_id,
+                )
+            )
+        ).all()
+
+        # Aggregate per document: first contact/date/description, sum line amounts
+        ctx_by_doc: dict[_UUID, dict] = {}
+        for row in rows:
+            doc_id = row.source_id
+            if doc_id not in ctx_by_doc:
+                ctx_by_doc[doc_id] = {
+                    "contact_name": row.contact_name,
+                    "transaction_date": row.transaction_date,
+                    "description": row.description,
+                    "total_line_amount": float(row.line_amount) if row.line_amount is not None else None,
+                }
+            else:
+                if row.line_amount is not None:
+                    prev = ctx_by_doc[doc_id]["total_line_amount"]
+                    ctx_by_doc[doc_id]["total_line_amount"] = (prev or 0.0) + float(row.line_amount)
+
+        for item_resp in response.items:
+            ctx = ctx_by_doc.get(item_resp.local_document_id)
+            if ctx:
+                item_resp.transaction_context = WritebackTransactionContext(**ctx)
+
+    return response
+
+
+@router.post(
+    "/{connection_id}/bas/sessions/{session_id}/writeback/jobs/{job_id}/retry",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Retry failed items from a write-back job",
+)
+async def retry_writeback_job(
+    connection_id: UUID,
+    session_id: UUID,
+    job_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Create a new write-back job retrying only failed items from the given job."""
+    from app.modules.integrations.xero.exceptions import WritebackError, WritebackJobNotFoundError
+    from app.modules.integrations.xero.writeback_schemas import WritebackJobResponse
+    from app.modules.integrations.xero.writeback_service import XeroWritebackService
+
+    await verify_connection_access(connection_id, session, user)
+    service = XeroWritebackService(session)
+
+    try:
+        job = await service.retry_failed_items(
+            job_id=job_id,
+            triggered_by=user.id,
+            tenant_id=user.tenant_id,
+        )
+        await session.commit()
+        return WritebackJobResponse.model_validate(job)
+    except WritebackJobNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except WritebackError as e:
+        if e.code == "job_in_progress":
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=e.message)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+
+
+# =============================================================================
+# Classification Send-Back Endpoints (Spec 049)
+# =============================================================================
+
+
+@router.post(
+    "/{connection_id}/bas/sessions/{session_id}/classification-requests/{request_id}/send-back",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Send IDK items back to client with agent guidance",
+)
+async def send_back_classifications(
+    connection_id: UUID,
+    session_id: UUID,
+    request_id: UUID,
+    body: SendBackRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Send selected IDK classification items back to the client with agent comments."""
+    from app.modules.bas.classification_schemas import SendBackResponse
+    from app.modules.bas.exceptions import ClassificationValidationError
+
+    await verify_connection_access(connection_id, session, user)
+    service = ClassificationService(session)
+
+    try:
+        result = await service.send_items_back(
+            request_id=request_id,
+            items_with_comments=[
+                {"classification_id": item.classification_id, "agent_comment": item.agent_comment}
+                for item in body.items
+            ],
+            triggered_by=user.id,
+            tenant_id=user.tenant_id,
+        )
+        await session.commit()
+        return SendBackResponse(**result)
+    except ClassificationValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+
+
+@router.get(
+    "/{connection_id}/bas/sessions/{session_id}/classification-requests/{request_id}/notes",
+    summary="List agent notes for a classification request",
+)
+async def list_agent_notes(
+    connection_id: UUID,
+    session_id: UUID,
+    request_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """List all agent transaction notes for a classification request."""
+    from app.modules.bas.classification_schemas import AgentNoteResponse
+    from app.modules.bas.repository import BASRepository
+
+    await verify_connection_access(connection_id, session, user)
+    repo = BASRepository(session)
+    notes = await repo.list_notes_for_request(request_id, user.tenant_id)
+    return [AgentNoteResponse.model_validate(n) for n in notes]
+
+
+@router.post(
+    "/{connection_id}/bas/sessions/{session_id}/classification-requests/{request_id}/notes",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create an agent note for a classification request",
+)
+async def create_agent_note(
+    connection_id: UUID,
+    session_id: UUID,
+    request_id: UUID,
+    body: AgentNoteCreate,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Create a per-transaction agent note (initial context or send-back guidance)."""
+    from app.modules.bas.classification_schemas import AgentNoteResponse
+    from app.modules.bas.repository import BASRepository
+
+    await verify_connection_access(connection_id, session, user)
+    repo = BASRepository(session)
+    note = await repo.create_agent_note(
+        tenant_id=user.tenant_id,
+        request_id=request_id,
+        source_type=body.source_type,
+        source_id=body.source_id,
+        line_item_index=body.line_item_index,
+        note_text=body.note_text,
+        is_send_back_comment=body.is_send_back_comment,
+        created_by=user.id,
+    )
+    await session.commit()
+    return AgentNoteResponse.model_validate(note)
+
+
+@router.get(
+    "/{connection_id}/xero/tax-rates",
+    summary="Get active tax rate codes for a Xero organisation",
+)
+async def get_org_tax_rates(
+    connection_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Return the active tax type codes configured for the org in Xero.
+
+    Used by the override dropdown to filter out codes not available for this org.
+    Falls back gracefully — if Xero is unreachable the UI falls back to the static list.
+    """
+    from app.config import get_settings
+    from app.modules.integrations.xero.client import XeroClient
+    from app.modules.integrations.xero.encryption import TokenEncryption
+    from app.modules.integrations.xero.repository import XeroConnectionRepository
+
+    await verify_connection_access(connection_id, session, user)
+
+    repo = XeroConnectionRepository(session)
+    connection = await repo.get_by_id(connection_id)
+
+    settings = get_settings()
+    encryption = TokenEncryption(settings.token_encryption.key.get_secret_value())
+    access_token = encryption.decrypt(connection.access_token)
+
+    async with XeroClient(settings.xero) as xero_client:
+        try:
+            tax_rates = await xero_client.get_tax_rates(access_token, connection.xero_tenant_id)
+        except Exception:
+            # Return empty list; frontend falls back to static VALID_TAX_TYPES
+            return {"tax_types": []}
+
+    active = [
+        {"tax_type": r["TaxType"], "name": r.get("Name", r["TaxType"])}
+        for r in tax_rates
+        if r.get("Status") == "ACTIVE" and r.get("TaxType")
+    ]
+    return {"tax_types": active}
+
+
+@router.get(
+    "/{connection_id}/bas/sessions/{session_id}/transactions/{source_type}/{source_id}/{line_item_index}/rounds",
+    summary="Get classification thread history for a transaction",
+)
+async def get_classification_rounds(
+    connection_id: UUID,
+    session_id: UUID,
+    source_type: str,
+    source_id: UUID,
+    line_item_index: int,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Get the full send-back conversation thread for a specific transaction."""
+    from app.modules.bas.classification_schemas import ClassificationRoundResponse
+    from app.modules.bas.classification_service import ClassificationService
+
+    await verify_connection_access(connection_id, session, user)
+    service = ClassificationService(session)
+    rounds = await service.get_classification_thread(
+        session_id=session_id,
+        source_type=source_type,
+        source_id=source_id,
+        line_item_index=line_item_index,
+        tenant_id=user.tenant_id,
+    )
+    return [ClassificationRoundResponse.model_validate(r) for r in rounds]
+
+
+# ---------------------------------------------------------------------------
+# Split management endpoints (Spec 049 line-items extension)
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/{connection_id}/bas/sessions/{session_id}/bank-transactions/{source_id}/splits",
+    response_model=TransactionSplitsResponse,
+    summary="List original Xero line items and any active overrides for a bank transaction",
+)
+async def list_transaction_splits(
+    connection_id: UUID,
+    session_id: UUID,
+    source_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Return the original XeroBankTransaction.line_items alongside any active overrides."""
+    from sqlalchemy import and_, select
+
+    from app.modules.bas.repository import BASRepository
+    from app.modules.integrations.xero.models import XeroBankTransaction
+
+    await verify_connection_access(connection_id, session, user)
+    repo = BASRepository(session)
+
+    # Fetch the Xero bank transaction to get its stored line_items array
+    result = await session.execute(
+        select(XeroBankTransaction).where(
+            and_(
+                XeroBankTransaction.id == source_id,
+                XeroBankTransaction.tenant_id == user.tenant_id,
+            )
+        )
+    )
+    txn = result.scalar_one_or_none()
+    raw_line_items: list[dict] = txn.line_items if txn and txn.line_items else []
+
+    original_line_items = [
+        XeroLineItemView(
+            index=i,
+            tax_type=li.get("TaxType") or li.get("tax_type"),
+            line_amount=li.get("LineAmount") or li.get("line_amount"),
+            description=li.get("Description") or li.get("description"),
+            account_code=li.get("AccountCode") or li.get("account_code"),
+        )
+        for i, li in enumerate(raw_line_items)
+    ]
+
+    overrides = await repo.get_overrides_for_transaction(source_id, user.tenant_id)
+    return TransactionSplitsResponse(
+        original_line_items=original_line_items,
+        overrides=[TaxCodeOverrideWithSplitResponse.model_validate(o) for o in overrides],
+    )
+
+
+@router.post(
+    "/{connection_id}/bas/sessions/{session_id}/bank-transactions/{source_id}/splits",
+    response_model=TaxCodeOverrideWithSplitResponse,
+    status_code=201,
+    summary="Create a new agent-defined split on a bank transaction",
+)
+async def create_split_override(
+    connection_id: UUID,
+    session_id: UUID,
+    source_id: UUID,
+    body: SplitCreateRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Create a split override with is_new_split=True. Validates balance after insert."""
+    from fastapi import HTTPException
+
+    await verify_connection_access(connection_id, session, user)
+    service = TaxCodeService(session)
+    try:
+        override = await service.create_split_override(
+            source_id=source_id,
+            connection_id=connection_id,
+            line_item_index=body.line_item_index,
+            override_tax_type=body.override_tax_type,
+            applied_by=user.id,
+            tenant_id=user.tenant_id,
+            db=session,
+            line_amount=body.line_amount,
+            line_description=body.line_description,
+            line_account_code=body.line_account_code,
+            is_new_split=body.is_new_split,
+            is_deleted=body.is_deleted,
+        )
+    except SplitAmountMismatchError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "detail": "split_amount_mismatch",
+                "expected_total": str(exc.expected_total),
+                "actual_total": str(exc.actual_total),
+            },
+        ) from exc
+    return TaxCodeOverrideWithSplitResponse.model_validate(override)
+
+
+@router.patch(
+    "/{connection_id}/bas/sessions/{session_id}/bank-transactions/{source_id}/splits/{override_id}",
+    response_model=TaxCodeOverrideWithSplitResponse,
+    summary="Update an existing split or override",
+)
+async def update_split_override(
+    connection_id: UUID,
+    session_id: UUID,
+    source_id: UUID,
+    override_id: UUID,
+    body: SplitUpdateRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Update fields on a split. Re-validates balance after update."""
+    from fastapi import HTTPException
+
+    await verify_connection_access(connection_id, session, user)
+    service = TaxCodeService(session)
+    try:
+        override = await service.update_split_override(
+            override_id=override_id,
+            tenant_id=user.tenant_id,
+            db=session,
+            override_tax_type=body.override_tax_type,
+            line_amount=body.line_amount,
+            line_description=body.line_description,
+            line_account_code=body.line_account_code,
+            is_deleted=body.is_deleted,
+        )
+    except SplitOverrideNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except SplitAmountMismatchError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "detail": "split_amount_mismatch",
+                "expected_total": str(exc.expected_total),
+                "actual_total": str(exc.actual_total),
+            },
+        ) from exc
+    return TaxCodeOverrideWithSplitResponse.model_validate(override)
+
+
+@router.delete(
+    "/{connection_id}/bas/sessions/{session_id}/bank-transactions/{source_id}/splits/{override_id}",
+    status_code=204,
+    summary="Remove a split (sets is_active=False)",
+)
+async def delete_split_override(
+    connection_id: UUID,
+    session_id: UUID,
+    source_id: UUID,
+    override_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+):
+    """Deactivate a split override and re-validate balance."""
+    from fastapi import HTTPException
+
+    await verify_connection_access(connection_id, session, user)
+    service = TaxCodeService(session)
+    try:
+        await service.delete_split_override(
+            override_id=override_id,
+            tenant_id=user.tenant_id,
+            db=session,
+        )
+    except SplitOverrideNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except SplitAmountMismatchError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "detail": "split_amount_mismatch",
+                "expected_total": str(exc.expected_total),
+                "actual_total": str(exc.actual_total),
+            },
+        ) from exc

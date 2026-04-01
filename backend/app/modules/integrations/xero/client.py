@@ -273,7 +273,28 @@ class XeroClient:
         if response.content:
             try:
                 error_data = response.json()
+                import logging as _logging
+                _logging.getLogger(__name__).warning(
+                    "Xero %s error body: %s", response.status_code, response.text[:2000]
+                )
+                # Extract top-level message
                 error_msg = error_data.get("Detail", error_data.get("Message", error_msg))
+                # Collect per-element validation errors (element-level and line-item-level)
+                elements = error_data.get("Elements", [])
+                validation_msgs: list[str] = []
+                for el in elements:
+                    for ve in el.get("ValidationErrors", []):
+                        msg = ve.get("Message", "")
+                        if msg:
+                            validation_msgs.append(msg)
+                    # Bank transactions and invoices nest errors under LineItems too
+                    for li in el.get("LineItems", []):
+                        for ve in li.get("ValidationErrors", []):
+                            msg = ve.get("Message", "")
+                            if msg:
+                                validation_msgs.append(msg)
+                if validation_msgs:
+                    error_msg = f"{error_msg}: {'; '.join(dict.fromkeys(validation_msgs))}"
             except Exception:
                 pass
 
@@ -1686,3 +1707,272 @@ class XeroClient:
         rate_limit = self._extract_rate_limit_state(response.headers)
 
         return quotes, rate_limit
+
+    # -------------------------------------------------------------------------
+    # Write-back methods (Spec 049)
+    # -------------------------------------------------------------------------
+
+    async def get_tax_rates(
+        self,
+        access_token: str,
+        xero_tenant_id: str,
+    ) -> list[dict]:
+        """Fetch all tax rates configured for a Xero organisation.
+
+        Always query per-org rather than hardcoding — organisations may have custom rates.
+
+        Args:
+            access_token: Valid Xero access token.
+            xero_tenant_id: Xero organisation tenant ID.
+
+        Returns:
+            List of tax rate dicts with keys: TaxType, Name, Status, TaxComponents, etc.
+        """
+        response = await self.client.get(
+            "https://api.xero.com/api.xro/2.0/TaxRates",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Xero-Tenant-Id": xero_tenant_id,
+                "Accept": "application/json",
+            },
+        )
+        self._check_response(response)
+        data = response.json()
+        return data.get("TaxRates", [])
+
+    async def get_invoice(
+        self,
+        access_token: str,
+        xero_tenant_id: str,
+        invoice_id: str,
+    ) -> tuple[dict, RateLimitState]:
+        """Fetch a single invoice from Xero.
+
+        Args:
+            access_token: Valid Xero access token.
+            xero_tenant_id: Xero organisation tenant ID.
+            invoice_id: Xero invoice UUID.
+
+        Returns:
+            Tuple of (invoice dict, RateLimitState).
+
+        Raises:
+            XeroAuthError: If token is invalid (401).
+            XeroRateLimitError: If rate limit exceeded (429).
+            XeroClientError: For other API errors.
+        """
+        response = await self.client.get(
+            f"https://api.xero.com/api.xro/2.0/Invoices/{invoice_id}",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Xero-Tenant-Id": xero_tenant_id,
+                "Accept": "application/json",
+            },
+        )
+        self._check_response(response)
+        data = response.json()
+        invoices = data.get("Invoices", [])
+        rate_limit = self._extract_rate_limit_state(response.headers)
+        return invoices[0] if invoices else {}, rate_limit
+
+    async def get_bank_transaction(
+        self,
+        access_token: str,
+        xero_tenant_id: str,
+        bank_transaction_id: str,
+    ) -> tuple[dict, RateLimitState]:
+        """Fetch a single bank transaction from Xero.
+
+        Args:
+            access_token: Valid Xero access token.
+            xero_tenant_id: Xero organisation tenant ID.
+            bank_transaction_id: Xero bank transaction UUID.
+
+        Returns:
+            Tuple of (bank transaction dict, RateLimitState).
+
+        Raises:
+            XeroAuthError: If token is invalid (401).
+            XeroRateLimitError: If rate limit exceeded (429).
+            XeroClientError: For other API errors.
+        """
+        response = await self.client.get(
+            f"https://api.xero.com/api.xro/2.0/BankTransactions/{bank_transaction_id}",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Xero-Tenant-Id": xero_tenant_id,
+                "Accept": "application/json",
+            },
+        )
+        self._check_response(response)
+        data = response.json()
+        transactions = data.get("BankTransactions", [])
+        rate_limit = self._extract_rate_limit_state(response.headers)
+        return transactions[0] if transactions else {}, rate_limit
+
+    async def get_credit_note(
+        self,
+        access_token: str,
+        xero_tenant_id: str,
+        credit_note_id: str,
+    ) -> tuple[dict, RateLimitState]:
+        """Fetch a single credit note from Xero.
+
+        Args:
+            access_token: Valid Xero access token.
+            xero_tenant_id: Xero organisation tenant ID.
+            credit_note_id: Xero credit note UUID.
+
+        Returns:
+            Tuple of (credit note dict, RateLimitState).
+
+        Raises:
+            XeroAuthError: If token is invalid (401).
+            XeroRateLimitError: If rate limit exceeded (429).
+            XeroClientError: For other API errors.
+        """
+        response = await self.client.get(
+            f"https://api.xero.com/api.xro/2.0/CreditNotes/{credit_note_id}",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Xero-Tenant-Id": xero_tenant_id,
+                "Accept": "application/json",
+            },
+        )
+        self._check_response(response)
+        data = response.json()
+        credit_notes = data.get("CreditNotes", [])
+        rate_limit = self._extract_rate_limit_state(response.headers)
+        return credit_notes[0] if credit_notes else {}, rate_limit
+
+    async def update_invoice(
+        self,
+        access_token: str,
+        xero_tenant_id: str,
+        invoice_id: str,
+        line_items: list[dict],
+        idempotency_key: str | None = None,
+    ) -> tuple[dict, RateLimitState]:
+        """Update an invoice's line items in Xero.
+
+        Args:
+            access_token: Valid Xero access token.
+            xero_tenant_id: Xero organisation tenant ID.
+            invoice_id: Xero invoice UUID.
+            line_items: Full list of line items with updated tax types.
+            idempotency_key: Optional idempotency key to prevent duplicate writes on retry.
+
+        Returns:
+            Tuple of (updated invoice dict, RateLimitState).
+
+        Raises:
+            XeroAuthError: If token is invalid (401).
+            XeroRateLimitError: If rate limit exceeded (429).
+            XeroClientError: For other API errors (including 400 period locked).
+        """
+        headers: dict[str, str] = {
+            "Authorization": f"Bearer {access_token}",
+            "Xero-Tenant-Id": xero_tenant_id,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if idempotency_key:
+            headers["Idempotency-Key"] = idempotency_key
+        response = await self.client.post(
+            f"https://api.xero.com/api.xro/2.0/Invoices/{invoice_id}",
+            headers=headers,
+            json={"LineItems": line_items},
+        )
+        self._check_response(response)
+        data = response.json()
+        invoices = data.get("Invoices", [])
+        rate_limit = self._extract_rate_limit_state(response.headers)
+        return invoices[0] if invoices else {}, rate_limit
+
+    async def update_bank_transaction(
+        self,
+        access_token: str,
+        xero_tenant_id: str,
+        bank_transaction_id: str,
+        line_items: list[dict],
+        idempotency_key: str | None = None,
+    ) -> tuple[dict, RateLimitState]:
+        """Update a bank transaction's line items in Xero.
+
+        Args:
+            access_token: Valid Xero access token.
+            xero_tenant_id: Xero organisation tenant ID.
+            bank_transaction_id: Xero bank transaction UUID.
+            line_items: Full list of line items with updated tax types.
+            idempotency_key: Optional idempotency key to prevent duplicate writes on retry.
+
+        Returns:
+            Tuple of (updated bank transaction dict, RateLimitState).
+
+        Raises:
+            XeroAuthError: If token is invalid (401).
+            XeroRateLimitError: If rate limit exceeded (429).
+            XeroClientError: For other API errors.
+        """
+        headers: dict[str, str] = {
+            "Authorization": f"Bearer {access_token}",
+            "Xero-Tenant-Id": xero_tenant_id,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if idempotency_key:
+            headers["Idempotency-Key"] = idempotency_key
+        response = await self.client.post(
+            f"https://api.xero.com/api.xro/2.0/BankTransactions/{bank_transaction_id}",
+            headers=headers,
+            json={"LineItems": line_items},
+        )
+        self._check_response(response)
+        data = response.json()
+        transactions = data.get("BankTransactions", [])
+        rate_limit = self._extract_rate_limit_state(response.headers)
+        return transactions[0] if transactions else {}, rate_limit
+
+    async def update_credit_note(
+        self,
+        access_token: str,
+        xero_tenant_id: str,
+        credit_note_id: str,
+        line_items: list[dict],
+        idempotency_key: str | None = None,
+    ) -> tuple[dict, RateLimitState]:
+        """Update a credit note's line items in Xero.
+
+        Args:
+            access_token: Valid Xero access token.
+            xero_tenant_id: Xero organisation tenant ID.
+            credit_note_id: Xero credit note UUID.
+            line_items: Full list of line items with updated tax types.
+            idempotency_key: Optional idempotency key to prevent duplicate writes on retry.
+
+        Returns:
+            Tuple of (updated credit note dict, RateLimitState).
+
+        Raises:
+            XeroAuthError: If token is invalid (401).
+            XeroRateLimitError: If rate limit exceeded (429).
+            XeroClientError: For other API errors.
+        """
+        headers: dict[str, str] = {
+            "Authorization": f"Bearer {access_token}",
+            "Xero-Tenant-Id": xero_tenant_id,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if idempotency_key:
+            headers["Idempotency-Key"] = idempotency_key
+        response = await self.client.post(
+            f"https://api.xero.com/api.xro/2.0/CreditNotes/{credit_note_id}",
+            headers=headers,
+            json={"LineItems": line_items},
+        )
+        self._check_response(response)
+        data = response.json()
+        credit_notes = data.get("CreditNotes", [])
+        rate_limit = self._extract_rate_limit_state(response.headers)
+        return credit_notes[0] if credit_notes else {}, rate_limit

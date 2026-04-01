@@ -1,6 +1,7 @@
 """Pydantic schemas for client transaction classification.
 
 Spec 047: Client Transaction Classification.
+Spec 049: Xero Tax Code Write-Back (send-back extensions).
 """
 
 from __future__ import annotations
@@ -268,3 +269,80 @@ class ClientClassificationSubmitResponse(BaseModel):
     classified_count: int
     total_count: int
     submitted_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# Send-Back Schemas (Spec 049)
+# ---------------------------------------------------------------------------
+
+
+class AgentNoteCreate(BaseModel):
+    """Create a per-transaction agent note."""
+
+    source_type: str
+    source_id: UUID
+    line_item_index: int
+    note_text: str = Field(..., min_length=1, max_length=1000)
+    is_send_back_comment: bool = False
+
+
+class AgentNoteResponse(BaseModel):
+    """Response for an agent transaction note."""
+
+    id: UUID
+    request_id: UUID
+    source_type: str
+    source_id: UUID
+    line_item_index: int
+    note_text: str
+    is_send_back_comment: bool
+    created_by: UUID | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SendBackItemRequest(BaseModel):
+    """One IDK item to send back with an agent comment."""
+
+    classification_id: UUID
+    agent_comment: str = Field(..., min_length=1, max_length=2000)
+
+
+class SendBackRequest(BaseModel):
+    """Request to send IDK items back to the client for clarification."""
+
+    items: list[SendBackItemRequest] = Field(..., min_length=1)
+
+
+class SendBackResponse(BaseModel):
+    """Response after sending items back to the client."""
+
+    new_request_id: UUID
+    round_number: int
+    client_email: str
+    item_count: int
+    expires_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ClassificationRoundResponse(BaseModel):
+    """One round in the send-back conversation thread for a transaction."""
+
+    id: UUID
+    session_id: UUID
+    source_type: str
+    source_id: UUID
+    line_item_index: int
+    round_number: int
+    request_id: UUID
+    agent_comment: str | None = None
+    client_response_category: str | None = None
+    client_response_description: str | None = None
+    client_needs_help: bool = False
+    responded_at: datetime | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+

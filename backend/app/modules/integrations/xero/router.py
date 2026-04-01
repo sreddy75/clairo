@@ -1771,7 +1771,7 @@ async def list_accounts(
     Returns:
         Account list.
     """
-    accounts, total = await account_repo.list_by_connection(
+    accounts = await account_repo.list_by_connection(
         connection_id=connection_id,
         is_active=is_active,
         is_bas_relevant=is_bas_relevant,
@@ -1779,7 +1779,7 @@ async def list_accounts(
 
     return XeroAccountListResponse(
         accounts=[XeroAccountResponse.model_validate(a) for a in accounts],
-        total=total,
+        total=len(accounts),
     )
 
 

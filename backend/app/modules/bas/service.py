@@ -366,6 +366,32 @@ class BASService:
         except Exception as e:
             logger.debug(f"Could not fetch quality score: {e}")
 
+        # Count approved, unsynced overrides (Spec 049)
+        from sqlalchemy import and_, func, select
+
+        from app.modules.bas.models import (
+            TaxCodeOverride,
+            TaxCodeOverrideWritebackStatus,
+            TaxCodeSuggestion,
+        )
+        approved_unsynced_count = 0
+        try:
+            count_result = await self.session.execute(
+                select(func.count())
+                .select_from(TaxCodeOverride)
+                .join(TaxCodeSuggestion, TaxCodeOverride.suggestion_id == TaxCodeSuggestion.id)
+                .where(
+                    and_(
+                        TaxCodeSuggestion.session_id == session.id,
+                        TaxCodeOverride.is_active.is_(True),
+                        TaxCodeOverride.writeback_status == TaxCodeOverrideWritebackStatus.PENDING_SYNC.value,
+                    )
+                )
+            )
+            approved_unsynced_count = count_result.scalar() or 0
+        except Exception as e:
+            logger.debug(f"Could not fetch approved_unsynced_count: {e}")
+
         return BASSessionResponse(
             id=session.id,
             period_id=session.period_id,
@@ -403,6 +429,7 @@ class BASService:
             lodgement_notes=session.lodgement_notes,
             is_lodged=session.is_lodged,
             can_record_lodgement=session.can_record_lodgement,
+            approved_unsynced_count=approved_unsynced_count,
             created_at=session.created_at,
             updated_at=session.updated_at,
         )

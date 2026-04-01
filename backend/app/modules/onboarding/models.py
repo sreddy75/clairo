@@ -23,6 +23,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -231,7 +232,7 @@ class OnboardingProgress(Base, TimestampMixin):
         JSONB,
         nullable=False,
         default=dict,
-        server_default="'{}'::jsonb",
+        server_default=text("'{}'::jsonb"),
         comment="Additional tracking data",
     )
 
@@ -361,7 +362,7 @@ class BulkImportJob(Base, TimestampMixin):
         JSONB,
         nullable=False,
         default=list,
-        server_default="'[]'::jsonb",
+        server_default=text("'[]'::jsonb"),
         comment="List of XPM/Xero client IDs to import",
     )
 
@@ -369,7 +370,7 @@ class BulkImportJob(Base, TimestampMixin):
         JSONB,
         nullable=False,
         default=list,
-        server_default="'[]'::jsonb",
+        server_default=text("'[]'::jsonb"),
         comment="List of imported client details",
     )
 
@@ -377,7 +378,7 @@ class BulkImportJob(Base, TimestampMixin):
         JSONB,
         nullable=False,
         default=list,
-        server_default="'[]'::jsonb",
+        server_default=text("'[]'::jsonb"),
         comment="List of failed clients with errors",
     )
 
@@ -662,7 +663,7 @@ class EmailDrip(Base):
         JSONB,
         nullable=False,
         default=dict,
-        server_default="'{}'::jsonb",
+        server_default=text("'{}'::jsonb"),
         comment="Additional context",
     )
 

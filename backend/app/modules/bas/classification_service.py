@@ -219,6 +219,7 @@ class ClassificationService:
                     "source_type": s.source_type,
                     "source_id": s.source_id,
                     "line_item_index": s.line_item_index,
+                    "suggestion_id": s.id,
                     "transaction_date": s.transaction_date,
                     "line_amount": s.line_amount or Decimal("0"),
                     "description": s.description,
@@ -596,6 +597,7 @@ class ClassificationService:
         connection_id: UUID,
     ) -> dict[str, Any]:
         """Submit all classifications for a request."""
+        from app.modules.bas.exceptions import ClassificationValidationError
         from app.modules.bas.models import BASAuditEventType
 
         request = await self.repo.get_classification_request_by_id_and_connection(
@@ -604,6 +606,26 @@ class ClassificationService:
         )
         if not request:
             raise ClassificationRequestNotFoundError(str(request_id))
+
+        # US6 (T034): Validate IDK items have a description
+        # US7 (T038): Validate all transactions are answered
+        classifications = await self.repo.get_classifications_by_request(request.id)
+        unanswered = []
+        for c in classifications:
+            if c.classified_at is None:
+                unanswered.append(c.id)
+            elif c.client_needs_help and not (c.client_description and c.client_description.strip()):
+                raise ClassificationValidationError(
+                    code="missing_idk_description",
+                    message="A description is required for 'I don't know' responses.",
+                )
+
+        if unanswered:
+            raise ClassificationValidationError(
+                code="unanswered_transactions",
+                message=f"{len(unanswered)} transaction(s) have not been answered.",
+                count=len(unanswered),
+            )
 
         now = datetime.now(timezone.utc)
         classified_count = await self.repo.count_classified(request.id)
@@ -628,6 +650,26 @@ class ClassificationService:
                 "total_count": request.transaction_count,
             },
         )
+
+        # T033/T052: Emit CLIENT_ANSWERED_ROUND for round 2+ send-back responses
+        if request.round_number > 1:
+            from app.modules.integrations.xero.audit_events import (
+                CLASSIFICATION_CLIENT_ANSWERED_ROUND,
+            )
+
+            await self.repo.create_audit_log(
+                tenant_id=request.tenant_id,
+                session_id=request.session_id,
+                event_type=CLASSIFICATION_CLIENT_ANSWERED_ROUND,
+                event_description=f"Client answered round {request.round_number} ({classified_count} items)",
+                is_system_action=True,
+                event_metadata={
+                    "request_id": str(request.id),
+                    "round_number": request.round_number,
+                    "parent_request_id": str(request.parent_request_id) if request.parent_request_id else None,
+                    "classified_count": classified_count,
+                },
+            )
 
         return {
             "request_id": request.id,
@@ -1088,3 +1130,208 @@ class ClassificationService:
             )
 
         return rows
+
+    # ------------------------------------------------------------------
+    # US9: Send-Back Loop (Spec 049)
+    # ------------------------------------------------------------------
+
+    async def send_items_back(
+        self,
+        request_id: UUID,
+        items_with_comments: list[dict],
+        triggered_by: UUID,
+        tenant_id: UUID,
+    ) -> dict[str, Any]:
+        """Send IDK items back to the client with agent guidance comments.
+
+        Creates a new ClassificationRequest (round N+1), copies the IDK
+        ClientClassification records, creates AgentTransactionNote records,
+        creates ClientClassificationRound records, generates a new magic link,
+        and sends the client an email.
+
+        Args:
+            request_id: Source classification request ID.
+            items_with_comments: List of dicts with classification_id and agent_comment.
+            triggered_by: Practice user ID initiating the send-back.
+            tenant_id: Tenant ID for RLS.
+
+        Returns:
+            Dict with new request details.
+        """
+        from app.modules.bas.exceptions import ClassificationValidationError
+        from app.modules.integrations.xero.audit_events import CLASSIFICATION_ITEMS_SENT_BACK
+        from app.modules.portal.auth.magic_link import MagicLinkService
+
+        # Load source request
+        source_request = await self.repo.get_classification_request_by_id(request_id, tenant_id)
+        if not source_request:
+            raise ClassificationRequestNotFoundError(str(request_id))
+
+        # Validate all items are IDK
+        classification_ids = [UUID(item["classification_id"]) if isinstance(item["classification_id"], str) else item["classification_id"] for item in items_with_comments]
+        classifications = await self.repo.get_classifications_by_request(request_id)
+        idk_map = {c.id: c for c in classifications if c.client_needs_help}
+
+        for item in items_with_comments:
+            cid = UUID(item["classification_id"]) if isinstance(item["classification_id"], str) else item["classification_id"]
+            if cid not in idk_map:
+                raise ClassificationValidationError(
+                    code="not_idk_item",
+                    message=f"Classification {cid} is not an IDK item",
+                )
+            comment = item.get("agent_comment", "")
+            if not comment or not comment.strip():
+                raise ClassificationValidationError(
+                    code="missing_agent_comment",
+                    message="Agent comment is required for send-back items",
+                )
+
+        new_round_number = source_request.round_number + 1
+
+        # Create new ClassificationRequest (round N+1)
+        from app.modules.bas.classification_models import ClassificationRequest
+
+        new_request = ClassificationRequest(
+            tenant_id=tenant_id,
+            connection_id=source_request.connection_id,
+            session_id=source_request.session_id,
+            requested_by=triggered_by,
+            client_email=source_request.client_email,
+            status=ClassificationRequestStatus.DRAFT,
+            transaction_count=len(items_with_comments),
+            parent_request_id=source_request.id,
+            round_number=new_round_number,
+        )
+        # Calculate 7-day expiry
+        from datetime import timedelta, timezone
+        new_request.expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+        self.session.add(new_request)
+        await self.session.flush()
+
+        # Copy IDK ClientClassification records into new request
+
+        from app.modules.bas.classification_models import ClientClassification
+
+        for item in items_with_comments:
+            cid = UUID(item["classification_id"]) if isinstance(item["classification_id"], str) else item["classification_id"]
+            orig = idk_map[cid]
+            new_cc = ClientClassification(
+                tenant_id=tenant_id,
+                request_id=new_request.id,
+                source_type=orig.source_type,
+                source_id=orig.source_id,
+                line_item_index=orig.line_item_index,
+                transaction_date=orig.transaction_date,
+                line_amount=orig.line_amount,
+                description=orig.description,
+                contact_name=orig.contact_name,
+                account_code=orig.account_code,
+            )
+            self.session.add(new_cc)
+            await self.session.flush()
+
+            # Create AgentTransactionNote (is_send_back_comment=True)
+            await self.repo.create_agent_note(
+                tenant_id=tenant_id,
+                request_id=new_request.id,
+                source_type=orig.source_type,
+                source_id=orig.source_id,
+                line_item_index=orig.line_item_index,
+                note_text=item["agent_comment"],
+                is_send_back_comment=True,
+                created_by=triggered_by,
+            )
+
+            # Create ClientClassificationRound
+            await self.repo.create_classification_round(
+                tenant_id=tenant_id,
+                session_id=source_request.session_id,
+                source_type=orig.source_type,
+                source_id=orig.source_id,
+                line_item_index=orig.line_item_index,
+                round_number=new_round_number,
+                request_id=new_request.id,
+                agent_comment=item["agent_comment"],
+            )
+
+        # Generate new magic link
+        magic_link_service = MagicLinkService(self.session)
+        invitation, token = await magic_link_service.create_invitation(
+            tenant_id=tenant_id,
+            connection_id=source_request.connection_id,
+            email=source_request.client_email,
+            invited_by=triggered_by,
+            expires_hours=7 * 24,
+        )
+        new_request.invitation_id = invitation.id
+        await self.session.flush()
+
+        magic_link_url = magic_link_service.build_magic_link_url(token)
+        magic_link_url = f"{magic_link_url}&redirect=/portal/classify/{new_request.id}"
+
+        # Send email with new link
+        try:
+            from app.email.service import get_email_service
+            from app.email.templates import EmailTemplate
+
+            email_service = get_email_service()
+            await email_service.send_email(
+                to=source_request.client_email,
+                template=EmailTemplate(
+                    subject="Your accountant has a follow-up question about your transactions",
+                    html=f"<p>Your accountant has reviewed your responses and has a follow-up question. "
+                    f"Please click the link below to respond: <a href='{magic_link_url}'>{magic_link_url}</a></p>",
+                    text=f"Your accountant has a follow-up question. Please visit: {magic_link_url}",
+                ),
+                tags=[{"name": "type", "value": "classification_sendback"}],
+            )
+            await magic_link_service.mark_invitation_sent(invitation_id=invitation.id, delivered=True)
+        except Exception:
+            logger.warning("Failed to send send-back email", exc_info=True)
+            await magic_link_service.mark_invitation_sent(invitation_id=invitation.id, delivered=False)
+
+        # Update status to SENT
+        await self.repo.update_request_status(new_request.id, ClassificationRequestStatus.SENT)
+
+        # Audit event
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=source_request.session_id,
+            event_type=CLASSIFICATION_ITEMS_SENT_BACK,
+            event_description=f"Sent {len(items_with_comments)} IDK items back (round {new_round_number})",
+            performed_by=triggered_by,
+            event_metadata={
+                "new_request_id": str(new_request.id),
+                "source_request_id": str(request_id),
+                "round_number": new_round_number,
+                "item_count": len(items_with_comments),
+            },
+        )
+
+        return {
+            "new_request_id": new_request.id,
+            "round_number": new_round_number,
+            "client_email": source_request.client_email,
+            "item_count": len(items_with_comments),
+            "expires_at": new_request.expires_at,
+        }
+
+    async def get_classification_thread(
+        self,
+        session_id: UUID,
+        source_type: str,
+        source_id: UUID,
+        line_item_index: int,
+        tenant_id: UUID,
+    ) -> list[Any]:
+        """Get the full send-back conversation thread for a transaction.
+
+        Returns ClientClassificationRound records ordered by round_number.
+        """
+        return await self.repo.list_rounds_for_transaction(
+            tenant_id=tenant_id,
+            session_id=session_id,
+            source_type=source_type,
+            source_id=source_id,
+            line_item_index=line_item_index,
+        )

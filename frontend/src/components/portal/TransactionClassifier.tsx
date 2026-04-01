@@ -32,6 +32,7 @@ interface Transaction {
   receipt_required: boolean;
   receipt_reason: string | null;
   receipt_attached: boolean;
+  agent_note?: string | null;
 }
 
 interface TransactionClassifierProps {
@@ -47,6 +48,8 @@ interface TransactionClassifierProps {
       needs_help?: boolean;
     }
   ) => Promise<void>;
+  /** Called when this item's answered state changes (for unanswered counter) */
+  onAnsweredChange?: (classificationId: string, answered: boolean) => void;
 }
 
 export function TransactionClassifier({
@@ -54,31 +57,55 @@ export function TransactionClassifier({
   isExpanded,
   onToggle,
   onSave,
+  onAnsweredChange,
 }: TransactionClassifierProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     transaction.current_category
   );
   const [freeText, setFreeText] = useState(transaction.current_description || "");
+  const [idkDescription, setIdkDescription] = useState("");
+  const [idkDescriptionTouched, setIdkDescriptionTouched] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const idkSelected = selectedCategory === "dont_know";
+  const idkValid = idkDescription.trim().length > 0;
+
+  // An item is "answered" when it has a non-IDK category, personal, or IDK+description
+  const isAnswered =
+    selectedCategory !== null &&
+    (selectedCategory !== "dont_know" || idkValid);
 
   const handleCategorySelect = useCallback(
     async (categoryId: string) => {
       setSelectedCategory(categoryId);
-      setSaving(true);
-      try {
-        if (categoryId === "personal") {
-          await onSave(transaction.id, { is_personal: true });
-        } else if (categoryId === "dont_know") {
-          await onSave(transaction.id, { needs_help: true });
-        } else {
-          await onSave(transaction.id, { category: categoryId });
+      if (categoryId !== "dont_know") {
+        setSaving(true);
+        try {
+          if (categoryId === "personal") {
+            await onSave(transaction.id, { is_personal: true });
+          } else {
+            await onSave(transaction.id, { category: categoryId });
+          }
+          onAnsweredChange?.(transaction.id, true);
+        } finally {
+          setSaving(false);
         }
-      } finally {
-        setSaving(false);
       }
+      // For "dont_know", wait until description saved
     },
-    [onSave, transaction.id]
+    [onSave, onAnsweredChange, transaction.id]
   );
+
+  const handleIdkSave = useCallback(async () => {
+    if (!idkValid) return;
+    setSaving(true);
+    try {
+      await onSave(transaction.id, { needs_help: true, description: idkDescription.trim() });
+      onAnsweredChange?.(transaction.id, true);
+    } finally {
+      setSaving(false);
+    }
+  }, [onSave, onAnsweredChange, transaction.id, idkDescription, idkValid]);
 
   const handleFreeTextSave = useCallback(async () => {
     if (!freeText.trim()) return;
@@ -89,12 +116,13 @@ export function TransactionClassifier({
         description: freeText.trim(),
       });
       setSelectedCategory("other");
+      onAnsweredChange?.(transaction.id, true);
     } finally {
       setSaving(false);
     }
-  }, [onSave, transaction.id, freeText]);
+  }, [onSave, onAnsweredChange, transaction.id, freeText]);
 
-  const isClassified = transaction.is_classified || selectedCategory !== null;
+  const isClassified = transaction.is_classified || isAnswered;
   const isExpense = (transaction.amount ?? 0) < 0;
 
   return (
@@ -161,6 +189,14 @@ export function TransactionClassifier({
         <div className="px-3 pb-3 space-y-3">
           <div className="border-t pt-3" />
 
+          {/* Agent note callout */}
+          {transaction.agent_note && (
+            <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs text-amber-800">
+              <p className="font-medium text-amber-600 mb-0.5">Your accountant says:</p>
+              {transaction.agent_note}
+            </div>
+          )}
+
           {/* Receipt flag callout */}
           {transaction.receipt_required && (
             <div className="rounded-md bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
@@ -223,6 +259,38 @@ export function TransactionClassifier({
               Not sure
             </button>
           </div>
+
+          {/* IDK mandatory description */}
+          {idkSelected && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium">
+                Describe what you know about this transaction
+                <span className="text-red-500 ml-1">*</span>
+              </p>
+              <div className="flex gap-2 items-start">
+                <Textarea
+                  value={idkDescription}
+                  onChange={(e) => setIdkDescription(e.target.value)}
+                  onBlur={() => setIdkDescriptionTouched(true)}
+                  placeholder="e.g. I think it was for a supplier but I'm not sure which one"
+                  className="text-xs min-h-[40px] h-10 resize-none"
+                  maxLength={500}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs shrink-0 h-10"
+                  disabled={saving || !idkValid}
+                  onClick={handleIdkSave}
+                >
+                  Save
+                </Button>
+              </div>
+              {idkDescriptionTouched && !idkValid && (
+                <p className="text-xs text-red-500">A description is required</p>
+              )}
+            </div>
+          )}
 
           {/* Free text — collapsible, only show if no category selected */}
           {!selectedCategory && (

@@ -2,6 +2,8 @@
 
 Provides factory_boy factories for:
 - XeroConnectionFactory
+- XeroWritebackJobFactory
+- XeroWritebackItemFactory
 """
 
 from datetime import datetime, timedelta, timezone
@@ -13,6 +15,12 @@ from app.modules.integrations.xero.models import (
     XeroConnection,
     XeroConnectionStatus,
     XeroConnectionType,
+)
+from app.modules.integrations.xero.writeback_models import (
+    XeroWritebackItem,
+    XeroWritebackItemStatus,
+    XeroWritebackJob,
+    XeroWritebackJobStatus,
 )
 
 
@@ -55,3 +63,52 @@ class NeedsReauthXeroConnectionFactory(XeroConnectionFactory):
     """Factory for a Xero connection needing reauthorization."""
 
     status = XeroConnectionStatus.NEEDS_REAUTH
+
+
+class XeroWritebackJobFactory(factory.Factory):
+    """Factory for XeroWritebackJob model."""
+
+    class Meta:
+        model = XeroWritebackJob
+
+    id = factory.LazyFunction(uuid4)
+    tenant_id = factory.LazyFunction(uuid4)
+    connection_id = factory.LazyFunction(uuid4)
+    session_id = factory.LazyFunction(uuid4)
+    triggered_by = None
+    status = XeroWritebackJobStatus.COMPLETED
+    total_count = 1
+    succeeded_count = 1
+    skipped_count = 0
+    failed_count = 0
+    started_at = None
+    completed_at = None
+    duration_seconds = None
+    error_detail = None
+    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+    updated_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+
+
+class XeroWritebackItemFactory(factory.Factory):
+    """Factory for XeroWritebackItem model."""
+
+    class Meta:
+        model = XeroWritebackItem
+
+    id = factory.LazyFunction(uuid4)
+    tenant_id = factory.LazyFunction(uuid4)
+    job_id = factory.LazyFunction(uuid4)
+    source_type = "invoice"
+    xero_document_id = factory.LazyFunction(lambda: str(uuid4()))
+    local_document_id = factory.LazyFunction(uuid4)
+    override_ids = factory.LazyFunction(list)
+    line_item_indexes = factory.LazyFunction(list)
+    before_tax_types = factory.LazyFunction(dict)
+    after_tax_types = factory.LazyFunction(dict)
+    status = XeroWritebackItemStatus.SUCCESS
+    skip_reason = None
+    error_detail = None
+    xero_http_status = None
+    processed_at = None
+    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+    updated_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
