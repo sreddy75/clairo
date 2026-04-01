@@ -26,6 +26,7 @@ import {
   Loader2,
   Mail,
   MessageSquare,
+  Paperclip,
   RefreshCw,
   Search,
   Send,
@@ -33,6 +34,7 @@ import {
   Sparkles,
   Trash2,
   TrendingUp,
+  X,
   Zap,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -185,9 +187,13 @@ export default function AssistantPage() {
   // Knowledge domain selector (spec 045)
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
 
+  // File attachment
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Task creation state
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -363,10 +369,12 @@ export default function AssistantPage() {
 
   const handleSubmit = async (query?: string) => {
     const messageText = query || input.trim();
-    if (!messageText || isStreaming) return;
+    if ((!messageText && !selectedFile) || isStreaming) return;
 
+    const fileToSend = selectedFile;
     setError(null);
     setInput('');
+    setSelectedFile(null);
     setIsStreaming(true);
     setThinkingStatus('Starting analysis...');
     setDetectedPerspectives([]);
@@ -400,7 +408,7 @@ export default function AssistantPage() {
         connection_id: selectedClient?.connection_id || null,
         conversation_id: conversationId || null,
         domain: selectedDomain,
-      })) {
+      }, fileToSend)) {
         switch (event.type) {
           case 'thinking':
             setThinkingStatus(event.message || 'Processing...');
@@ -1002,7 +1010,45 @@ export default function AssistantPage() {
                     getToken={getToken}
                   />
                 )}
+                {selectedFile && (
+                  <div className="mb-2">
+                    <div className="inline-flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 text-xs">
+                      <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="max-w-[200px] truncate">{selectedFile.name}</span>
+                      <span className="text-muted-foreground">
+                        {selectedFile.size < 1024 * 1024
+                          ? `${(selectedFile.size / 1024).toFixed(0)}KB`
+                          : `${(selectedFile.size / (1024 * 1024)).toFixed(1)}MB`}
+                      </span>
+                      <button onClick={() => setSelectedFile(null)} className="ml-1 rounded-sm hover:bg-muted">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.csv,.xlsx,.txt"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      if (f.size > 10 * 1024 * 1024) { alert('File too large. Maximum is 10MB.'); return; }
+                      setSelectedFile(f);
+                    }
+                    e.target.value = '';
+                  }}
+                />
                 <div className="flex items-end gap-3">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isStreaming}
+                    className="flex-shrink-0 w-12 h-12 border border-border rounded-xl hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                    title="Attach file (image, PDF, Excel, CSV)"
+                  >
+                    <Paperclip className="h-5 w-5 text-muted-foreground" />
+                  </button>
                   <div className="flex-1 relative">
                     <textarea
                       ref={inputRef}
@@ -1018,7 +1064,7 @@ export default function AssistantPage() {
                   </div>
                   <button
                     onClick={() => handleSubmit()}
-                    disabled={!input.trim() || isStreaming}
+                    disabled={(!input.trim() && !selectedFile) || isStreaming}
                     className="flex-shrink-0 w-12 h-12 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center shadow-sm"
                   >
                     {isStreaming ? (

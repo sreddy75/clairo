@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -141,10 +141,13 @@ async def agent_chat(
 
 @router.post("/chat/stream")
 async def agent_chat_stream(
-    request: AgentChatRequest,
     orchestrator: OrchestratorDep,
     current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_READ)),
     db: AsyncSession = Depends(get_db),
+    query: str = Form(..., min_length=1, max_length=2000),
+    connection_id: str | None = Form(None),
+    conversation_id: str | None = Form(None),
+    file: UploadFile | None = File(None),
 ) -> StreamingResponse:
     """Stream a query response with thinking status updates and conversation persistence.
 
@@ -157,10 +160,33 @@ async def agent_chat_stream(
     - error: Error occurred
 
     Conversations are automatically saved per client for history viewing.
+    Supports optional file attachments (images, PDFs, Excel, CSV).
     """
+    # Parse UUIDs from form fields
+    parsed_connection_id = UUID(connection_id) if connection_id else None
+    parsed_conversation_id = UUID(conversation_id) if conversation_id else None
+
+    # Process file attachment before entering the generator
+    attachment_data = None
+    if file and file.filename:
+        try:
+            from app.core.file_processor import process_chat_attachment
+
+            attachment_data = await process_chat_attachment(
+                file,
+                current_user.tenant_id,
+                "assistant",
+                parsed_connection_id or "general",
+                f"msg-{UUID(int=0).hex[:12]}",
+            )
+        except ValueError as e:
+            return StreamingResponse(
+                iter([_sse_event("error", {"message": str(e)})]),
+                media_type="text/event-stream",
+            )
 
     async def generate_events() -> AsyncGenerator[str, None]:
-        conversation_id = request.conversation_id
+        conv_id = parsed_conversation_id
         conv_repo = ChatConversationRepository(db)
         msg_repo = ChatMessageRepository(db)
 
@@ -171,11 +197,11 @@ async def agent_chat_stream(
             )
 
             user_id = current_user.clerk_id  # Clerk user ID for conversation ownership
-            client_id = request.connection_id  # Connection ID = client context
+            client_id = parsed_connection_id  # Connection ID = client context
 
-            if conversation_id:
+            if conv_id:
                 # Continue existing conversation
-                conversation = await conv_repo.get_by_id(conversation_id)
+                conversation = await conv_repo.get_by_id(conv_id)
                 if not conversation:
                     yield _sse_event("error", {"message": "Conversation not found"})
                     return
@@ -184,20 +210,20 @@ async def agent_chat_stream(
                     return
             else:
                 # Create new conversation with title from query
-                title = request.query[:100] + ("..." if len(request.query) > 100 else "")
+                title = query[:100] + ("..." if len(query) > 100 else "")
                 conversation = await conv_repo.create(
                     user_id=user_id,
                     title=title,
                     client_id=client_id,
                 )
-                conversation_id = conversation.id
+                conv_id = conversation.id
                 await db.commit()
 
             # Save user message
             await msg_repo.create(
-                conversation_id=conversation_id,
+                conversation_id=conv_id,
                 role="user",
-                content=request.query,
+                content=query,
             )
             await db.commit()
 
@@ -210,16 +236,17 @@ async def agent_chat_stream(
             yield _sse_event(
                 "thinking", {"stage": "knowledge", "message": "Searching knowledge base..."}
             )
-            knowledge_chunks = await _fetch_knowledge_chunks(request.query, db)
+            knowledge_chunks = await _fetch_knowledge_chunks(query, db)
 
             # Stage 3: Process through orchestrator with status callbacks
             full_response = ""
             async for event in orchestrator.process_query_streaming(
-                query=request.query,
+                query=query,
                 tenant_id=current_user.tenant_id,
                 user_id=current_user.id,
-                connection_id=request.connection_id,
+                connection_id=parsed_connection_id,
                 knowledge_chunks=knowledge_chunks,
+                content_blocks=attachment_data.content_blocks if attachment_data else None,
             ):
                 # Capture response content for saving
                 if event["type"] == "response" and "content" in event.get("data", {}):
@@ -228,7 +255,7 @@ async def agent_chat_stream(
                 # Add conversation_id to metadata event
                 if event["type"] == "metadata":
                     event_data = event.get("data", {})
-                    event_data["conversation_id"] = str(conversation_id)
+                    event_data["conversation_id"] = str(conv_id)
                     yield _sse_event(event["type"], event_data)
                 else:
                     yield _sse_event(event["type"], event.get("data", {}))
@@ -238,28 +265,28 @@ async def agent_chat_stream(
             if result:
                 # Save assistant response
                 await msg_repo.create(
-                    conversation_id=conversation_id,
+                    conversation_id=conv_id,
                     role="assistant",
                     content=result.content,
                 )
 
                 # Update conversation timestamp
-                await conv_repo.touch(conversation_id)
+                await conv_repo.touch(conv_id)
 
                 # Log the query (audit)
                 audit_service = AgentAuditService(db)
                 query_record = await audit_service.log_query(
-                    query=request.query,
+                    query=query,
                     tenant_id=current_user.tenant_id,
                     user_id=current_user.id,
                     response=result,
-                    connection_id=request.connection_id,
+                    connection_id=parsed_connection_id,
                 )
 
                 # Create escalation if required
                 if result.escalation_required:
                     await audit_service.create_escalation(
-                        query=request.query,
+                        query=query,
                         query_record=query_record,
                         response=result,
                         tenant_id=current_user.tenant_id,
@@ -281,7 +308,7 @@ async def agent_chat_stream(
 
                 await db.commit()
 
-            yield _sse_event("done", {"conversation_id": str(conversation_id)})
+            yield _sse_event("done", {"conversation_id": str(conv_id)})
 
         except Exception as e:
             logger.error(f"Agent chat stream error: {e}", exc_info=True)

@@ -26,7 +26,6 @@ from app.modules.feedback.schemas import (
     ConversationResponse,
     ConversationTurnResponse,
     FeedbackStats,
-    MessageCreate,
     MessageResponse,
     StatusUpdate,
     SubmissionDetailResponse,
@@ -160,12 +159,40 @@ async def get_conversation(
 )
 async def send_message(
     submission_id: UUID,
-    data: MessageCreate,
     db: DbSession,
     tenant_id: TenantId,
+    content: str = Form(..., min_length=1),
+    content_type: str = Form(default="text"),
+    file: UploadFile | None = File(None),
 ) -> ConversationTurnResponse:
+    # If a file is attached, extract its text content and prepend to message
+    message_content = content
+    if file and file.filename:
+        try:
+            from app.core.file_processor import process_chat_attachment
+
+            attachment = await process_chat_attachment(
+                file,
+                tenant_id,
+                "feedback",
+                submission_id,
+                f"msg-{submission_id.hex[:12]}",
+            )
+            # For text-based content (CSV, Excel, text), prepend extracted text
+            for block in attachment.content_blocks:
+                if block.get("type") == "text":
+                    message_content = block["text"] + "\n\n" + content
+                    break
+            # For images/PDFs, note the attachment in the message
+            if attachment.category in ("image", "pdf"):
+                message_content = (
+                    f"[Attached {attachment.category}: {attachment.filename}]\n\n{content}"
+                )
+        except ValueError:
+            pass  # Proceed without attachment on error
+
     service = FeedbackService(db)
-    result = await service.send_message(submission_id, tenant_id, data.content, data.content_type)
+    result = await service.send_message(submission_id, tenant_id, message_content, content_type)
     await db.commit()
     return ConversationTurnResponse(
         user_message=MessageResponse.from_model(result["user_message"]),

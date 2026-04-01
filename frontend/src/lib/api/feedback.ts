@@ -124,16 +124,21 @@ export async function sendMessage(
   token: string,
   id: string,
   content: string,
-  contentType: string = 'text'
+  contentType: string = 'text',
+  file?: File | null,
 ): Promise<ConversationTurnResponse> {
+  const formData = new FormData();
+  formData.append('content', content);
+  formData.append('content_type', contentType);
+  if (file) formData.append('file', file);
+
   const response = await apiClient.post(
     `${BASE}/${id}/conversation/message`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ content, content_type: contentType }),
+      body: formData,
     }
   );
   return apiClient.handleResponse<ConversationTurnResponse>(response);

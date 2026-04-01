@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@clerk/nextjs';
-import { Mic, Send, Loader2 } from 'lucide-react';
+import { FileText, Mic, Paperclip, Send, Loader2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -38,9 +38,12 @@ export function ConversationChat({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom on new messages
   const scrollToBottom = useCallback(() => {
@@ -100,9 +103,11 @@ export function ConversationChat({
   // Send text message
   const handleSend = useCallback(async () => {
     const content = input.trim();
-    if (!content || isLoading) return;
+    if ((!content && !selectedFile) || isLoading) return;
 
+    const fileToSend = selectedFile;
     setInput('');
+    setSelectedFile(null);
     setError(null);
     setIsLoading(true);
 
@@ -110,7 +115,9 @@ export function ConversationChat({
       const token = await getToken();
       if (!token) throw new Error('Not authenticated');
 
-      const response = await sendMessage(token, submissionId, content);
+      const response = await sendMessage(
+        token, submissionId, content || '[File attached]', 'text', fileToSend,
+      );
       handleTurnResponse(response);
     } catch (err) {
       setError(
@@ -119,7 +126,7 @@ export function ConversationChat({
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, getToken, submissionId, handleTurnResponse]);
+  }, [input, selectedFile, isLoading, getToken, submissionId, handleTurnResponse]);
 
   // Send voice message via file upload
   const handleVoiceUpload = useCallback(
@@ -186,7 +193,39 @@ export function ConversationChat({
 
       {/* Input area */}
       <div className="border-t p-4 space-y-2">
+        {selectedFile && (
+          <div className="inline-flex items-center gap-2 rounded-md bg-muted/50 px-2.5 py-1.5 text-xs">
+            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="max-w-[200px] truncate">{selectedFile.name}</span>
+            <button onClick={() => setSelectedFile(null)} className="ml-1 rounded-sm hover:bg-muted">
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <input
+            ref={docInputRef}
+            type="file"
+            accept=".png,.jpg,.jpeg,.webp,.gif,.pdf,.csv,.xlsx,.txt"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) {
+                if (f.size > 10 * 1024 * 1024) { alert('File too large. Maximum is 10MB.'); return; }
+                setSelectedFile(f);
+              }
+              e.target.value = '';
+            }}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => docInputRef.current?.click()}
+            disabled={isLoading}
+            title="Attach file"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
           <Textarea
             ref={textareaRef}
             value={input}
@@ -200,7 +239,7 @@ export function ConversationChat({
           <Button
             size="icon"
             onClick={handleSend}
-            disabled={!input.trim() || isLoading}
+            disabled={(!input.trim() && !selectedFile) || isLoading}
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

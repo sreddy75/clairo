@@ -115,16 +115,22 @@ export interface AgentStreamEvent {
  */
 export async function* agentChatStream(
   token: string,
-  request: AgentChatRequest
+  request: AgentChatRequest,
+  file?: File | null,
 ): AsyncGenerator<AgentStreamEvent, void, unknown> {
+  const formData = new FormData();
+  formData.append('query', request.query);
+  if (request.connection_id) formData.append('connection_id', request.connection_id);
+  if (request.conversation_id) formData.append('conversation_id', request.conversation_id);
+  if (file) formData.append('file', file);
+
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${AGENT_BASE}/chat/stream`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
       Accept: 'text/event-stream',
     },
-    body: JSON.stringify(request),
+    body: formData,
   });
 
   if (!response.ok) {

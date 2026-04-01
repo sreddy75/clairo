@@ -362,6 +362,7 @@ class MultiPerspectiveOrchestrator:
         connection_id: UUID | None = None,
         knowledge_chunks: list[dict[str, Any]] | None = None,
         options_format: bool = False,
+        content_blocks: list[dict[str, Any]] | None = None,
     ) -> AsyncGenerator[dict[str, Any], None]:
         """Process a query with streaming status updates.
 
@@ -456,11 +457,19 @@ class MultiPerspectiveOrchestrator:
         )
 
         try:
+            # Build user message — multimodal if file attached
+            if content_blocks:
+                user_content: str | list[dict[str, Any]] = content_blocks + [
+                    {"type": "text", "text": user_prompt}
+                ]
+            else:
+                user_content = user_prompt
+
             response = self.client.messages.create(
                 model=self.settings.model,
                 max_tokens=self.settings.max_response_tokens,
                 system=system_prompt,
-                messages=[{"role": "user", "content": user_prompt}],
+                messages=[{"role": "user", "content": user_content}],
             )
             first_block = response.content[0]
             content = first_block.text if hasattr(first_block, "text") else str(first_block)
