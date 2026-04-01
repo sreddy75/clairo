@@ -123,7 +123,8 @@ async def get_tax_plan(
     try:
         plan = await service.get_plan(plan_id, current_user.tenant_id)
         client_name = await service.get_client_name(plan.xero_connection_id, current_user.tenant_id)
-        return _plan_to_response(plan, client_name)
+        connection_status = await service.get_connection_status(plan.xero_connection_id)
+        return _plan_to_response(plan, client_name, connection_status)
     except DomainError as e:
         raise _handle_domain_error(e)
 
@@ -418,7 +419,9 @@ async def get_tax_rates(
 # ------------------------------------------------------------------
 
 
-def _plan_to_response(plan: TaxPlan, client_name: str) -> TaxPlanResponse:
+def _plan_to_response(
+    plan: TaxPlan, client_name: str, connection_status: str | None = None,
+) -> TaxPlanResponse:
     """Convert TaxPlan model to response schema."""
     scenarios = plan.scenarios or []
     return TaxPlanResponse(
@@ -439,4 +442,5 @@ def _plan_to_response(plan: TaxPlan, client_name: str) -> TaxPlanResponse:
         scenarios=[TaxScenarioResponse.model_validate(s) for s in scenarios],
         scenario_count=len(scenarios),
         message_count=0,  # Messages loaded separately
+        xero_connection_status=connection_status,
     )

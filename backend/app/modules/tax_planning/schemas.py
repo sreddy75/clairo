@@ -190,6 +190,7 @@ class TaxPlanResponse(BaseModel):
     scenarios: list[TaxScenarioResponse] = Field(default_factory=list)
     scenario_count: int = 0
     message_count: int = 0
+    xero_connection_status: str | None = None
 
 
 class TaxPlanListItem(BaseModel):

@@ -356,6 +356,34 @@ export function TaxPlanningWorkspace({
         </div>
       )}
 
+      {/* Xero reauth banner */}
+      {plan.xero_connection_status === 'needs_reauth' && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                Xero connection expired
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                Reconnect to pull the latest financial data. Current data is from{' '}
+                {plan.xero_report_fetched_at
+                  ? new Date(plan.xero_report_fetched_at).toLocaleDateString()
+                  : 'a previous session'}
+                .
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900"
+              onClick={() => window.open('/settings/integrations', '_blank')}
+            >
+              Reconnect Xero
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Row 1: Financials + Tax Position side by side */}
       {plan.financials_data && !showManualEntry ? (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

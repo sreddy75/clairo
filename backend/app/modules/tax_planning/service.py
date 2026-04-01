@@ -132,6 +132,10 @@ class TaxPlanningService:
         if not connection or not connection.last_full_sync_at:
             return False
 
+        # Don't attempt refresh if Xero connection needs reauthorization
+        if connection.status.value != "active":
+            return False
+
         # No P&L data yet — definitely stale
         if not plan.xero_report_fetched_at:
             return True
@@ -1068,6 +1072,13 @@ class TaxPlanningService:
         )
         connection = result.scalar_one_or_none()
         return connection.organization_name if connection else ""
+
+    async def get_connection_status(self, xero_connection_id: uuid.UUID) -> str | None:
+        """Get the Xero connection status (active, needs_reauth, disconnected)."""
+        connection = await self.session.get(XeroConnection, xero_connection_id)
+        if not connection:
+            return None
+        return connection.status.value if connection.status else None
 
     # ------------------------------------------------------------------
     # PDF Export
