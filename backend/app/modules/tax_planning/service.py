@@ -106,6 +106,10 @@ class TaxPlanningService:
                     plan.id,
                     exc_info=True,
                 )
+                # Rollback the failed transaction so the session is usable
+                await self.session.rollback()
+                # Re-fetch plan with clean session
+                plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
 
         return plan
 
