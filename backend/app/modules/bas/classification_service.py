@@ -29,7 +29,6 @@ from app.modules.bas.classification_models import (
     ClassificationRequestStatus,
 )
 from app.modules.bas.exceptions import (
-    ClassificationRequestExistsError,
     ClassificationRequestNotFoundError,
     NoClientEmailError,
     NoUnresolvedTransactionsError,

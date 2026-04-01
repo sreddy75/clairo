@@ -145,7 +145,11 @@ def format_reference_material(chunks: list[dict]) -> str:
 
         source_type = chunk.get("source_type", "")
         superseded = chunk.get("is_superseded", False)
-        superseded_note = " (Note: this ruling has been superseded — check for current version)" if superseded else ""
+        superseded_note = (
+            " (Note: this ruling has been superseded — check for current version)"
+            if superseded
+            else ""
+        )
 
         lines.append(f"\n[{i}] {title} ({identifier}){superseded_note}")
         lines.append(f"Source type: {source_type}")
@@ -214,16 +218,18 @@ def format_financial_context(
 
     unrecon = financials_data.get("unreconciled_summary")
     if unrecon and unrecon.get("transaction_count", 0) > 0:
-        lines.extend([
-            "",
-            f"--- Unreconciled Transactions ({unrecon.get('quarter', 'current quarter')}) [PROVISIONAL] ---",
-            f"Count: {unrecon['transaction_count']}",
-            f"Unreconciled Income: ${unrecon.get('unreconciled_income', 0):,.2f}",
-            f"Unreconciled Expenses: ${unrecon.get('unreconciled_expenses', 0):,.2f}",
-            f"Estimated GST Collected: ${unrecon.get('gst_collected_estimate', 0):,.2f}",
-            f"Estimated GST Paid: ${unrecon.get('gst_paid_estimate', 0):,.2f}",
-            "Note: These are provisional estimates from unreconciled transactions.",
-        ])
+        lines.extend(
+            [
+                "",
+                f"--- Unreconciled Transactions ({unrecon.get('quarter', 'current quarter')}) [PROVISIONAL] ---",
+                f"Count: {unrecon['transaction_count']}",
+                f"Unreconciled Income: ${unrecon.get('unreconciled_income', 0):,.2f}",
+                f"Unreconciled Expenses: ${unrecon.get('unreconciled_expenses', 0):,.2f}",
+                f"Estimated GST Collected: ${unrecon.get('gst_collected_estimate', 0):,.2f}",
+                f"Estimated GST Paid: ${unrecon.get('gst_paid_estimate', 0):,.2f}",
+                "Note: These are provisional estimates from unreconciled transactions.",
+            ]
+        )
 
     return "\n".join(lines)
 
