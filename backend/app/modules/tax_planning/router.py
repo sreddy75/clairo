@@ -124,7 +124,15 @@ async def get_tax_plan(
         plan = await service.get_plan(plan_id, current_user.tenant_id)
         client_name = await service.get_client_name(plan.xero_connection_id, current_user.tenant_id)
         connection_status = await service.get_connection_status(plan.xero_connection_id)
-        return _plan_to_response(plan, client_name, connection_status)
+
+        # Check if data is stale (read-only check, no Xero API calls)
+        import contextlib
+
+        data_stale = False
+        with contextlib.suppress(Exception):
+            data_stale = await service.is_plan_data_stale(plan)
+
+        return _plan_to_response(plan, client_name, connection_status, data_stale)
     except DomainError as e:
         raise _handle_domain_error(e)
 
@@ -420,7 +428,10 @@ async def get_tax_rates(
 
 
 def _plan_to_response(
-    plan: TaxPlan, client_name: str, connection_status: str | None = None,
+    plan: TaxPlan,
+    client_name: str,
+    connection_status: str | None = None,
+    data_stale: bool = False,
 ) -> TaxPlanResponse:
     """Convert TaxPlan model to response schema."""
     scenarios = plan.scenarios or []
@@ -443,4 +454,5 @@ def _plan_to_response(
         scenario_count=len(scenarios),
         message_count=0,  # Messages loaded separately
         xero_connection_status=connection_status,
+        data_stale=data_stale,
     )

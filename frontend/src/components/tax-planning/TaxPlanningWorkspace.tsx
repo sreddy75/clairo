@@ -409,6 +409,40 @@ export function TaxPlanningWorkspace({
         </div>
       )}
 
+      {/* Stale data banner — shows when newer Xero data is available */}
+      {plan.data_stale && !xeroAuthNeeded && plan.xero_connection_status !== 'needs_reauth' && (
+        <div className="rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Newer financial data available
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                Xero data has been synced since this plan was last updated.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-blue-300 text-blue-800 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-200 dark:hover:bg-blue-900"
+              onClick={async () => {
+                try {
+                  const token = await getToken();
+                  if (!token) return;
+                  await pullXeroFinancials(token, plan.id, true);
+                  const updated = await getTaxPlan(token, plan.id);
+                  setPlan(updated);
+                } catch {
+                  setXeroAuthNeeded(true);
+                }
+              }}
+            >
+              Refresh from Xero
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Row 1: Financials + Tax Position side by side */}
       {plan.financials_data && !showManualEntry ? (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

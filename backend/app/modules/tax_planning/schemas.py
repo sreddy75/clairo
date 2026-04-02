@@ -191,6 +191,7 @@ class TaxPlanResponse(BaseModel):
     scenario_count: int = 0
     message_count: int = 0
     xero_connection_status: str | None = None
+    data_stale: bool = False
 
 
 class TaxPlanListItem(BaseModel):

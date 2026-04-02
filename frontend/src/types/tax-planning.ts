@@ -180,6 +180,7 @@ export interface TaxPlan {
   scenario_count: number;
   message_count: number;
   xero_connection_status?: string | null;
+  data_stale?: boolean;
 }
 
 export interface TaxPlanListItem {
