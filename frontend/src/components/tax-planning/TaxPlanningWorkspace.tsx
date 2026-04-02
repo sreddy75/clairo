@@ -384,26 +384,25 @@ export function TaxPlanningWorkspace({
               >
                 Reconnect Xero
               </Button>
-              {!plan.financials_data && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    try {
-                      setXeroAuthNeeded(false);
-                      const token = await getToken();
-                      if (!token) return;
-                      await pullXeroFinancials(token, plan.id, true);
-                      const updated = await getTaxPlan(token, plan.id);
-                      setPlan(updated);
-                    } catch {
-                      setXeroAuthNeeded(true);
-                    }
-                  }}
-                >
-                  Retry Pull
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    setXeroAuthNeeded(false);
+                    setError(null);
+                    const token = await getToken();
+                    if (!token) return;
+                    await pullXeroFinancials(token, plan.id, true);
+                    const updated = await getTaxPlan(token, plan.id);
+                    setPlan(updated);
+                  } catch {
+                    setXeroAuthNeeded(true);
+                  }
+                }}
+              >
+                Retry Pull
+              </Button>
             </div>
           </div>
         </div>
