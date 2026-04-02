@@ -68,6 +68,7 @@ export function TaxPlanningWorkspace({
   const [selectedEntityType, setSelectedEntityType] = useState<EntityType>('company');
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [showCreateNew, setShowCreateNew] = useState(false);
+  const [xeroAuthNeeded, setXeroAuthNeeded] = useState(false);
 
   // Load existing plan for this connection + FY
   const loadPlan = useCallback(async () => {
@@ -138,10 +139,10 @@ export function TaxPlanningWorkspace({
           const updated = await getTaxPlan(token, newPlan.id);
           setPlan(updated);
         } catch {
-          // Plan created but Xero pull failed — show plan anyway
+          // Plan created but Xero pull failed — show plan with reauth prompt
           const updated = await getTaxPlan(token, newPlan.id);
           setPlan(updated);
-          setError('Plan created but Xero data pull failed. You can enter data manually.');
+          setXeroAuthNeeded(true);
         }
       } else {
         setPlan(newPlan);
@@ -356,30 +357,54 @@ export function TaxPlanningWorkspace({
         </div>
       )}
 
-      {/* Xero reauth banner */}
-      {plan.xero_connection_status === 'needs_reauth' && (
+      {/* Xero reauth banner — shows when backend reports needs_reauth or Xero pull failed */}
+      {(plan.xero_connection_status === 'needs_reauth' || xeroAuthNeeded) && (
         <div className="rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                Xero connection expired
+                Xero connection needs re-authorisation
               </p>
               <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
-                Reconnect to pull the latest financial data. Current data is from{' '}
-                {plan.xero_report_fetched_at
-                  ? new Date(plan.xero_report_fetched_at).toLocaleDateString()
-                  : 'a previous session'}
-                .
+                {plan.financials_data
+                  ? `Reconnect to pull the latest financial data. Showing data from ${
+                      plan.xero_report_fetched_at
+                        ? new Date(plan.xero_report_fetched_at).toLocaleDateString()
+                        : 'a previous session'
+                    }.`
+                  : 'Reconnect Xero to pull financial data into this plan.'}
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900"
-              onClick={() => window.open('/settings/integrations', '_blank')}
-            >
-              Reconnect Xero
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900"
+                onClick={() => window.open('/settings/integrations', '_blank')}
+              >
+                Reconnect Xero
+              </Button>
+              {!plan.financials_data && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      setXeroAuthNeeded(false);
+                      const token = await getToken();
+                      if (!token) return;
+                      await pullXeroFinancials(token, plan.id, true);
+                      const updated = await getTaxPlan(token, plan.id);
+                      setPlan(updated);
+                    } catch {
+                      setXeroAuthNeeded(true);
+                    }
+                  }}
+                >
+                  Retry Pull
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
