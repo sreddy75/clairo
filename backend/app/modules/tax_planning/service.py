@@ -120,6 +120,15 @@ class TaxPlanningService:
             with contextlib.suppress(Exception):
                 await self.session.rollback()
 
+            # After rollback, the ORM expires all loaded objects. Accessing any
+            # attribute on the original `plan` would trigger a synchronous lazy
+            # load, which raises MissingGreenlet in async context. Re-fetch a
+            # clean copy so the caller gets a fully-loaded, session-attached plan.
+            with contextlib.suppress(Exception):
+                refetched = await self.plan_repo.get_by_id(plan_id, tenant_id)
+                if refetched:
+                    return refetched
+
         # Return the original plan with pre-loaded relationships
         return plan
 
@@ -141,6 +150,13 @@ class TaxPlanningService:
 
         # Don't attempt refresh if Xero connection needs reauthorization
         if connection.status.value != "active":
+            return False
+
+        # Don't attempt refresh if token is expired — the Xero API call will
+        # fail, trigger a token refresh that corrupts the session. The status
+        # field may still say "active" even when the token has expired; the
+        # needs_refresh property checks actual token_expires_at.
+        if connection.needs_refresh:
             return False
 
         # No P&L data yet — definitely stale
