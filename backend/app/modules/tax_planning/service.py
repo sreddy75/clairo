@@ -3,6 +3,7 @@
 Orchestrates Xero data pull, tax calculation, plan CRUD, and AI chat.
 """
 
+import contextlib
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -84,36 +85,42 @@ class TaxPlanningService:
         if not plan:
             raise TaxPlanNotFoundError(plan_id)
 
-        # Lazy auto-refresh: if Xero data has been synced since the last
-        # P&L fetch, transparently pull fresh financials before returning.
-        # Entire block is best-effort — any failure returns stale data.
+        # Force-load relationships into memory so they survive session issues
+        _ = plan.scenarios  # selectin loaded — triggers the query now
+
+        # Check if auto-refresh is needed and safe to attempt
+        should_refresh = False
+        with contextlib.suppress(Exception):
+            should_refresh = await self._is_plan_data_stale(plan)
+
+        if not should_refresh:
+            return plan
+
+        # Attempt auto-refresh — any failure returns the already-loaded plan
+        logger.info(
+            "Auto-refreshing stale P&L for plan %s (FY %s)",
+            plan.id,
+            plan.financial_year,
+        )
         try:
-            if await self._is_plan_data_stale(plan):
-                logger.info(
-                    "Auto-refreshing stale P&L for plan %s (FY %s)",
-                    plan.id,
-                    plan.financial_year,
-                )
-                await self.pull_xero_financials(
-                    plan_id=plan.id,
-                    tenant_id=tenant_id,
-                    force_refresh=True,
-                )
-                await self.session.commit()
-                plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
+            await self.pull_xero_financials(
+                plan_id=plan.id,
+                tenant_id=tenant_id,
+                force_refresh=True,
+            )
+            refreshed = await self.plan_repo.get_by_id(plan_id, tenant_id)
+            if refreshed:
+                return refreshed
         except Exception:
             logger.warning(
                 "Auto-refresh failed for plan %s, returning stale data",
                 plan.id,
                 exc_info=True,
             )
-            try:
+            with contextlib.suppress(Exception):
                 await self.session.rollback()
-                plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
-            except Exception:
-                # Session completely broken — return whatever we have
-                logger.warning("Session recovery failed, returning cached plan object")
 
+        # Return the original plan with pre-loaded relationships
         return plan
 
     async def _is_plan_data_stale(self, plan: TaxPlan) -> bool:
