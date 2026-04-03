@@ -151,21 +151,21 @@
 ## Phase 8: Polish & Cross-Cutting Concerns
 
 - [x] T049 [P] Add audit events for analysis lifecycle: `analysis.generated`, `analysis.reviewed`, `analysis.shared`, `implementation.updated` in `backend/app/modules/tax_planning/service.py`
-- [ ] T050 [P] Add notification to accountant when client marks implementation item complete or asks a question in `backend/app/modules/notifications/`
-- [ ] T051 [P] Add PDF export of accountant brief — reuse existing weasyprint pattern from `backend/app/modules/tax_planning/` PDF export
-- [ ] T052 Lint and format all new code: `cd backend && uv run ruff check . && uv run ruff format .` and `cd frontend && npm run lint`
-- [ ] T053 Run full verification checklist from `quickstart.md`
+- [x] T050 [P] Add notification to accountant when client marks implementation item complete or asks a question in `backend/app/modules/notifications/`
+- [x] T051 [P] Add PDF export of accountant brief — reuse existing weasyprint pattern from `backend/app/modules/tax_planning/` PDF export
+- [x] T052 Lint and format all new code: `cd backend && uv run ruff check . && uv run ruff format .` and `cd frontend && npm run lint`
+- [x] T053 Run full verification checklist from `quickstart.md`
 
 ---
 
 ## Phase FINAL: PR & Merge
 
-- [ ] T054 Ensure all tests pass: `cd backend && uv run pytest`
-- [ ] T055 Run linting and type checking: `cd backend && uv run ruff check .` and `cd frontend && npx tsc --noEmit`
-- [ ] T056 Push feature branch and create PR: `git push -u origin feature/041-multi-agent-tax-planning` and `gh pr create --title "Spec 041: Multi-Agent Tax Planning Pipeline"`
-- [ ] T057 Address review feedback
-- [ ] T058 Merge PR to main (squash merge)
-- [ ] T059 Update ROADMAP.md — mark spec 041 as COMPLETE
+- [x] T054 Ensure all tests pass: `cd backend && uv run pytest`
+- [x] T055 Run linting and type checking: `cd backend && uv run ruff check .` and `cd frontend && npx tsc --noEmit`
+- [x] T056 Push feature branch and create PR: `git push -u origin feature/041-multi-agent-tax-planning` and `gh pr create --title "Spec 041: Multi-Agent Tax Planning Pipeline"`
+- [x] T057 Address review feedback
+- [x] T058 Merge PR to main (squash merge)
+- [x] T059 Update ROADMAP.md — mark spec 041 as COMPLETE
 
 ---
 
