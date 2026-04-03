@@ -808,6 +808,176 @@ export function TaxPlanningWorkspace({
                     </CardContent>
                   </Card>
                 )}
+
+                {/* AI Transparency — expandable detail sections */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    AI Transparency
+                  </h4>
+
+                  {/* Client Profile */}
+                  {analysis.client_profile && (
+                    <ExpandableSection
+                      title="Client Profile"
+                      subtitle="What the AI determined about this entity"
+                    >
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {Object.entries(analysis.client_profile as Record<string, unknown>).map(([key, value]) => (
+                          <div key={key} className="rounded-md bg-muted/50 p-2.5">
+                            <p className="text-[10px] text-muted-foreground uppercase">{key.replace(/_/g, ' ')}</p>
+                            <p className="text-sm font-medium mt-0.5">
+                              {typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
+                               typeof value === 'number' ? `$${(value as number).toLocaleString()}` :
+                               typeof value === 'object' ? JSON.stringify(value) :
+                               String(value ?? '')}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </ExpandableSection>
+                  )}
+
+                  {/* All Strategies Evaluated */}
+                  {analysis.strategies_evaluated && analysis.strategies_evaluated.length > 0 && (
+                    <ExpandableSection
+                      title={`All Strategies Evaluated (${analysis.strategies_evaluated.length})`}
+                      subtitle="Every strategy the AI considered, with applicability reasoning"
+                    >
+                      <div className="space-y-2">
+                        {(analysis.strategies_evaluated as Record<string, unknown>[]).map((strategy, i) => {
+                          const applicable = strategy.applicable as boolean;
+                          return (
+                            <div
+                              key={i}
+                              className={`rounded-md border p-3 ${applicable ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/30' : 'border-stone-200 bg-stone-50/50 dark:border-stone-800 dark:bg-stone-950/30'}`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-xs font-bold ${applicable ? 'text-emerald-600' : 'text-stone-400'}`}>
+                                      {applicable ? '✓ APPLICABLE' : '✗ NOT APPLICABLE'}
+                                    </span>
+                                    {Boolean(strategy.risk_rating) && (
+                                      <Badge variant="outline" className="text-[10px]">
+                                        {String(strategy.risk_rating)}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-sm font-medium mt-1">{String(strategy.name || strategy.strategy_id || `Strategy ${i + 1}`)}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">{String(strategy.applicability_reason || '')}</p>
+                                </div>
+                                {applicable && Boolean(strategy.estimated_impact_range) && (
+                                  <div className="text-right shrink-0 ml-4">
+                                    <p className="text-xs text-muted-foreground">Est. saving</p>
+                                    <p className="text-sm font-medium text-emerald-600">
+                                      ${((strategy.estimated_impact_range as Record<string, number>).min || 0).toLocaleString()}
+                                      –${((strategy.estimated_impact_range as Record<string, number>).max || 0).toLocaleString()}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                              {Boolean(strategy.compliance_refs) && (strategy.compliance_refs as string[]).length > 0 && (
+                                <p className="text-[10px] text-muted-foreground mt-1.5">
+                                  Refs: {(strategy.compliance_refs as string[]).join(', ')}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ExpandableSection>
+                  )}
+
+                  {/* Modelled Scenarios */}
+                  {analysis.recommended_scenarios && analysis.recommended_scenarios.length > 0 && (
+                    <ExpandableSection
+                      title={`Modelled Scenarios (${analysis.recommended_scenarios.length})`}
+                      subtitle="Each strategy modelled with real tax calculator numbers"
+                    >
+                      <div className="space-y-2">
+                        {(analysis.recommended_scenarios as Record<string, unknown>[]).map((scenario, i) => {
+                          const impact = scenario.impact as Record<string, Record<string, number>> | undefined;
+                          const change = impact?.change;
+                          return (
+                            <div key={i} className="rounded-md border p-3">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <p className="text-sm font-medium">{String(scenario.scenario_title || `Scenario ${i + 1}`)}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">{String(scenario.description || '')}</p>
+                                </div>
+                                {change && (
+                                  <div className="text-right shrink-0 ml-4">
+                                    <p className="text-lg font-bold text-emerald-600">
+                                      ${(change.tax_saving || 0).toLocaleString()}
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground">tax saving</p>
+                                  </div>
+                                )}
+                              </div>
+                              {impact && (
+                                <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                                  <span>Before: ${(impact.before?.tax_payable || 0).toLocaleString()}</span>
+                                  <span>→</span>
+                                  <span>After: ${(impact.after?.tax_payable || 0).toLocaleString()}</span>
+                                  {scenario.cash_flow_impact != null && (
+                                    <span>| Cash flow: ${(scenario.cash_flow_impact as number).toLocaleString()}</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ExpandableSection>
+                  )}
+
+                  {/* Quality Review */}
+                  {analysis.review_result && (
+                    <ExpandableSection
+                      title="Quality Review"
+                      subtitle={analysis.review_passed ? 'All checks passed' : 'Some issues found — review recommended'}
+                    >
+                      <div className="space-y-2">
+                        {Object.entries(analysis.review_result as Record<string, unknown>).map(([key, value]) => {
+                          if (key === 'summary') return (
+                            <p key={key} className="text-sm">{String(value)}</p>
+                          );
+                          if (typeof value === 'boolean') return (
+                            <div key={key} className="flex items-center gap-2">
+                              <span className={value ? 'text-emerald-600' : 'text-red-500'}>
+                                {value ? '✓' : '✗'}
+                              </span>
+                              <span className="text-sm">{key.replace(/_/g, ' ')}</span>
+                            </div>
+                          );
+                          if (Array.isArray(value) && value.length > 0) return (
+                            <div key={key}>
+                              <p className="text-xs font-medium text-muted-foreground">{key.replace(/_/g, ' ')}</p>
+                              <ul className="text-sm list-disc pl-4 mt-1">
+                                {value.map((item, j) => <li key={j}>{String(item)}</li>)}
+                              </ul>
+                            </div>
+                          );
+                          return null;
+                        })}
+                      </div>
+                    </ExpandableSection>
+                  )}
+
+                  {/* Client Summary Preview */}
+                  {analysis.client_summary && (
+                    <ExpandableSection
+                      title="Client Summary Preview"
+                      subtitle="What the client will see when you share this plan"
+                    >
+                      <div className="prose prose-sm dark:prose-invert max-w-none border rounded-lg p-4 bg-background">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {analysis.client_summary}
+                        </ReactMarkdown>
+                      </div>
+                    </ExpandableSection>
+                  )}
+                </div>
               </div>
             )}
           </TabsContent>
@@ -985,5 +1155,45 @@ function GeneratingProgress({ stage }: { stage: number }) {
         </p>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Expandable Section Component
+// ---------------------------------------------------------------------------
+
+function ExpandableSection({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-muted/30 transition-colors rounded-lg"
+      >
+        <div>
+          <p className="text-sm font-medium">{title}</p>
+          {subtitle && (
+            <p className="text-xs text-muted-foreground">{subtitle}</p>
+          )}
+        </div>
+        <span className={`text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`}>
+          ▾
+        </span>
+      </button>
+      {open && (
+        <CardContent className="pt-0 pb-4">
+          {children}
+        </CardContent>
+      )}
+    </Card>
   );
 }
