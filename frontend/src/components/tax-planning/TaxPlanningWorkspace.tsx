@@ -2,6 +2,8 @@
 
 import { useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -660,12 +662,31 @@ export function TaxPlanningWorkspace({
             )}
 
             {generating && (
-              <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="animate-pulse text-center">
+              <div className="flex flex-col items-center justify-center py-16 space-y-6">
+                <div className="text-center">
                   <h3 className="text-lg font-semibold">Generating Tax Plan...</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Profiling → Scanning strategies → Modelling → Writing brief → Reviewing
+                    This typically takes 30–60 seconds
                   </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {[
+                    { label: 'Profiling', icon: '1' },
+                    { label: 'Scanning', icon: '2' },
+                    { label: 'Modelling', icon: '3' },
+                    { label: 'Writing', icon: '4' },
+                    { label: 'Reviewing', icon: '5' },
+                  ].map((step, i) => (
+                    <div key={step.label} className="flex items-center gap-2">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+                          <span className="text-xs font-bold text-primary">{step.icon}</span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-1">{step.label}</span>
+                      </div>
+                      {i < 4 && <div className="w-6 h-px bg-border mb-4" />}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -762,8 +783,10 @@ export function TaxPlanningWorkspace({
                   <Card>
                     <CardContent className="pt-4">
                       <h4 className="font-semibold mb-2">Accountant Brief</h4>
-                      <div className="prose prose-sm dark:prose-invert max-w-none max-h-[400px] overflow-y-auto">
-                        <pre className="whitespace-pre-wrap text-sm font-sans">{analysis.accountant_brief}</pre>
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:my-3 prose-p:my-2 prose-li:my-0.5 prose-table:my-3 prose-td:px-3 prose-td:py-1.5 prose-th:px-3 prose-th:py-1.5">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {analysis.accountant_brief}
+                        </ReactMarkdown>
                       </div>
                     </CardContent>
                   </Card>
