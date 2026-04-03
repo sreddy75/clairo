@@ -33,7 +33,7 @@ export function ClairoLogo({ size = 'md', showText = true, variant = 'light', cl
         alt="Clairo"
         width={iconSize}
         height={iconSize}
-        className="flex-shrink-0 rounded-md mix-blend-multiply dark:mix-blend-normal"
+        className="flex-shrink-0 rounded-md "
       />
       {showText && (
         <span className={cn(
@@ -59,7 +59,7 @@ export function ClairoIcon({ size = 36, className = '' }: { size?: number; class
       alt="Clairo"
       width={size}
       height={size}
-      className={cn('rounded-md mix-blend-multiply dark:mix-blend-normal', className)}
+      className={cn('rounded-md ', className)}
     />
   );
 }
