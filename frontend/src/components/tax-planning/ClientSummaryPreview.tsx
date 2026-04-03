@@ -13,7 +13,7 @@ interface ClientSummaryPreviewProps {
   totalSaving?: number;
 }
 
-export function ClientSummaryPreview({ summary, clientName, financialYear, totalSaving }: ClientSummaryPreviewProps) {
+export function ClientSummaryPreview({ summary: _summary, clientName: _clientName, financialYear: _financialYear, totalSaving: _totalSaving }: ClientSummaryPreviewProps) {
   // TODO: Implement portal-style preview
   return (
     <div className="p-4">

@@ -24,7 +24,7 @@ interface ImplementationChecklistProps {
   readOnly?: boolean;
 }
 
-export function ImplementationChecklist({ items, onUpdateStatus, readOnly }: ImplementationChecklistProps) {
+export function ImplementationChecklist({ items, onUpdateStatus: _onUpdateStatus, readOnly: _readOnly }: ImplementationChecklistProps) {
   // TODO: Implement checklist with checkboxes, deadlines, savings badges
   return (
     <div className="p-4">

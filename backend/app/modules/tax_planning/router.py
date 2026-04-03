@@ -423,6 +423,300 @@ async def get_tax_rates(
 
 
 # ------------------------------------------------------------------
+# Analysis Pipeline (Spec 041)
+# ------------------------------------------------------------------
+
+
+@router.post("/{plan_id}/analysis/generate", status_code=202)
+async def generate_analysis(
+    plan_id: uuid.UUID,
+    current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
+    service: TaxPlanningService = Depends(_get_service),
+):
+    """Trigger the multi-agent analysis pipeline. Returns immediately with a task ID."""
+    from app.modules.tax_planning.exceptions import AnalysisInProgressError, NoFinancialsError
+    from app.modules.tax_planning.models import AnalysisStatus
+    from app.modules.tax_planning.repository import AnalysisRepository
+
+    try:
+        plan = await service.get_plan(plan_id, current_user.tenant_id)
+
+        if not plan.financials_data:
+            raise NoFinancialsError()
+
+        # Check for existing in-progress analysis
+        analysis_repo = AnalysisRepository(service.session)
+        current = await analysis_repo.get_current_for_plan(plan_id, current_user.tenant_id)
+        if current and current.status == AnalysisStatus.GENERATING.value:
+            raise AnalysisInProgressError(plan_id)
+
+        # Determine version number
+        versions = await analysis_repo.list_versions(plan_id, current_user.tenant_id)
+        next_version = max((v.version for v in versions), default=0) + 1
+
+        # Unmark previous current
+        if current:
+            current.is_current = False
+            await service.session.flush()
+
+        # Create analysis record
+        analysis = await analysis_repo.create({
+            "tenant_id": current_user.tenant_id,
+            "tax_plan_id": plan_id,
+            "version": next_version,
+            "is_current": True,
+            "status": AnalysisStatus.GENERATING.value,
+            "generated_by": current_user.id,
+        })
+        await service.session.commit()
+
+        # Dispatch Celery task
+        from app.tasks.tax_planning import run_analysis_pipeline
+
+        task_result = run_analysis_pipeline.delay(
+            plan_id=str(plan_id),
+            tenant_id=str(current_user.tenant_id),
+            user_id=str(current_user.id),
+            analysis_id=str(analysis.id),
+        )
+
+        return {
+            "task_id": task_result.id,
+            "analysis_id": str(analysis.id),
+            "version": next_version,
+            "status": "generating",
+            "message": "Tax plan analysis started",
+        }
+    except DomainError as e:
+        raise _handle_domain_error(e)
+
+
+@router.get("/{plan_id}/analysis/progress/{task_id}")
+async def get_analysis_progress(
+    plan_id: uuid.UUID,
+    task_id: str,
+    current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_READ)),
+):
+    """Stream real-time progress of the pipeline via SSE."""
+    import asyncio
+    import json as json_lib
+
+    from celery.result import AsyncResult
+    from starlette.responses import StreamingResponse
+
+    async def generate_events():
+        result = AsyncResult(task_id)
+        while True:
+            if result.state == "PROGRESS":
+                meta = result.info or {}
+                yield f"data: {json_lib.dumps({'type': 'progress', **meta})}\n\n"
+            elif result.state == "SUCCESS":
+                data = result.result or {}
+                yield f"data: {json_lib.dumps({'type': 'complete', 'analysis_id': data.get('analysis_id'), 'status': data.get('status')})}\n\n"
+                return
+            elif result.state == "FAILURE":
+                yield f"data: {json_lib.dumps({'type': 'error', 'message': str(result.info), 'retryable': True})}\n\n"
+                return
+            elif result.state == "PENDING":
+                yield f"data: {json_lib.dumps({'type': 'progress', 'stage': 'queued', 'stage_number': 0, 'total_stages': 5, 'message': 'Waiting to start...'})}\n\n"
+
+            await asyncio.sleep(1)
+
+    return StreamingResponse(
+        generate_events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+    )
+
+
+@router.get("/{plan_id}/analysis")
+async def get_analysis(
+    plan_id: uuid.UUID,
+    current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_READ)),
+    service: TaxPlanningService = Depends(_get_service),
+):
+    """Get the current analysis for a plan."""
+    from app.modules.tax_planning.exceptions import AnalysisNotFoundError
+    from app.modules.tax_planning.repository import AnalysisRepository, ImplementationItemRepository
+
+    try:
+        analysis_repo = AnalysisRepository(service.session)
+        analysis = await analysis_repo.get_current_for_plan(plan_id, current_user.tenant_id)
+        if not analysis:
+            raise AnalysisNotFoundError(plan_id)
+
+        item_repo = ImplementationItemRepository(service.session)
+        items = await item_repo.list_by_analysis(analysis.id, current_user.tenant_id)
+
+        # Get previous versions for comparison
+        versions = await analysis_repo.list_versions(plan_id, current_user.tenant_id)
+        previous_versions = [
+            {"version": v.version, "generated_at": str(v.created_at), "status": v.status}
+            for v in versions
+            if v.id != analysis.id
+        ]
+
+        return {
+            "id": str(analysis.id),
+            "version": analysis.version,
+            "status": analysis.status,
+            "client_profile": analysis.client_profile,
+            "strategies_evaluated": analysis.strategies_evaluated,
+            "recommended_scenarios": analysis.recommended_scenarios,
+            "combined_strategy": analysis.combined_strategy,
+            "accountant_brief": analysis.accountant_brief,
+            "client_summary": analysis.client_summary,
+            "review_result": analysis.review_result,
+            "review_passed": analysis.review_passed,
+            "implementation_items": [
+                {
+                    "id": str(item.id),
+                    "title": item.title,
+                    "description": item.description,
+                    "deadline": str(item.deadline) if item.deadline else None,
+                    "estimated_saving": float(item.estimated_saving) if item.estimated_saving else None,
+                    "risk_rating": item.risk_rating,
+                    "status": item.status,
+                    "client_visible": item.client_visible,
+                    "completed_at": str(item.completed_at) if item.completed_at else None,
+                }
+                for item in items
+            ],
+            "generation_time_ms": analysis.generation_time_ms,
+            "generated_at": str(analysis.created_at),
+            "previous_versions": previous_versions,
+        }
+    except DomainError as e:
+        raise _handle_domain_error(e)
+
+
+@router.patch("/{plan_id}/analysis")
+async def update_analysis(
+    plan_id: uuid.UUID,
+    current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
+    service: TaxPlanningService = Depends(_get_service),
+    accountant_brief: str | None = None,
+    client_summary: str | None = None,
+    status: str | None = None,
+):
+    """Update the accountant brief, client summary, or status."""
+    from app.modules.tax_planning.exceptions import AnalysisNotFoundError
+    from app.modules.tax_planning.repository import AnalysisRepository
+
+    try:
+        analysis_repo = AnalysisRepository(service.session)
+        analysis = await analysis_repo.get_current_for_plan(plan_id, current_user.tenant_id)
+        if not analysis:
+            raise AnalysisNotFoundError(plan_id)
+
+        update_data: dict = {}
+        if accountant_brief is not None:
+            update_data["accountant_brief"] = accountant_brief
+        if client_summary is not None:
+            update_data["client_summary"] = client_summary
+        if status is not None:
+            update_data["status"] = status
+            if status == "reviewed":
+                update_data["reviewed_by"] = current_user.id
+
+        if update_data:
+            await analysis_repo.update(analysis, update_data)
+            await service.session.commit()
+
+        return {"status": analysis.status, "message": "Analysis updated"}
+    except DomainError as e:
+        raise _handle_domain_error(e)
+
+
+@router.post("/{plan_id}/analysis/approve")
+async def approve_analysis(
+    plan_id: uuid.UUID,
+    current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
+    service: TaxPlanningService = Depends(_get_service),
+):
+    """Approve the analysis for client sharing."""
+    from app.modules.tax_planning.exceptions import AnalysisNotFoundError
+    from app.modules.tax_planning.repository import AnalysisRepository
+
+    try:
+        analysis_repo = AnalysisRepository(service.session)
+        analysis = await analysis_repo.get_current_for_plan(plan_id, current_user.tenant_id)
+        if not analysis:
+            raise AnalysisNotFoundError(plan_id)
+
+        await analysis_repo.update(analysis, {
+            "status": "approved",
+            "reviewed_by": current_user.id,
+        })
+        await service.session.commit()
+
+        return {"status": "approved", "message": "Analysis approved. Ready to share with client."}
+    except DomainError as e:
+        raise _handle_domain_error(e)
+
+
+@router.post("/{plan_id}/analysis/share")
+async def share_analysis(
+    plan_id: uuid.UUID,
+    current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
+    service: TaxPlanningService = Depends(_get_service),
+):
+    """Share the approved analysis to the client portal."""
+    from datetime import UTC, datetime
+
+    from app.modules.tax_planning.exceptions import AnalysisNotApprovedError, AnalysisNotFoundError
+    from app.modules.tax_planning.repository import AnalysisRepository
+
+    try:
+        analysis_repo = AnalysisRepository(service.session)
+        analysis = await analysis_repo.get_current_for_plan(plan_id, current_user.tenant_id)
+        if not analysis:
+            raise AnalysisNotFoundError(plan_id)
+        if analysis.status != "approved":
+            raise AnalysisNotApprovedError()
+
+        await analysis_repo.update(analysis, {
+            "status": "shared",
+            "shared_at": datetime.now(UTC),
+        })
+        await service.session.commit()
+
+        return {
+            "status": "shared",
+            "shared_at": str(analysis.shared_at),
+            "message": "Analysis shared to client portal",
+        }
+    except DomainError as e:
+        raise _handle_domain_error(e)
+
+
+@router.patch("/{plan_id}/analysis/items/{item_id}")
+async def update_implementation_item(
+    plan_id: uuid.UUID,
+    item_id: uuid.UUID,
+    current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
+    service: TaxPlanningService = Depends(_get_service),
+    status: str = "completed",
+):
+    """Update an implementation item status."""
+    from app.modules.tax_planning.repository import ImplementationItemRepository
+
+    item_repo = ImplementationItemRepository(service.session)
+    item = await item_repo.update_status(
+        item_id, current_user.tenant_id, status, completed_by="accountant",
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail="Implementation item not found")
+    await service.session.commit()
+
+    return {
+        "id": str(item.id),
+        "status": item.status,
+        "completed_at": str(item.completed_at) if item.completed_at else None,
+    }
+
+
+# ------------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------------
 

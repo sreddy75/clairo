@@ -51,15 +51,6 @@ def run_analysis_pipeline(
 ) -> dict[str, Any]:
     """Run the multi-agent tax planning analysis pipeline.
 
-    Executes 5 agents sequentially:
-    1. Profiler — entity classification, eligibility
-    2. Scanner — evaluate 15+ strategy categories
-    3. Modeller — model top strategies with calculator
-    4. Advisor — generate accountant brief + client summary
-    5. Reviewer — verify numbers, citations, consistency
-
-    Reports progress via self.update_state() after each agent.
-
     Args:
         plan_id: The tax plan to analyse.
         tenant_id: Tenant ID for RLS context.
@@ -93,55 +84,41 @@ async def _run_analysis_pipeline_async(
     resume_from_stage: int | None = None,
 ) -> dict[str, Any]:
     """Async implementation of the analysis pipeline."""
+    from app.modules.tax_planning.agents.orchestrator import AnalysisPipelineOrchestrator
+
+    settings = get_settings()
     session = await _get_async_session()
 
     try:
         await _set_tenant_context(session, tenant_id)
 
-        # TODO: Implement full pipeline orchestration
-        # For now, stub out the progress reporting pattern
-
-        stages = [
-            (1, "profiling", "Analysing client profile..."),
-            (2, "scanning", "Evaluating tax strategies..."),
-            (3, "modelling", "Modelling top strategies..."),
-            (4, "writing", "Writing accountant brief..."),
-            (5, "reviewing", "Verifying calculations and citations..."),
-        ]
-
-        start_stage = resume_from_stage or 1
-
-        for stage_num, stage_name, message in stages:
-            if stage_num < start_stage:
-                continue
-
+        def on_progress(stage: str, stage_number: int, message: str) -> None:
             task.update_state(
                 state="PROGRESS",
                 meta={
-                    "stage": stage_name,
-                    "stage_number": stage_num,
+                    "stage": stage,
+                    "stage_number": stage_number,
                     "total_stages": 5,
                     "message": message,
                     "analysis_id": str(analysis_id),
                 },
             )
 
-            # TODO: Call the appropriate agent here
-            logger.info(
-                "Pipeline stage %d/%d: %s for plan %s",
-                stage_num,
-                5,
-                stage_name,
-                plan_id,
-            )
+        orchestrator = AnalysisPipelineOrchestrator(session, settings)
+        result_id = await orchestrator.run(
+            plan_id=plan_id,
+            tenant_id=tenant_id,
+            analysis_id=analysis_id,
+            on_progress=on_progress,
+        )
 
         return {
-            "analysis_id": str(analysis_id),
+            "analysis_id": str(result_id),
             "status": "completed",
         }
 
     except Exception as e:
-        logger.error("Analysis pipeline failed for plan %s: %s", plan_id, e)
+        logger.error("Analysis pipeline failed for plan %s: %s", plan_id, e, exc_info=True)
         return {
             "analysis_id": str(analysis_id),
             "status": "failed",

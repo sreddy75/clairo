@@ -15,7 +15,7 @@ interface AccountantBriefProps {
   readOnly?: boolean;
 }
 
-export function AccountantBrief({ brief, reviewResult, reviewPassed, onSave, readOnly }: AccountantBriefProps) {
+export function AccountantBrief({ brief: _brief, reviewResult: _reviewResult, reviewPassed: _reviewPassed, onSave: _onSave, readOnly: _readOnly }: AccountantBriefProps) {
   // TODO: Implement markdown renderer + edit mode
   return (
     <div className="p-4">

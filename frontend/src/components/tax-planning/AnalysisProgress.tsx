@@ -14,7 +14,7 @@ interface AnalysisProgressProps {
   onError: (error: string, stage: string) => void;
 }
 
-export function AnalysisProgress({ taskId, planId, onComplete, onError }: AnalysisProgressProps) {
+export function AnalysisProgress({ taskId, planId: _planId, onComplete: _onComplete, onError: _onError }: AnalysisProgressProps) {
   // TODO: Implement SSE polling + progress stepper UI
   return (
     <div className="p-8 text-center text-muted-foreground">
