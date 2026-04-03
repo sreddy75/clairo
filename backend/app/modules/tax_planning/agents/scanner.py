@@ -4,12 +4,17 @@ Evaluates 15+ tax strategy categories against the client profile,
 using RAG retrieval for ATO compliance citations.
 """
 
+import json
 import logging
 from typing import Any
 
 import anthropic
 
+from app.modules.tax_planning.agents.prompts import SCANNER_SYSTEM_PROMPT
+
 logger = logging.getLogger(__name__)
+
+MAX_TOKENS = 8000
 
 
 class StrategyScannerAgent:
@@ -23,14 +28,75 @@ class StrategyScannerAgent:
         self,
         client_profile: dict[str, Any],
         financials_data: dict[str, Any],
-        tax_position: dict[str, Any],
+        tax_position: dict[str, Any] | None,
         knowledge_chunks: list[dict[str, Any]] | None = None,
     ) -> list[dict[str, Any]]:
         """Evaluate all strategy categories against the client profile.
 
         Returns:
-            List of strategy evaluations, each with: strategy_id, category,
-            name, applicable (bool), applicability_reason, estimated_impact_range,
-            risk_rating, compliance_refs, eofy_deadline.
+            List of strategy evaluations with applicability, impact, risk, citations.
         """
-        raise NotImplementedError("StrategyScannerAgent.run() not yet implemented")
+        # Build reference material from RAG chunks
+        reference_material = ""
+        if knowledge_chunks:
+            refs = []
+            for i, chunk in enumerate(knowledge_chunks, 1):
+                title = chunk.get("title", "")
+                ruling = chunk.get("ruling_number", "")
+                section = chunk.get("section_ref", "")
+                text = chunk.get("text", "")[:500]
+                identifier = ruling or section or title
+                refs.append(f"[{i}] {identifier}: {text}")
+            reference_material = "\n\n".join(refs)
+
+        income = financials_data.get("income", {})
+        expenses = financials_data.get("expenses", {})
+
+        user_prompt = f"""Evaluate tax planning strategies for this client.
+
+## Client Profile
+{json.dumps(client_profile, indent=2)}
+
+## Current Financial Position
+- Total Income: ${income.get("total_income", 0):,.2f}
+- Total Expenses: ${expenses.get("total_expenses", 0):,.2f}
+- Net Profit: ${income.get("total_income", 0) - expenses.get("total_expenses", 0):,.2f}
+- Current Tax Payable: ${tax_position.get("total_tax_payable", 0):,.2f if tax_position else 'not calculated'}
+
+## Reference Material (ATO Knowledge Base)
+{reference_material if reference_material else 'No specific references available — use your training knowledge and note "verify independently" for compliance_refs.'}
+
+Evaluate ALL 15+ strategy categories. For each strategy, determine if it is applicable
+to this specific client and explain why. Output a JSON array of strategy objects.
+Output ONLY the JSON array, no other text."""
+
+        response = await self.client.messages.create(
+            model=self.model,
+            max_tokens=MAX_TOKENS,
+            system=SCANNER_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+
+        content = response.content[0].text if response.content else "[]"
+
+        # Parse JSON response
+        try:
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            strategies = json.loads(content)
+            if not isinstance(strategies, list):
+                strategies = [strategies]
+        except (json.JSONDecodeError, IndexError):
+            logger.warning("Failed to parse scanner JSON response")
+            strategies = []
+
+        applicable_count = sum(1 for s in strategies if s.get("applicable"))
+        logger.info(
+            "Scanner: evaluated %d strategies, %d applicable",
+            len(strategies),
+            applicable_count,
+        )
+
+        return strategies
