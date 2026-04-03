@@ -209,11 +209,16 @@ class AnalysisPipelineOrchestrator:
     async def _retrieve_knowledge(self, entity_type: str) -> list[dict[str, Any]]:
         """Retrieve tax knowledge chunks for strategy citations."""
         try:
+            from app.modules.knowledge.pinecone_service import PineconeService
             from app.modules.knowledge.service import KnowledgeSearchRequest, KnowledgeService
+            from app.modules.knowledge.voyage_service import VoyageService
 
+            pinecone = PineconeService(self.settings)
+            voyage = VoyageService(self.settings)
             knowledge_service = KnowledgeService(
                 self.session,
-                self.settings,
+                pinecone,
+                voyage,
             )
             entity_filters = {
                 "company": ["company"],

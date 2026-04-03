@@ -51,6 +51,10 @@ class StrategyScannerAgent:
 
         income = financials_data.get("income", {})
         expenses = financials_data.get("expenses", {})
+        total_income = float(income.get("total_income", 0))
+        total_expenses = float(expenses.get("total_expenses", 0))
+        net_profit = total_income - total_expenses
+        current_tax = float(tax_position.get("total_tax_payable", 0)) if tax_position else 0
 
         user_prompt = f"""Evaluate tax planning strategies for this client.
 
@@ -58,10 +62,10 @@ class StrategyScannerAgent:
 {json.dumps(client_profile, indent=2)}
 
 ## Current Financial Position
-- Total Income: ${income.get("total_income", 0):,.2f}
-- Total Expenses: ${expenses.get("total_expenses", 0):,.2f}
-- Net Profit: ${income.get("total_income", 0) - expenses.get("total_expenses", 0):,.2f}
-- Current Tax Payable: ${tax_position.get("total_tax_payable", 0):,.2f if tax_position else 'not calculated'}
+- Total Income: ${total_income:,.2f}
+- Total Expenses: ${total_expenses:,.2f}
+- Net Profit: ${net_profit:,.2f}
+- Current Tax Payable: ${current_tax:,.2f}
 
 ## Reference Material (ATO Knowledge Base)
 {reference_material if reference_material else 'No specific references available — use your training knowledge and note "verify independently" for compliance_refs.'}
