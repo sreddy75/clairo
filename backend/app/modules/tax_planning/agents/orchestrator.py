@@ -256,9 +256,11 @@ class AnalysisPipelineOrchestrator:
         financial_year: str,
     ) -> list[dict[str, Any]]:
         """Build implementation checklist items from recommended scenarios."""
+        from datetime import date
+
         items = []
         fy_end_year = int(financial_year.split("-")[0]) + 1
-        eofy = f"{fy_end_year}-06-30"
+        eofy = date(fy_end_year, 6, 30)
 
         for i, scenario in enumerate(scenarios):
             saving = scenario.get("impact", {}).get("change", {}).get("tax_saving", 0)
