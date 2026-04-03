@@ -79,6 +79,7 @@ export function TaxPlanningWorkspace({
   const [xeroAuthNeeded, setXeroAuthNeeded] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [generatingStage, setGeneratingStage] = useState(0);
 
   // Load existing plan for this connection + FY
   const loadPlan = useCallback(async () => {
@@ -143,6 +144,7 @@ export function TaxPlanningWorkspace({
   const handleGenerateAnalysis = async () => {
     if (!plan) return;
     setGenerating(true);
+    setGeneratingStage(0);
     setError(null);
     try {
       const token = await getToken();
@@ -152,12 +154,18 @@ export function TaxPlanningWorkspace({
       // Poll for progress via SSE
       const { analysisProgressStream } = await import('@/lib/api/tax-planning');
       for await (const event of analysisProgressStream(token, plan.id, result.task_id)) {
+        if (event.type === 'progress' && event.stage_number) {
+          setGeneratingStage(event.stage_number);
+        }
         if (event.type === 'complete') {
+          setGeneratingStage(5);
           await loadAnalysis(plan.id);
           break;
         }
         if (event.type === 'error') {
           setError(event.message || 'Analysis failed');
+          // Still try to load partial results
+          await loadAnalysis(plan.id);
           break;
         }
       }
@@ -671,22 +679,34 @@ export function TaxPlanningWorkspace({
                 </div>
                 <div className="flex items-center gap-3">
                   {[
-                    { label: 'Profiling', icon: '1' },
-                    { label: 'Scanning', icon: '2' },
-                    { label: 'Modelling', icon: '3' },
-                    { label: 'Writing', icon: '4' },
-                    { label: 'Reviewing', icon: '5' },
-                  ].map((step, i) => (
-                    <div key={step.label} className="flex items-center gap-2">
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
-                          <span className="text-xs font-bold text-primary">{step.icon}</span>
+                    { label: 'Profiling', num: 1 },
+                    { label: 'Scanning', num: 2 },
+                    { label: 'Modelling', num: 3 },
+                    { label: 'Writing', num: 4 },
+                    { label: 'Reviewing', num: 5 },
+                  ].map((step, i) => {
+                    const isDone = generatingStage > step.num;
+                    const isActive = generatingStage === step.num;
+                    return (
+                      <div key={step.label} className="flex items-center gap-2">
+                        <div className="flex flex-col items-center">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                            isDone ? 'bg-emerald-100 text-emerald-600' :
+                            isActive ? 'bg-primary text-primary-foreground animate-pulse' :
+                            'bg-muted text-muted-foreground'
+                          }`}>
+                            <span className="text-xs font-bold">{isDone ? '✓' : step.num}</span>
+                          </div>
+                          <span className={`text-[10px] mt-1 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                            {step.label}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-muted-foreground mt-1">{step.label}</span>
+                        {i < 4 && (
+                          <div className={`w-6 h-px mb-4 ${isDone ? 'bg-emerald-300' : 'bg-border'}`} />
+                        )}
                       </div>
-                      {i < 4 && <div className="w-6 h-px bg-border mb-4" />}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
