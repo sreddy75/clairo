@@ -670,45 +670,7 @@ export function TaxPlanningWorkspace({
             )}
 
             {generating && (
-              <div className="flex flex-col items-center justify-center py-16 space-y-6">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold">Generating Tax Plan...</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    This typically takes 30–60 seconds
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {[
-                    { label: 'Profiling', num: 1 },
-                    { label: 'Scanning', num: 2 },
-                    { label: 'Modelling', num: 3 },
-                    { label: 'Writing', num: 4 },
-                    { label: 'Reviewing', num: 5 },
-                  ].map((step, i) => {
-                    const isDone = generatingStage > step.num;
-                    const isActive = generatingStage === step.num;
-                    return (
-                      <div key={step.label} className="flex items-center gap-2">
-                        <div className="flex flex-col items-center">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                            isDone ? 'bg-emerald-100 text-emerald-600' :
-                            isActive ? 'bg-primary text-primary-foreground animate-pulse' :
-                            'bg-muted text-muted-foreground'
-                          }`}>
-                            <span className="text-xs font-bold">{isDone ? '✓' : step.num}</span>
-                          </div>
-                          <span className={`text-[10px] mt-1 ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                            {step.label}
-                          </span>
-                        </div>
-                        {i < 4 && (
-                          <div className={`w-6 h-px mb-4 ${isDone ? 'bg-emerald-300' : 'bg-border'}`} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <GeneratingProgress stage={generatingStage} />
             )}
 
             {analysis && !generating && (
@@ -872,6 +834,156 @@ export function TaxPlanningWorkspace({
           />
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Generating Progress Component
+// ---------------------------------------------------------------------------
+
+const PIPELINE_STAGES = [
+  {
+    num: 1,
+    label: 'Profiling',
+    messages: [
+      'Analysing entity classification...',
+      'Checking small business eligibility...',
+      'Evaluating turnover thresholds...',
+      'Identifying applicable concessions...',
+    ],
+  },
+  {
+    num: 2,
+    label: 'Scanning Strategies',
+    messages: [
+      'Evaluating timing strategies...',
+      'Checking depreciation opportunities...',
+      'Analysing superannuation options...',
+      'Reviewing income deferral strategies...',
+      'Assessing capital gains timing...',
+      'Checking prepayment eligibility...',
+    ],
+  },
+  {
+    num: 3,
+    label: 'Modelling',
+    messages: [
+      'Calculating tax impact for each strategy...',
+      'Running before/after tax calculations...',
+      'Evaluating cash flow impact...',
+      'Finding optimal strategy combination...',
+      'Modelling combined tax position...',
+    ],
+  },
+  {
+    num: 4,
+    label: 'Writing Brief',
+    messages: [
+      'Drafting executive summary...',
+      'Writing per-strategy analysis...',
+      'Adding ATO compliance references...',
+      'Generating client-friendly summary...',
+      'Building implementation timeline...',
+    ],
+  },
+  {
+    num: 5,
+    label: 'Reviewing',
+    messages: [
+      'Verifying tax calculator numbers...',
+      'Checking ATO citation accuracy...',
+      'Validating strategy consistency...',
+      'Confirming implementation deadlines...',
+    ],
+  },
+];
+
+function GeneratingProgress({ stage }: { stage: number }) {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  // Rotate messages every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMessageIndex((prev) => prev + 1);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Reset message index when stage changes
+  useEffect(() => {
+    setMessageIndex(0);
+  }, [stage]);
+
+  const activeStage = PIPELINE_STAGES.find((s) => s.num === stage);
+  const activeMessage = activeStage
+    ? activeStage.messages[messageIndex % activeStage.messages.length]
+    : 'Starting analysis...';
+
+  return (
+    <div className="flex flex-col items-center justify-center flex-1 min-h-[400px] space-y-10">
+      {/* Title */}
+      <div className="text-center space-y-2">
+        <h3 className="text-2xl font-semibold">Generating Tax Plan...</h3>
+        <p className="text-sm text-muted-foreground">
+          This typically takes 2–3 minutes
+        </p>
+      </div>
+
+      {/* Stepper */}
+      <div className="flex items-center gap-4">
+        {PIPELINE_STAGES.map((step, i) => {
+          const isDone = stage > step.num;
+          const isActive = stage === step.num;
+          return (
+            <div key={step.label} className="flex items-center gap-4">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ${
+                    isDone
+                      ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300'
+                      : isActive
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 animate-pulse'
+                        : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  <span className="text-sm font-bold">
+                    {isDone ? '✓' : step.num}
+                  </span>
+                </div>
+                <span
+                  className={`text-xs mt-2 font-medium transition-colors ${
+                    isActive
+                      ? 'text-primary'
+                      : isDone
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-muted-foreground'
+                  }`}
+                >
+                  {step.label}
+                </span>
+              </div>
+              {i < PIPELINE_STAGES.length - 1 && (
+                <div
+                  className={`w-10 h-0.5 mb-6 transition-colors duration-500 ${
+                    isDone ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-border'
+                  }`}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Rotating status message */}
+      <div className="text-center h-12 flex items-center">
+        <p
+          key={`${stage}-${messageIndex}`}
+          className="text-sm text-muted-foreground animate-in fade-in duration-500"
+        >
+          {activeMessage}
+        </p>
+      </div>
     </div>
   );
 }
