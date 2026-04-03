@@ -291,9 +291,9 @@ function HeroSection() {
                 className="text-[clamp(3rem,7vw,6.5rem)] font-light text-foreground leading-[0.9] tracking-[-0.03em] mb-8"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Stop checking.
+                Your expertise.
                 <br />
-                <span className="text-muted-foreground/60">Start advising.</span>
+                <span className="text-muted-foreground/60">Every client. Every time.</span>
               </motion.h1>
 
               <motion.p
@@ -302,8 +302,9 @@ function HeroSection() {
                 transition={{ delay: 0.5 }}
                 className="text-lg text-muted-foreground max-w-lg leading-relaxed mb-10"
               >
-                Clairo connects your Xero data to AI trained on Australian tax law.
-                BAS, tax planning, and client management — one platform.
+                Clairo pulls your Xero data, evaluates 20+ tax strategies against ATO
+                rulings, and generates a complete tax plan with real numbers — in minutes,
+                not hours. You review, approve, and share. EOFY sorted.
               </motion.p>
 
               <motion.div
