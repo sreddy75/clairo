@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   createTaxPlan,
   deleteScenario,
@@ -482,66 +483,94 @@ export function TaxPlanningWorkspace({
 
       {/* Two-column body — fills remaining viewport height */}
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* LEFT: Data panels, independently scrollable */}
-        <div className="overflow-y-auto space-y-4 min-h-0 pr-1">
+        {/* LEFT: Tabbed data panels, independently scrollable */}
+        <div className="min-h-0 flex flex-col">
           {plan.financials_data && !showManualEntry ? (
-            <>
-              {/* Tax Position hero card first */}
-              {plan.tax_position && (
-                <TaxPositionCard
-                  taxPosition={plan.tax_position}
-                  entityType={plan.entity_type}
+            <Tabs
+              defaultValue="position"
+              className="flex flex-col h-full"
+            >
+              <TabsList className="shrink-0 w-full justify-start">
+                <TabsTrigger value="position">Position</TabsTrigger>
+                <TabsTrigger value="scenarios">
+                  Scenarios{plan.scenarios && plan.scenarios.length > 0
+                    ? ` (${plan.scenarios.length})`
+                    : ''}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent
+                value="position"
+                className="flex-1 overflow-y-auto space-y-4 mt-3 pr-1"
+              >
+                {plan.tax_position && (
+                  <TaxPositionCard
+                    taxPosition={plan.tax_position}
+                    entityType={plan.entity_type}
+                  />
+                )}
+                <FinancialsPanel
+                  financials={plan.financials_data}
+                  dataSource={plan.data_source}
+                  xeroFetchedAt={plan.xero_report_fetched_at}
+                  onRefreshXero={plan.xero_connection_id ? handleRefreshXero : undefined}
+                  onEdit={() => setShowManualEntry(true)}
                 />
-              )}
+              </TabsContent>
 
-              {/* Financials breakdown */}
-              <FinancialsPanel
-                financials={plan.financials_data}
-                dataSource={plan.data_source}
-                xeroFetchedAt={plan.xero_report_fetched_at}
-                onRefreshXero={plan.xero_connection_id ? handleRefreshXero : undefined}
-                onEdit={() => setShowManualEntry(true)}
-              />
-
-              {/* Scenario comparison table (if 2+ scenarios) */}
-              {plan.scenarios && plan.scenarios.length >= 2 && (
-                <div className="overflow-x-auto">
-                  <ComparisonTable scenarios={plan.scenarios} />
-                </div>
-              )}
-
-              {/* Individual scenario cards */}
-              {plan.scenarios && plan.scenarios.length > 0 && (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {plan.scenarios.map((scenario) => (
-                    <ScenarioCard
-                      key={scenario.id}
-                      scenario={scenario}
-                      onDelete={scenarioDeleteHandler}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
+              <TabsContent
+                value="scenarios"
+                className="flex-1 overflow-y-auto space-y-4 mt-3 pr-1"
+              >
+                {plan.scenarios && plan.scenarios.length >= 2 && (
+                  <div className="overflow-x-auto">
+                    <ComparisonTable scenarios={plan.scenarios} />
+                  </div>
+                )}
+                {plan.scenarios && plan.scenarios.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-3">
+                    {plan.scenarios.map((scenario) => (
+                      <ScenarioCard
+                        key={scenario.id}
+                        scenario={scenario}
+                        onDelete={scenarioDeleteHandler}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-sm text-muted-foreground text-center">
+                      No scenarios yet.
+                      <br />
+                      <span className="text-xs">
+                        Use the chat to model tax strategies.
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           ) : (
-            <ManualEntryForm
-              onSubmit={handleSaveManual}
-              onCancel={plan.financials_data ? () => setShowManualEntry(false) : undefined}
-              initialValues={
-                plan.financials_data
-                  ? {
-                      revenue: plan.financials_data.income.revenue,
-                      other_income: plan.financials_data.income.other_income,
-                      cost_of_sales: plan.financials_data.expenses.cost_of_sales,
-                      operating_expenses: plan.financials_data.expenses.operating_expenses,
-                      payg_instalments: plan.financials_data.credits.payg_instalments,
-                      payg_withholding: plan.financials_data.credits.payg_withholding,
-                      franking_credits: plan.financials_data.credits.franking_credits,
-                      turnover: plan.financials_data.turnover,
-                    }
-                  : undefined
-              }
-            />
+            <div className="overflow-y-auto pr-1">
+              <ManualEntryForm
+                onSubmit={handleSaveManual}
+                onCancel={plan.financials_data ? () => setShowManualEntry(false) : undefined}
+                initialValues={
+                  plan.financials_data
+                    ? {
+                        revenue: plan.financials_data.income.revenue,
+                        other_income: plan.financials_data.income.other_income,
+                        cost_of_sales: plan.financials_data.expenses.cost_of_sales,
+                        operating_expenses: plan.financials_data.expenses.operating_expenses,
+                        payg_instalments: plan.financials_data.credits.payg_instalments,
+                        payg_withholding: plan.financials_data.credits.payg_withholding,
+                        franking_credits: plan.financials_data.credits.franking_credits,
+                        turnover: plan.financials_data.turnover,
+                      }
+                    : undefined
+                }
+              />
+            </div>
           )}
         </div>
 
