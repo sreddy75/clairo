@@ -284,28 +284,23 @@ function HeroSection() {
                 For Australian Accounting Practices
               </motion.p>
 
-              <motion.h1
+              <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.8 }}
-                className="text-[clamp(3rem,7vw,6.5rem)] font-light text-foreground leading-[0.9] tracking-[-0.03em] mb-8"
-                style={{ fontFamily: 'var(--font-heading)' }}
+                className="mb-8"
               >
-                Your expertise.
-                <br />
-                <span className="text-muted-foreground/60">Every client. Every time.</span>
-              </motion.h1>
+                <h1
+                  className="text-[clamp(3rem,7vw,6.5rem)] font-light text-foreground leading-[0.9] tracking-[-0.03em]"
+                  style={{ fontFamily: 'var(--font-heading)' }}
+                >
+                  Your expertise.
+                  <br />
+                  <span className="text-muted-foreground/60">Every client. Every time.</span>
+                </h1>
+              </motion.div>
 
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="text-lg text-muted-foreground max-w-lg leading-relaxed mb-10"
-              >
-                Clairo pulls your Xero data, evaluates 20+ tax strategies against ATO
-                rulings, and generates a complete tax plan with real numbers — in minutes,
-                not hours. You review, approve, and share. EOFY sorted.
-              </motion.p>
+              <RotatingHeroMessage />
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -958,5 +953,81 @@ export default function HomePage() {
       </main>
       <Footer />
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Rotating Hero Message
+// ---------------------------------------------------------------------------
+
+const HERO_MESSAGES = [
+  {
+    label: 'Tax Planning',
+    text: 'Evaluates 20+ tax strategies against ATO rulings and generates a complete tax plan with real numbers — in minutes, not hours. You review, approve, and share. EOFY sorted.',
+  },
+  {
+    label: 'BAS Workflow',
+    text: 'Pulls your Xero data, calculates GST, PAYG, and BAS figures automatically, flags data quality issues, and prepares lodgement-ready returns. End-to-end BAS in a fraction of the time.',
+  },
+  {
+    label: 'AI Assistant',
+    text: 'Ask any Australian tax question and get answers grounded in ATO rulings, legislation, and tax determinations. Client-specific context from Xero makes every answer relevant.',
+  },
+  {
+    label: 'Client Portal',
+    text: 'Share tax plans, collect documents, and track implementation progress — all in one portal your clients actually use. Less email, more action.',
+  },
+];
+
+function RotatingHeroMessage() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % HERO_MESSAGES.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const active = HERO_MESSAGES[activeIndex] as (typeof HERO_MESSAGES)[number];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+      className="mb-10"
+    >
+      {/* Capability pills */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {HERO_MESSAGES.map((msg, i) => (
+          <button
+            key={msg.label}
+            onClick={() => setActiveIndex(i)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              i === activeIndex
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted/60 text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            {msg.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Rotating description */}
+      <div className="h-[80px] relative">
+        <motion.p
+          key={activeIndex}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.4 }}
+          className="text-lg text-muted-foreground max-w-lg leading-relaxed absolute"
+        >
+          {active.text}
+        </motion.p>
+      </div>
+    </motion.div>
   );
 }
