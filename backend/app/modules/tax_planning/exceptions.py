@@ -87,3 +87,47 @@ class TaxPlanExportError(DomainError):
             code="TAX_PLAN_EXPORT_ERROR",
             status_code=400,
         )
+
+
+# ---------------------------------------------------------------------------
+# Analysis Pipeline Exceptions (Spec 041)
+# ---------------------------------------------------------------------------
+
+
+class AnalysisNotFoundError(NotFoundError):
+    """Raised when a tax plan analysis does not exist."""
+
+    def __init__(self, analysis_id: UUID | str) -> None:
+        super().__init__("TaxPlanAnalysis", str(analysis_id))
+
+
+class AnalysisInProgressError(ConflictError):
+    """Raised when a pipeline is already running for this plan."""
+
+    def __init__(self, plan_id: UUID | str) -> None:
+        super().__init__(
+            message="An analysis is already in progress for this tax plan",
+            resource_type="TaxPlanAnalysis",
+            conflict_field="tax_plan_id",
+        )
+        self.details["plan_id"] = str(plan_id)
+
+
+class AnalysisNotApprovedError(ValidationError):
+    """Raised when trying to share an analysis that hasn't been approved."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            message="Analysis must be approved before sharing to client portal",
+            field="status",
+        )
+
+
+class NoFinancialsError(ValidationError):
+    """Raised when trying to generate analysis without financials loaded."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            message="Load financial data before generating an analysis",
+            field="financials_data",
+        )

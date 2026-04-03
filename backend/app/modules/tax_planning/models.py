@@ -5,6 +5,8 @@ Entities:
     - TaxPlan: Tax planning session per client per financial year
     - TaxScenario: What-if scenario within a tax plan
     - TaxPlanMessage: AI chat conversation message
+    - TaxPlanAnalysis: Multi-agent pipeline output for a tax plan
+    - ImplementationItem: Actionable checklist item within an analysis
 """
 
 import enum
@@ -13,6 +15,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import (
+    Boolean,
     Date,
     DateTime,
     ForeignKey,
@@ -255,3 +258,168 @@ class TaxPlanMessage(BaseModel, TenantMixin):
 
     # Relationships
     tax_plan: Mapped["TaxPlan"] = relationship(back_populates="messages")
+
+
+# ---------------------------------------------------------------------------
+# Analysis Pipeline Models (Spec 041)
+# ---------------------------------------------------------------------------
+
+
+class AnalysisStatus(str, enum.Enum):
+    """Lifecycle status of a tax plan analysis."""
+
+    GENERATING = "generating"
+    DRAFT = "draft"
+    REVIEWED = "reviewed"
+    APPROVED = "approved"
+    SHARED = "shared"
+
+
+class ImplementationStatus(str, enum.Enum):
+    """Status of an implementation checklist item."""
+
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    SKIPPED = "skipped"
+
+
+class TaxPlanAnalysis(BaseModel, TenantMixin):
+    """Stored output of the multi-agent tax planning pipeline.
+
+    One analysis per generation run, versioned for re-generation support.
+    Contains all agent outputs: client profile, strategies evaluated,
+    recommended scenarios, accountant brief, client summary, and review.
+    """
+
+    __tablename__ = "tax_plan_analyses"
+    __table_args__ = (
+        UniqueConstraint(
+            "tax_plan_id",
+            "version",
+            name="uq_tax_plan_analysis_plan_version",
+        ),
+        Index("ix_tax_plan_analyses_plan_id", "tax_plan_id"),
+        Index("ix_tax_plan_analyses_tenant_status", "tenant_id", "status"),
+    )
+
+    tax_plan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tax_plans.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    is_current: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default=AnalysisStatus.GENERATING.value,
+        server_default="generating",
+    )
+
+    # Agent outputs
+    client_profile: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    strategies_evaluated: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    recommended_scenarios: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    combined_strategy: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
+    # Documents
+    accountant_brief: Mapped[str | None] = mapped_column(Text, nullable=True)
+    client_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Quality review
+    review_result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    review_passed: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
+    # Phase 2 extension fields (nullable, populated later)
+    entities: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    group_structure: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    distribution_plan: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    entity_summaries: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+
+    # Metadata
+    generation_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    token_usage: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    generated_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+    )
+    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+    )
+    shared_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    # Relationships
+    tax_plan: Mapped["TaxPlan"] = relationship(
+        foreign_keys=[tax_plan_id],
+        backref="analyses",
+    )
+    items: Mapped[list["ImplementationItem"]] = relationship(
+        back_populates="analysis",
+        cascade="all, delete-orphan",
+        order_by="ImplementationItem.sort_order",
+        lazy="selectin",
+    )
+
+
+class ImplementationItem(BaseModel, TenantMixin):
+    """Individual action item within a tax plan analysis.
+
+    Tracks implementation progress across accountant and client portal views.
+    """
+
+    __tablename__ = "implementation_items"
+    __table_args__ = (
+        Index("ix_implementation_items_analysis_id", "analysis_id"),
+        Index("ix_implementation_items_tenant_status", "tenant_id", "status"),
+    )
+
+    analysis_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tax_plan_analyses.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    strategy_ref: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    deadline: Mapped[datetime | None] = mapped_column(Date, nullable=True)
+    estimated_saving: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 2),
+        nullable=True,
+    )
+    entity_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+    )
+    risk_rating: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    compliance_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    client_visible: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default=ImplementationStatus.PENDING.value,
+        server_default="pending",
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    completed_by: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
+    # Relationships
+    analysis: Mapped["TaxPlanAnalysis"] = relationship(back_populates="items")

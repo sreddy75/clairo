@@ -288,3 +288,128 @@ export async function checkXeroChanges(
   });
   return apiClient.handleResponse<XeroChanges>(response);
 }
+
+// ---------------------------------------------------------------------------
+// Analysis Pipeline (Spec 041)
+// ---------------------------------------------------------------------------
+
+export interface GenerateAnalysisResponse {
+  task_id: string;
+  analysis_id: string;
+  version: number;
+  status: string;
+  message: string;
+}
+
+export interface AnalysisProgressEvent {
+  type: 'progress' | 'complete' | 'error';
+  stage?: string;
+  stage_number?: number;
+  total_stages?: number;
+  message?: string;
+  analysis_id?: string;
+  status?: string;
+  retryable?: boolean;
+}
+
+export interface AnalysisResponse {
+  id: string;
+  version: number;
+  status: string;
+  client_profile: Record<string, unknown> | null;
+  strategies_evaluated: Record<string, unknown>[] | null;
+  recommended_scenarios: Record<string, unknown>[] | null;
+  combined_strategy: Record<string, unknown> | null;
+  accountant_brief: string | null;
+  client_summary: string | null;
+  review_result: Record<string, unknown> | null;
+  review_passed: boolean | null;
+  implementation_items: {
+    id: string;
+    title: string;
+    description?: string;
+    deadline?: string;
+    estimated_saving?: number;
+    risk_rating?: string;
+    status: string;
+    client_visible: boolean;
+    completed_at?: string;
+  }[];
+  generation_time_ms: number | null;
+  generated_at: string;
+  previous_versions: { version: number; generated_at: string; status: string }[];
+}
+
+export async function generateAnalysis(
+  token: string,
+  planId: string,
+): Promise<GenerateAnalysisResponse> {
+  const response = await apiClient.post(`${BASE}/${planId}/analysis/generate`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return apiClient.handleResponse<GenerateAnalysisResponse>(response);
+}
+
+export async function* analysisProgressStream(
+  token: string,
+  planId: string,
+  taskId: string,
+): AsyncGenerator<AnalysisProgressEvent> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  const response = await fetch(`${apiUrl}${BASE}/${planId}/analysis/progress/${taskId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream' },
+  });
+
+  if (!response.ok) throw new Error(`Progress stream failed: ${response.status}`);
+
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No response body');
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          yield JSON.parse(line.slice(6));
+        } catch { /* skip */ }
+      }
+    }
+  }
+}
+
+export async function getAnalysis(
+  token: string,
+  planId: string,
+): Promise<AnalysisResponse> {
+  const response = await apiClient.get(`${BASE}/${planId}/analysis`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return apiClient.handleResponse<AnalysisResponse>(response);
+}
+
+export async function approveAnalysis(
+  token: string,
+  planId: string,
+): Promise<{ status: string; message: string }> {
+  const response = await apiClient.post(`${BASE}/${planId}/analysis/approve`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return apiClient.handleResponse(response);
+}
+
+export async function shareAnalysis(
+  token: string,
+  planId: string,
+): Promise<{ status: string; shared_at: string; message: string }> {
+  const response = await apiClient.post(`${BASE}/${planId}/analysis/share`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return apiClient.handleResponse(response);
+}
