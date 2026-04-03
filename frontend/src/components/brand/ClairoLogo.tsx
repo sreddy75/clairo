@@ -12,10 +12,10 @@ interface ClairoLogoProps {
 }
 
 const sizes = {
-  sm: { icon: 24, text: 'text-lg' },
-  md: { icon: 32, text: 'text-xl' },
-  lg: { icon: 48, text: 'text-2xl' },
-  xl: { icon: 64, text: 'text-3xl' },
+  sm: { icon: 28, text: 'text-lg' },
+  md: { icon: 36, text: 'text-xl' },
+  lg: { icon: 52, text: 'text-2xl' },
+  xl: { icon: 72, text: 'text-3xl' },
 };
 
 /**
@@ -26,18 +26,18 @@ export function ClairoLogo({ size = 'md', showText = true, variant = 'light', cl
   const { icon: iconSize, text: textSize } = sizes[size];
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
-      <Image
+    <div className={cn('flex items-center gap-2.5', className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src="/logos/clairo-logo-new.png"
         alt="Clairo"
         width={iconSize}
         height={iconSize}
-        className="flex-shrink-0 rounded-sm"
-        priority
+        className="flex-shrink-0 rounded-md mix-blend-multiply dark:mix-blend-normal"
       />
       {showText && (
         <span className={cn(
-          'font-bold',
+          'font-bold tracking-tight',
           variant === 'dark' ? 'text-white' : 'text-foreground',
           textSize
         )}>
@@ -51,32 +51,38 @@ export function ClairoLogo({ size = 'md', showText = true, variant = 'light', cl
 /**
  * Icon-only version for favicons, app icons, etc.
  */
-export function ClairoIcon({ size = 32, className = '' }: { size?: number; className?: string }) {
+export function ClairoIcon({ size = 36, className = '' }: { size?: number; className?: string }) {
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src="/logos/clairo-logo-new.png"
       alt="Clairo"
       width={size}
       height={size}
-      className={cn('rounded-sm', className)}
+      className={cn('rounded-md mix-blend-multiply dark:mix-blend-normal', className)}
     />
   );
 }
 
 /**
- * Animated logo for thinking/loading states in chat
+ * Animated logo for thinking/loading states in chat.
+ * Uses the MP4 animation with <img> fallback for the static logo.
  */
 export function ClairoThinking({ size = 48, className = '' }: { size?: number; className?: string }) {
   return (
-    <video
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src="/logos/clairo-animate.mp4"
+      alt=""
       width={size}
       height={size}
-      autoPlay
-      loop
-      muted
-      playsInline
-      className={cn('rounded-sm', className)}
+      className={cn('rounded-md', className)}
+      // If MP4 doesn't render as <img>, fall back to static logo with animation
+      onError={(e) => {
+        const el = e.currentTarget;
+        el.src = '/logos/clairo-logo-new.png';
+        el.classList.add('animate-pulse');
+      }}
     />
   );
 }

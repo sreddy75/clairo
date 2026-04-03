@@ -249,7 +249,8 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
           {thinkingText && (
             <div className="flex justify-start">
               <div className="flex items-center gap-2 max-w-[85%] rounded-lg bg-muted/30 px-3 py-2">
-                <video src="/logos/clairo-animate.mp4" width={24} height={24} autoPlay loop muted playsInline className="rounded-sm shrink-0" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logos/clairo-logo-new.png" alt="" width={22} height={22} className="rounded-sm shrink-0 animate-pulse mix-blend-multiply dark:mix-blend-normal" />
                 <span className="text-sm text-muted-foreground italic">{thinkingText}</span>
               </div>
             </div>
@@ -259,7 +260,8 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
           {isLoading && !streamingContent && !thinkingText && (
             <div className="flex justify-start">
               <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2">
-                <video src="/logos/clairo-animate.mp4" width={24} height={24} autoPlay loop muted playsInline className="rounded-sm" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logos/clairo-logo-new.png" alt="" width={22} height={22} className="rounded-sm animate-pulse mix-blend-multiply dark:mix-blend-normal" />
                 <span className="text-xs text-muted-foreground">Thinking...</span>
               </div>
             </div>
