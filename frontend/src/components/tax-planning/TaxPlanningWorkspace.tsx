@@ -758,7 +758,61 @@ export function TaxPlanningWorkspace({
                   </CardContent>
                 </Card>
 
-                {/* Full analysis modal */}
+                {/* Accountant Brief — on main page */}
+                {analysis.accountant_brief && (
+                  <Card>
+                    <CardContent className="pt-4">
+                      <h4 className="font-semibold mb-2">Accountant Brief</h4>
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:my-3 prose-p:my-2 prose-li:my-0.5 prose-table:my-3 prose-td:px-3 prose-td:py-1.5 prose-th:px-3 prose-th:py-1.5">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {analysis.accountant_brief}
+                        </ReactMarkdown>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Implementation Checklist — on main page */}
+                {analysis.implementation_items && analysis.implementation_items.length > 0 && (
+                  <Card>
+                    <CardContent className="pt-4">
+                      <h4 className="font-semibold mb-2">Implementation Checklist</h4>
+                      <div className="space-y-2">
+                        {analysis.implementation_items.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between rounded-md border p-3">
+                            <div>
+                              <p className="text-sm font-medium">{item.title}</p>
+                              {item.deadline && (
+                                <p className="text-xs text-muted-foreground">Deadline: {item.deadline}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {item.estimated_saving && (
+                                <Badge variant="outline" className="text-emerald-600">
+                                  Save ${item.estimated_saving.toLocaleString()}
+                                </Badge>
+                              )}
+                              {item.risk_rating && (
+                                <Badge variant="outline" className="text-xs">{item.risk_rating}</Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* View AI Analysis button */}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowAnalysisDetail(true)}
+                >
+                  View AI Analysis — {analysis.strategies_evaluated?.length ?? 0} strategies evaluated, {analysis.recommended_scenarios?.length ?? 0} modelled
+                </Button>
+
+                {/* AI analysis modal — transparency details only */}
                 <AnalysisDetailDialog
                   analysis={analysis}
                   open={showAnalysisDetail}
@@ -961,60 +1015,13 @@ function AnalysisDetailDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tax Plan Analysis — Full Detail</DialogTitle>
+          <DialogTitle>AI Analysis Detail</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
-          {/* Accountant Brief */}
-          {analysis.accountant_brief && (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                Accountant Brief
-              </h3>
-              <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:my-3 prose-p:my-2 prose-li:my-0.5 prose-table:my-3 prose-td:px-3 prose-td:py-1.5 prose-th:px-3 prose-th:py-1.5 border rounded-lg p-4">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {analysis.accountant_brief}
-                </ReactMarkdown>
-              </div>
-            </div>
-          )}
-
-          {/* Implementation Checklist */}
-          {analysis.implementation_items && analysis.implementation_items.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                Implementation Checklist
-              </h3>
-              <div className="space-y-2">
-                {analysis.implementation_items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between rounded-md border p-3">
-                    <div>
-                      <p className="text-sm font-medium">{item.title}</p>
-                      {item.deadline && (
-                        <p className="text-xs text-muted-foreground">Deadline: {item.deadline}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {item.estimated_saving && (
-                        <Badge variant="outline" className="text-emerald-600">
-                          Save ${item.estimated_saving.toLocaleString()}
-                        </Badge>
-                      )}
-                      {item.risk_rating && (
-                        <Badge variant="outline" className="text-xs">{item.risk_rating}</Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* AI Transparency */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              AI Transparency
-            </h3>
+        <div className="space-y-4 mt-4">
+          <p className="text-sm text-muted-foreground">
+            Full transparency into how the AI generated this tax plan — every strategy considered, every number calculated, every source checked.
+          </p>
 
             {analysis.client_profile && (
               <ExpandableSection title="Client Profile" subtitle="What the AI determined about this entity">
@@ -1134,7 +1141,6 @@ function AnalysisDetailDialog({
                 </div>
               </ExpandableSection>
             )}
-          </div>
         </div>
       </DialogContent>
     </Dialog>
