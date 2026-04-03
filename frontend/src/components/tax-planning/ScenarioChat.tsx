@@ -37,9 +37,10 @@ interface ScenarioChatProps {
   planId: string;
   disabled?: boolean;
   onScenarioCreated?: (scenario: TaxScenario) => void;
+  className?: string;
 }
 
-export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioChatProps) {
+export function ScenarioChat({ planId, disabled, onScenarioCreated, className }: ScenarioChatProps) {
   const { getToken } = useAuth();
   const [messages, setMessages] = useState<TaxPlanMessage[]>([]);
   const [input, setInput] = useState('');
@@ -215,7 +216,7 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated }: ScenarioCh
   };
 
   return (
-    <Card className="flex flex-col h-[700px]">
+    <Card className={cn("flex flex-col h-[700px]", className)}>
       <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">

@@ -300,97 +300,169 @@ export function TaxPlanningWorkspace({
   }
 
   // Plan exists — show workspace
+  const scenarioCreatedHandler = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const updated = await getTaxPlan(token, plan.id);
+      setPlan(updated);
+    } catch {
+      setPlan((prev) => prev ? { ...prev, scenario_count: (prev.scenario_count || 0) + 1 } : prev);
+    }
+  };
+
+  const scenarioDeleteHandler = async (scenarioId: string) => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      await deleteScenario(token, plan.id, scenarioId);
+    } catch (e) {
+      console.warn('Delete scenario failed:', e);
+    }
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const updated = await getTaxPlan(token, plan.id);
+      setPlan(updated);
+    } catch {
+      setPlan((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          scenarios: prev.scenarios.filter((s) => s.id !== scenarioId),
+          scenario_count: Math.max(0, (prev.scenario_count || 0) - 1),
+        };
+      });
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold">
-            Tax Plan — {clientName}
-          </h3>
-          <Badge className={STATUS_COLORS[plan.status] || ''}>
-            {plan.status === 'in_progress'
-              ? 'In Progress'
-              : plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
-          </Badge>
-          <Badge variant="outline">
-            {ENTITY_TYPE_LABELS[plan.entity_type]} • FY {plan.financial_year}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          {plan.status === 'in_progress' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleStatusChange('finalised')}
-            >
-              Finalise
-            </Button>
-          )}
-          {plan.status === 'finalised' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleStatusChange('in_progress')}
-            >
-              Reopen
-            </Button>
-          )}
-          {plan.tax_position && (
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              Export PDF
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowCreateNew(true)}
-          >
-            New Plan
-          </Button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-          {error}
-        </div>
-      )}
-
-      {/* Xero reauth banner — shows when backend reports needs_reauth or Xero pull failed */}
-      {(plan.xero_connection_status === 'needs_reauth' || xeroAuthNeeded) && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                Xero connection needs re-authorisation
-              </p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
-                {plan.financials_data
-                  ? `Reconnect to pull the latest financial data. Showing data from ${
-                      plan.xero_report_fetched_at
-                        ? new Date(plan.xero_report_fetched_at).toLocaleDateString()
-                        : 'a previous session'
-                    }.`
-                  : 'Reconnect Xero to pull financial data into this plan.'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
+    <div className="flex flex-col h-[calc(100vh-6rem)]">
+      {/* Header — fixed, never scrolls */}
+      <div className="shrink-0 space-y-3 pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold">
+              Tax Plan — {clientName}
+            </h3>
+            <Badge className={STATUS_COLORS[plan.status] || ''}>
+              {plan.status === 'in_progress'
+                ? 'In Progress'
+                : plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
+            </Badge>
+            <Badge variant="outline">
+              {ENTITY_TYPE_LABELS[plan.entity_type]} • FY {plan.financial_year}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            {plan.status === 'in_progress' && (
               <Button
                 variant="outline"
                 size="sm"
-                className="border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900"
-                onClick={() => window.open('/settings/integrations', '_blank')}
+                onClick={() => handleStatusChange('finalised')}
               >
-                Reconnect Xero
+                Finalise
               </Button>
+            )}
+            {plan.status === 'finalised' && (
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => handleStatusChange('in_progress')}
+              >
+                Reopen
+              </Button>
+            )}
+            {plan.tax_position && (
+              <Button variant="outline" size="sm" onClick={handleExport}>
+                Export PDF
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCreateNew(true)}
+            >
+              New Plan
+            </Button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+            {error}
+          </div>
+        )}
+
+        {/* Xero reauth banner */}
+        {(plan.xero_connection_status === 'needs_reauth' || xeroAuthNeeded) && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                  Xero connection needs re-authorisation
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                  {plan.financials_data
+                    ? `Reconnect to pull the latest financial data. Showing data from ${
+                        plan.xero_report_fetched_at
+                          ? new Date(plan.xero_report_fetched_at).toLocaleDateString()
+                          : 'a previous session'
+                      }.`
+                    : 'Reconnect Xero to pull financial data into this plan.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900"
+                  onClick={() => window.open('/settings/integrations', '_blank')}
+                >
+                  Reconnect Xero
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      setXeroAuthNeeded(false);
+                      setError(null);
+                      const token = await getToken();
+                      if (!token) return;
+                      await pullXeroFinancials(token, plan.id, true);
+                      const updated = await getTaxPlan(token, plan.id);
+                      setPlan(updated);
+                    } catch {
+                      setXeroAuthNeeded(true);
+                    }
+                  }}
+                >
+                  Retry Pull
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Stale data banner */}
+        {plan.data_stale && !xeroAuthNeeded && plan.xero_connection_status !== 'needs_reauth' && (
+          <div className="rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  Newer financial data available
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                  Xero data has been synced since this plan was last updated.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-blue-300 text-blue-800 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-200 dark:hover:bg-blue-900"
                 onClick={async () => {
                   try {
-                    setXeroAuthNeeded(false);
-                    setError(null);
                     const token = await getToken();
                     if (!token) return;
                     await pullXeroFinancials(token, plan.id, true);
@@ -401,149 +473,86 @@ export function TaxPlanningWorkspace({
                   }
                 }}
               >
-                Retry Pull
+                Refresh from Xero
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Stale data banner — shows when newer Xero data is available */}
-      {plan.data_stale && !xeroAuthNeeded && plan.xero_connection_status !== 'needs_reauth' && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                Newer financial data available
-              </p>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-                Xero data has been synced since this plan was last updated.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-blue-300 text-blue-800 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-200 dark:hover:bg-blue-900"
-              onClick={async () => {
-                try {
-                  const token = await getToken();
-                  if (!token) return;
-                  await pullXeroFinancials(token, plan.id, true);
-                  const updated = await getTaxPlan(token, plan.id);
-                  setPlan(updated);
-                } catch {
-                  setXeroAuthNeeded(true);
-                }
-              }}
-            >
-              Refresh from Xero
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Two-column body — fills remaining viewport height */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-4">
+        {/* LEFT: Data panels, independently scrollable */}
+        <div className="overflow-y-auto space-y-4 min-h-0 pr-1">
+          {plan.financials_data && !showManualEntry ? (
+            <>
+              {/* Tax Position hero card first */}
+              {plan.tax_position && (
+                <TaxPositionCard
+                  taxPosition={plan.tax_position}
+                  entityType={plan.entity_type}
+                />
+              )}
 
-      {/* Row 1: Financials + Tax Position side by side */}
-      {plan.financials_data && !showManualEntry ? (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <FinancialsPanel
-              financials={plan.financials_data}
-              dataSource={plan.data_source}
-              xeroFetchedAt={plan.xero_report_fetched_at}
-              onRefreshXero={plan.xero_connection_id ? handleRefreshXero : undefined}
-              onEdit={() => setShowManualEntry(true)}
+              {/* Financials breakdown */}
+              <FinancialsPanel
+                financials={plan.financials_data}
+                dataSource={plan.data_source}
+                xeroFetchedAt={plan.xero_report_fetched_at}
+                onRefreshXero={plan.xero_connection_id ? handleRefreshXero : undefined}
+                onEdit={() => setShowManualEntry(true)}
+              />
+
+              {/* Scenario comparison table (if 2+ scenarios) */}
+              {plan.scenarios && plan.scenarios.length >= 2 && (
+                <div className="overflow-x-auto">
+                  <ComparisonTable scenarios={plan.scenarios} />
+                </div>
+              )}
+
+              {/* Individual scenario cards */}
+              {plan.scenarios && plan.scenarios.length > 0 && (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {plan.scenarios.map((scenario) => (
+                    <ScenarioCard
+                      key={scenario.id}
+                      scenario={scenario}
+                      onDelete={scenarioDeleteHandler}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <ManualEntryForm
+              onSubmit={handleSaveManual}
+              onCancel={plan.financials_data ? () => setShowManualEntry(false) : undefined}
+              initialValues={
+                plan.financials_data
+                  ? {
+                      revenue: plan.financials_data.income.revenue,
+                      other_income: plan.financials_data.income.other_income,
+                      cost_of_sales: plan.financials_data.expenses.cost_of_sales,
+                      operating_expenses: plan.financials_data.expenses.operating_expenses,
+                      payg_instalments: plan.financials_data.credits.payg_instalments,
+                      payg_withholding: plan.financials_data.credits.payg_withholding,
+                      franking_credits: plan.financials_data.credits.franking_credits,
+                      turnover: plan.financials_data.turnover,
+                    }
+                  : undefined
+              }
             />
-          </div>
-          {plan.tax_position && (
-            <div>
-              <TaxPositionCard
-                taxPosition={plan.tax_position}
-                entityType={plan.entity_type}
-              />
-            </div>
           )}
         </div>
-      ) : (
-        <ManualEntryForm
-          onSubmit={handleSaveManual}
-          onCancel={plan.financials_data ? () => setShowManualEntry(false) : undefined}
-          initialValues={
-            plan.financials_data
-              ? {
-                  revenue: plan.financials_data.income.revenue,
-                  other_income: plan.financials_data.income.other_income,
-                  cost_of_sales: plan.financials_data.expenses.cost_of_sales,
-                  operating_expenses: plan.financials_data.expenses.operating_expenses,
-                  payg_instalments: plan.financials_data.credits.payg_instalments,
-                  payg_withholding: plan.financials_data.credits.payg_withholding,
-                  franking_credits: plan.financials_data.credits.franking_credits,
-                  turnover: plan.financials_data.turnover,
-                }
-              : undefined
-          }
+
+        {/* RIGHT: Chat, fills full column height */}
+        <ScenarioChat
+          planId={plan.id}
+          disabled={!plan.tax_position}
+          onScenarioCreated={scenarioCreatedHandler}
+          className="lg:h-full lg:max-h-none"
         />
-      )}
-
-      {/* Row 2: AI Chat — full width */}
-      <ScenarioChat
-        planId={plan.id}
-        disabled={!plan.tax_position}
-        onScenarioCreated={async () => {
-          // Reload full plan to get properly formatted scenarios
-          try {
-            const token = await getToken();
-            if (!token) return;
-            const updated = await getTaxPlan(token, plan.id);
-            setPlan(updated);
-          } catch {
-            // Increment count as fallback
-            setPlan((prev) => prev ? { ...prev, scenario_count: (prev.scenario_count || 0) + 1 } : prev);
-          }
-        }}
-      />
-
-      {/* Row 3: Scenarios */}
-      {plan.scenarios && plan.scenarios.length > 0 && (
-        <div className="space-y-4">
-          {/* Comparison table first (if 2+) */}
-          {plan.scenarios.length >= 2 && (
-            <ComparisonTable scenarios={plan.scenarios} />
-          )}
-
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {plan.scenarios.map((scenario) => (
-              <ScenarioCard
-                key={scenario.id}
-                scenario={scenario}
-                onDelete={async (scenarioId) => {
-                  try {
-                    const token = await getToken();
-                    if (!token) return;
-                    await deleteScenario(token, plan.id, scenarioId);
-                  } catch (e) {
-                    console.warn('Delete scenario failed:', e);
-                  }
-                  try {
-                    const token = await getToken();
-                    if (!token) return;
-                    const updated = await getTaxPlan(token, plan.id);
-                    setPlan(updated);
-                  } catch {
-                    setPlan((prev) => {
-                      if (!prev) return prev;
-                      return {
-                        ...prev,
-                        scenarios: prev.scenarios.filter((s) => s.id !== scenarioId),
-                        scenario_count: Math.max(0, (prev.scenario_count || 0) - 1),
-                      };
-                    });
-                  }
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
