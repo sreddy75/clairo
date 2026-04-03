@@ -821,19 +821,7 @@ export function TaxPlanningWorkspace({
                       title="Client Profile"
                       subtitle="What the AI determined about this entity"
                     >
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {Object.entries(analysis.client_profile as Record<string, unknown>).map(([key, value]) => (
-                          <div key={key} className="rounded-md bg-muted/50 p-2.5">
-                            <p className="text-[10px] text-muted-foreground uppercase">{key.replace(/_/g, ' ')}</p>
-                            <p className="text-sm font-medium mt-0.5">
-                              {typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
-                               typeof value === 'number' ? `$${(value as number).toLocaleString()}` :
-                               typeof value === 'object' ? JSON.stringify(value) :
-                               String(value ?? '')}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+                      <ProfileCard profile={analysis.client_profile as Record<string, unknown>} />
                     </ExpandableSection>
                   )}
 
@@ -1195,5 +1183,86 @@ function ExpandableSection({
         </CardContent>
       )}
     </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Profile Card — smart rendering of client profile data
+// ---------------------------------------------------------------------------
+
+const RATE_FIELDS = new Set(['applicable_tax_rate', 'effective_rate']);
+const CURRENCY_FIELDS = new Set(['aggregated_turnover', 'total_income', 'total_expenses', 'net_profit', 'taxable_income']);
+const SKIP_FIELDS = new Set(['key_thresholds', 'financials_summary']); // Render separately
+
+function formatProfileValue(key: string, value: unknown): string {
+  if (value === null || value === undefined) return 'N/A';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (RATE_FIELDS.has(key) && typeof value === 'number') return `${(value * 100).toFixed(0)}%`;
+  if (CURRENCY_FIELDS.has(key) && typeof value === 'number') return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  if (typeof value === 'number') return value.toLocaleString();
+  return String(value);
+}
+
+function ProfileCard({ profile }: { profile: Record<string, unknown> }) {
+  const mainFields = Object.entries(profile).filter(([key]) => !SKIP_FIELDS.has(key));
+  const financials = profile.financials_summary as Record<string, number> | undefined;
+  const thresholds = profile.key_thresholds as Record<string, Record<string, unknown>> | undefined;
+
+  return (
+    <div className="space-y-4">
+      {/* Main fields */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {mainFields.map(([key, value]) => (
+          <div key={key} className="rounded-md bg-muted/50 p-2.5">
+            <p className="text-[10px] text-muted-foreground uppercase">{key.replace(/_/g, ' ')}</p>
+            <p className="text-sm font-medium mt-0.5">{formatProfileValue(key, value)}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Financials summary */}
+      {financials && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">FINANCIALS SUMMARY</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Object.entries(financials).map(([key, value]) => (
+              <div key={key} className="rounded-md bg-muted/50 p-2.5">
+                <p className="text-[10px] text-muted-foreground uppercase">{key.replace(/_/g, ' ')}</p>
+                <p className="text-sm font-medium mt-0.5">${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Key thresholds */}
+      {thresholds && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">KEY THRESHOLDS</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {Object.entries(thresholds).map(([key, info]) => {
+              const val = typeof info === 'object' && info !== null ? info : { value: info };
+              const threshold = (val as Record<string, unknown>).value;
+              const above = (val as Record<string, unknown>).above_threshold;
+              return (
+                <div key={key} className="flex items-center justify-between rounded-md border p-2.5">
+                  <span className="text-xs">{key.replace(/_/g, ' ')}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium">
+                      {typeof threshold === 'number' ? `$${threshold.toLocaleString()}` : String(threshold ?? '')}
+                    </span>
+                    {above !== undefined && (
+                      <span className={`text-[10px] font-bold ${above ? 'text-amber-600' : 'text-emerald-600'}`}>
+                        {above ? 'ABOVE' : 'BELOW'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
