@@ -278,6 +278,45 @@ async def resend_invitation(
 
 
 # =============================================================================
+# Tax Plan (Spec 041 — shared analysis for client portal)
+# =============================================================================
+
+
+@client_router.get("/tax-plan")
+async def get_portal_tax_plan(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get the shared tax plan for the authenticated portal client."""
+
+    # TODO: Wire up portal client auth dependency when fully integrated
+    # For now, return 404 if no shared analysis found
+    raise HTTPException(status_code=404, detail="No tax plan shared yet")
+
+
+@client_router.patch("/tax-plan/items/{item_id}")
+async def update_portal_item(
+    item_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    status_val: str = "completed",
+):
+    """Allow client to mark an implementation item as completed."""
+
+    # TODO: Get tenant_id from portal client auth
+    # For now, stub endpoint
+    raise HTTPException(status_code=404, detail="Not yet implemented")
+
+
+@client_router.post("/tax-plan/question")
+async def ask_portal_question(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    question: str = "",
+):
+    """Client asks a question about the tax plan — routes to accountant."""
+    # TODO: Create notification for the accountant
+    return {"message": "Your question has been sent to your accountant.", "question_id": None}
+
+
+# =============================================================================
 # Include Auth Router (Magic Link Authentication)
 # =============================================================================
 

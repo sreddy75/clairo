@@ -15,13 +15,18 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  type AnalysisResponse,
+  approveAnalysis,
   createTaxPlan,
   deleteScenario,
   exportPlanPdf,
+  generateAnalysis,
+  getAnalysis,
   getTaxPlan,
   listTaxPlans,
   pullXeroFinancials,
   saveManualFinancials,
+  shareAnalysis,
   updateTaxPlan,
 } from '@/lib/api/tax-planning';
 import type {
@@ -70,6 +75,8 @@ export function TaxPlanningWorkspace({
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [showCreateNew, setShowCreateNew] = useState(false);
   const [xeroAuthNeeded, setXeroAuthNeeded] = useState(false);
+  const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   // Load existing plan for this connection + FY
   const loadPlan = useCallback(async () => {
@@ -93,6 +100,8 @@ export function TaxPlanningWorkspace({
           try {
             const fullPlan = await getTaxPlan(token, existingPlan.id);
             setPlan(fullPlan);
+            // Load analysis if exists
+            loadAnalysis(existingPlan.id).catch(() => {});
           } catch (planErr) {
             // GET plan failed (e.g., Xero token expired during auto-refresh)
             // Still show the plan with whatever data the list had
@@ -114,6 +123,48 @@ export function TaxPlanningWorkspace({
   useEffect(() => {
     loadPlan();
   }, [loadPlan]);
+
+  // Load existing analysis for this plan
+  const loadAnalysis = useCallback(async (planId: string) => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const data = await getAnalysis(token, planId);
+      setAnalysis(data);
+    } catch {
+      // No analysis yet — that's fine
+      setAnalysis(null);
+    }
+  }, [getToken]);
+
+  // Generate tax plan analysis via multi-agent pipeline
+  const handleGenerateAnalysis = async () => {
+    if (!plan) return;
+    setGenerating(true);
+    setError(null);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const result = await generateAnalysis(token, plan.id);
+
+      // Poll for progress via SSE
+      const { analysisProgressStream } = await import('@/lib/api/tax-planning');
+      for await (const event of analysisProgressStream(token, plan.id, result.task_id)) {
+        if (event.type === 'complete') {
+          await loadAnalysis(plan.id);
+          break;
+        }
+        if (event.type === 'error') {
+          setError(event.message || 'Analysis failed');
+          break;
+        }
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to generate analysis');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   // Create new plan
   const handleCreatePlan = async () => {
@@ -503,6 +554,10 @@ export function TaxPlanningWorkspace({
                 ? ` (${plan.scenarios.length})`
                 : ''}
             </TabsTrigger>
+            <TabsTrigger value="analysis" className="gap-1.5 data-[state=active]:bg-background">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">4</span>
+              Analysis{analysis ? ` ✓` : ''}
+            </TabsTrigger>
           </TabsList>
 
           {/* Step 1: Review current tax position & financials */}
@@ -571,6 +626,183 @@ export function TaxPlanningWorkspace({
                     Go to &quot;Explore Strategies&quot; to model tax scenarios with AI.
                   </span>
                 </p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Step 4: AI-generated comprehensive analysis */}
+          <TabsContent
+            value="analysis"
+            className="flex-1 overflow-y-auto space-y-4 mt-4"
+          >
+            {!analysis && !generating && (
+              <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold">Generate Comprehensive Tax Plan</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-md">
+                    Our AI analyses your client&apos;s position, evaluates 15+ tax strategies,
+                    models the best options, and produces a ready-to-use brief.
+                  </p>
+                </div>
+                <Button
+                  onClick={handleGenerateAnalysis}
+                  disabled={!plan.tax_position}
+                  size="lg"
+                >
+                  Generate Tax Plan
+                </Button>
+                {!plan.tax_position && (
+                  <p className="text-xs text-muted-foreground">
+                    Load financials first to enable analysis.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {generating && (
+              <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                <div className="animate-pulse text-center">
+                  <h3 className="text-lg font-semibold">Generating Tax Plan...</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Profiling → Scanning strategies → Modelling → Writing brief → Reviewing
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {analysis && !generating && (
+              <div className="space-y-4">
+                {/* Status bar */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={analysis.review_passed ? 'default' : 'destructive'}>
+                      {analysis.review_passed ? 'Quality Verified' : 'Needs Review'}
+                    </Badge>
+                    <Badge variant="outline">{analysis.status}</Badge>
+                    {analysis.generation_time_ms && (
+                      <span className="text-xs text-muted-foreground">
+                        Generated in {(analysis.generation_time_ms / 1000).toFixed(1)}s
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {analysis.status === 'draft' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          const token = await getToken();
+                          if (!token) return;
+                          await approveAnalysis(token, plan.id);
+                          await loadAnalysis(plan.id);
+                        }}
+                      >
+                        Approve
+                      </Button>
+                    )}
+                    {analysis.status === 'approved' && (
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          const token = await getToken();
+                          if (!token) return;
+                          await shareAnalysis(token, plan.id);
+                          await loadAnalysis(plan.id);
+                        }}
+                      >
+                        Share with Client
+                      </Button>
+                    )}
+                    {analysis.status === 'shared' && (
+                      <Badge className="bg-emerald-100 text-emerald-700">
+                        Shared to Portal
+                      </Badge>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleGenerateAnalysis}
+                    >
+                      Re-generate
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Combined strategy summary */}
+                {analysis.combined_strategy && (
+                  <Card>
+                    <CardContent className="pt-4">
+                      <h4 className="font-semibold mb-2">Combined Strategy Impact</h4>
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <p className="text-2xl font-bold text-emerald-600">
+                            ${(analysis.combined_strategy as Record<string, number>).total_tax_saving?.toLocaleString() ?? '0'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Total Tax Saving</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">
+                            {(analysis.combined_strategy as Record<string, number>).strategy_count ?? 0}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Strategies</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold">
+                            {analysis.strategies_evaluated?.length ?? 0}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Evaluated</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Accountant Brief */}
+                {analysis.accountant_brief && (
+                  <Card>
+                    <CardContent className="pt-4">
+                      <h4 className="font-semibold mb-2">Accountant Brief</h4>
+                      <div className="prose prose-sm dark:prose-invert max-w-none max-h-[400px] overflow-y-auto">
+                        <pre className="whitespace-pre-wrap text-sm font-sans">{analysis.accountant_brief}</pre>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Implementation Checklist */}
+                {analysis.implementation_items && analysis.implementation_items.length > 0 && (
+                  <Card>
+                    <CardContent className="pt-4">
+                      <h4 className="font-semibold mb-2">Implementation Checklist</h4>
+                      <div className="space-y-2">
+                        {analysis.implementation_items.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between rounded-md border p-3">
+                            <div>
+                              <p className="text-sm font-medium">{item.title}</p>
+                              {item.deadline && (
+                                <p className="text-xs text-muted-foreground">
+                                  Deadline: {item.deadline}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {item.estimated_saving && (
+                                <Badge variant="outline" className="text-emerald-600">
+                                  Save ${item.estimated_saving.toLocaleString()}
+                                </Badge>
+                              )}
+                              {item.risk_rating && (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.risk_rating}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
           </TabsContent>
