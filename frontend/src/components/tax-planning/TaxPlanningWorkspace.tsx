@@ -481,7 +481,7 @@ export function TaxPlanningWorkspace({
       </div>
 
       {/* Two-column body — fills remaining viewport height */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* LEFT: Data panels, independently scrollable */}
         <div className="overflow-y-auto space-y-4 min-h-0 pr-1">
           {plan.financials_data && !showManualEntry ? (
