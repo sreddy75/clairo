@@ -245,24 +245,22 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
             </div>
           )}
 
-          {/* Thinking indicator */}
+          {/* Thinking indicator with animated logo */}
           {thinkingText && (
             <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-lg bg-muted/30 px-3 py-2 text-sm text-muted-foreground italic">
-                {thinkingText}
+              <div className="flex items-center gap-2 max-w-[85%] rounded-lg bg-muted/30 px-3 py-2">
+                <video src="/logos/clairo-animate.mp4" width={24} height={24} autoPlay loop muted playsInline className="rounded-sm shrink-0" />
+                <span className="text-sm text-muted-foreground italic">{thinkingText}</span>
               </div>
             </div>
           )}
 
-          {/* Loading dots */}
+          {/* Loading indicator with animated logo */}
           {isLoading && !streamingContent && !thinkingText && (
             <div className="flex justify-start">
-              <div className="rounded-lg bg-muted/30 px-3 py-2">
-                <div className="flex gap-1">
-                  <div className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
+              <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2">
+                <video src="/logos/clairo-animate.mp4" width={24} height={24} autoPlay loop muted playsInline className="rounded-sm" />
+                <span className="text-xs text-muted-foreground">Thinking...</span>
               </div>
             </div>
           )}

@@ -1,1 +1,1 @@
-export { ClairoLogo, ClairoIcon, default } from './ClairoLogo';
+export { ClairoLogo, ClairoIcon, ClairoThinking, default } from './ClairoLogo';
