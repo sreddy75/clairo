@@ -9,6 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -80,6 +86,7 @@ export function TaxPlanningWorkspace({
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generatingStage, setGeneratingStage] = useState(0);
+  const [showAnalysisDetail, setShowAnalysisDetail] = useState(false);
 
   // Load existing plan for this connection + FY
   const loadPlan = useCallback(async () => {
@@ -675,297 +682,88 @@ export function TaxPlanningWorkspace({
 
             {analysis && !generating && (
               <div className="space-y-4">
-                {/* Status bar */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={analysis.review_passed ? 'default' : 'destructive'}>
-                      {analysis.review_passed ? 'Quality Verified' : 'Needs Review'}
-                    </Badge>
-                    <Badge variant="outline">{analysis.status}</Badge>
-                    {analysis.generation_time_ms && (
-                      <span className="text-xs text-muted-foreground">
-                        Generated in {(analysis.generation_time_ms / 1000).toFixed(1)}s
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {analysis.status === 'draft' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={async () => {
-                          const token = await getToken();
-                          if (!token) return;
-                          await approveAnalysis(token, plan.id);
-                          await loadAnalysis(plan.id);
-                        }}
-                      >
-                        Approve
-                      </Button>
-                    )}
-                    {analysis.status === 'approved' && (
-                      <Button
-                        size="sm"
-                        onClick={async () => {
-                          const token = await getToken();
-                          if (!token) return;
-                          await shareAnalysis(token, plan.id);
-                          await loadAnalysis(plan.id);
-                        }}
-                      >
-                        Share with Client
-                      </Button>
-                    )}
-                    {analysis.status === 'shared' && (
-                      <Badge className="bg-emerald-100 text-emerald-700">
-                        Shared to Portal
-                      </Badge>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleGenerateAnalysis}
-                    >
-                      Re-generate
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Combined strategy summary */}
-                {analysis.combined_strategy && (
-                  <Card>
-                    <CardContent className="pt-4">
-                      <h4 className="font-semibold mb-2">Combined Strategy Impact</h4>
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div>
-                          <p className="text-2xl font-bold text-emerald-600">
-                            ${(analysis.combined_strategy as Record<string, number>).total_tax_saving?.toLocaleString() ?? '0'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Total Tax Saving</p>
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold">
-                            {(analysis.combined_strategy as Record<string, number>).strategy_count ?? 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Strategies</p>
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold">
-                            {analysis.strategies_evaluated?.length ?? 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Evaluated</p>
-                        </div>
+                {/* Summary card — click to see full analysis */}
+                <Card
+                  className="cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => setShowAnalysisDetail(true)}
+                >
+                  <CardContent className="pt-5 pb-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={analysis.review_passed ? 'default' : 'destructive'}>
+                          {analysis.review_passed ? 'Quality Verified' : 'Needs Review'}
+                        </Badge>
+                        <Badge variant="outline">{analysis.status}</Badge>
+                        {analysis.generation_time_ms && (
+                          <span className="text-xs text-muted-foreground">
+                            Generated in {(analysis.generation_time_ms / 1000).toFixed(1)}s
+                          </span>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Accountant Brief */}
-                {analysis.accountant_brief && (
-                  <Card>
-                    <CardContent className="pt-4">
-                      <h4 className="font-semibold mb-2">Accountant Brief</h4>
-                      <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:my-3 prose-p:my-2 prose-li:my-0.5 prose-table:my-3 prose-td:px-3 prose-td:py-1.5 prose-th:px-3 prose-th:py-1.5">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {analysis.accountant_brief}
-                        </ReactMarkdown>
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        {analysis.status === 'draft' && (
+                          <Button size="sm" variant="outline" onClick={async () => {
+                            const token = await getToken();
+                            if (!token) return;
+                            await approveAnalysis(token, plan.id);
+                            await loadAnalysis(plan.id);
+                          }}>
+                            Approve
+                          </Button>
+                        )}
+                        {analysis.status === 'approved' && (
+                          <Button size="sm" onClick={async () => {
+                            const token = await getToken();
+                            if (!token) return;
+                            await shareAnalysis(token, plan.id);
+                            await loadAnalysis(plan.id);
+                          }}>
+                            Share with Client
+                          </Button>
+                        )}
+                        {analysis.status === 'shared' && (
+                          <Badge className="bg-emerald-100 text-emerald-700">Shared to Portal</Badge>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={handleGenerateAnalysis}>
+                          Re-generate
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    </div>
 
-                {/* Implementation Checklist */}
-                {analysis.implementation_items && analysis.implementation_items.length > 0 && (
-                  <Card>
-                    <CardContent className="pt-4">
-                      <h4 className="font-semibold mb-2">Implementation Checklist</h4>
-                      <div className="space-y-2">
-                        {analysis.implementation_items.map((item) => (
-                          <div key={item.id} className="flex items-center justify-between rounded-md border p-3">
-                            <div>
-                              <p className="text-sm font-medium">{item.title}</p>
-                              {item.deadline && (
-                                <p className="text-xs text-muted-foreground">
-                                  Deadline: {item.deadline}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {item.estimated_saving && (
-                                <Badge variant="outline" className="text-emerald-600">
-                                  Save ${item.estimated_saving.toLocaleString()}
-                                </Badge>
-                              )}
-                              {item.risk_rating && (
-                                <Badge variant="outline" className="text-xs">
-                                  {item.risk_rating}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                    {/* Hero metrics */}
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-3xl font-bold text-emerald-600">
+                          ${(analysis.combined_strategy as Record<string, number>)?.total_tax_saving?.toLocaleString() ?? '0'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">Total Tax Saving</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* AI Transparency — expandable detail sections */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                    AI Transparency
-                  </h4>
-
-                  {/* Client Profile */}
-                  {analysis.client_profile && (
-                    <ExpandableSection
-                      title="Client Profile"
-                      subtitle="What the AI determined about this entity"
-                    >
-                      <ProfileCard profile={analysis.client_profile as Record<string, unknown>} />
-                    </ExpandableSection>
-                  )}
-
-                  {/* All Strategies Evaluated */}
-                  {analysis.strategies_evaluated && analysis.strategies_evaluated.length > 0 && (
-                    <ExpandableSection
-                      title={`All Strategies Evaluated (${analysis.strategies_evaluated.length})`}
-                      subtitle="Every strategy the AI considered, with applicability reasoning"
-                    >
-                      <div className="space-y-2">
-                        {(analysis.strategies_evaluated as Record<string, unknown>[]).map((strategy, i) => {
-                          const applicable = strategy.applicable as boolean;
-                          return (
-                            <div
-                              key={i}
-                              className={`rounded-md border p-3 ${applicable ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/30' : 'border-stone-200 bg-stone-50/50 dark:border-stone-800 dark:bg-stone-950/30'}`}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className={`text-xs font-bold ${applicable ? 'text-emerald-600' : 'text-stone-400'}`}>
-                                      {applicable ? '✓ APPLICABLE' : '✗ NOT APPLICABLE'}
-                                    </span>
-                                    {Boolean(strategy.risk_rating) && (
-                                      <Badge variant="outline" className="text-[10px]">
-                                        {String(strategy.risk_rating)}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <p className="text-sm font-medium mt-1">{String(strategy.name || strategy.strategy_id || `Strategy ${i + 1}`)}</p>
-                                  <p className="text-xs text-muted-foreground mt-0.5">{String(strategy.applicability_reason || '')}</p>
-                                </div>
-                                {applicable && Boolean(strategy.estimated_impact_range) && (
-                                  <div className="text-right shrink-0 ml-4">
-                                    <p className="text-xs text-muted-foreground">Est. saving</p>
-                                    <p className="text-sm font-medium text-emerald-600">
-                                      ${((strategy.estimated_impact_range as Record<string, number>).min || 0).toLocaleString()}
-                                      –${((strategy.estimated_impact_range as Record<string, number>).max || 0).toLocaleString()}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                              {Boolean(strategy.compliance_refs) && (strategy.compliance_refs as string[]).length > 0 && (
-                                <p className="text-[10px] text-muted-foreground mt-1.5">
-                                  Refs: {(strategy.compliance_refs as string[]).join(', ')}
-                                </p>
-                              )}
-                            </div>
-                          );
-                        })}
+                      <div>
+                        <p className="text-3xl font-bold">
+                          {(analysis.combined_strategy as Record<string, number>)?.strategy_count ?? 0}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">Strategies Recommended</p>
                       </div>
-                    </ExpandableSection>
-                  )}
-
-                  {/* Modelled Scenarios */}
-                  {analysis.recommended_scenarios && analysis.recommended_scenarios.length > 0 && (
-                    <ExpandableSection
-                      title={`Modelled Scenarios (${analysis.recommended_scenarios.length})`}
-                      subtitle="Each strategy modelled with real tax calculator numbers"
-                    >
-                      <div className="space-y-2">
-                        {(analysis.recommended_scenarios as Record<string, unknown>[]).map((scenario, i) => {
-                          const impact = scenario.impact as Record<string, Record<string, number>> | undefined;
-                          const change = impact?.change;
-                          return (
-                            <div key={i} className="rounded-md border p-3">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <p className="text-sm font-medium">{String(scenario.scenario_title || `Scenario ${i + 1}`)}</p>
-                                  <p className="text-xs text-muted-foreground mt-0.5">{String(scenario.description || '')}</p>
-                                </div>
-                                {change && (
-                                  <div className="text-right shrink-0 ml-4">
-                                    <p className="text-lg font-bold text-emerald-600">
-                                      ${(change.tax_saving || 0).toLocaleString()}
-                                    </p>
-                                    <p className="text-[10px] text-muted-foreground">tax saving</p>
-                                  </div>
-                                )}
-                              </div>
-                              {impact && (
-                                <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                                  <span>Before: ${(impact.before?.tax_payable || 0).toLocaleString()}</span>
-                                  <span>→</span>
-                                  <span>After: ${(impact.after?.tax_payable || 0).toLocaleString()}</span>
-                                  {scenario.cash_flow_impact != null && (
-                                    <span>| Cash flow: ${(scenario.cash_flow_impact as number).toLocaleString()}</span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                      <div>
+                        <p className="text-3xl font-bold">
+                          {analysis.strategies_evaluated?.length ?? 0}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">Strategies Evaluated</p>
                       </div>
-                    </ExpandableSection>
-                  )}
+                    </div>
 
-                  {/* Quality Review */}
-                  {analysis.review_result && (
-                    <ExpandableSection
-                      title="Quality Review"
-                      subtitle={analysis.review_passed ? 'All checks passed' : 'Some issues found — review recommended'}
-                    >
-                      <div className="space-y-2">
-                        {Object.entries(analysis.review_result as Record<string, unknown>).map(([key, value]) => {
-                          if (key === 'summary') return (
-                            <p key={key} className="text-sm">{String(value)}</p>
-                          );
-                          if (typeof value === 'boolean') return (
-                            <div key={key} className="flex items-center gap-2">
-                              <span className={value ? 'text-emerald-600' : 'text-red-500'}>
-                                {value ? '✓' : '✗'}
-                              </span>
-                              <span className="text-sm">{key.replace(/_/g, ' ')}</span>
-                            </div>
-                          );
-                          if (Array.isArray(value) && value.length > 0) return (
-                            <div key={key}>
-                              <p className="text-xs font-medium text-muted-foreground">{key.replace(/_/g, ' ')}</p>
-                              <ul className="text-sm list-disc pl-4 mt-1">
-                                {value.map((item, j) => <li key={j}>{String(item)}</li>)}
-                              </ul>
-                            </div>
-                          );
-                          return null;
-                        })}
-                      </div>
-                    </ExpandableSection>
-                  )}
+                    <p className="text-xs text-center text-muted-foreground mt-4">
+                      Click to view full analysis — brief, checklist, strategies, and AI transparency
+                    </p>
+                  </CardContent>
+                </Card>
 
-                  {/* Client Summary Preview */}
-                  {analysis.client_summary && (
-                    <ExpandableSection
-                      title="Client Summary Preview"
-                      subtitle="What the client will see when you share this plan"
-                    >
-                      <div className="prose prose-sm dark:prose-invert max-w-none border rounded-lg p-4 bg-background">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {analysis.client_summary}
-                        </ReactMarkdown>
-                      </div>
-                    </ExpandableSection>
-                  )}
-                </div>
+                {/* Full analysis modal */}
+                <AnalysisDetailDialog
+                  analysis={analysis}
+                  open={showAnalysisDetail}
+                  onClose={() => setShowAnalysisDetail(false)}
+                />
               </div>
             )}
           </TabsContent>
@@ -1143,6 +941,203 @@ function GeneratingProgress({ stage }: { stage: number }) {
         </p>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Analysis Detail Dialog
+// ---------------------------------------------------------------------------
+
+function AnalysisDetailDialog({
+  analysis,
+  open,
+  onClose,
+}: {
+  analysis: AnalysisResponse;
+  open: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Tax Plan Analysis — Full Detail</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 mt-4">
+          {/* Accountant Brief */}
+          {analysis.accountant_brief && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                Accountant Brief
+              </h3>
+              <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:my-3 prose-p:my-2 prose-li:my-0.5 prose-table:my-3 prose-td:px-3 prose-td:py-1.5 prose-th:px-3 prose-th:py-1.5 border rounded-lg p-4">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {analysis.accountant_brief}
+                </ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {/* Implementation Checklist */}
+          {analysis.implementation_items && analysis.implementation_items.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                Implementation Checklist
+              </h3>
+              <div className="space-y-2">
+                {analysis.implementation_items.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between rounded-md border p-3">
+                    <div>
+                      <p className="text-sm font-medium">{item.title}</p>
+                      {item.deadline && (
+                        <p className="text-xs text-muted-foreground">Deadline: {item.deadline}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {item.estimated_saving && (
+                        <Badge variant="outline" className="text-emerald-600">
+                          Save ${item.estimated_saving.toLocaleString()}
+                        </Badge>
+                      )}
+                      {item.risk_rating && (
+                        <Badge variant="outline" className="text-xs">{item.risk_rating}</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* AI Transparency */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              AI Transparency
+            </h3>
+
+            {analysis.client_profile && (
+              <ExpandableSection title="Client Profile" subtitle="What the AI determined about this entity">
+                <ProfileCard profile={analysis.client_profile as Record<string, unknown>} />
+              </ExpandableSection>
+            )}
+
+            {analysis.strategies_evaluated && analysis.strategies_evaluated.length > 0 && (
+              <ExpandableSection
+                title={`All Strategies Evaluated (${analysis.strategies_evaluated.length})`}
+                subtitle="Every strategy considered, with applicability reasoning"
+              >
+                <div className="space-y-2">
+                  {(analysis.strategies_evaluated as Record<string, unknown>[]).map((strategy, i) => {
+                    const applicable = strategy.applicable as boolean;
+                    return (
+                      <div key={i} className={`rounded-md border p-3 ${applicable ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/30' : 'border-stone-200 bg-stone-50/50 dark:border-stone-800 dark:bg-stone-950/30'}`}>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-bold ${applicable ? 'text-emerald-600' : 'text-stone-400'}`}>
+                                {applicable ? '✓ APPLICABLE' : '✗ NOT APPLICABLE'}
+                              </span>
+                              {Boolean(strategy.risk_rating) && (
+                                <Badge variant="outline" className="text-[10px]">{String(strategy.risk_rating)}</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm font-medium mt-1">{String(strategy.name || strategy.strategy_id || `Strategy ${i + 1}`)}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{String(strategy.applicability_reason || '')}</p>
+                          </div>
+                          {applicable && Boolean(strategy.estimated_impact_range) && (
+                            <div className="text-right shrink-0 ml-4">
+                              <p className="text-xs text-muted-foreground">Est. saving</p>
+                              <p className="text-sm font-medium text-emerald-600">
+                                ${((strategy.estimated_impact_range as Record<string, number>).min || 0).toLocaleString()}
+                                –${((strategy.estimated_impact_range as Record<string, number>).max || 0).toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ExpandableSection>
+            )}
+
+            {analysis.recommended_scenarios && analysis.recommended_scenarios.length > 0 && (
+              <ExpandableSection
+                title={`Modelled Scenarios (${analysis.recommended_scenarios.length})`}
+                subtitle="Each strategy modelled with real tax calculator numbers"
+              >
+                <div className="space-y-2">
+                  {(analysis.recommended_scenarios as Record<string, unknown>[]).map((scenario, i) => {
+                    const impact = scenario.impact as Record<string, Record<string, number>> | undefined;
+                    const change = impact?.change;
+                    return (
+                      <div key={i} className="rounded-md border p-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-sm font-medium">{String(scenario.scenario_title || `Scenario ${i + 1}`)}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{String(scenario.description || '')}</p>
+                          </div>
+                          {change && (
+                            <div className="text-right shrink-0 ml-4">
+                              <p className="text-lg font-bold text-emerald-600">${(change.tax_saving || 0).toLocaleString()}</p>
+                              <p className="text-[10px] text-muted-foreground">tax saving</p>
+                            </div>
+                          )}
+                        </div>
+                        {impact && (
+                          <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                            <span>Before: ${(impact.before?.tax_payable || 0).toLocaleString()}</span>
+                            <span>→</span>
+                            <span>After: ${(impact.after?.tax_payable || 0).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </ExpandableSection>
+            )}
+
+            {analysis.review_result && (
+              <ExpandableSection
+                title="Quality Review"
+                subtitle={analysis.review_passed ? 'All checks passed' : 'Some issues found — review recommended'}
+              >
+                <div className="space-y-2">
+                  {Object.entries(analysis.review_result as Record<string, unknown>).map(([key, value]) => {
+                    if (key === 'summary') return <p key={key} className="text-sm">{String(value)}</p>;
+                    if (typeof value === 'boolean') return (
+                      <div key={key} className="flex items-center gap-2">
+                        <span className={value ? 'text-emerald-600' : 'text-red-500'}>{value ? '✓' : '✗'}</span>
+                        <span className="text-sm">{key.replace(/_/g, ' ')}</span>
+                      </div>
+                    );
+                    if (Array.isArray(value) && value.length > 0) return (
+                      <div key={key}>
+                        <p className="text-xs font-medium text-muted-foreground">{key.replace(/_/g, ' ')}</p>
+                        <ul className="text-sm list-disc pl-4 mt-1">
+                          {value.map((item, j) => <li key={j}>{String(item)}</li>)}
+                        </ul>
+                      </div>
+                    );
+                    return null;
+                  })}
+                </div>
+              </ExpandableSection>
+            )}
+
+            {analysis.client_summary && (
+              <ExpandableSection title="Client Summary Preview" subtitle="What the client will see when you share">
+                <div className="prose prose-sm dark:prose-invert max-w-none border rounded-lg p-4 bg-background">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{analysis.client_summary}</ReactMarkdown>
+                </div>
+              </ExpandableSection>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
