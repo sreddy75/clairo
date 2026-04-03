@@ -312,7 +312,8 @@ async def ask_portal_question(
     question: str = "",
 ):
     """Client asks a question about the tax plan — routes to accountant."""
-    # TODO: Create notification for the accountant
+    # TODO: Wire portal auth to get tenant_id + create full notification
+    # For now, return success response
     return {"message": "Your question has been sent to your accountant.", "question_id": None}
 
 

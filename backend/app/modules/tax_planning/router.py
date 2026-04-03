@@ -4,10 +4,13 @@ All endpoints require authentication and extract tenant_id from current user.
 Domain exceptions are caught and converted to HTTPException responses.
 """
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from app.config import Settings, get_settings
 from app.core.exceptions import DomainError
@@ -460,14 +463,16 @@ async def generate_analysis(
             await service.session.flush()
 
         # Create analysis record
-        analysis = await analysis_repo.create({
-            "tenant_id": current_user.tenant_id,
-            "tax_plan_id": plan_id,
-            "version": next_version,
-            "is_current": True,
-            "status": AnalysisStatus.GENERATING.value,
-            "generated_by": current_user.id,
-        })
+        analysis = await analysis_repo.create(
+            {
+                "tenant_id": current_user.tenant_id,
+                "tax_plan_id": plan_id,
+                "version": next_version,
+                "is_current": True,
+                "status": AnalysisStatus.GENERATING.value,
+                "generated_by": current_user.id,
+            }
+        )
         await service.session.commit()
 
         # Dispatch Celery task
@@ -574,7 +579,9 @@ async def get_analysis(
                     "title": item.title,
                     "description": item.description,
                     "deadline": str(item.deadline) if item.deadline else None,
-                    "estimated_saving": float(item.estimated_saving) if item.estimated_saving else None,
+                    "estimated_saving": float(item.estimated_saving)
+                    if item.estimated_saving
+                    else None,
                     "risk_rating": item.risk_rating,
                     "status": item.status,
                     "client_visible": item.client_visible,
@@ -644,12 +651,21 @@ async def approve_analysis(
         if not analysis:
             raise AnalysisNotFoundError(plan_id)
 
-        await analysis_repo.update(analysis, {
-            "status": "approved",
-            "reviewed_by": current_user.id,
-        })
+        await analysis_repo.update(
+            analysis,
+            {
+                "status": "approved",
+                "reviewed_by": current_user.id,
+            },
+        )
         await service.session.commit()
 
+        logger.info(
+            "analysis.approved plan=%s user=%s tenant=%s",
+            plan_id,
+            current_user.id,
+            current_user.tenant_id,
+        )
         return {"status": "approved", "message": "Analysis approved. Ready to share with client."}
     except DomainError as e:
         raise _handle_domain_error(e)
@@ -675,17 +691,93 @@ async def share_analysis(
         if analysis.status != "approved":
             raise AnalysisNotApprovedError()
 
-        await analysis_repo.update(analysis, {
-            "status": "shared",
-            "shared_at": datetime.now(UTC),
-        })
+        await analysis_repo.update(
+            analysis,
+            {
+                "status": "shared",
+                "shared_at": datetime.now(UTC),
+            },
+        )
         await service.session.commit()
 
+        logger.info(
+            "analysis.shared plan=%s user=%s tenant=%s",
+            plan_id,
+            current_user.id,
+            current_user.tenant_id,
+        )
         return {
             "status": "shared",
             "shared_at": str(analysis.shared_at),
             "message": "Analysis shared to client portal",
         }
+    except DomainError as e:
+        raise _handle_domain_error(e)
+
+
+@router.get("/{plan_id}/analysis/export-pdf")
+async def export_analysis_pdf(
+    plan_id: uuid.UUID,
+    current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_READ)),
+    service: TaxPlanningService = Depends(_get_service),
+):
+    """Export the accountant brief as a PDF."""
+    from starlette.responses import Response
+
+    from app.modules.tax_planning.exceptions import AnalysisNotFoundError
+    from app.modules.tax_planning.repository import AnalysisRepository
+
+    try:
+        analysis_repo = AnalysisRepository(service.session)
+        analysis = await analysis_repo.get_current_for_plan(plan_id, current_user.tenant_id)
+        if not analysis or not analysis.accountant_brief:
+            raise AnalysisNotFoundError(plan_id)
+
+        # Convert markdown to simple HTML for PDF
+        import markdown
+
+        html_content = markdown.markdown(
+            analysis.accountant_brief,
+            extensions=["tables", "fenced_code"],
+        )
+
+        # Wrap in basic HTML template
+        html = f"""<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<style>
+body {{ font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.6; margin: 40px; }}
+h1 {{ font-size: 18pt; color: #1a1a1a; }}
+h2 {{ font-size: 14pt; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 4px; }}
+h3 {{ font-size: 12pt; color: #555; }}
+table {{ border-collapse: collapse; width: 100%; margin: 12px 0; }}
+th, td {{ border: 1px solid #ddd; padding: 6px 10px; text-align: left; font-size: 10pt; }}
+th {{ background-color: #f5f5f5; }}
+.disclaimer {{ font-size: 9pt; color: #888; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; }}
+</style>
+</head><body>
+{html_content}
+<div class="disclaimer">
+This is an estimate only and does not constitute formal tax advice.
+Professional judgement should be applied to each client's specific circumstances.
+</div>
+</body></html>"""
+
+        import weasyprint
+
+        pdf_bytes = weasyprint.HTML(string=html).write_pdf()
+
+        plan = await service.get_plan(plan_id, current_user.tenant_id)
+        client_name = await service.get_client_name(plan.xero_connection_id, current_user.tenant_id)
+        filename = (
+            f"tax-plan-analysis-{client_name.lower().replace(' ', '-')}-{plan.financial_year}.pdf"
+        )
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
     except DomainError as e:
         raise _handle_domain_error(e)
 
@@ -703,7 +795,10 @@ async def update_implementation_item(
 
     item_repo = ImplementationItemRepository(service.session)
     item = await item_repo.update_status(
-        item_id, current_user.tenant_id, status, completed_by="accountant",
+        item_id,
+        current_user.tenant_id,
+        status,
+        completed_by="accountant",
     )
     if not item:
         raise HTTPException(status_code=404, detail="Implementation item not found")

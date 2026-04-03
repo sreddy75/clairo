@@ -259,7 +259,9 @@ class AnalysisRepository:
         return analysis
 
     async def get_by_id(
-        self, analysis_id: uuid.UUID, tenant_id: uuid.UUID,
+        self,
+        analysis_id: uuid.UUID,
+        tenant_id: uuid.UUID,
     ) -> TaxPlanAnalysis | None:
         result = await self.session.execute(
             select(TaxPlanAnalysis).where(
@@ -270,7 +272,9 @@ class AnalysisRepository:
         return result.scalar_one_or_none()
 
     async def get_current_for_plan(
-        self, tax_plan_id: uuid.UUID, tenant_id: uuid.UUID,
+        self,
+        tax_plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
     ) -> TaxPlanAnalysis | None:
         result = await self.session.execute(
             select(TaxPlanAnalysis).where(
@@ -282,7 +286,9 @@ class AnalysisRepository:
         return result.scalar_one_or_none()
 
     async def list_versions(
-        self, tax_plan_id: uuid.UUID, tenant_id: uuid.UUID,
+        self,
+        tax_plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
     ) -> list[TaxPlanAnalysis]:
         result = await self.session.execute(
             select(TaxPlanAnalysis)
@@ -295,7 +301,9 @@ class AnalysisRepository:
         return list(result.scalars().all())
 
     async def update(
-        self, analysis: TaxPlanAnalysis, data: dict[str, Any],
+        self,
+        analysis: TaxPlanAnalysis,
+        data: dict[str, Any],
     ) -> TaxPlanAnalysis:
         for key, value in data.items():
             if hasattr(analysis, key) and value is not None:
@@ -305,7 +313,9 @@ class AnalysisRepository:
         return analysis
 
     async def set_current(
-        self, tax_plan_id: uuid.UUID, analysis_id: uuid.UUID,
+        self,
+        tax_plan_id: uuid.UUID,
+        analysis_id: uuid.UUID,
     ) -> None:
         """Mark one analysis as current, unmark all others for this plan."""
         await self.session.execute(
@@ -314,9 +324,7 @@ class AnalysisRepository:
             .values(is_current=False)
         )
         await self.session.execute(
-            update(TaxPlanAnalysis)
-            .where(TaxPlanAnalysis.id == analysis_id)
-            .values(is_current=True)
+            update(TaxPlanAnalysis).where(TaxPlanAnalysis.id == analysis_id).values(is_current=True)
         )
         await self.session.flush()
 
@@ -328,7 +336,8 @@ class ImplementationItemRepository:
         self.session = session
 
     async def create_batch(
-        self, items: list[dict[str, Any]],
+        self,
+        items: list[dict[str, Any]],
     ) -> list[ImplementationItem]:
         records = [ImplementationItem(**item) for item in items]
         self.session.add_all(records)
@@ -338,7 +347,9 @@ class ImplementationItemRepository:
         return records
 
     async def list_by_analysis(
-        self, analysis_id: uuid.UUID, tenant_id: uuid.UUID,
+        self,
+        analysis_id: uuid.UUID,
+        tenant_id: uuid.UUID,
     ) -> list[ImplementationItem]:
         result = await self.session.execute(
             select(ImplementationItem)
@@ -351,7 +362,9 @@ class ImplementationItemRepository:
         return list(result.scalars().all())
 
     async def get_by_id(
-        self, item_id: uuid.UUID, tenant_id: uuid.UUID,
+        self,
+        item_id: uuid.UUID,
+        tenant_id: uuid.UUID,
     ) -> ImplementationItem | None:
         result = await self.session.execute(
             select(ImplementationItem).where(

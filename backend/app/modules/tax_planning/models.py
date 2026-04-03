@@ -310,7 +310,10 @@ class TaxPlanAnalysis(BaseModel, TenantMixin):
     )
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     is_current: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=True, server_default="true",
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
     )
     status: Mapped[str] = mapped_column(
         String(20),
@@ -343,13 +346,16 @@ class TaxPlanAnalysis(BaseModel, TenantMixin):
     generation_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     token_usage: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     generated_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True,
+        UUID(as_uuid=True),
+        nullable=True,
     )
     reviewed_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True,
+        UUID(as_uuid=True),
+        nullable=True,
     )
     shared_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True,
+        DateTime(timezone=True),
+        nullable=True,
     )
 
     # Relationships
@@ -388,15 +394,20 @@ class ImplementationItem(BaseModel, TenantMixin):
     strategy_ref: Mapped[str | None] = mapped_column(String(100), nullable=True)
     deadline: Mapped[datetime | None] = mapped_column(Date, nullable=True)
     estimated_saving: Mapped[Decimal | None] = mapped_column(
-        Numeric(12, 2), nullable=True,
+        Numeric(12, 2),
+        nullable=True,
     )
     entity_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True,
+        UUID(as_uuid=True),
+        nullable=True,
     )
     risk_rating: Mapped[str | None] = mapped_column(String(20), nullable=True)
     compliance_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     client_visible: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=True, server_default="true",
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
     )
     status: Mapped[str] = mapped_column(
         String(20),
@@ -405,7 +416,8 @@ class ImplementationItem(BaseModel, TenantMixin):
         server_default="pending",
     )
     completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True,
+        DateTime(timezone=True),
+        nullable=True,
     )
     completed_by: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
