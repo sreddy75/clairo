@@ -182,6 +182,10 @@ class TaxPlanningService:
             )
         except Exception as e:
             logger.error("Xero P&L pull failed", exc_info=True)
+            import contextlib
+
+            with contextlib.suppress(Exception):
+                await self.session.rollback()
             raise XeroPullError(str(e)) from e
 
         # Transform Xero summary into financials_data format
@@ -219,6 +223,13 @@ class TaxPlanningService:
             financials_data["unreconciled_summary"] = unreconciled
         except Exception:
             logger.warning("Bank context fetch failed, proceeding without", exc_info=True)
+            # Rollback to clear any failed transaction state from bank context queries
+            try:
+                await self.session.rollback()
+                # Re-fetch plan since rollback expires ORM objects
+                plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
+            except Exception:
+                pass
 
         await self.plan_repo.update(
             plan,
