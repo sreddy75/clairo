@@ -3657,6 +3657,7 @@ class XeroReportService:
         report_type: str,
         period_key: str,
         force_refresh: bool = False,
+        to_date_override: str | None = None,
     ) -> dict[str, Any]:
         """Get a report, from cache if available or fetch from Xero.
 
@@ -3665,6 +3666,9 @@ class XeroReportService:
             report_type: Type of report (e.g., 'profit_and_loss').
             period_key: Period identifier (e.g., '2025-FY', '2025-12').
             force_refresh: If True, bypass cache and fetch fresh data.
+            to_date_override: Optional ISO date string to cap the report
+                to_date (e.g. reconciliation date). When set, the cache
+                key is adjusted so different caps get separate entries.
 
         Returns:
             Report data dict with summary and rows.
@@ -3717,12 +3721,21 @@ class XeroReportService:
             )
             return await self._compute_aged_payables(connection_id)
 
+        # When to_date is overridden, use a composite cache key so
+        # different caps (e.g. different reconciliation dates) get
+        # separate cache entries.
+        cache_period_key = (
+            f"{period_key}__to_{to_date_override}"
+            if to_date_override
+            else period_key
+        )
+
         # Check cache first (unless forcing refresh)
         if not force_refresh:
             cached = await self.report_repo.get_cached_report(
                 connection_id=connection_id,
                 report_type=report_type_enum,
-                period_key=period_key,
+                period_key=cache_period_key,
                 include_expired=False,
             )
             if cached:
@@ -3731,14 +3744,14 @@ class XeroReportService:
                     extra={
                         "connection_id": str(connection_id),
                         "report_type": report_type,
-                        "period_key": period_key,
+                        "period_key": cache_period_key,
                     },
                 )
                 # Log audit event for report access
                 await self._log_report_access(
                     connection_id=connection_id,
                     report_type=report_type,
-                    period_key=period_key,
+                    period_key=cache_period_key,
                     source="cache",
                 )
                 return self._report_to_dict(cached)
@@ -3748,6 +3761,8 @@ class XeroReportService:
             connection_id=connection_id,
             report_type=report_type_enum,
             period_key=period_key,
+            to_date_override=to_date_override,
+            cache_period_key=cache_period_key,
         )
 
     async def list_report_statuses(
@@ -3973,6 +3988,8 @@ class XeroReportService:
         period_key: str,
         triggered_by: str = "on_demand",
         user_id: UUID | None = None,
+        to_date_override: str | None = None,
+        cache_period_key: str | None = None,
     ) -> dict[str, Any]:
         """Fetch a report from Xero and cache it.
 
@@ -3982,6 +3999,9 @@ class XeroReportService:
             period_key: Period identifier.
             triggered_by: How the sync was triggered.
             user_id: User who triggered the sync.
+            to_date_override: Optional ISO date to cap the report to_date.
+            cache_period_key: Period key to use for cache storage (includes
+                override suffix when to_date_override is set).
 
         Returns:
             Report data dict.
@@ -4011,6 +4031,8 @@ class XeroReportService:
 
             # Parse period key to get date range
             from_date, to_date = self._parse_period_key(period_key)
+            if to_date_override:
+                to_date = to_date_override
 
             # Fetch report from Xero based on type
             async with XeroClient(self.settings.xero) as client:
@@ -4054,7 +4076,7 @@ class XeroReportService:
                 "tenant_id": connection.tenant_id,
                 "connection_id": connection_id,
                 "report_type": report_type,
-                "period_key": period_key,
+                "period_key": cache_period_key or period_key,
                 "xero_report_id": metadata.get("xero_report_id"),
                 "report_name": metadata.get("report_name", report_type.value),
                 "report_titles": metadata.get("report_titles", []),
@@ -4081,7 +4103,7 @@ class XeroReportService:
             await self._log_report_access(
                 connection_id=connection_id,
                 report_type=report_type.value,
-                period_key=period_key,
+                period_key=cache_period_key or period_key,
                 source="xero_api",
             )
 
@@ -4284,7 +4306,7 @@ class XeroReportService:
             report_type="bank_summary",
             period_key="current",
         )
-        rows_data = report_data.get("rows_data", [])
+        rows_data = report_data.get("rows", [])
         if not rows_data:
             return []
         return BankSummaryTransformer.extract_per_account_summary(rows_data)

@@ -5,7 +5,7 @@ Orchestrates Xero data pull, tax calculation, plan CRUD, and AI chat.
 
 import logging
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -172,13 +172,30 @@ class TaxPlanningService:
         if not plan.xero_connection_id:
             raise NoXeroConnectionError()
 
+        report_service = XeroReportService(self.session, self.settings)
+
+        # Fetch reconciliation date first so we can cap the P&L period.
+        # On accrual basis, Xero includes all approved invoices within the
+        # date range — sales invoices created ahead of time inflate income
+        # beyond what has actually been reconciled.
         try:
-            report_service = XeroReportService(self.session, self.settings)
+            recon_date = await report_service.get_last_reconciliation_date(
+                plan.xero_connection_id,
+            )
+        except Exception:
+            logger.warning("Reconciliation date fetch failed, using today", exc_info=True)
+            recon_date = None
+
+        # Cap P&L to_date at the earlier of reconciliation date or today
+        effective_to = min(recon_date, date.today()).isoformat() if recon_date else date.today().isoformat()
+
+        try:
             report_data = await report_service.get_report(
                 connection_id=plan.xero_connection_id,
                 report_type="profit_and_loss",
                 period_key=f"{plan.financial_year[:4]}-FY",
                 force_refresh=force_refresh,
+                to_date_override=effective_to,
             )
         except Exception as e:
             logger.error("Xero P&L pull failed", exc_info=True)
@@ -196,11 +213,9 @@ class TaxPlanningService:
         now = datetime.now(UTC)
 
         # Fetch bank context (FR-015, FR-016, FR-017, FR-018)
+        # recon_date was already fetched above for the P&L date cap
         try:
             bank_balances = await report_service.get_bank_balances(plan.xero_connection_id)
-            recon_date = await report_service.get_last_reconciliation_date(
-                plan.xero_connection_id,
-            )
             unreconciled = await self._get_unreconciled_summary(
                 plan.xero_connection_id, plan.financial_year
             )

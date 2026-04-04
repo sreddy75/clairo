@@ -520,6 +520,23 @@ export default function AssistantPage() {
     }
   };
 
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file && file.size <= 10 * 1024 * 1024) {
+          setSelectedFile(file);
+        } else if (file) {
+          alert('File too large. Maximum size is 10MB.');
+        }
+        return;
+      }
+    }
+  }, []);
+
   // Determine if we're in initial mode selection (no messages, no client selected)
   const showModeSelection = messages.length === 0 && !selectedClient && !showClientSearch && !generalModeActive;
 
@@ -1055,6 +1072,7 @@ export default function AssistantPage() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
+                      onPaste={handlePaste}
                       placeholder={selectedClient ? `Ask about ${selectedClient.name}...` : 'Ask about tax, GST, BAS, compliance...'}
                       rows={1}
                       className="w-full px-4 py-3 bg-background border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground placeholder:text-muted-foreground text-sm"

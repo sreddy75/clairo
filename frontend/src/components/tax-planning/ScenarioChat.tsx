@@ -98,6 +98,23 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
     e.target.value = '';
   };
 
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file && file.size <= 10 * 1024 * 1024) {
+          setSelectedFile(file);
+        } else if (file) {
+          alert('File too large. Maximum size is 10MB.');
+        }
+        return;
+      }
+    }
+  }, []);
+
   const handleSend = async () => {
     if ((!input.trim() && !selectedFile) || isLoading || disabled) return;
 
@@ -312,6 +329,7 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder={
                 disabled
                   ? 'Load financials first to enable AI chat'
