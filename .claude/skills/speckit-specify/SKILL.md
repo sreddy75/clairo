@@ -1,6 +1,8 @@
 ---
-description: Create or update the feature specification from a natural language feature description.
+name: speckit-specify
+description: "Create or update the feature specification from a natural language feature description. Use when the user says \"/speckit.specify\" or asks to specify a spec."
 ---
+
 
 ## User Input
 

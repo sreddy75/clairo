@@ -1,6 +1,8 @@
 ---
-description: Execute the implementation planning workflow using the plan template to generate design artifacts.
+name: speckit-plan
+description: "Execute the implementation planning workflow using the plan template to generate design artifacts. Use when the user says \"/speckit.plan\" or asks to plan a spec."
 ---
+
 
 ## User Input
 

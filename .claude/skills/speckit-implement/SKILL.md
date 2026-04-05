@@ -1,6 +1,8 @@
 ---
-description: Execute the implementation plan by processing and executing all tasks defined in tasks.md
+name: speckit-implement
+description: "Execute the implementation plan by processing and executing all tasks defined in tasks.md Use when the user says \"/speckit.implement\" or asks to implement a spec."
 ---
+
 
 ## User Input
 
