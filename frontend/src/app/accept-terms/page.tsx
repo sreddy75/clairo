@@ -1,8 +1,10 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,7 +15,6 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TOS_VERSION } from "@/lib/constants";
-import Link from "next/link";
 
 export default function AcceptTermsPage() {
   const { getToken } = useAuth();
