@@ -377,6 +377,27 @@ class TaxCodeService:
             },
         )
 
+        # Core audit trail for AI suggestion approval
+        try:
+            from app.core.audit import AuditService
+
+            audit = AuditService(self.session)
+            await audit.log_event(
+                event_type="ai.suggestion.approved",
+                event_category="data",
+                actor_type="user",
+                actor_id=user_id,
+                tenant_id=tenant_id,
+                resource_type="tax_code_suggestion",
+                resource_id=suggestion_id,
+                action="update",
+                outcome="success",
+                old_values={"ai_suggested": suggestion.suggested_tax_type},
+                new_values={"applied": suggestion.applied_tax_type},
+            )
+        except Exception:
+            pass
+
         return suggestion
 
     async def reject_suggestion(
@@ -408,6 +429,27 @@ class TaxCodeService:
                 "reason": reason,
             },
         )
+
+        # Core audit trail for AI suggestion rejection
+        try:
+            from app.core.audit import AuditService
+
+            audit = AuditService(self.session)
+            await audit.log_event(
+                event_type="ai.suggestion.rejected",
+                event_category="data",
+                actor_type="user",
+                actor_id=user_id,
+                tenant_id=tenant_id,
+                resource_type="tax_code_suggestion",
+                resource_id=suggestion_id,
+                action="update",
+                outcome="success",
+                old_values={"ai_suggested": suggestion.suggested_tax_type},
+                new_values={"rejected": True, "reason": reason},
+            )
+        except Exception:
+            pass
 
         return suggestion
 
@@ -447,6 +489,27 @@ class TaxCodeService:
                 "reason": reason,
             },
         )
+
+        # Core audit trail for AI suggestion override (modified)
+        try:
+            from app.core.audit import AuditService
+
+            audit = AuditService(self.session)
+            await audit.log_event(
+                event_type="ai.suggestion.modified",
+                event_category="data",
+                actor_type="user",
+                actor_id=user_id,
+                tenant_id=tenant_id,
+                resource_type="tax_code_suggestion",
+                resource_id=suggestion_id,
+                action="update",
+                outcome="success",
+                old_values={"ai_suggested": suggestion.suggested_tax_type},
+                new_values={"override": tax_type, "reason": reason},
+            )
+        except Exception:
+            pass
 
         return suggestion
 
@@ -1126,6 +1189,26 @@ If you cannot classify with reasonable confidence, set tax_type to null and conf
                             "suggestion_basis": "Could not classify with sufficient confidence",
                         }
                     )
+
+            # Audit log AI classification
+            try:
+                from app.core.audit import AuditService
+
+                audit = AuditService(self.session)
+                await audit.log_event(
+                    event_type="ai.bas.classification",
+                    event_category="data",
+                    action="create",
+                    outcome="success",
+                    metadata={
+                        "model": "claude-sonnet-4-20250514",
+                        "items_count": len(items),
+                        "classified_count": sum(1 for r in results if r["suggested_tax_type"]),
+                        "tier": "llm_classification",
+                    },
+                )
+            except Exception:
+                pass
 
             return results
 

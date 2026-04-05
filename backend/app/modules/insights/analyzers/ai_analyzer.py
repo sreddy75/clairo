@@ -380,6 +380,25 @@ class AIAnalyzer(BaseAnalyzer):
 
             insights_data = json.loads(response_text)
 
+            # Audit log AI analysis
+            try:
+                from app.core.audit import AuditService
+
+                audit = AuditService(self.db)
+                await audit.log_event(
+                    event_type="ai.insights.analysis",
+                    event_category="data",
+                    action="create",
+                    outcome="success",
+                    metadata={
+                        "model": "claude-sonnet-4-20250514",
+                        "input_tokens": getattr(response.usage, "input_tokens", None),
+                        "output_tokens": getattr(response.usage, "output_tokens", None),
+                    },
+                )
+            except Exception:
+                pass
+
             if isinstance(insights_data, dict) and "insights" in insights_data:
                 return insights_data["insights"]
             elif isinstance(insights_data, list):

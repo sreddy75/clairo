@@ -630,3 +630,228 @@ async def get_revenue_trends(
 ) -> RevenueTrendsResponse:
     """Get revenue trends over time."""
     return await service.get_revenue_trends(period=period, lookback_days=lookback_days)
+
+
+# =============================================================================
+# Audit Log Endpoints (Spec 052)
+# =============================================================================
+
+
+@router.get(
+    "/audit",
+    summary="List audit events",
+    description="Paginated, filterable audit log for the current tenant.",
+)
+async def list_audit_events(
+    admin_user: Annotated[PracticeUser, Depends(require_admin())],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=50, ge=1, le=100),
+    event_type: str | None = Query(default=None),
+    event_category: str | None = Query(default=None),
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
+) -> dict:
+    """List audit events for the admin's tenant."""
+    from sqlalchemy import func, select
+
+    from app.core.audit import AuditLog
+    from app.modules.admin.schemas import AuditLogItem, AuditLogListResponse
+
+    tenant_id = admin_user.tenant_id
+
+    query = select(AuditLog).where(AuditLog.tenant_id == tenant_id)
+
+    if event_type:
+        query = query.where(AuditLog.event_type.startswith(event_type))
+    if event_category:
+        query = query.where(AuditLog.event_category == event_category)
+    if date_from:
+        from datetime import datetime as dt
+
+        query = query.where(AuditLog.occurred_at >= dt.fromisoformat(date_from))
+    if date_to:
+        from datetime import datetime as dt
+
+        query = query.where(AuditLog.occurred_at <= dt.fromisoformat(date_to))
+
+    # Count
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await session.execute(count_query)).scalar() or 0
+
+    # Paginate
+    query = query.order_by(AuditLog.occurred_at.desc())
+    query = query.offset((page - 1) * per_page).limit(per_page)
+    result = await session.execute(query)
+    rows = result.scalars().all()
+
+    items = [
+        AuditLogItem(
+            id=r.id,
+            occurred_at=r.occurred_at,
+            event_type=r.event_type,
+            event_category=r.event_category,
+            actor_email=r.actor_email,
+            resource_type=r.resource_type,
+            resource_id=r.resource_id,
+            action=r.action,
+            outcome=r.outcome,
+            metadata=r.metadata,
+        )
+        for r in rows
+    ]
+
+    pages = (total + per_page - 1) // per_page
+    return AuditLogListResponse(
+        items=items, total=total, page=page, per_page=per_page, pages=pages
+    ).model_dump()
+
+
+@router.get(
+    "/audit/summary",
+    summary="Audit log summary",
+    description="Aggregated statistics for the audit log.",
+)
+async def get_audit_summary(
+    admin_user: Annotated[PracticeUser, Depends(require_admin())],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> dict:
+    """Get summary stats for the tenant's audit log."""
+    from sqlalchemy import func, select
+
+    from app.core.audit import AuditLog
+    from app.modules.admin.schemas import AuditSummaryResponse
+
+    tenant_id = admin_user.tenant_id
+
+    # Total
+    total = (
+        await session.execute(
+            select(func.count()).where(AuditLog.tenant_id == tenant_id)
+        )
+    ).scalar() or 0
+
+    # By category
+    cat_rows = (
+        await session.execute(
+            select(AuditLog.event_category, func.count())
+            .where(AuditLog.tenant_id == tenant_id)
+            .group_by(AuditLog.event_category)
+        )
+    ).all()
+    by_category = {row[0]: row[1] for row in cat_rows}
+
+    # By event type (top 20)
+    type_rows = (
+        await session.execute(
+            select(AuditLog.event_type, func.count())
+            .where(AuditLog.tenant_id == tenant_id)
+            .group_by(AuditLog.event_type)
+            .order_by(func.count().desc())
+            .limit(20)
+        )
+    ).all()
+    by_event_type = {row[0]: row[1] for row in type_rows}
+
+    # AI suggestion stats
+    ai_approved = (
+        await session.execute(
+            select(func.count()).where(
+                AuditLog.tenant_id == tenant_id,
+                AuditLog.event_type == "ai.suggestion.approved",
+            )
+        )
+    ).scalar() or 0
+    ai_modified = (
+        await session.execute(
+            select(func.count()).where(
+                AuditLog.tenant_id == tenant_id,
+                AuditLog.event_type == "ai.suggestion.modified",
+            )
+        )
+    ).scalar() or 0
+    ai_rejected = (
+        await session.execute(
+            select(func.count()).where(
+                AuditLog.tenant_id == tenant_id,
+                AuditLog.event_type == "ai.suggestion.rejected",
+            )
+        )
+    ).scalar() or 0
+
+    return AuditSummaryResponse(
+        total_events=total,
+        by_category=by_category,
+        by_event_type=by_event_type,
+        ai_suggestions={
+            "approved": ai_approved,
+            "modified": ai_modified,
+            "rejected": ai_rejected,
+            "total": ai_approved + ai_modified + ai_rejected,
+        },
+    ).model_dump()
+
+
+@router.get(
+    "/audit/export",
+    summary="Export audit log as CSV",
+    description="Stream audit events as CSV download.",
+)
+async def export_audit_csv(
+    admin_user: Annotated[PracticeUser, Depends(require_admin())],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    event_type: str | None = Query(default=None),
+    event_category: str | None = Query(default=None),
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
+    max_rows: int = Query(default=50000, ge=1, le=50000),
+) -> "StreamingResponse":
+    """Export audit log as CSV."""
+    import csv
+    import io
+
+    from fastapi.responses import StreamingResponse
+    from sqlalchemy import select
+
+    from app.core.audit import AuditLog
+
+    tenant_id = admin_user.tenant_id
+    query = select(AuditLog).where(AuditLog.tenant_id == tenant_id)
+
+    if event_type:
+        query = query.where(AuditLog.event_type.startswith(event_type))
+    if event_category:
+        query = query.where(AuditLog.event_category == event_category)
+    if date_from:
+        from datetime import datetime as dt
+
+        query = query.where(AuditLog.occurred_at >= dt.fromisoformat(date_from))
+    if date_to:
+        from datetime import datetime as dt
+
+        query = query.where(AuditLog.occurred_at <= dt.fromisoformat(date_to))
+
+    query = query.order_by(AuditLog.occurred_at.desc()).limit(max_rows)
+    result = await session.execute(query)
+    rows = result.scalars().all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "occurred_at", "event_type", "event_category", "actor_email",
+        "resource_type", "resource_id", "action", "outcome", "metadata",
+    ])
+    for r in rows:
+        writer.writerow([
+            r.occurred_at.isoformat() if r.occurred_at else "",
+            r.event_type, r.event_category, r.actor_email or "",
+            r.resource_type or "", str(r.resource_id) if r.resource_id else "",
+            r.action, r.outcome, str(r.metadata) if r.metadata else "",
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=audit_log.csv"},
+    )

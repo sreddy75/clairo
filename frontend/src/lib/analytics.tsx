@@ -19,7 +19,7 @@
  */
 
 import { useUser } from '@clerk/nextjs';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 // PostHog types (inline to avoid dependency until package is added)
 interface PostHogLike {
@@ -239,10 +239,56 @@ function UserIdentitySync(): null {
 export function AnalyticsProvider(): ReactNode {
   return (
     <>
-      <PostHogScript />
+      <ConsentGatedPostHog />
       <SentryScript />
     </>
   );
+}
+
+/**
+ * Consent-gated PostHog loader.
+ * Only loads PostHog after the user has explicitly accepted cookies.
+ * Sentry is loaded unconditionally (legitimate interest for error tracking).
+ */
+function ConsentGatedPostHog(): ReactNode {
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('clairo_cookie_consent');
+      if (stored) {
+        const data = JSON.parse(stored);
+        if (data.status === 'accepted') {
+          setShouldLoad(true);
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // Listen for consent changes (from CookieConsentBanner)
+    const handler = () => {
+      try {
+        const stored = localStorage.getItem('clairo_cookie_consent');
+        if (stored) {
+          const data = JSON.parse(stored);
+          setShouldLoad(data.status === 'accepted');
+        }
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('storage', handler);
+    // Custom event for same-tab updates
+    window.addEventListener('cookie-consent-changed', handler);
+    return () => {
+      window.removeEventListener('storage', handler);
+      window.removeEventListener('cookie-consent-changed', handler);
+    };
+  }, []);
+
+  if (!shouldLoad) return null;
+  return <PostHogScript />;
 }
 
 /**

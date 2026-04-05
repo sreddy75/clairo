@@ -325,3 +325,40 @@ class TopUsersResponse(BaseModel):
 
     metric: str = Field(description="Metric used for ranking")
     users: list[TopUserEntry] = Field(description="Top users list")
+
+
+# ── Audit Log Schemas (Spec 052) ─────────────────────────────────────────
+
+
+class AuditLogItem(BaseModel):
+    """Single audit log entry."""
+
+    id: UUID
+    occurred_at: datetime
+    event_type: str
+    event_category: str
+    actor_email: str | None = None
+    resource_type: str | None = None
+    resource_id: UUID | None = None
+    action: str
+    outcome: str
+    metadata: dict | None = None
+
+
+class AuditLogListResponse(BaseModel):
+    """Paginated audit log response."""
+
+    items: list[AuditLogItem]
+    total: int
+    page: int
+    per_page: int
+    pages: int
+
+
+class AuditSummaryResponse(BaseModel):
+    """Summary statistics for the audit log."""
+
+    total_events: int
+    by_category: dict[str, int]
+    by_event_type: dict[str, int]
+    ai_suggestions: dict[str, int]

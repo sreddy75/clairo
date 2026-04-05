@@ -495,6 +495,26 @@ Please analyze the insights and provide a helpful response."""
                 messages=[{"role": "user", "content": user_prompt}],
             )
             ai_response = response.content[0].text
+
+            # Audit log AI query
+            try:
+                from app.core.audit import AuditService
+
+                audit = AuditService(self.session)
+                await audit.log_event(
+                    event_type="ai.insights.summary",
+                    event_category="data",
+                    action="create",
+                    outcome="success",
+                    metadata={
+                        "model": "claude-sonnet-4-20250514",
+                        "input_tokens": getattr(response.usage, "input_tokens", None),
+                        "output_tokens": getattr(response.usage, "output_tokens", None),
+                    },
+                )
+            except Exception:
+                pass
+
         except Exception as e:
             logger.error(f"AI query failed: {e}")
             return MultiClientQueryResponse(

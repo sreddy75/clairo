@@ -2,6 +2,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Sora, Plus_Jakarta_Sans } from 'next/font/google';
 
+import { CookieConsentBanner } from '@/components/CookieConsentBanner';
 import { AnalyticsProvider } from '@/lib/analytics';
 
 import { Providers } from './providers';
@@ -45,6 +46,29 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  openGraph: {
+    type: 'website',
+    locale: 'en_AU',
+    siteName: 'Clairo',
+    title: 'Clairo — AI-Powered Tax & Advisory Platform',
+    description:
+      'Decision support for Australian accounting practices. BAS preparation, tax planning, and compliance — powered by AI.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Clairo — AI-Powered Tax & Advisory Platform',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Clairo — AI-Powered Tax & Advisory Platform',
+    description:
+      'Decision support for Australian accounting practices. BAS preparation, tax planning, and compliance — powered by AI.',
+    images: ['/og-image.png'],
+  },
   other: {
     'mobile-web-app-capable': 'yes',
   },
@@ -74,6 +98,7 @@ export default function RootLayout({
       </head>
       <body className={`${sora.variable} ${jakarta.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
+        <CookieConsentBanner />
         <SpeedInsights />
       </body>
     </html>

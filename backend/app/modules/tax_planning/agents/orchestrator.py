@@ -192,6 +192,31 @@ class AnalysisPipelineOrchestrator:
                 review_passed,
             )
 
+            # Audit log the complete analysis run
+            try:
+                from app.core.audit import AuditService
+
+                audit = AuditService(self.session)
+                await audit.log_event(
+                    event_type="ai.tax_planning.analysis",
+                    event_category="data",
+                    tenant_id=tenant_id,
+                    resource_type="tax_plan_analysis",
+                    resource_id=analysis_id,
+                    action="create",
+                    outcome="success",
+                    metadata={
+                        "plan_id": str(plan_id),
+                        "strategies_count": len(strategies),
+                        "scenarios_count": len(scenarios),
+                        "review_passed": review_passed,
+                        "generation_time_ms": elapsed_ms,
+                        "token_usage": token_usage,
+                    },
+                )
+            except Exception:
+                pass  # Never let audit failure break the main flow
+
             return analysis_id
 
         except Exception:

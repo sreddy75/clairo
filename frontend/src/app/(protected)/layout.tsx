@@ -14,6 +14,7 @@ import {
   ListChecks,
   MessageSquareText,
   Mic,
+  ScrollText,
   Search,
   Settings,
   ShieldCheck,
@@ -76,6 +77,7 @@ const adminNavigation: NavItem[] = [
   { name: 'Usage', href: '/admin/usage', icon: BarChart3 },
   { name: 'Knowledge Base', href: '/admin/knowledge', icon: Library },
   { name: 'Triggers', href: '/admin/triggers', icon: Zap },
+  { name: 'Audit Log', href: '/admin/audit', icon: ScrollText },
   { name: 'Admin', href: '/internal/admin', icon: ShieldCheck },
 ];
 

@@ -920,13 +920,16 @@ function Footer() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Clairo. All rights reserved.
-          </p>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>&copy; {new Date().getFullYear()} KR8IT Pty Ltd. All rights reserved.</p>
+            <p>ABN: 50 676 613 284 | <a href="mailto:support@clairo.com.au" className="hover:text-foreground">support@clairo.com.au</a></p>
+          </div>
           <div className="flex items-center gap-6 text-xs text-muted-foreground">
             <span>ATO Compliant</span>
             <span className="w-px h-3 bg-border" />
             <span>Australian Hosted</span>
+            <span className="w-px h-3 bg-border" />
+            <span>Encrypted at rest &amp; in transit</span>
           </div>
         </div>
       </div>

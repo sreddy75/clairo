@@ -273,7 +273,8 @@
       "WebFetch(domain:minesite.io)",
       "WebFetch(domain:seamsight.com)",
       "WebFetch(domain:vein.io)",
-      "WebFetch(domain:www.getseam.ai)"
+      "WebFetch(domain:www.getseam.ai)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

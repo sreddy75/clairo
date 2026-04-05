@@ -900,6 +900,29 @@ class TaxPlanningService:
             }
         )
 
+        # Audit log AI interaction
+        try:
+            from app.core.audit import AuditService
+
+            audit = AuditService(self.session)
+            await audit.log_event(
+                event_type="ai.tax_planning.chat",
+                event_category="data",
+                tenant_id=tenant_id,
+                resource_type="tax_plan",
+                resource_id=plan_id,
+                action="create",
+                outcome="success",
+                metadata={
+                    "model": response.token_usage.get("model", "claude-sonnet") if response.token_usage else None,
+                    "input_tokens": response.token_usage.get("input_tokens") if response.token_usage else None,
+                    "output_tokens": response.token_usage.get("output_tokens") if response.token_usage else None,
+                    "scenarios_count": len(response.scenarios),
+                },
+            )
+        except Exception:
+            pass  # Never let audit failure break the main flow
+
         return {
             "message": assistant_msg,
             "scenarios_created": created_scenarios,

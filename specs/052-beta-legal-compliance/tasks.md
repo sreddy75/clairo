@@ -130,36 +130,36 @@
 
 ### Implementation
 
-- [ ] T025 [P] [US3] Create tax planning audit events file at `backend/app/modules/tax_planning/audit_events.py`
+- [x] T025 [P] [US3] Create tax planning audit events file at `backend/app/modules/tax_planning/audit_events.py`
   - Define `TAX_PLANNING_AUDIT_EVENTS` dict with event types: `ai.tax_planning.chat`, `ai.tax_planning.analysis`. Include category, description, retention.
-- [ ] T026 [P] [US3] Create BAS audit events file at `backend/app/modules/bas/audit_events.py`
+- [x] T026 [P] [US3] Create BAS audit events file at `backend/app/modules/bas/audit_events.py`
   - Define `BAS_AI_AUDIT_EVENTS` dict with event types: `ai.bas.classification`, `ai.bas.client_classification`. Include category, description, retention. (Note: a `bas_audit_log` table exists for BAS session events — these new events go to the core `audit_logs` table for AI-specific calls.)
-- [ ] T027 [US3] Add AuditService calls to tax planning chat in `backend/app/modules/tax_planning/service.py`
+- [x] T027 [US3] Add AuditService calls to tax planning chat in `backend/app/modules/tax_planning/service.py`
   - After non-streaming AI chat (~line 840-854): log `ai.tax_planning.chat` with model, input_tokens, output_tokens, plan_id, scenarios_count in metadata.
   - After streaming chat (~line 963-1003): log at stream completion with token usage.
-- [ ] T028 [US3] Add AuditService calls to multi-agent orchestrator in `backend/app/modules/tax_planning/agents/orchestrator.py`
+- [x] T028 [US3] Add AuditService calls to multi-agent orchestrator in `backend/app/modules/tax_planning/agents/orchestrator.py`
   - After each sub-agent call (~line 66-170): log `ai.tax_planning.analysis` with agent_role, model, input_tokens, output_tokens, plan_id in metadata.
-- [ ] T029 [US3] Add AuditService calls to BAS LLM classification in `backend/app/modules/bas/tax_code_service.py`
+- [x] T029 [US3] Add AuditService calls to BAS LLM classification in `backend/app/modules/bas/tax_code_service.py`
   - After `suggest_from_llm()` (~line 1079-1084): log `ai.bas.classification` with model, transaction_id (or hash), suggested_code, confidence, tier.
   - After `suggest_from_client_input()` (~line 1201-1203): log `ai.bas.client_classification` with model, classification_result.
-- [ ] T030 [US3] Add AuditService calls to insights AI analyzer in `backend/app/modules/insights/analyzers/ai_analyzer.py`
+- [x] T030 [US3] Add AuditService calls to insights AI analyzer in `backend/app/modules/insights/analyzers/ai_analyzer.py`
   - After AI analysis (~line 360-362): log `ai.insights.analysis` with model, analysis_type, input_tokens, output_tokens.
-- [ ] T031 [US3] Add AuditService calls to insights summarizer in `backend/app/modules/insights/service.py`
+- [x] T031 [US3] Add AuditService calls to insights summarizer in `backend/app/modules/insights/service.py`
   - After AI summarization (~line 490-492): log `ai.insights.summary` with model, summary_length, input_tokens, output_tokens.
-- [ ] T032 [US3] Add human override audit logging to tax code resolution flow
+- [x] T032 [US3] Add human override audit logging to tax code resolution flow
   - Find where accountant approve/modify/reject actions are persisted (tax code suggestions or overrides). Add `AuditService.log_event()` calls logging `ai.suggestion.approved`, `ai.suggestion.modified`, or `ai.suggestion.rejected` with old_values (AI suggestion) and new_values (accountant's choice).
-- [ ] T033 [P] [US3] Create admin audit response schemas at `backend/app/modules/admin/schemas.py`
+- [x] T033 [P] [US3] Create admin audit response schemas at `backend/app/modules/admin/schemas.py`
   - Create (or add to existing) admin schemas: `AuditLogListResponse` (paginated list), `AuditLogItem`, `AuditSummaryResponse`, `AuditExportParams`.
-- [ ] T034 [US3] Create admin audit router at `backend/app/modules/admin/router.py`
+- [x] T034 [US3] Create admin audit router at `backend/app/modules/admin/router.py`
   - `GET /api/v1/admin/audit` — paginated, filterable audit log list (query params: page, per_page, event_type, event_category, actor_id, date_from, date_to, resource_type). Scoped to current tenant.
   - `GET /api/v1/admin/audit/export` — streaming CSV export with same filter params. Max 50,000 rows.
   - `GET /api/v1/admin/audit/summary` — aggregated stats (total events, by category, by type, AI suggestion approve/modify/reject counts).
   - Register router in `backend/app/main.py` if not already included.
-- [ ] T035 [US3] Build admin audit log viewer page at `frontend/src/app/(protected)/admin/audit/page.tsx`
+- [x] T035 [US3] Build admin audit log viewer page at `frontend/src/app/(protected)/admin/audit/page.tsx`
   - Paginated table of audit events using shadcn/ui `Table`. Filters: date range (date picker), event type (select), event category (select), actor (search). Export CSV button. Summary cards at the top (total events, AI suggestions breakdown).
-- [ ] T036 [US3] Add audit log nav entry to admin navigation in `frontend/src/app/(protected)/layout.tsx`
+- [x] T036 [US3] Add audit log nav entry to admin navigation in `frontend/src/app/(protected)/layout.tsx`
   - Add `{ name: 'Audit Log', href: '/admin/audit', icon: ScrollText }` to the `adminNavigation` array (~line 75-80).
-- [ ] T037 [US3] Create API client functions for audit endpoints in `frontend/src/lib/api/admin.ts`
+- [x] T037 [US3] Create API client functions for audit endpoints in `frontend/src/lib/api/admin.ts`
   - Add `fetchAuditLog()`, `fetchAuditSummary()`, `exportAuditCSV()` functions calling the new admin audit endpoints.
 
 **Checkpoint**: All AI modules log to audit trail. Human overrides logged with before/after. Admin can view, filter, and export audit log.
@@ -174,19 +174,19 @@
 
 ### Implementation
 
-- [ ] T038 [P] [US4] Add Open Graph meta tags to root layout at `frontend/src/app/layout.tsx`
+- [x] T038 [P] [US4] Add Open Graph meta tags to root layout at `frontend/src/app/layout.tsx`
   - Add `openGraph` to the existing `Metadata` export (~line 22-51): title, description, type ("website"), url, siteName, locale ("en_AU"), images (reference a static share image). Add `twitter` card metadata.
-- [ ] T039 [P] [US4] Create or verify social share image at `frontend/public/og-image.png`
+- [ ] T039 [P] [US4] DEFERRED: Create social share image `frontend/public/og-image.png` (requires design asset) at `frontend/public/og-image.png`
   - Add a branded OG image (1200x630px recommended). If no design asset exists, create a placeholder with Clairo logo and tagline.
-- [ ] T040 [P] [US4] Verify favicon sizes at `frontend/public/`
+- [ ] T040 [P] [US4] DEFERRED: Generate favicon sizes from logo (requires design asset) at `frontend/public/`
   - Confirm `favicon.ico` (16x16, 32x32), `apple-touch-icon.png` (180x180) exist. Add any missing sizes. Update `frontend/src/app/layout.tsx` `icons` metadata if needed.
-- [ ] T041 [US4] Update landing page footer at `frontend/src/app/page.tsx`
+- [x] T041 [US4] Update landing page footer at `frontend/src/app/page.tsx`
   - Add ABN to the footer (~line 888-932). Add support/contact email. Ensure legal page links point to correct routes (`/terms`, `/privacy`, `/acceptable-use`). Add "Acceptable Use" link alongside existing "Terms" and "Privacy" links.
-- [ ] T042 [US4] Add security/trust statement to landing page at `frontend/src/app/page.tsx`
+- [x] T042 [US4] Add security/trust statement to landing page at `frontend/src/app/page.tsx`
   - Add a section or badge near the existing "ATO Compliant" / "Australian Hosted" badges stating: "Your data is encrypted at rest and in transit. Hosted in Australian data centres."
-- [ ] T043 [US4] Verify and update pricing section at `frontend/src/app/page.tsx`
+- [ ] T043 [US4] DEFERRED: Verify pricing section (requires business decision on pricing tiers) at `frontend/src/app/page.tsx`
   - Ensure the pricing section has either real pricing tiers or a clear "Contact us for pricing" CTA with a link to the contact email or a booking page.
-- [ ] T044 [US4] Mobile responsive audit and fixes at `frontend/src/app/page.tsx`
+- [ ] T044 [US4] DEFERRED: Mobile responsive audit (requires visual QA testing) and fixes at `frontend/src/app/page.tsx`
   - Test at 375px viewport width. Fix any horizontal overflow, broken layouts, untappable CTAs. Check all sections: hero, problem, platform, how-it-works, pricing, footer.
 
 **Checkpoint**: OG tags work (test with a link preview tool). Mobile layout clean. Footer has ABN and contact info.
@@ -201,13 +201,13 @@
 
 ### Implementation
 
-- [ ] T045 [P] [US5] Create cookie consent hook at `frontend/src/hooks/useCookieConsent.ts`
+- [x] T045 [P] [US5] Create cookie consent hook at `frontend/src/hooks/useCookieConsent.ts`
   - Read/write `clairo_cookie_consent` from localStorage. Return `{consent: 'accepted' | 'declined' | null, accept(), decline()}`. Store as JSON: `{status, timestamp, version}`.
-- [ ] T046 [P] [US5] Create CookieConsentBanner component at `frontend/src/components/CookieConsentBanner.tsx`
+- [x] T046 [P] [US5] Create CookieConsentBanner component at `frontend/src/components/CookieConsentBanner.tsx`
   - Fixed to bottom of screen. Text: "We use cookies to improve your experience and analyze site usage." Accept and Decline buttons. Link to cookie policy (`/terms` or a dedicated `/cookies` section). Use shadcn/ui `Card` or custom banner styling. Animates away on choice.
-- [ ] T047 [US5] Modify analytics provider to gate on consent in `frontend/src/lib/analytics.tsx`
+- [x] T047 [US5] Modify analytics provider to gate on consent in `frontend/src/lib/analytics.tsx`
   - Import `useCookieConsent`. Only render PostHog `<script>` and Vercel Speed Insights when consent is `'accepted'`. Keep Sentry unconditional (legitimate interest for error tracking). When consent changes from null to accepted, dynamically load scripts.
-- [ ] T048 [US5] Add CookieConsentBanner to root layout at `frontend/src/app/layout.tsx`
+- [x] T048 [US5] Add CookieConsentBanner to root layout at `frontend/src/app/layout.tsx`
   - Render `<CookieConsentBanner />` in the root layout body so it appears on all pages (landing, auth, app). Only renders when consent is null.
 
 **Checkpoint**: Cookie consent works end-to-end. PostHog gated. Sentry still loads. Banner remembers preference.
