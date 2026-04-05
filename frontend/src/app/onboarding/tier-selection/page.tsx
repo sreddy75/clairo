@@ -41,7 +41,7 @@ export default function TierSelectionPage() {
         setAuthToken(token);
       }
 
-      await selectTierAndStartTrial('professional', true);
+      await selectTierAndStartTrial('starter', true);
       router.push('/onboarding/connect-xero');
     } catch (err) {
       console.error('Failed to start trial:', err);

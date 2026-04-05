@@ -49,13 +49,13 @@ class TierFeatures(TypedDict):
 
 TIER_FEATURES: dict[SubscriptionTierType, TierFeatures] = {
     "starter": {
-        "max_clients": 25,
-        "ai_insights": "basic",
-        "client_portal": False,
-        "custom_triggers": False,
+        "max_clients": None,  # Unlimited — single $299 plan
+        "ai_insights": "full",
+        "client_portal": True,
+        "custom_triggers": True,
         "api_access": False,
-        "knowledge_base": False,
-        "magic_zone": False,
+        "knowledge_base": True,
+        "magic_zone": True,
     },
     "professional": {
         "max_clients": 100,
@@ -96,7 +96,7 @@ TIER_ORDER: list[SubscriptionTierType] = [
 
 # Pricing in AUD cents
 TIER_PRICING: dict[SubscriptionTierType, int | None] = {
-    "starter": 9900,  # $99
+    "starter": 29900,  # $299
     "professional": 29900,  # $299
     "growth": 59900,  # $599
     "enterprise": None,  # Custom

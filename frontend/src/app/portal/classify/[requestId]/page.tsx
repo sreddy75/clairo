@@ -43,6 +43,7 @@ export default function ClassifyPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Load classification request data
   useEffect(() => {
@@ -50,6 +51,11 @@ export default function ClassifyPage() {
       try {
         const result = await portalApi.classify.getRequest(requestId);
         setData(result);
+        // Auto-expand first unclassified transaction
+        const firstUnclassified = result.transactions.find((t: Transaction) => !t.is_classified);
+        if (firstUnclassified) {
+          setExpandedId(firstUnclassified.id);
+        }
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : "Failed to load classification request";
@@ -83,6 +89,14 @@ export default function ClassifyPage() {
           t.id === classificationId ? { ...t, is_classified: true, current_category: saveData.category || t.current_category } : t
         );
         const classified = updated.filter((t) => t.is_classified).length;
+
+        // Auto-advance to next unclassified transaction
+        const currentIndex = updated.findIndex((t) => t.id === classificationId);
+        const nextUnclassified = updated.find(
+          (t, i) => i > currentIndex && !t.is_classified
+        ) || updated.find((t) => !t.is_classified);
+        setExpandedId(nextUnclassified?.id ?? null);
+
         return {
           ...prev,
           transactions: updated,
@@ -203,11 +217,15 @@ export default function ClassifyPage() {
       </Card>
 
       {/* Transaction list */}
-      <div className="space-y-3">
+      <div className="space-y-1">
         {data.transactions.map((transaction) => (
           <TransactionClassifier
             key={transaction.id}
             transaction={transaction}
+            isExpanded={expandedId === transaction.id}
+            onToggle={() =>
+              setExpandedId(expandedId === transaction.id ? null : transaction.id)
+            }
             onSave={handleSave}
           />
         ))}

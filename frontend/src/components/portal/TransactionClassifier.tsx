@@ -3,7 +3,6 @@
 import {
   CheckCircle2,
   ChevronDown,
-  ChevronUp,
   HelpCircle,
   Receipt,
   User,
@@ -12,7 +11,6 @@ import { useCallback, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
   EXPENSE_CATEGORIES,
@@ -38,6 +36,8 @@ interface Transaction {
 
 interface TransactionClassifierProps {
   transaction: Transaction;
+  isExpanded: boolean;
+  onToggle: () => void;
   onSave: (
     classificationId: string,
     data: {
@@ -51,9 +51,10 @@ interface TransactionClassifierProps {
 
 export function TransactionClassifier({
   transaction,
+  isExpanded,
+  onToggle,
   onSave,
 }: TransactionClassifierProps) {
-  const [expanded, setExpanded] = useState(!transaction.is_classified);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     transaction.current_category
   );
@@ -97,168 +98,155 @@ export function TransactionClassifier({
   const isExpense = (transaction.amount ?? 0) < 0;
 
   return (
-    <Card
+    <div
       className={cn(
-        "transition-colors",
-        isClassified && "border-emerald-200 bg-emerald-50/30"
+        "border rounded-lg transition-colors",
+        isClassified && "border-emerald-200 bg-emerald-50/30",
+        isExpanded && !isClassified && "border-primary/30 bg-primary/[0.02]",
+        !isExpanded && !isClassified && "hover:bg-muted/30"
       )}
     >
-      <CardContent className="p-4">
-        {/* Header row — always visible */}
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="flex w-full items-center justify-between text-left"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            {isClassified ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
-            ) : (
-              <div className="h-5 w-5 rounded-full border-2 border-stone-300 shrink-0" />
-            )}
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium tabular-nums">
-                  {formatCurrency(Math.abs(transaction.amount))}
-                </span>
-                {transaction.transaction_date && (
-                  <span className="text-xs text-muted-foreground">
-                    {transaction.transaction_date}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground truncate">
-                {transaction.description || "No description"}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {transaction.receipt_required && !transaction.receipt_attached && (
-              <Badge variant="outline" className="text-amber-600 border-amber-300">
-                <Receipt className="h-3 w-3 mr-1" />
-                Receipt needed
-              </Badge>
-            )}
-            {selectedCategory && (
-              <Badge variant="secondary" className="text-xs">
-                {getCategoryLabel(selectedCategory)}
-              </Badge>
-            )}
-            {expanded ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
-          </div>
-        </button>
-
-        {/* Expanded content — category selection */}
-        {expanded && (
-          <div className="mt-4 space-y-4">
-            {/* Receipt flag callout */}
-            {transaction.receipt_required && (
-              <div className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                <Receipt className="inline h-4 w-4 mr-1" />
-                {transaction.receipt_reason || "Please attach a receipt or invoice"}
-              </div>
-            )}
-
-            {/* What was this for? */}
-            <p className="text-sm font-medium">What was this for?</p>
-
-            {/* Expense categories */}
-            {isExpense && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">Business expenses</p>
-                <div className="flex flex-wrap gap-2">
-                  {EXPENSE_CATEGORIES.map((cat) => (
-                    <Button
-                      key={cat.id}
-                      variant={selectedCategory === cat.id ? "default" : "outline"}
-                      size="sm"
-                      className="text-xs"
-                      disabled={saving}
-                      onClick={() => handleCategorySelect(cat.id)}
-                    >
-                      {cat.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Income categories */}
-            {!isExpense && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">Income</p>
-                <div className="flex flex-wrap gap-2">
-                  {INCOME_CATEGORIES.map((cat) => (
-                    <Button
-                      key={cat.id}
-                      variant={selectedCategory === cat.id ? "default" : "outline"}
-                      size="sm"
-                      className="text-xs"
-                      disabled={saving}
-                      onClick={() => handleCategorySelect(cat.id)}
-                    >
-                      {cat.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Special actions */}
-            <div className="flex gap-2 pt-2 border-t">
-              <Button
-                variant={selectedCategory === "personal" ? "destructive" : "outline"}
-                size="sm"
-                className="text-xs"
-                disabled={saving}
-                onClick={() => handleCategorySelect("personal")}
-              >
-                <User className="h-3 w-3 mr-1" />
-                Personal — not business
-              </Button>
-              <Button
-                variant={selectedCategory === "dont_know" ? "secondary" : "outline"}
-                size="sm"
-                className="text-xs"
-                disabled={saving}
-                onClick={() => handleCategorySelect("dont_know")}
-              >
-                <HelpCircle className="h-3 w-3 mr-1" />
-                I don&apos;t know
-              </Button>
-            </div>
-
-            {/* Free text for "Other" */}
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">
-                Or describe what this was for:
-              </p>
-              <div className="flex gap-2">
-                <Textarea
-                  value={freeText}
-                  onChange={(e) => setFreeText(e.target.value)}
-                  placeholder="e.g. Bought printer ink for the office"
-                  className="text-sm min-h-[60px]"
-                  maxLength={500}
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={saving || !freeText.trim()}
-                  onClick={handleFreeTextSave}
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
-          </div>
+      {/* Collapsed row — always visible */}
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
+      >
+        {/* Status icon */}
+        {isClassified ? (
+          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+        ) : (
+          <div className="h-4 w-4 rounded-full border-2 border-stone-300 shrink-0" />
         )}
-      </CardContent>
-    </Card>
+
+        {/* Amount */}
+        <span className="text-sm font-medium tabular-nums w-20 shrink-0 text-right">
+          {formatCurrency(Math.abs(transaction.amount))}
+        </span>
+
+        {/* Date */}
+        <span className="text-xs text-muted-foreground w-20 shrink-0">
+          {transaction.transaction_date || "—"}
+        </span>
+
+        {/* Description */}
+        <span className="text-sm text-muted-foreground truncate flex-1 min-w-0">
+          {transaction.description || "No description"}
+        </span>
+
+        {/* Right side badges */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {transaction.receipt_required && !transaction.receipt_attached && (
+            <Badge variant="outline" className="text-amber-600 border-amber-300 text-[10px] px-1.5 py-0">
+              <Receipt className="h-2.5 w-2.5 mr-0.5" />
+              Receipt
+            </Badge>
+          )}
+          {selectedCategory && !isExpanded && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              {getCategoryLabel(selectedCategory)}
+            </Badge>
+          )}
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 text-muted-foreground transition-transform",
+              isExpanded && "rotate-180"
+            )}
+          />
+        </div>
+      </button>
+
+      {/* Expanded content — category selection */}
+      {isExpanded && (
+        <div className="px-3 pb-3 space-y-3">
+          <div className="border-t pt-3" />
+
+          {/* Receipt flag callout */}
+          {transaction.receipt_required && (
+            <div className="rounded-md bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
+              <Receipt className="inline h-3.5 w-3.5 mr-1" />
+              {transaction.receipt_reason || "Please attach a receipt or invoice"}
+            </div>
+          )}
+
+          {/* What was this for? */}
+          <p className="text-xs font-medium text-muted-foreground">What was this for?</p>
+
+          {/* Category buttons — compact grid */}
+          <div className="flex flex-wrap gap-1.5">
+            {(isExpense ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                disabled={saving}
+                onClick={() => handleCategorySelect(cat.id)}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-medium border transition-colors",
+                  selectedCategory === cat.id
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-foreground border-border hover:bg-muted"
+                )}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Special actions — inline with categories */}
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleCategorySelect("personal")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors",
+                selectedCategory === "personal"
+                  ? "bg-red-500 text-white border-red-500"
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              <User className="h-3 w-3" />
+              Personal
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleCategorySelect("dont_know")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors",
+                selectedCategory === "dont_know"
+                  ? "bg-stone-500 text-white border-stone-500"
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              <HelpCircle className="h-3 w-3" />
+              Not sure
+            </button>
+          </div>
+
+          {/* Free text — collapsible, only show if no category selected */}
+          {!selectedCategory && (
+            <div className="flex gap-2 items-start">
+              <Textarea
+                value={freeText}
+                onChange={(e) => setFreeText(e.target.value)}
+                placeholder="Or describe what this was for..."
+                className="text-xs min-h-[40px] h-10 resize-none"
+                maxLength={500}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs shrink-0 h-10"
+                disabled={saving || !freeText.trim()}
+                onClick={handleFreeTextSave}
+              >
+                Save
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

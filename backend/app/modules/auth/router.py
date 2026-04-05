@@ -520,6 +520,7 @@ async def accept_terms(
             user_id=practice_user.user_id,
             version=request_body.version,
             ip_address=ip_address,
+            tenant_id=practice_user.tenant_id,
         )
     except Exception as e:
         raise HTTPException(

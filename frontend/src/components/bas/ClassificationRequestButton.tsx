@@ -103,9 +103,56 @@ export function ClassificationRequestButton({
     }
   }, [connectionId, sessionId, message, emailOverride, getToken]);
 
-  // Show status badge if request already exists
+  const handleResend = useCallback(async () => {
+    setSending(true);
+    setError(null);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      const response = await fetch(
+        `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/classification/request`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            message: message || null,
+            email_override: emailOverride || null,
+            resend: true,
+          }),
+        }
+      );
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || "Failed to resend");
+      }
+      setSent(true);
+      setTimeout(() => {
+        setOpen(false);
+        setSent(false);
+        setMessage("");
+        setEmailOverride("");
+      }, 2000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to resend");
+    } finally {
+      setSending(false);
+    }
+  }, [connectionId, sessionId, message, emailOverride, getToken]);
+
+  // Show status badge with resend option if request already exists
   if (existingRequest && existingRequest.status !== "cancelled" && existingRequest.status !== "expired") {
     const config = STATUS_CONFIG[existingRequest.status] ?? STATUS_CONFIG.sent!;
+    const canResend = ["sent", "viewed"].includes(existingRequest.status);
+    const canSendRemaining = ["submitted", "completed", "reviewing"].includes(existingRequest.status) && unresolvedCount > 0;
+    const showResendDialog = canResend || canSendRemaining;
+    const resendLabel = canSendRemaining ? `Send ${unresolvedCount} remaining` : "Resend";
+    const resendTitle = canSendRemaining ? "Send Remaining Transactions" : "Resend Client Request";
+    const resendDescription = canSendRemaining
+      ? `Send the ${unresolvedCount} remaining unclassified transaction${unresolvedCount !== 1 ? "s" : ""} to the client for classification.`
+      : "Resend the classification link to the same or a different email address.";
     return (
       <div className="flex items-center gap-2">
         <Badge variant={config.variant} className="gap-1">
@@ -116,6 +163,87 @@ export function ClassificationRequestButton({
           <span className="text-xs text-muted-foreground tabular-nums">
             {existingRequest.classified_count}/{existingRequest.transaction_count}
           </span>
+        )}
+        {showResendDialog && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button variant={canSendRemaining ? "outline" : "ghost"} size="sm" className="h-7 gap-1 text-xs">
+                <Send className="h-3 w-3" />
+                {resendLabel}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{resendTitle}</DialogTitle>
+                <DialogDescription>
+                  {resendDescription}
+                </DialogDescription>
+              </DialogHeader>
+
+              {sent ? (
+                <div className="flex flex-col items-center gap-3 py-6">
+                  <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                  <p className="text-sm font-medium">Request resent!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="resend-email">Send to</Label>
+                    <Input
+                      id="resend-email"
+                      type="email"
+                      placeholder={clientEmail || "client@business.com.au"}
+                      value={emailOverride}
+                      onChange={(e) => setEmailOverride(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Leave blank to resend to the original email
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="resend-message">Message (optional)</Label>
+                    <Textarea
+                      id="resend-message"
+                      placeholder="Just a reminder to classify these..."
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      maxLength={500}
+                      className="min-h-[80px]"
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="text-sm text-red-600">
+                      <AlertCircle className="inline h-4 w-4 mr-1" />
+                      {error}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!sent && (
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleResend} disabled={sending}>
+                    {sending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Resend
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              )}
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     );

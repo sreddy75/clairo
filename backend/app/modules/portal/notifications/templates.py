@@ -24,12 +24,12 @@ class EmailTemplate:
 class PortalEmailTemplates:
     """Email template generator for Client Portal notifications."""
 
-    # Brand colors and styles (matching main email templates)
-    PRIMARY_COLOR = "#2563eb"
-    PRIMARY_DARK = "#1d4ed8"
+    # Brand colors and styles (Clairo coral primary)
+    PRIMARY_COLOR = "#e85530"
+    PRIMARY_DARK = "#ce3b16"
     TEXT_COLOR = "#1f2937"
     SECONDARY_TEXT = "#6b7280"
-    BACKGROUND = "#f9fafb"
+    BACKGROUND = "#faf9f7"
     WHITE = "#ffffff"
     WARNING_BG = "#fffbeb"
     WARNING_TEXT = "#d97706"
@@ -43,7 +43,7 @@ class PortalEmailTemplates:
     WEBSITE_URL = "https://www.clairo.com.au"
     SUPPORT_EMAIL = "support@clairo.com.au"
     COMPANY_NAME = "KR8IT Pty Ltd"
-    COPYRIGHT_YEAR = "2025"
+    COPYRIGHT_YEAR = "2026"
 
     @classmethod
     def _base_template(cls, content: str, footer_text: str = "") -> str:

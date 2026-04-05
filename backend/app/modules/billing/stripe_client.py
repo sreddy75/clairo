@@ -217,14 +217,14 @@ class StripeClient:
         so we fall back to getting it from the latest invoice's line items.
         """
         # Try direct access first
-        if hasattr(subscription, "current_period_end") and subscription.current_period_end:
+        if hasattr(subscription, "current_period_end") and subscription.current_period_end is not None:
             return subscription.current_period_end
 
         # Fall back to invoice line items
         if subscription.latest_invoice:
             invoice = stripe.Invoice.retrieve(subscription.latest_invoice)
             if invoice.lines and invoice.lines.data:
-                return invoice.lines.data[0].period.get("end", 0)
+                return getattr(invoice.lines.data[0].period, "end", 0)
 
         # Last resort: billing_cycle_anchor + 30 days
         return subscription.billing_cycle_anchor + (30 * 24 * 60 * 60)

@@ -644,6 +644,7 @@ class AuthService:
         user_id: uuid.UUID,
         version: str,
         ip_address: str | None = None,
+        tenant_id: uuid.UUID | None = None,
     ) -> "User":
         """Record the user's acceptance of Terms of Service.
 
@@ -676,21 +677,22 @@ class AuthService:
         user.tos_accepted_ip = ip_address
         await self.session.flush()
 
-        if self.audit_service:
-            await self.audit_service.log_event(
-                event_type="user.tos.accepted",
-                event_category="auth",
-                actor_type="user",
-                actor_id=user_id,
-                actor_email=user.email,
-                actor_ip=ip_address,
-                resource_type="user",
-                resource_id=user_id,
-                action="update",
-                outcome="success",
-                new_values={"tos_version": version},
-                metadata={"version": version, "ip_address": ip_address},
-            )
+        if self.audit_service and tenant_id:
+                await self.audit_service.log_event(
+                    event_type="user.tos.accepted",
+                    event_category="auth",
+                    actor_type="user",
+                    actor_id=user_id,
+                    actor_email=user.email,
+                    actor_ip=ip_address,
+                    tenant_id=tenant_id,
+                    resource_type="user",
+                    resource_id=user_id,
+                    action="update",
+                    outcome="success",
+                    new_values={"tos_version": version},
+                    metadata={"version": version, "ip_address": ip_address},
+                )
 
         return user
 
