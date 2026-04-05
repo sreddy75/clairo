@@ -158,12 +158,13 @@ class TaxScenarioRepository:
         await self.session.delete(scenario)
         await self.session.flush()
 
-    async def get_next_sort_order(self, tax_plan_id: uuid.UUID) -> int:
-        result = await self.session.execute(
-            select(func.coalesce(func.max(TaxScenario.sort_order), -1)).where(
-                TaxScenario.tax_plan_id == tax_plan_id
-            )
+    async def get_next_sort_order(self, tax_plan_id: uuid.UUID, tenant_id: uuid.UUID | None = None) -> int:
+        query = select(func.coalesce(func.max(TaxScenario.sort_order), -1)).where(
+            TaxScenario.tax_plan_id == tax_plan_id
         )
+        if tenant_id is not None:
+            query = query.where(TaxScenario.tenant_id == tenant_id)
+        result = await self.session.execute(query)
         return result.scalar_one() + 1
 
 
@@ -201,14 +202,17 @@ class TaxPlanMessageRepository:
         return messages, total
 
     async def get_recent_messages(
-        self, tax_plan_id: uuid.UUID, max_tokens: int = 8000
+        self, tax_plan_id: uuid.UUID, max_tokens: int = 8000, tenant_id: uuid.UUID | None = None
     ) -> list[TaxPlanMessage]:
         """Get recent messages newest-first, up to max_tokens cumulative."""
-        result = await self.session.execute(
+        query = (
             select(TaxPlanMessage)
             .where(TaxPlanMessage.tax_plan_id == tax_plan_id)
             .order_by(TaxPlanMessage.created_at.desc())
         )
+        if tenant_id is not None:
+            query = query.where(TaxPlanMessage.tenant_id == tenant_id)
+        result = await self.session.execute(query)
         messages = list(result.scalars().all())
 
         selected: list[TaxPlanMessage] = []
@@ -316,16 +320,24 @@ class AnalysisRepository:
         self,
         tax_plan_id: uuid.UUID,
         analysis_id: uuid.UUID,
+        tenant_id: uuid.UUID | None = None,
     ) -> None:
         """Mark one analysis as current, unmark all others for this plan."""
-        await self.session.execute(
+        unmark_query = (
             update(TaxPlanAnalysis)
             .where(TaxPlanAnalysis.tax_plan_id == tax_plan_id)
             .values(is_current=False)
         )
-        await self.session.execute(
-            update(TaxPlanAnalysis).where(TaxPlanAnalysis.id == analysis_id).values(is_current=True)
+        mark_query = (
+            update(TaxPlanAnalysis)
+            .where(TaxPlanAnalysis.id == analysis_id)
+            .values(is_current=True)
         )
+        if tenant_id is not None:
+            unmark_query = unmark_query.where(TaxPlanAnalysis.tenant_id == tenant_id)
+            mark_query = mark_query.where(TaxPlanAnalysis.tenant_id == tenant_id)
+        await self.session.execute(unmark_query)
+        await self.session.execute(mark_query)
         await self.session.flush()
 
 

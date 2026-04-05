@@ -209,20 +209,16 @@ class XeroConnectionRepository:
         await self.session.flush()
         return connection
 
-    async def get_by_id(self, connection_id: UUID) -> XeroConnection | None:
+    async def get_by_id(self, connection_id: UUID, tenant_id: UUID | None = None) -> XeroConnection | None:
         """Get connection by ID.
 
-        Note: RLS ensures only connections for the current tenant are returned.
-
-        Args:
-            connection_id: The connection ID.
-
-        Returns:
-            XeroConnection if found, None otherwise.
+        Note: RLS provides database-level isolation. The optional tenant_id
+        parameter adds application-level defense-in-depth.
         """
-        result = await self.session.execute(
-            select(XeroConnection).where(XeroConnection.id == connection_id)
-        )
+        query = select(XeroConnection).where(XeroConnection.id == connection_id)
+        if tenant_id is not None:
+            query = query.where(XeroConnection.tenant_id == tenant_id)
+        result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_by_xero_tenant_id(
@@ -301,12 +297,14 @@ class XeroConnectionRepository:
         self,
         connection_id: UUID,
         data: XeroConnectionUpdate,
+        tenant_id: UUID | None = None,
     ) -> XeroConnection | None:
         """Update a connection.
 
         Args:
             connection_id: The connection ID.
             data: Fields to update.
+            tenant_id: Optional tenant filter for defense-in-depth.
 
         Returns:
             Updated XeroConnection, or None if not found.
@@ -351,30 +349,34 @@ class XeroConnectionRepository:
             update_values["last_employees_sync_at"] = data.last_employees_sync_at
 
         if not update_values:
-            return await self.get_by_id(connection_id)
+            return await self.get_by_id(connection_id, tenant_id=tenant_id)
 
-        await self.session.execute(
-            update(XeroConnection).where(XeroConnection.id == connection_id).values(**update_values)
-        )
+        stmt = update(XeroConnection).where(XeroConnection.id == connection_id).values(**update_values)
+        if tenant_id is not None:
+            stmt = stmt.where(XeroConnection.tenant_id == tenant_id)
+        await self.session.execute(stmt)
 
-        return await self.get_by_id(connection_id)
+        return await self.get_by_id(connection_id, tenant_id=tenant_id)
 
-    async def disconnect(self, connection_id: UUID) -> None:
+    async def disconnect(self, connection_id: UUID, tenant_id: UUID | None = None) -> None:
         """Mark a connection as disconnected.
 
         Args:
             connection_id: The connection ID.
+            tenant_id: Optional tenant filter for defense-in-depth.
         """
-        await self.session.execute(
+        stmt = (
             update(XeroConnection)
             .where(XeroConnection.id == connection_id)
             .values(
                 status=XeroConnectionStatus.DISCONNECTED,
-                # Clear tokens on disconnect for security
                 access_token="[REVOKED]",
                 refresh_token="[REVOKED]",
             )
         )
+        if tenant_id is not None:
+            stmt = stmt.where(XeroConnection.tenant_id == tenant_id)
+        await self.session.execute(stmt)
 
     async def count_active_by_tenant(self, tenant_id: UUID) -> int:
         """Count active connections for a tenant.
@@ -764,11 +766,12 @@ class XeroClientRepository:
 
         return clients, total
 
-    async def soft_delete(self, client_id: UUID) -> None:
+    async def soft_delete(self, client_id: UUID, tenant_id: UUID | None = None) -> None:
         """Soft delete by setting is_active=False."""
-        await self.session.execute(
-            update(XeroClient).where(XeroClient.id == client_id).values(is_active=False)
-        )
+        stmt = update(XeroClient).where(XeroClient.id == client_id).values(is_active=False)
+        if tenant_id is not None:
+            stmt = stmt.where(XeroClient.tenant_id == tenant_id)
+        await self.session.execute(stmt)
 
     async def list_all_for_tenant(
         self,
@@ -779,10 +782,12 @@ class XeroClientRepository:
         sort_order: Literal["asc", "desc"] = "asc",
         limit: int = 25,
         offset: int = 0,
+        tenant_id: UUID | None = None,
     ) -> tuple[list[XeroClient], int]:
         """List all clients for the current tenant across all connections.
 
-        RLS ensures only clients for the current tenant are returned.
+        RLS provides database-level isolation. The optional tenant_id adds
+        application-level defense-in-depth.
 
         Args:
             search: Search by name (case-insensitive partial match).
@@ -798,6 +803,9 @@ class XeroClientRepository:
         """
         query = select(XeroClient)
 
+        if tenant_id is not None:
+            query = query.where(XeroClient.tenant_id == tenant_id)
+
         if is_active is not None:
             query = query.where(XeroClient.is_active == is_active)
 
@@ -805,7 +813,6 @@ class XeroClientRepository:
             query = query.where(XeroClient.contact_type == contact_type)
 
         if search:
-            # Case-insensitive search on name
             query = query.where(XeroClient.name.ilike(f"%{search}%"))
 
         # Get total count

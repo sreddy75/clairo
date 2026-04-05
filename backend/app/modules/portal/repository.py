@@ -383,9 +383,9 @@ class DocumentRequestRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_with_details(self, request_id: UUID) -> DocumentRequest | None:
+    async def get_with_details(self, request_id: UUID, tenant_id: UUID | None = None) -> DocumentRequest | None:
         """Get request with related responses, documents, and events."""
-        result = await self.session.execute(
+        query = (
             select(DocumentRequest)
             .options(
                 selectinload(DocumentRequest.responses).selectinload(RequestResponse.documents),
@@ -393,6 +393,9 @@ class DocumentRequestRepository:
             )
             .where(DocumentRequest.id == request_id)
         )
+        if tenant_id is not None:
+            query = query.where(DocumentRequest.tenant_id == tenant_id)
+        result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def create(self, request: DocumentRequest) -> DocumentRequest:

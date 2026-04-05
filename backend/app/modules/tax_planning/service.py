@@ -863,6 +863,27 @@ class TaxPlanningService:
             for chunk in retrieved_chunks
         ] or None
 
+        # Confidence-based decline (matches knowledge chatbot pattern)
+        scores = [c.get("score", 0.0) for c in retrieved_chunks if c.get("score")]
+        top_score = scores[0] if scores else 0.0
+        mean_top5 = sum(scores[:5]) / min(len(scores), 5) if scores else 0.0
+        verification_rate = citation_verification.get("verification_rate", 0.0)
+        confidence_score = 0.4 * top_score + 0.3 * mean_top5 + 0.3 * verification_rate
+        if confidence_score < 0.5 and retrieved_chunks:
+            # Low confidence — replace AI response with decline message
+            response.content = (
+                "I don't have enough reliable tax compliance information to "
+                "answer this confidently. The response may rely on general "
+                "knowledge rather than current ATO guidance. Please consult "
+                "the ATO website (ato.gov.au) or your compliance resources "
+                "for authoritative information."
+            )
+            response.scenarios = []
+            citation_verification["status"] = "low_confidence"
+            citation_verification["confidence_score"] = confidence_score
+        else:
+            citation_verification["confidence_score"] = confidence_score
+
         # Create scenario records
         created_scenarios = []
         scenario_ids = []

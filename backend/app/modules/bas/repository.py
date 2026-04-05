@@ -64,13 +64,17 @@ class BASRepository:
     async def get_period(
         self,
         period_id: UUID,
+        tenant_id: UUID | None = None,
     ) -> BASPeriod | None:
         """Get a period by ID."""
-        result = await self.session.execute(
+        query = (
             select(BASPeriod)
             .options(selectinload(BASPeriod.session))
             .where(BASPeriod.id == period_id)
         )
+        if tenant_id is not None:
+            query = query.where(BASPeriod.tenant_id == tenant_id)
+        result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_period_by_quarter(
@@ -133,9 +137,10 @@ class BASRepository:
     async def get_session(
         self,
         session_id: UUID,
+        tenant_id: UUID | None = None,
     ) -> BASSession | None:
         """Get a session by ID with all related data."""
-        result = await self.session.execute(
+        query = (
             select(BASSession)
             .options(
                 selectinload(BASSession.period),
@@ -144,6 +149,9 @@ class BASRepository:
             )
             .where(BASSession.id == session_id)
         )
+        if tenant_id is not None:
+            query = query.where(BASSession.tenant_id == tenant_id)
+        result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_session_by_period(
@@ -316,11 +324,13 @@ class BASRepository:
     async def get_adjustment(
         self,
         adjustment_id: UUID,
+        tenant_id: UUID | None = None,
     ) -> BASAdjustment | None:
         """Get an adjustment by ID."""
-        result = await self.session.execute(
-            select(BASAdjustment).where(BASAdjustment.id == adjustment_id)
-        )
+        query = select(BASAdjustment).where(BASAdjustment.id == adjustment_id)
+        if tenant_id is not None:
+            query = query.where(BASAdjustment.tenant_id == tenant_id)
+        result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def list_adjustments(
@@ -919,14 +929,15 @@ class BASRepository:
         return classification
 
     async def update_request_status(
-        self, request_id: UUID, status: str, **kwargs: Any
+        self, request_id: UUID, status: str, tenant_id: UUID | None = None, **kwargs: Any
     ) -> ClassificationRequest | None:
         """Update the status of a classification request."""
-        result = await self.session.execute(
-            select(ClassificationRequest).where(
-                ClassificationRequest.id == request_id,
-            )
+        query = select(ClassificationRequest).where(
+            ClassificationRequest.id == request_id,
         )
+        if tenant_id is not None:
+            query = query.where(ClassificationRequest.tenant_id == tenant_id)
+        result = await self.session.execute(query)
         request = result.scalars().first()
         if not request:
             return None
