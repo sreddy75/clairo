@@ -36,8 +36,9 @@ STANDARD_TABLES = [
     "implementation_items",
 ]
 
-# Pattern B: standard tenant isolation policy
+# RLS policy pattern with FORCE (applies even to table owners/superusers)
 ENABLE_RLS = "ALTER TABLE {table} ENABLE ROW LEVEL SECURITY"
+FORCE_RLS = "ALTER TABLE {table} FORCE ROW LEVEL SECURITY"
 CREATE_POLICY = """
 CREATE POLICY {table}_tenant_isolation ON {table}
     FOR ALL
@@ -45,6 +46,7 @@ CREATE POLICY {table}_tenant_isolation ON {table}
     WITH CHECK (tenant_id = current_setting('app.current_tenant_id', true)::uuid)
 """
 DROP_POLICY = "DROP POLICY IF EXISTS {table}_tenant_isolation ON {table}"
+NO_FORCE_RLS = "ALTER TABLE {table} NO FORCE ROW LEVEL SECURITY"
 DISABLE_RLS = "ALTER TABLE {table} DISABLE ROW LEVEL SECURITY"
 
 
@@ -53,11 +55,13 @@ def upgrade() -> None:
     # Standard tables
     for table in STANDARD_TABLES:
         op.execute(ENABLE_RLS.format(table=table))
+        op.execute(FORCE_RLS.format(table=table))
         op.execute(CREATE_POLICY.format(table=table))
 
     # Special case: document_request_templates has nullable tenant_id
     # Tenant-owned templates are isolated; system templates (tenant_id IS NULL) visible to all
     op.execute(ENABLE_RLS.format(table="document_request_templates"))
+    op.execute(FORCE_RLS.format(table="document_request_templates"))
     op.execute(CREATE_POLICY.format(table="document_request_templates"))
     op.execute("""
         CREATE POLICY document_request_templates_system_read ON document_request_templates
@@ -70,8 +74,10 @@ def downgrade() -> None:
     """Remove RLS policies from all tables."""
     for table in STANDARD_TABLES:
         op.execute(DROP_POLICY.format(table=table))
+        op.execute(NO_FORCE_RLS.format(table=table))
         op.execute(DISABLE_RLS.format(table=table))
 
     op.execute("DROP POLICY IF EXISTS document_request_templates_system_read ON document_request_templates")
     op.execute(DROP_POLICY.format(table="document_request_templates"))
+    op.execute(NO_FORCE_RLS.format(table="document_request_templates"))
     op.execute(DISABLE_RLS.format(table="document_request_templates"))

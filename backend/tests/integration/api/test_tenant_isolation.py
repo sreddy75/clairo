@@ -82,11 +82,11 @@ class TestClientDataIsolation:
     ) -> None:
         await _insert(db_session, "xero_connections", {
             "tenant_id": str(tenant_a.id), "xero_tenant_id": "xa",
-            "xero_tenant_name": "Alpha Xero", "token_data": "{}", "status": "active",
+            "organization_name": "Alpha Xero", "access_token": "tok_a", "refresh_token": "ref_a", "status": "active",
         })
         await _insert(db_session, "xero_connections", {
             "tenant_id": str(tenant_b.id), "xero_tenant_id": "xb",
-            "xero_tenant_name": "Beta Xero", "token_data": "{}", "status": "active",
+            "organization_name": "Beta Xero", "access_token": "tok_b", "refresh_token": "ref_b", "status": "active",
         })
         await db_session.commit()
 
@@ -146,11 +146,11 @@ class TestTaxPlanDataIsolation:
         # Need xero_connections for FK
         xca = await _insert(db_session, "xero_connections", {
             "tenant_id": str(tenant_a.id), "xero_tenant_id": "tpa",
-            "xero_tenant_name": "A", "token_data": "{}", "status": "active",
+            "organization_name": "A", "access_token": "tpa_tok", "refresh_token": "tpa_ref", "status": "active",
         })
         xcb = await _insert(db_session, "xero_connections", {
             "tenant_id": str(tenant_b.id), "xero_tenant_id": "tpb",
-            "xero_tenant_name": "B", "token_data": "{}", "status": "active",
+            "organization_name": "B", "access_token": "tpb_tok", "refresh_token": "tpb_ref", "status": "active",
         })
         await _insert(db_session, "tax_plans", {
             "tenant_id": str(tenant_a.id), "xero_connection_id": str(xca),

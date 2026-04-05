@@ -37,6 +37,7 @@ from app.modules.agents import models as agents_models  # noqa: F401
 # (e.g., XeroConnection references Insight). By importing all models here,
 # we ensure that all model classes are registered before any tests run.
 # noqa comments suppress unused import warnings - these imports are for side effects
+import app.modules.admin.models as admin_models  # noqa: F401
 from app.modules.auth import models as auth_models  # noqa: F401
 from app.modules.bas import models as bas_models  # noqa: F401
 from app.modules.billing import models as billing_models  # noqa: F401
@@ -48,38 +49,47 @@ from app.modules.onboarding import models as onboarding_models  # noqa: F401
 from app.modules.quality import models as quality_models  # noqa: F401
 from app.modules.triggers import models as triggers_models  # noqa: F401
 
+# Models added in later specs — import models.py directly to register
+# SQLAlchemy classes without triggering router/service imports that pull
+# in heavy dependencies (minio, anthropic, etc.)
+try:
+    import app.modules.portal.models as portal_models  # noqa: F401
+except Exception:
+    pass
+try:
+    import app.modules.bas.classification_models as classification_models  # noqa: F401
+except Exception:
+    pass
+try:
+    import app.modules.feedback.models as feedback_models  # noqa: F401
+except Exception:
+    pass
+try:
+    import app.modules.tax_planning.models as tax_planning_models  # noqa: F401
+except Exception:
+    pass
+
 # ==============================================================================
 # Database Fixtures
 # ==============================================================================
 
 
-@pytest_asyncio.fixture(scope="session", loop_scope="session")
+@pytest_asyncio.fixture
 async def test_engine() -> AsyncGenerator[AsyncEngine, None]:
     """Create a test database engine.
 
-    Session-scoped to avoid recreating the engine for each test.
-    Uses the same database as development but with test isolation.
-
-    Note: loop_scope="session" is required for pytest-asyncio 0.24+ to work
-    with session-scoped async fixtures.
+    Function-scoped to avoid event loop conflicts between session-scoped
+    fixtures and function-scoped tests. Tables are managed by alembic
+    migrations — run `alembic upgrade head` before running tests.
     """
     settings = get_settings()
-    # Use a test-specific database or the same with transaction rollback
     engine = create_async_engine(
         settings.database.url,
         echo=False,
         pool_pre_ping=True,
     )
 
-    # Create all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     yield engine
-
-    # Drop all tables after tests
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
 
     await engine.dispose()
 

@@ -19,6 +19,7 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db as get_db_session
@@ -805,12 +806,11 @@ async def export_audit_csv(
     date_from: str | None = Query(default=None),
     date_to: str | None = Query(default=None),
     max_rows: int = Query(default=50000, ge=1, le=50000),
-) -> "StreamingResponse":
+) -> StreamingResponse:
     """Export audit log as CSV."""
     import csv
     import io
 
-    from fastapi.responses import StreamingResponse
     from sqlalchemy import select
 
     from app.core.audit import AuditLog
