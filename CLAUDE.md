@@ -54,6 +54,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 (2 new JSONB columns on `tax_plan_messages`), Pinecone `clairo-knowledge` index (`compliance_knowledge` namespace) (050-rag-tax-planning)
 - Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Celery, Anthropic SDK (Claude Sonnet), Pydantic v2, React 18 + shadcn/ui (041-multi-agent-tax-planning)
 - PostgreSQL 16 (2 new tables: `tax_plan_analyses`, `implementation_items`) (041-multi-agent-tax-planning)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Anthropic SDK (Claude Sonnet), Voyage 3.5 lite (embeddings), Resend (email), React 18 + shadcn/ui, existing A2UI system (051-ai-discovery-agent)
+- PostgreSQL 16 (9 new tables, pgvector for workflow embeddings), MinIO (artifact file storage) (051-ai-discovery-agent)
 
 ## Recent Changes
 - 046-ai-tax-code-resolution: Added Python 3.12+ (backend), TypeScript/Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Celery, Anthropic SDK (Claude Sonnet for LLM tier), React 18 + shadcn/ui
