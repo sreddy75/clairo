@@ -274,7 +274,13 @@
       "WebFetch(domain:seamsight.com)",
       "WebFetch(domain:vein.io)",
       "WebFetch(domain:www.getseam.ai)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(sips:*)",
+      "Bash(convert logos/clairo-logo-new.png -resize 1200x630 -gravity center -background '#faf9f7' -extent 1200x630 \\\\\\( logos/clairo-logo-new.png -resize 120x120 \\\\\\) -gravity West -geometry +80+0 -composite -font Helvetica-Bold -pointsize 48 -fill '#1a1a1a' -gravity Center -annotate +40-20 \"Clairo\" -font Helvetica -pointsize 24 -fill '#6b6b6b' -annotate +40+30 \"AI-Powered Tax & Advisory Platform\" og-image.png)",
+      "Bash(magick logos/clairo-logo-new.png -resize 32x32 favicon.ico)",
+      "Bash(magick logos/clairo-logo-new.png -resize 180x180 apple-touch-icon.png)",
+      "Bash(magick logos/clairo-logo-new.png -resize 192x192 icon-192.png)",
+      "Bash(magick logos/clairo-logo-new.png -resize 512x512 icon-512.png)"
     ],
     "deny": [],
     "ask": []
