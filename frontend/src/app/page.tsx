@@ -766,21 +766,27 @@ function PricingSection() {
           >
             <p className="text-[11px] font-medium text-primary uppercase tracking-[0.3em] mb-6">Pricing</p>
             <h2 className="text-[clamp(1.8rem,4vw,3.2rem)] font-light text-foreground leading-[1.1] tracking-[-0.02em] mb-6" style={{ fontFamily: 'var(--font-heading)' }}>
-              Pricing that reflects results, not seats.
+              One plan. Everything included.
             </h2>
-            <p className="text-muted-foreground leading-relaxed mb-8">
-              We don&apos;t think you should pay more because you have more logins.
-              You should pay based on the value you get — the clients you serve, the work Clairo handles for you.
-              We&apos;re finalising our pricing model with early access partners now.
-            </p>
+            <div className="mb-8">
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-4xl font-bold text-foreground" style={{ fontFamily: 'var(--font-heading)' }}>$299</span>
+                <span className="text-muted-foreground">/month</span>
+              </div>
+              <p className="text-sm text-primary font-medium mb-4">Introductory pricing — locked in for early partners</p>
+              <p className="text-muted-foreground leading-relaxed">
+                Full platform access for your entire practice. No per-seat fees, no per-client surcharges.
+                Price locked for the duration of your subscription.
+              </p>
+            </div>
             <Link
               href="/sign-up"
               className="group inline-flex items-center justify-center gap-3 px-7 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-md transition-all text-sm tracking-wide"
             >
-              Request Early Access
+              Get Started
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <p className="text-xs text-muted-foreground mt-3">No credit card required</p>
+            <p className="text-xs text-muted-foreground mt-3">14-day free trial. No credit card required.</p>
           </motion.div>
 
           <motion.div
@@ -811,11 +817,11 @@ function PricingSection() {
               </div>
 
               <div className="border-t border-border/60 pt-8">
-                <p className="text-xs font-medium text-foreground uppercase tracking-[0.2em] mb-4">How we price</p>
+                <p className="text-xs font-medium text-foreground uppercase tracking-[0.2em] mb-4">No surprises</p>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    'Based on clients managed',
-                    'Not per seat or per login',
+                    'Unlimited team members',
+                    'Unlimited clients',
                     'No lock-in contracts',
                     'Free onboarding support',
                   ].map((item, i) => (
@@ -828,10 +834,10 @@ function PricingSection() {
               </div>
 
               <div className="border-t border-border/60 pt-8">
-                <p className="text-xs font-medium text-foreground uppercase tracking-[0.2em] mb-4">Early access</p>
+                <p className="text-xs font-medium text-foreground uppercase tracking-[0.2em] mb-4">Early partner benefits</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  We&apos;re working with a small group of practices during EOFY 2026 to shape the product and the pricing.
-                  Early partners get founder-friendly terms and direct input into the roadmap.
+                  $299/month introductory rate locked in for the life of your subscription.
+                  Direct input into the roadmap and priority support from the founding team.
                 </p>
               </div>
             </div>

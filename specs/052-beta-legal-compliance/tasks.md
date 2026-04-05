@@ -176,17 +176,17 @@
 
 - [x] T038 [P] [US4] Add Open Graph meta tags to root layout at `frontend/src/app/layout.tsx`
   - Add `openGraph` to the existing `Metadata` export (~line 22-51): title, description, type ("website"), url, siteName, locale ("en_AU"), images (reference a static share image). Add `twitter` card metadata.
-- [ ] T039 [P] [US4] DEFERRED: Create social share image `frontend/public/og-image.png` (requires design asset) at `frontend/public/og-image.png`
+- [x] T039 [P] [US4] Create social share image `frontend/public/og-image.png` at `frontend/public/og-image.png`
   - Add a branded OG image (1200x630px recommended). If no design asset exists, create a placeholder with Clairo logo and tagline.
-- [ ] T040 [P] [US4] DEFERRED: Generate favicon sizes from logo (requires design asset) at `frontend/public/`
+- [x] T040 [P] [US4] Generate favicon and apple-touch-icon from logo at `frontend/public/`
   - Confirm `favicon.ico` (16x16, 32x32), `apple-touch-icon.png` (180x180) exist. Add any missing sizes. Update `frontend/src/app/layout.tsx` `icons` metadata if needed.
 - [x] T041 [US4] Update landing page footer at `frontend/src/app/page.tsx`
   - Add ABN to the footer (~line 888-932). Add support/contact email. Ensure legal page links point to correct routes (`/terms`, `/privacy`, `/acceptable-use`). Add "Acceptable Use" link alongside existing "Terms" and "Privacy" links.
 - [x] T042 [US4] Add security/trust statement to landing page at `frontend/src/app/page.tsx`
   - Add a section or badge near the existing "ATO Compliant" / "Australian Hosted" badges stating: "Your data is encrypted at rest and in transit. Hosted in Australian data centres."
-- [ ] T043 [US4] DEFERRED: Verify pricing section (requires business decision on pricing tiers) at `frontend/src/app/page.tsx`
+- [x] T043 [US4] Update pricing section to $299/month introductory price at `frontend/src/app/page.tsx`
   - Ensure the pricing section has either real pricing tiers or a clear "Contact us for pricing" CTA with a link to the contact email or a booking page.
-- [ ] T044 [US4] DEFERRED: Mobile responsive audit (requires visual QA testing) and fixes at `frontend/src/app/page.tsx`
+- [ ] T044 [US4] Mobile responsive audit (owner will eyeball) and fixes at `frontend/src/app/page.tsx`
   - Test at 375px viewport width. Fix any horizontal overflow, broken layouts, untappable CTAs. Check all sections: hero, problem, platform, how-it-works, pricing, footer.
 
 **Checkpoint**: OG tags work (test with a link preview tool). Mobile layout clean. Footer has ABN and contact info.
