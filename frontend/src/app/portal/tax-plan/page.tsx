@@ -7,6 +7,7 @@
  * Clients can mark items as done and ask questions.
  */
 
+import { FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { AIDisclaimer } from '@/components/ui/AIDisclaimer';
@@ -76,9 +77,11 @@ export default function PortalTaxPlanPage() {
 
   if (!plan) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <p className="text-muted-foreground">
-          No tax plan has been shared with you yet. Your accountant will share one when ready.
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
+        <h3 className="text-lg font-semibold">No tax plan yet</h3>
+        <p className="text-sm text-muted-foreground mt-1 max-w-md">
+          Your accountant hasn&apos;t shared a tax plan with you yet. Once they prepare one, you&apos;ll see it here with strategies and implementation steps.
         </p>
       </div>
     );

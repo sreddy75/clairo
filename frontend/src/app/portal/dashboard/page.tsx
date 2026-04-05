@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, ClipboardList, LogOut, Loader2, RefreshCw, AlertCircle, WifiOff } from 'lucide-react';
+import { Building2, ClipboardList, FileText, LogOut, Loader2, RefreshCw, AlertCircle, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
@@ -280,6 +280,16 @@ export default function PortalDashboardPage() {
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
+        )}
+
+        {!dashboard && !error && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <FileText className="h-12 w-12 text-muted-foreground/30 mb-4" />
+            <h3 className="text-lg font-semibold">Nothing shared yet</h3>
+            <p className="text-sm text-muted-foreground mt-1 max-w-md">
+              Your accountant hasn&apos;t shared any updates yet. Once they prepare BAS returns or tax plans, you&apos;ll see them here.
+            </p>
+          </div>
         )}
 
         {dashboard && (

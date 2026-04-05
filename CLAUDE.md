@@ -58,6 +58,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 (9 new tables, pgvector for workflow embeddings), MinIO (artifact file storage) (051-ai-discovery-agent)
 - Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Anthropic SDK, React 18 + shadcn/ui, Clerk (auth), PostHog (analytics), Sentry (error tracking) (052-beta-legal-compliance)
 - PostgreSQL 16 (3 new columns on existing `users` table, no new tables) (052-beta-legal-compliance)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, pytest + pytest-asyncio, factory_boy (054-onboarding-hardening)
+- PostgreSQL 16 (16 new RLS policies, no schema changes) (054-onboarding-hardening)
 
 ## Recent Changes
 - 046-ai-tax-code-resolution: Added Python 3.12+ (backend), TypeScript/Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Celery, Anthropic SDK (Claude Sonnet for LLM tier), React 18 + shadcn/ui
