@@ -1,9 +1,10 @@
 'use client';
 
-import { Clock, Settings, X } from 'lucide-react';
+import { Clock, CreditCard, Settings, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
+import { openBillingPortal } from '@/lib/api/billing';
 import { cn } from '@/lib/utils';
 import type { SubscriptionTier } from '@/types/billing';
 
@@ -169,6 +170,18 @@ export function TrialBanner({
         </div>
 
         <div className="flex items-center gap-2">
+          {daysRemaining <= 3 && (
+            <button
+              onClick={() => openBillingPortal()}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                'bg-primary text-primary-foreground hover:bg-primary/90'
+              )}
+            >
+              <CreditCard className="h-4 w-4" />
+              Add Payment Method
+            </button>
+          )}
           <Link
             href="/settings/billing"
             className={cn(

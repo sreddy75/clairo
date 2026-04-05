@@ -329,6 +329,8 @@ class BootstrapResponse(BaseModel):
     trial_status: Any | None = Field(None, description="Trial status for current tenant")
     tos_accepted_at: datetime | None = Field(None, description="When user accepted ToS")
     tos_version_accepted: str | None = Field(None, description="ToS version accepted")
+    subscription_status: str | None = Field(None, description="Current subscription status")
+    can_access: bool = Field(True, description="Whether write operations are allowed")
 
 
 class AcceptTermsRequest(BaseModel):

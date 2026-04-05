@@ -17,6 +17,7 @@ from app.core.exceptions import DomainError
 from app.database import get_db
 from app.modules.auth.models import PracticeUser
 from app.modules.auth.permissions import Permission, require_permission
+from app.modules.billing.middleware import require_active_subscription
 from app.modules.tax_planning.models import TaxPlan
 from app.modules.tax_planning.schemas import (
     ChatResponse,
@@ -64,6 +65,7 @@ async def create_tax_plan(
     data: TaxPlanCreate,
     current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
     service: TaxPlanningService = Depends(_get_service),
+    _sub: None = Depends(require_active_subscription),
 ):
     """Create a new tax plan for a client."""
     try:
