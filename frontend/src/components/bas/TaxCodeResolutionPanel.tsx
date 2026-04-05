@@ -1,7 +1,6 @@
 'use client';
 
 import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
-import { AIDisclaimer } from '@/components/ui/AIDisclaimer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -10,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { AIDisclaimer } from '@/components/ui/AIDisclaimer';
 import { Button } from '@/components/ui/button';
 import type {
   TaxCodeSuggestion,
