@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
+import { SubscriptionBanner } from '@/components/billing/SubscriptionBanner';
 import { TrialBanner } from '@/components/billing/TrialBanner';
 import { ClairoLogo } from '@/components/brand';
 import { CommandPalette } from '@/components/CommandPalette';
@@ -127,6 +128,8 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const [features, setFeatures] = useState<TierFeatures | null>(null);
   const [_tier, setTier] = useState<string>('starter');
   const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [_canAccess, setCanAccess] = useState(true);
   const [showHelpMenu, setShowHelpMenu] = useState(false);
   const [adminExpanded, setAdminExpanded] = useState(true);
   const [commandOpen, setCommandOpen] = useState(false);
@@ -270,6 +273,19 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
           if (data.trial_status) {
             setTrialStatus(data.trial_status);
+          }
+
+          // Subscription status for access gating
+          if (data.subscription_status) {
+            setSubscriptionStatus(data.subscription_status);
+            // Redirect cancelled users to expired page (unless already on billing)
+            if (data.subscription_status === 'cancelled' && !pathname.startsWith('/settings/billing') && pathname !== '/subscription-expired') {
+              router.push('/subscription-expired');
+              return;
+            }
+          }
+          if (data.can_access !== undefined) {
+            setCanAccess(data.can_access);
           }
         } else if (response.status === 404) {
           router.push('/onboarding');
@@ -491,8 +507,19 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
           />
         </header>
 
-        {/* Trial Banner */}
-        {trialStatus?.is_trial && trialStatus.days_remaining !== null && (
+        {/* Subscription Status Banners */}
+        {subscriptionStatus === 'suspended' && !pathname.startsWith('/settings/billing') && (
+          <SubscriptionBanner status="suspended" />
+        )}
+        {subscriptionStatus === 'past_due' && (
+          <SubscriptionBanner
+            status="past_due"
+            currentPeriodEnd={trialStatus?.billing_date ?? null}
+          />
+        )}
+
+        {/* Trial Banner (only when not suspended/past_due) */}
+        {trialStatus?.is_trial && trialStatus.days_remaining !== null && subscriptionStatus === 'trial' && (
           <div className="px-6 pt-4">
             <TrialBanner
               daysRemaining={trialStatus.days_remaining}

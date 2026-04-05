@@ -71,6 +71,7 @@ from app.modules.bas.schemas import (
 from app.modules.bas.service import BASService
 from app.modules.bas.tax_code_service import TaxCodeService
 from app.modules.bas.workboard_service import WorkboardService
+from app.modules.billing.middleware import require_active_subscription
 from app.modules.integrations.xero.repository import XeroConnectionRepository
 
 logger = logging.getLogger(__name__)
@@ -166,6 +167,7 @@ async def create_session(
     request: BASSessionCreate,
     session: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+    _sub: None = Depends(require_active_subscription),
 ) -> BASSessionResponse:
     """Create a new BAS session."""
     await verify_connection_access(connection_id, session, user)
@@ -1310,6 +1312,7 @@ async def create_classification_request(
     body: ClassificationRequestCreate,
     session: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+    _sub: None = Depends(require_active_subscription),
 ) -> ClassificationRequestResponse:
     """Create a classification request and send magic link to the client."""
     await verify_connection_access(connection_id, session, user)

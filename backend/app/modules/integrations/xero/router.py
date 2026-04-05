@@ -22,6 +22,7 @@ from app.core.audit import AuditService
 from app.database import get_db as get_db_session
 from app.modules.auth.models import PracticeUser
 from app.modules.auth.permissions import Permission, require_permission
+from app.modules.billing.middleware import require_active_subscription
 from app.tasks.celery_app import celery_app
 
 from .client import XeroClientError
@@ -1012,6 +1013,7 @@ async def initiate_sync(
     current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_MANAGE)),
     sync_service: XeroSyncService = Depends(get_sync_service),
     audit_service: AuditService = Depends(get_audit_service),
+    _sub: None = Depends(require_active_subscription),
 ) -> XeroSyncJobResponse:
     """Initiate a Xero data sync.
 

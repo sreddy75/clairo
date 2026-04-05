@@ -455,12 +455,21 @@ async def get_bootstrap(
             exc_info=True,
         )
 
+    # ── 4. Subscription status for access gating ──────────────────────────
+    sub_status = None
+    sub_can_access = True
+    if full_tenant is not None:
+        sub_status = full_tenant.subscription_status.value
+        sub_can_access = full_tenant.can_access
+
     return BootstrapResponse(
         user=me_response,
         features=features_response,
         trial_status=trial_status_response,
         tos_accepted_at=user.tos_accepted_at if user else None,
         tos_version_accepted=user.tos_version_accepted if user else None,
+        subscription_status=sub_status,
+        can_access=sub_can_access,
     )
 
 

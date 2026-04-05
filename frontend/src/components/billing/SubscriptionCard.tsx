@@ -64,6 +64,8 @@ export function SubscriptionCard({
         return 'bg-purple-100 text-purple-800';
       case 'past_due':
         return 'bg-red-100 text-red-800';
+      case 'suspended':
+        return 'bg-red-100 text-red-800';
       case 'cancelled':
         return 'bg-muted text-foreground';
       default:
@@ -81,6 +83,8 @@ export function SubscriptionCard({
         return 'Past Due';
       case 'cancelled':
         return 'Cancelled';
+      case 'suspended':
+        return 'Suspended';
       case 'trial':
         return 'Trial';
       default:
@@ -295,18 +299,23 @@ export function SubscriptionCard({
               </button>
             )}
 
-            {!isGrandfathered && subscription.status !== 'trial' && (
+            {!isGrandfathered && (
               <button
                 onClick={handleManageBilling}
                 disabled={isLoading}
-                className="inline-flex items-center px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted-foreground bg-card hover:bg-muted disabled:opacity-50"
+                className={cn(
+                  'inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50',
+                  subscription.status === 'suspended'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    : 'border border-border text-muted-foreground bg-card hover:bg-muted'
+                )}
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <CreditCard className="h-4 w-4 mr-2" />
                 )}
-                Manage Billing
+                {subscription.status === 'trial' ? 'Add Payment Method' : subscription.status === 'suspended' ? 'Reactivate' : 'Manage Billing'}
               </button>
             )}
 
