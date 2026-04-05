@@ -280,7 +280,8 @@
       "Bash(magick logos/clairo-logo-new.png -resize 32x32 favicon.ico)",
       "Bash(magick logos/clairo-logo-new.png -resize 180x180 apple-touch-icon.png)",
       "Bash(magick logos/clairo-logo-new.png -resize 192x192 icon-192.png)",
-      "Bash(magick logos/clairo-logo-new.png -resize 512x512 icon-512.png)"
+      "Bash(magick logos/clairo-logo-new.png -resize 512x512 icon-512.png)",
+      "Bash(PORT=3001 npm run dev)"
     ],
     "deny": [],
     "ask": []
