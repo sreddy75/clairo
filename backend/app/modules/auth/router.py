@@ -36,6 +36,8 @@ from .middleware import get_current_user
 from .models import PracticeUser
 from .permissions import Permission, require_permission
 from .schemas import (
+    AcceptTermsRequest,
+    AcceptTermsResponse,
     BootstrapResponse,
     InvitationCreate,
     InvitationListResponse,
@@ -54,6 +56,7 @@ from .schemas import (
     TenantSettingsResponse,
     TenantSummary,
     TenantUpdate,
+    TosVersionResponse,
     UserActionResponse,
     UserListResponse,
 )
@@ -456,6 +459,77 @@ async def get_bootstrap(
         user=me_response,
         features=features_response,
         trial_status=trial_status_response,
+        tos_accepted_at=user.tos_accepted_at if user else None,
+        tos_version_accepted=user.tos_version_accepted if user else None,
+    )
+
+
+# =============================================================================
+# Terms of Service Endpoints
+# =============================================================================
+
+
+@router.get(
+    "/tos-version",
+    response_model=TosVersionResponse,
+    summary="Get current ToS version",
+    description="Returns the current Terms of Service version. Public endpoint.",
+)
+async def get_tos_version() -> TosVersionResponse:
+    """Get the current ToS version."""
+    from app.core.constants import TOS_CURRENT_VERSION, TOS_EFFECTIVE_DATE
+
+    return TosVersionResponse(
+        version=TOS_CURRENT_VERSION,
+        effective_date=TOS_EFFECTIVE_DATE,
+    )
+
+
+@router.post(
+    "/accept-terms",
+    response_model=AcceptTermsResponse,
+    summary="Accept Terms of Service",
+    description="Record the user's acceptance of the current Terms of Service.",
+)
+async def accept_terms(
+    request_body: AcceptTermsRequest,
+    current_user: Annotated[ClerkTokenPayload, Depends(get_current_user)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    request: Request,
+) -> AcceptTermsResponse:
+    """Accept the Terms of Service.
+
+    Args:
+        request_body: Contains the ToS version being accepted.
+        current_user: JWT claims from Clerk.
+        auth_service: Auth service instance.
+        request: FastAPI request for IP address.
+    """
+    # Get the base user from Clerk ID
+    practice_user = await auth_service.get_current_user(current_user.sub)
+    if practice_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    ip_address = request.client.host if request.client else None
+
+    try:
+        user = await auth_service.accept_terms(
+            user_id=practice_user.user_id,
+            version=request_body.version,
+            ip_address=ip_address,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    return AcceptTermsResponse(
+        tos_accepted_at=user.tos_accepted_at,
+        tos_version_accepted=user.tos_version_accepted,
     )
 
 

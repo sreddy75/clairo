@@ -1,5 +1,6 @@
 'use client';
 
+import { AIDisclaimer } from '@/components/ui/AIDisclaimer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency, formatPercentage } from '@/lib/formatters';
@@ -121,10 +122,7 @@ export function TaxPositionCard({ taxPosition, entityType }: TaxPositionCardProp
         </div>
 
         {/* Disclaimer */}
-        <p className="text-[11px] leading-tight text-muted-foreground/70">
-          This is an estimate only and does not constitute formal tax advice.
-          Please consult your tax professional for specific advice.
-        </p>
+        <AIDisclaimer className="mt-2" />
       </CardContent>
     </Card>
   );

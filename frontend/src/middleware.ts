@@ -11,12 +11,15 @@ const isPublicRoute = createRouteMatcher([
   '/invitation(.*)',
   '/pricing(.*)',
   '/portal(.*)',  // Client portal uses its own magic link auth
+  '/terms',
+  '/privacy',
+  '/acceptable-use',
   '/api/health',
   '/api/webhooks(.*)',
 ]);
 
 // Routes that require auth but not backend registration
-const isOnboardingRoute = createRouteMatcher(['/onboarding(.*)']);
+const isOnboardingRoute = createRouteMatcher(['/onboarding(.*)', '/accept-terms']);
 
 export default clerkMiddleware((auth, request) => {
   const { userId } = auth();

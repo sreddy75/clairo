@@ -1151,6 +1151,8 @@ class TaxPlanningService:
         tax_pos["credits_applied"] = DotDict(plan.tax_position.get("credits_applied", {}))
         tax_pos["offsets"] = DotDict(plan.tax_position.get("offsets", {}))
 
+        from app.core.constants import AI_DISCLAIMER_TEXT
+
         html = template.render(
             practice_name=practice_name,
             client_name=client_name,
@@ -1162,6 +1164,7 @@ class TaxPlanningService:
             messages=messages_list,
             include_conversation=include_conversation,
             generated_date=datetime.now(UTC).strftime("%d %B %Y"),
+            ai_disclaimer=AI_DISCLAIMER_TEXT,
         )
 
         pdf_bytes = weasyprint.HTML(string=html).write_pdf()

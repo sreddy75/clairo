@@ -21,7 +21,7 @@ from datetime import UTC, date, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import INET, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base, TimestampMixin
@@ -478,6 +478,23 @@ class User(Base, TimestampMixin):
         server_default="true",
         index=True,
         comment="Whether the user can access the platform",
+    )
+
+    # Terms of Service acceptance
+    tos_accepted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When the user accepted the Terms of Service",
+    )
+    tos_version_accepted: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+        comment="ToS version string accepted (e.g. 1.0)",
+    )
+    tos_accepted_ip: Mapped[str | None] = mapped_column(
+        INET,
+        nullable=True,
+        comment="IP address at time of ToS acceptance",
     )
 
     # Relationships (1:1 with profile tables)

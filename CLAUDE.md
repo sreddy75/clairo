@@ -56,6 +56,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 (2 new tables: `tax_plan_analyses`, `implementation_items`) (041-multi-agent-tax-planning)
 - Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Anthropic SDK (Claude Sonnet), Voyage 3.5 lite (embeddings), Resend (email), React 18 + shadcn/ui, existing A2UI system (051-ai-discovery-agent)
 - PostgreSQL 16 (9 new tables, pgvector for workflow embeddings), MinIO (artifact file storage) (051-ai-discovery-agent)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Anthropic SDK, React 18 + shadcn/ui, Clerk (auth), PostHog (analytics), Sentry (error tracking) (052-beta-legal-compliance)
+- PostgreSQL 16 (3 new columns on existing `users` table, no new tables) (052-beta-legal-compliance)
 
 ## Recent Changes
 - 046-ai-tax-code-resolution: Added Python 3.12+ (backend), TypeScript/Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Celery, Anthropic SDK (Claude Sonnet for LLM tier), React 18 + shadcn/ui

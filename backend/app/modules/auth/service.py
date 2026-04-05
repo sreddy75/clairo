@@ -639,6 +639,61 @@ class AuthService:
 
         return tenant
 
+    async def accept_terms(
+        self,
+        user_id: uuid.UUID,
+        version: str,
+        ip_address: str | None = None,
+    ) -> "User":
+        """Record the user's acceptance of Terms of Service.
+
+        Args:
+            user_id: The user accepting the terms.
+            version: The ToS version being accepted.
+            ip_address: IP address at time of acceptance.
+
+        Returns:
+            Updated User with ToS fields set.
+        """
+        from app.core.constants import TOS_CURRENT_VERSION
+
+        if version != TOS_CURRENT_VERSION:
+            from app.core.exceptions import ValidationError
+
+            raise ValidationError(
+                f"Version mismatch: expected {TOS_CURRENT_VERSION}, got {version}"
+            )
+
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            from app.core.exceptions import NotFoundError
+
+            raise NotFoundError(f"User {user_id} not found")
+
+        now = datetime.now(UTC)
+        user.tos_accepted_at = now
+        user.tos_version_accepted = version
+        user.tos_accepted_ip = ip_address
+        await self.session.flush()
+
+        if self.audit_service:
+            await self.audit_service.log_event(
+                event_type="user.tos.accepted",
+                event_category="auth",
+                actor_type="user",
+                actor_id=user_id,
+                actor_email=user.email,
+                actor_ip=ip_address,
+                resource_type="user",
+                resource_id=user_id,
+                action="update",
+                outcome="success",
+                new_values={"tos_version": version},
+                metadata={"version": version, "ip_address": ip_address},
+            )
+
+        return user
+
 
 class UserService:
     """Service for user management operations.

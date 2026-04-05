@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { AIDisclaimer } from '@/components/ui/AIDisclaimer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -85,6 +86,7 @@ export default function PortalTaxPlanPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 p-6">
+      <AIDisclaimer />
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Your Tax Plan — FY {plan.financial_year}</h1>

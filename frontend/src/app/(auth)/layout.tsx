@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 
 import { ClairoLogo } from '@/components/brand';
 import { ThemeToggle } from '@/components/theme';
@@ -36,7 +37,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       {/* Footer */}
-      <div className="mt-8 text-center text-sm text-muted-foreground">
+      <div className="mt-8 text-center text-sm text-muted-foreground space-y-2">
+        <div className="flex items-center justify-center gap-4">
+          <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+          <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+          <Link href="/acceptable-use" className="hover:text-foreground transition-colors">Acceptable Use</Link>
+        </div>
         <p>
           © {new Date().getFullYear()} Clairo. Designed for Australian Accounting Practices.
         </p>

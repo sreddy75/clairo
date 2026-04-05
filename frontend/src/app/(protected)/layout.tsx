@@ -251,6 +251,14 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
         if (response.ok) {
           const data = await response.json();
+
+          // Check ToS acceptance before allowing access
+          const { TOS_VERSION } = await import('@/lib/constants');
+          if (!data.tos_accepted_at || data.tos_version_accepted !== TOS_VERSION) {
+            router.push('/accept-terms');
+            return;
+          }
+
           setIsRegistered(true);
 
           if (data.features) {

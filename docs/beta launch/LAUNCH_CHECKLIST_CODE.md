@@ -1,11 +1,43 @@
 # Clairo — Launch Readiness: Code & Platform Implementation
 
 > Items to implement via Claude Code / speckit workflow.
-> Each section is roughly a speckit spec candidate.
+> Grouped into 4 specs, executed in dependency order.
 
 ---
 
-## 1. In-App Legal & Consent
+## Spec Breakdown
+
+| Spec | ID | Sections | Status |
+|------|----|----------|--------|
+| **Beta Legal & Compliance** | 052 | 1, 2, 9 | Not started |
+| **Stripe Billing** | 053 | 6 | Not started |
+| **Onboarding & Core Hardening** | 054 | 3, 4, 5 | Not started |
+| **Infra & Launch Polish** | 055 | 7, 8, 10 | Not started |
+
+### Execution Order
+
+1. **052 — Beta Legal & Compliance** (blocks launch)
+   - ToS acceptance at signup, AI disclaimers on all outputs, cookie consent
+   - Legal pages (terms, privacy, acceptable use, cookies) + landing page polish
+   - Audit trail completeness: all AI suggestions logged, immutable append-only log
+   - *Why first*: Cannot onboard paying customers without legal compliance
+
+2. **053 — Stripe Billing** | **054 — Onboarding & Core Hardening** (parallel)
+   - **053**: Stripe products/prices, signup → subscription, webhooks, dunning, free trial for beta
+   - **054**: Onboarding wizard (Xero connect → import → guided BAS), empty states, smoke tests for BAS/tax planning/portal/RAG, multi-tenancy isolation tests
+   - *Why parallel*: Independent concerns — billing vs product experience
+
+3. **055 — Infra & Launch Polish** (last)
+   - Production deployment pipeline, backups, CORS, Sentry, uptime monitoring
+   - Security hardening: rate limiting, dependency audit, OWASP review, MFA
+   - Performance: indexes, retry logic, load testing
+   - Support: feedback button, FAQ, status page
+   - Analytics: product events, landing page tracking
+   - *Why last*: Can be incremental, some items are ongoing post-launch
+
+---
+
+## 1. In-App Legal & Consent `→ Spec 052`
 
 ### ToS & Privacy Acceptance at Signup
 - [ ] Add ToS acceptance checkbox to Clerk signup flow (or post-signup onboarding step)
@@ -26,7 +58,7 @@
 
 ---
 
-## 2. Landing Page Updates
+## 2. Landing Page Updates `→ Spec 052`
 
 ### Legal Pages
 - [ ] Build Terms of Service page (route: `/terms`)
@@ -49,7 +81,7 @@
 
 ---
 
-## 3. Onboarding & First-Run Experience
+## 3. Onboarding & First-Run Experience `→ Spec 054`
 
 - [ ] New tenant signup → Clerk auth → tenant record created → redirect to onboarding
 - [ ] Onboarding wizard: connect Xero, import first client, guided BAS walkthrough
@@ -58,7 +90,7 @@
 
 ---
 
-## 4. Core Flow Hardening (Smoke Test Targets)
+## 4. Core Flow Hardening (Smoke Test Targets) `→ Spec 054`
 
 ### BAS End-to-End
 - [ ] Xero sync pulls transactions correctly
@@ -87,7 +119,7 @@
 
 ---
 
-## 5. Multi-Tenancy & Data Isolation
+## 5. Multi-Tenancy & Data Isolation `→ Spec 054`
 
 - [ ] Write integration tests: tenant A's API calls never return tenant B's data
 - [ ] Write integration tests: client portal user only sees their own business
@@ -96,7 +128,7 @@
 
 ---
 
-## 6. Billing Integration (Stripe)
+## 6. Billing Integration (Stripe) `→ Spec 053`
 
 - [ ] Stripe product and price objects created for the subscription plan
 - [ ] Signup flow creates Stripe customer + subscription
@@ -108,7 +140,7 @@
 
 ---
 
-## 7. Infrastructure & Security
+## 7. Infrastructure & Security `→ Spec 055`
 
 ### Production Environment
 - [ ] Production deployment pipeline works (separate from staging)
@@ -137,7 +169,7 @@
 
 ---
 
-## 8. Support Features (In-App)
+## 8. Support Features (In-App) `→ Spec 055`
 
 - [ ] "Report a bug" or feedback button in the app (links to support email or captures in-app)
 - [ ] In-app help / FAQ section (even minimal: "How do I connect Xero?", "What does AI tax planning do?")
@@ -145,7 +177,7 @@
 
 ---
 
-## 9. Audit Trail Completeness
+## 9. Audit Trail Completeness `→ Spec 052`
 
 - [ ] All AI suggestions logged with: input, output, model version, timestamp
 - [ ] All accountant approvals / overrides logged with: user, timestamp, before/after
@@ -154,7 +186,7 @@
 
 ---
 
-## 10. Analytics & Tracking
+## 10. Analytics & Tracking `→ Spec 055`
 
 - [ ] Track key product events: signup, Xero connected, first BAS started, BAS completed, tax plan created, tax plan exported
 - [ ] Google Analytics or Plausible on landing page (respecting cookie consent)

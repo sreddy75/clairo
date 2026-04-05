@@ -327,6 +327,28 @@ class BootstrapResponse(BaseModel):
     user: MeResponse = Field(..., description="Current user profile with tenant and permissions")
     features: Any | None = Field(None, description="Feature access status for current tenant")
     trial_status: Any | None = Field(None, description="Trial status for current tenant")
+    tos_accepted_at: datetime | None = Field(None, description="When user accepted ToS")
+    tos_version_accepted: str | None = Field(None, description="ToS version accepted")
+
+
+class AcceptTermsRequest(BaseModel):
+    """Request schema for accepting Terms of Service."""
+
+    version: str = Field(..., description="ToS version being accepted", min_length=1, max_length=20)
+
+
+class AcceptTermsResponse(BaseModel):
+    """Response schema after accepting Terms of Service."""
+
+    tos_accepted_at: datetime = Field(..., description="Acceptance timestamp")
+    tos_version_accepted: str = Field(..., description="Version accepted")
+
+
+class TosVersionResponse(BaseModel):
+    """Response schema for current ToS version."""
+
+    version: str = Field(..., description="Current ToS version")
+    effective_date: str = Field(..., description="Effective date of current ToS")
 
 
 class LogoutRequest(BaseModel):

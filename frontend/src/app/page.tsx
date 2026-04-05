@@ -910,10 +910,11 @@ function Footer() {
           </div>
 
           <div className="md:col-span-2">
-            <p className="text-xs font-medium text-foreground uppercase tracking-[0.2em] mb-4">Company</p>
+            <p className="text-xs font-medium text-foreground uppercase tracking-[0.2em] mb-4">Legal</p>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link></li>
-              <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link></li>
+              <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
+              <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/acceptable-use" className="hover:text-foreground transition-colors">Acceptable Use</Link></li>
             </ul>
           </div>
         </div>

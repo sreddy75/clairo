@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { AIDisclaimer } from '@/components/ui/AIDisclaimer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -652,6 +653,7 @@ export function TaxPlanningWorkspace({
             value="analysis"
             className="flex-1 overflow-y-auto space-y-4 mt-4"
           >
+            <AIDisclaimer />
             {!analysis && !generating && (
               <div className="flex flex-col items-center justify-center py-16 space-y-4">
                 <div className="text-center">

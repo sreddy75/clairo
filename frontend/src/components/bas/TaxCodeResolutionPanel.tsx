@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AIDisclaimer } from '@/components/ui/AIDisclaimer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -211,6 +212,7 @@ export function TaxCodeResolutionPanel({
 
   return (
     <div className="space-y-3">
+      <AIDisclaimer />
       {/* Request client classification (Spec 047) */}
       {/* Client classification: request button or review panel */}
       {pending.length > 0 && (

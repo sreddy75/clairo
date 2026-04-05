@@ -741,6 +741,8 @@ async def export_analysis_pdf(
             extensions=["tables", "fenced_code"],
         )
 
+        from app.core.constants import AI_DISCLAIMER_TEXT
+
         # Wrap in basic HTML template
         html = f"""<!DOCTYPE html>
 <html><head>
@@ -758,8 +760,7 @@ th {{ background-color: #f5f5f5; }}
 </head><body>
 {html_content}
 <div class="disclaimer">
-This is an estimate only and does not constitute formal tax advice.
-Professional judgement should be applied to each client's specific circumstances.
+{AI_DISCLAIMER_TEXT}
 </div>
 </body></html>"""
 
