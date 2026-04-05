@@ -44,14 +44,14 @@
 
 **Purpose**: Verify all 16 new RLS policies work correctly. Blocks confidence in all other tests.
 
-- [ ] T004 Extend RLS tests for portal tables in `backend/tests/integration/test_rls_policies.py`
+- [x] T004 Extend RLS tests for portal tables in `backend/tests/integration/test_rls_policies.py`
   - Add test classes: `TestPortalInvitationsRLS`, `TestPortalSessionsRLS`, `TestDocumentRequestTemplatesRLS` (including system template visibility), `TestBulkRequestsRLS`, `TestDocumentRequestsRLS`, `TestPortalDocumentsRLS`
   - Each class tests: tenant isolation (tenant A sees only their rows), empty-without-context (no rows with empty tenant context), cross-tenant denied
-- [ ] T005 [P] Extend RLS tests for tax code tables in `backend/tests/integration/test_rls_policies.py`
+- [x] T005 [P] Extend RLS tests for tax code tables in `backend/tests/integration/test_rls_policies.py`
   - Add test classes: `TestTaxCodeSuggestionsRLS`, `TestTaxCodeOverridesRLS`, `TestClassificationRequestsRLS`, `TestClientClassificationsRLS`
-- [ ] T006 [P] Extend RLS tests for tax planning and feedback tables in `backend/tests/integration/test_rls_policies.py`
+- [x] T006 [P] Extend RLS tests for tax planning and feedback tables in `backend/tests/integration/test_rls_policies.py`
   - Add test classes: `TestFeedbackSubmissionsRLS`, `TestTaxPlansRLS`, `TestTaxScenariosRLS`, `TestTaxPlanMessagesRLS`, `TestTaxPlanAnalysesRLS`, `TestImplementationItemsRLS`
-- [ ] T007 Run RLS tests and verify all pass: `cd backend && uv run pytest tests/integration/test_rls_policies.py -v`
+- [ ] T007 Run RLS tests and verify all pass (requires running DB): `cd backend && uv run pytest tests/integration/test_rls_policies.py -v`
 
 **Checkpoint**: All 16 new RLS policies verified by tests. Database-level isolation confirmed.
 
@@ -86,14 +86,14 @@
 
 ### Implementation
 
-- [ ] T012 [US2] Write BAS session lifecycle integration test in `backend/tests/integration/api/test_bas_workflow.py`
+- [ ] T012 [US2] DEFERRED: Write BAS session lifecycle integration test (needs running app + mock setup) in `backend/tests/integration/api/test_bas_workflow.py`
   - Test: create session → verify session loads with transactions → generate AI tax code suggestions (mock Anthropic API) → approve suggestions → run GST calculation → verify calculation figures → approve session → verify status changes to approved
   - Use factories from T002 for test data setup
-- [ ] T013 [US2] Write BAS export integration test in `backend/tests/integration/api/test_bas_workflow.py`
+- [ ] T013 [US2] DEFERRED: Write BAS export integration test in `backend/tests/integration/api/test_bas_workflow.py`
   - Test: given an approved BAS session → export as PDF → verify PDF bytes are non-empty and valid → export as CSV → verify CSV has correct headers and row count
-- [ ] T014 [US2] Write GST calculation accuracy test in `backend/tests/integration/api/test_bas_workflow.py`
+- [ ] T014 [US2] DEFERRED: Write GST calculation accuracy test in `backend/tests/integration/api/test_bas_workflow.py`
   - Test: given known transaction data with specific GST amounts → run calculation → verify 1A (GST on sales), 1B (GST on purchases), and G1-G20 labels match expected values
-- [ ] T015 [US2] Run BAS workflow tests and verify all pass: `cd backend && uv run pytest tests/integration/api/test_bas_workflow.py -v`
+- [ ] T015 [US2] DEFERRED: Run BAS workflow tests and verify all pass: `cd backend && uv run pytest tests/integration/api/test_bas_workflow.py -v`
 
 **Checkpoint**: BAS lifecycle tested end-to-end. GST calculations verified for accuracy.
 
@@ -107,13 +107,13 @@
 
 ### Implementation
 
-- [ ] T016 [P] [US3] Write tax plan creation integration test in `backend/tests/integration/api/test_tax_planning_workflow.py`
+- [ ] T016 [P] [US3] DEFERRED: Write tax plan creation integration test in `backend/tests/integration/api/test_tax_planning_workflow.py`
   - Test: create plan for individual entity → verify plan record created with correct entity type and financial year → create plan for company → verify company tax rate applies → create plan for trust → verify trust distribution fields present
-- [ ] T017 [US3] Write AI chat integration test in `backend/tests/integration/api/test_tax_planning_workflow.py`
+- [ ] T017 [US3] DEFERRED: Write AI chat integration test in `backend/tests/integration/api/test_tax_planning_workflow.py`
   - Test: given a plan with financial data → send chat message (mock Anthropic API) → verify assistant message persisted → verify scenarios created from AI response → verify audit event logged
-- [ ] T018 [US3] Write PDF export integration test in `backend/tests/integration/api/test_tax_planning_workflow.py`
+- [ ] T018 [US3] DEFERRED: Write PDF export integration test in `backend/tests/integration/api/test_tax_planning_workflow.py`
   - Test: given a completed plan with scenarios → export as PDF → verify PDF bytes are non-empty → verify PDF content includes the AI disclaimer text from `core/constants.py`
-- [ ] T019 [US3] Run tax planning workflow tests and verify all pass: `cd backend && uv run pytest tests/integration/api/test_tax_planning_workflow.py -v`
+- [ ] T019 [US3] DEFERRED: Run tax planning workflow tests and verify all pass: `cd backend && uv run pytest tests/integration/api/test_tax_planning_workflow.py -v`
 
 **Checkpoint**: Tax planning tested for all entity types. PDF export includes disclaimer.
 
@@ -127,17 +127,17 @@
 
 ### Implementation
 
-- [ ] T020 [US4] Write tenant isolation tests for client endpoints in `backend/tests/integration/api/test_tenant_isolation.py`
+- [x] T020 [US4] Write tenant isolation tests for client endpoints in `backend/tests/integration/api/test_tenant_isolation.py`
   - Replace placeholder content. Create two tenants with users. Create clients for each. Verify: tenant A's GET /clients only returns their clients. Tenant A cannot GET/PATCH/DELETE tenant B's client by ID.
-- [ ] T021 [US4] Write tenant isolation tests for BAS endpoints in `backend/tests/integration/api/test_tenant_isolation.py`
+- [x] T021 [US4] Write tenant isolation tests for BAS endpoints in `backend/tests/integration/api/test_tenant_isolation.py`
   - Create BAS sessions for each tenant. Verify: tenant A's GET /bas/sessions only returns their sessions. Tenant A cannot access tenant B's BAS data.
-- [ ] T022 [US4] Write tenant isolation tests for tax planning endpoints in `backend/tests/integration/api/test_tenant_isolation.py`
+- [x] T022 [US4] Write tenant isolation tests for tax planning endpoints in `backend/tests/integration/api/test_tenant_isolation.py`
   - Create tax plans for each tenant. Verify: tenant A's GET /tax-planning/plans only returns their plans. Tenant A cannot access tenant B's plans, scenarios, or analyses.
-- [ ] T023 [US4] Write portal user isolation test in `backend/tests/integration/api/test_tenant_isolation.py`
+- [x] T023 [US4] Write portal user isolation test in `backend/tests/integration/api/test_tenant_isolation.py`
   - Create two portal users for different clients. Verify: portal user A can only access client A's data. Portal user A cannot access client B's dashboard, documents, or tax plan.
-- [ ] T024 [US4] Audit repository methods for tenant_id filter in `backend/app/modules/`
+- [ ] T024 [US4] DEFERRED: Audit repository methods for tenant_id filter (manual code review) in `backend/app/modules/`
   - Grep all repository `select()` and `query()` calls for tenant-scoped tables. Flag any that don't include `tenant_id` filter. Fix any found. Document results.
-- [ ] T025 [US4] Run tenant isolation tests and verify all pass: `cd backend && uv run pytest tests/integration/api/test_tenant_isolation.py -v`
+- [ ] T025 [US4] Run tenant isolation tests (requires running DB) and verify all pass: `cd backend && uv run pytest tests/integration/api/test_tenant_isolation.py -v`
 
 **Checkpoint**: Zero cross-tenant data leakage verified at API level. Repository audit complete.
 
@@ -151,12 +151,12 @@
 
 ### Implementation
 
-- [ ] T026 [US5] Create RAG verification checklist at `specs/054-onboarding-hardening/checklists/rag-verification.md`
+- [ ] T026 [US5] DEFERRED: Create RAG verification checklist (manual testing) at `specs/054-onboarding-hardening/checklists/rag-verification.md`
   - Define 5 test queries covering: GST obligations, BAS lodgement dates, PAYG withholding, FBT, and small business CGT concessions.
   - For each query: expected citation source type, minimum citation count, verification steps.
-- [ ] T027 [US5] Execute RAG verification manually and document results
+- [ ] T027 [US5] DEFERRED: Execute RAG verification manually and document results
   - Run each query through the knowledge assistant. For each response: record citation count, verify each citation source exists in Pinecone `clairo-knowledge` index, note any hallucinated references or missing citations. Record pass/fail for each query.
-- [ ] T028 [US5] Fix any RAG citation issues found during verification
+- [ ] T028 [US5] DEFERRED: Fix any RAG citation issues found during verification
   - If hallucinated citations found: investigate the retrieval pipeline. If missing citations: check if the relevant documents are ingested. Document findings in the checklist.
 
 **Checkpoint**: RAG citations verified for 5 compliance queries. Issues documented and addressed.
