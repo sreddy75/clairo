@@ -231,6 +231,82 @@ def format_financial_context(
             ]
         )
 
+    # Full year projection (Spec 056 - US2)
+    projection = financials_data.get("projection")
+    if projection:
+        lines.extend(
+            [
+                "",
+                f"--- Full Year Projection (based on {projection['months_used']} months YTD) ---",
+                f"Projected Revenue: ${projection['projected_revenue']:,.2f}",
+                f"Projected Expenses: ${projection['projected_expenses']:,.2f}",
+                f"Projected Net Profit: ${projection['projected_net_profit']:,.2f}",
+                f"Monthly Avg Revenue: ${projection['monthly_avg_revenue']:,.2f}",
+                f"Monthly Avg Expenses: ${projection['monthly_avg_expenses']:,.2f}",
+                "Note: Linear projection based on YTD monthly averages. Use for planning only.",
+            ]
+        )
+
+    # Prior year same-period comparison (Spec 056 - US3)
+    prior_ytd = financials_data.get("prior_year_ytd")
+    if prior_ytd:
+        changes = prior_ytd.get("changes", {})
+        lines.extend(
+            [
+                "",
+                f"--- Same Period Last Year ({prior_ytd.get('period_coverage', 'prior year')}) ---",
+                f"Prior Year Revenue: ${prior_ytd.get('revenue', 0):,.2f} (change: {changes.get('revenue_pct', 0):+.1f}%)",
+                f"Prior Year Expenses: ${prior_ytd.get('total_expenses', 0):,.2f} (change: {changes.get('expenses_pct', 0):+.1f}%)",
+                f"Prior Year Net Profit: ${prior_ytd.get('net_profit', 0):,.2f} (change: {changes.get('profit_pct', 0):+.1f}%)",
+            ]
+        )
+
+    # Multi-year trends (Spec 056 - US4)
+    prior_years = financials_data.get("prior_years")
+    if prior_years:
+        lines.extend(["", "--- Multi-Year Trends ---"])
+        for py in prior_years:
+            lines.append(
+                f"  {py['financial_year']}: Revenue ${py['revenue']:,.2f} | Expenses ${py['expenses']:,.2f} | Net Profit ${py['net_profit']:,.2f}"
+            )
+
+    # Strategy constraints (Spec 056 - US5)
+    strategy_ctx = financials_data.get("strategy_context")
+    if strategy_ctx:
+        lines.extend(
+            [
+                "",
+                "--- Strategy Constraints ---",
+                f"Available Cash: ${strategy_ctx['available_cash']:,.2f}" if strategy_ctx.get("available_cash") is not None else "Available Cash: Not available",
+                f"Monthly Operating Expenses: ${strategy_ctx['monthly_operating_expenses']:,.2f}",
+                f"3-Month Cash Buffer: ${strategy_ctx['cash_buffer_3mo']:,.2f}",
+            ]
+        )
+        if strategy_ctx.get("max_strategy_budget") is not None:
+            lines.append(f"Maximum Available for Strategies: ${strategy_ctx['max_strategy_budget']:,.2f}")
+        else:
+            lines.append("Maximum Available for Strategies: Limited — cash reserves below 3-month buffer")
+        if strategy_ctx.get("existing_asset_spend", 0) > 0:
+            lines.append(f"Existing Asset/Equipment Spend YTD: ${strategy_ctx['existing_asset_spend']:,.2f}")
+        lines.append("IMPORTANT: Do not recommend strategies exceeding available cash without explicit justification.")
+
+    # Payroll data (Spec 056 - US6)
+    payroll = financials_data.get("payroll_summary")
+    if payroll:
+        lines.extend(
+            [
+                "",
+                "--- Payroll Data ---",
+                f"Employees: {payroll['employee_count']}",
+                f"Total Wages YTD: ${payroll['total_wages_ytd']:,.2f}",
+                f"Total Superannuation YTD: ${payroll['total_super_ytd']:,.2f}",
+                f"Total PAYG Withheld YTD: ${payroll['total_tax_withheld_ytd']:,.2f}",
+            ]
+        )
+        if payroll.get("has_owners"):
+            lines.append("Note: Business has owner/director employees — consider salary vs dividend optimisation and super contribution strategies.")
+        lines.append("Consider: maximising concessional super contributions ($30,000 cap), catch-up contributions (if eligible), salary packaging options.")
+
     return "\n".join(lines)
 
 
