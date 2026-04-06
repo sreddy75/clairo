@@ -42,12 +42,59 @@ export interface FinancialsData {
   turnover: number;
   months_data_available: number;
   is_annualised: boolean;
-  // Bank context (FR-015 to FR-018)
+  // Bank context
   bank_balances?: BankAccountBalance[];
-  total_bank_balance?: number;
+  total_bank_balance?: number | null;
   last_reconciliation_date?: string;
   period_coverage?: string;
   unreconciled_summary?: UnreconciledSummary;
+  // Projection (Spec 056 - US2)
+  projection?: {
+    projected_revenue: number;
+    projected_expenses: number;
+    projected_net_profit: number;
+    monthly_avg_revenue: number;
+    monthly_avg_expenses: number;
+    months_used: number;
+    projection_method: string;
+  } | null;
+  // Prior year comparison (Spec 056 - US3)
+  prior_year_ytd?: {
+    revenue: number;
+    total_income: number;
+    total_expenses: number;
+    net_profit: number;
+    period_coverage: string;
+    changes: {
+      revenue_pct: number;
+      expenses_pct: number;
+      profit_pct: number;
+    };
+  } | null;
+  // Multi-year trends (Spec 056 - US4)
+  prior_years?: Array<{
+    financial_year: string;
+    revenue: number;
+    expenses: number;
+    net_profit: number;
+  }> | null;
+  // Strategy context (Spec 056 - US5)
+  strategy_context?: {
+    available_cash: number | null;
+    monthly_operating_expenses: number;
+    cash_buffer_3mo: number;
+    max_strategy_budget: number | null;
+    existing_asset_spend: number;
+  } | null;
+  // Payroll summary (Spec 056 - US6)
+  payroll_summary?: {
+    employee_count: number;
+    total_wages_ytd: number;
+    total_super_ytd: number;
+    total_tax_withheld_ytd: number;
+    has_owners: boolean;
+    employees: Array<{ name: string; job_title: string | null; status: string }>;
+  } | null;
 }
 
 export interface BankAccountBalance {

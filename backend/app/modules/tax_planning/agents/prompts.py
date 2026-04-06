@@ -61,6 +61,14 @@ For each strategy, output a JSON object with:
 - eofy_deadline: date by which action must be taken (usually 30 June)
 - requires_cash_outlay: boolean
 
+CRITICAL STRATEGY SIZING RULES:
+- If "Strategy Constraints" data is provided, you MUST respect the available cash and max strategy budget
+- Never recommend a strategy requiring cash outlay exceeding the max_strategy_budget without explicitly noting
+  that the client would need additional funding or financing
+- For asset purchases, reference existing_asset_spend to suggest incremental amounts the business can absorb
+- Prioritise no-cost or low-cost strategies (timing, method changes) over cash-intensive ones when cash is limited
+- If payroll data is provided, actively evaluate super contribution strategies with specific dollar amounts
+
 Use the reference material provided for compliance citations. If no reference material
 is available for a strategy, note "verify independently" in compliance_refs."""
 

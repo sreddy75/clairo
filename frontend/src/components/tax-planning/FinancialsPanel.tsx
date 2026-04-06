@@ -167,26 +167,123 @@ export function FinancialsPanel({
           </div>
         )}
 
-        {/* Bank Position (FR-016) */}
-        {financials.total_bank_balance != null && (
+        {/* Bank Position */}
+        <div className="border-t pt-3 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Bank Position
+            </p>
+            {financials.last_reconciliation_date && (
+              <span className="text-xs text-muted-foreground">
+                Reconciled to {new Date(financials.last_reconciliation_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            )}
+          </div>
+          {financials.total_bank_balance != null ? (
+            <>
+              {financials.bank_balances?.map((acct, i) => (
+                <SummaryRow key={i} label={acct.account_name} value={acct.closing_balance} />
+              ))}
+              <div className="flex items-center justify-between font-medium">
+                <span>Total Bank Balance</span>
+                <span className="tabular-nums">{formatCurrency(financials.total_bank_balance)}</span>
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">Bank data not available</p>
+          )}
+        </div>
+
+        {/* Full Year Projection (Spec 056 - US2) */}
+        {financials.projection && (
           <div className="border-t pt-3 space-y-1.5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Bank Position
+                Projected Full Year
               </p>
-              {financials.last_reconciliation_date && (
-                <span className="text-xs text-muted-foreground">
-                  Reconciled to {new Date(financials.last_reconciliation_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
-              )}
+              <Badge variant="outline" className="text-xs text-blue-600 border-blue-300">
+                Projected ({financials.projection.months_used}mo avg)
+              </Badge>
             </div>
-            {financials.bank_balances?.map((acct, i) => (
-              <SummaryRow key={i} label={acct.account_name} value={acct.closing_balance} />
-            ))}
+            <SummaryRow label="Projected Revenue" value={financials.projection.projected_revenue} />
+            <SummaryRow label="Projected Expenses" value={financials.projection.projected_expenses} />
             <div className="flex items-center justify-between font-medium">
-              <span>Total Bank Balance</span>
-              <span className="tabular-nums">{formatCurrency(financials.total_bank_balance)}</span>
+              <span>Projected Net Profit</span>
+              <span className={cn('tabular-nums', financials.projection.projected_net_profit >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                {formatCurrency(financials.projection.projected_net_profit)}
+              </span>
             </div>
+          </div>
+        )}
+
+        {/* Prior Year Comparison (Spec 056 - US3) */}
+        {financials.prior_year_ytd && (
+          <div className="border-t pt-3 space-y-1.5">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              vs Same Period Last Year
+            </p>
+            <p className="text-xs text-muted-foreground">{financials.prior_year_ytd.period_coverage}</p>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Revenue</span>
+              <span className="tabular-nums">
+                {formatCurrency(financials.prior_year_ytd.revenue)}
+                <span className={cn('ml-2 text-xs', financials.prior_year_ytd.changes.revenue_pct >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                  {financials.prior_year_ytd.changes.revenue_pct >= 0 ? '↑' : '↓'}{Math.abs(financials.prior_year_ytd.changes.revenue_pct)}%
+                </span>
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Expenses</span>
+              <span className="tabular-nums">
+                {formatCurrency(financials.prior_year_ytd.total_expenses)}
+                <span className={cn('ml-2 text-xs', financials.prior_year_ytd.changes.expenses_pct <= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                  {financials.prior_year_ytd.changes.expenses_pct >= 0 ? '↑' : '↓'}{Math.abs(financials.prior_year_ytd.changes.expenses_pct)}%
+                </span>
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm font-medium">
+              <span>Net Profit</span>
+              <span className="tabular-nums">
+                {formatCurrency(financials.prior_year_ytd.net_profit)}
+                <span className={cn('ml-2 text-xs', financials.prior_year_ytd.changes.profit_pct >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                  {financials.prior_year_ytd.changes.profit_pct >= 0 ? '↑' : '↓'}{Math.abs(financials.prior_year_ytd.changes.profit_pct)}%
+                </span>
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Multi-Year Trends (Spec 056 - US4) */}
+        {financials.prior_years && financials.prior_years.length > 0 && (
+          <div className="border-t pt-3 space-y-1.5">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Year-on-Year Trends
+            </p>
+            <div className="text-xs space-y-1">
+              {financials.prior_years.map((py) => (
+                <div key={py.financial_year} className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{py.financial_year}</span>
+                  <span className="tabular-nums">
+                    Rev {formatCurrency(py.revenue)} · Exp {formatCurrency(py.expenses)} · Net {formatCurrency(py.net_profit)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Payroll Summary (Spec 056 - US6) */}
+        {financials.payroll_summary && (
+          <div className="border-t pt-3 space-y-1.5">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Payroll
+            </p>
+            <SummaryRow label={`Employees (${financials.payroll_summary.employee_count})`} value={financials.payroll_summary.total_wages_ytd} />
+            <SummaryRow label="Superannuation YTD" value={financials.payroll_summary.total_super_ytd} />
+            <SummaryRow label="PAYG Withheld YTD" value={financials.payroll_summary.total_tax_withheld_ytd} />
+            {financials.payroll_summary.has_owners && (
+              <p className="text-xs text-amber-600">Includes owner/director employees</p>
+            )}
           </div>
         )}
 
