@@ -110,3 +110,48 @@ class XeroConnectionNotFoundError(XeroSyncError):
     def __init__(self, connection_id: UUID):
         self.connection_id = connection_id
         super().__init__(f"Xero connection {connection_id} not found")
+
+
+# =============================================================================
+# Write-back exceptions (Spec 049)
+# =============================================================================
+
+
+class WritebackError(XeroSyncError):
+    """Base exception for Xero write-back operations."""
+
+    def __init__(self, message: str = "Write-back error occurred", code: str | None = None):
+        self.code = code or message
+        super().__init__(message)
+
+
+class XeroDocumentNotEditableError(WritebackError):
+    """Raised when a Xero document cannot be edited (voided, deleted, locked)."""
+
+    def __init__(self, skip_reason: str, xero_document_id: str = ""):
+        self.skip_reason = skip_reason
+        self.xero_document_id = xero_document_id
+        super().__init__(
+            f"Xero document {xero_document_id!r} is not editable: {skip_reason}",
+            code=skip_reason,
+        )
+
+
+class XeroConflictError(WritebackError):
+    """Raised when Xero document has been modified externally since last sync."""
+
+    def __init__(self, xero_document_id: str):
+        self.xero_document_id = xero_document_id
+        super().__init__(
+            f"Xero document {xero_document_id!r} has been modified in Xero since last sync."
+            " Re-sync from Xero before writing back.",
+            code="conflict_changed",
+        )
+
+
+class WritebackJobNotFoundError(WritebackError):
+    """Raised when a write-back job cannot be found."""
+
+    def __init__(self, job_id: UUID):
+        self.job_id = job_id
+        super().__init__(f"Write-back job {job_id} not found", code="job_not_found")

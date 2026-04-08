@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.config import get_settings
-from app.database import Base, get_db
+from app.database import get_db
 from app.modules.action_items import models as action_items_models  # noqa: F401
 from app.modules.agents import models as agents_models  # noqa: F401
 
@@ -46,7 +46,9 @@ from app.modules.integrations.xero import models as xero_models  # noqa: F401
 from app.modules.knowledge import models as knowledge_models  # noqa: F401
 from app.modules.notifications import models as notifications_models  # noqa: F401
 from app.modules.onboarding import models as onboarding_models  # noqa: F401
+from app.modules.portal import models as portal_models  # noqa: F401
 from app.modules.quality import models as quality_models  # noqa: F401
+from app.modules.tax_planning import models as tax_planning_models  # noqa: F401
 from app.modules.triggers import models as triggers_models  # noqa: F401
 
 # Models added in later specs — import models.py directly to register

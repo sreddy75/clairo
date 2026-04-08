@@ -104,7 +104,7 @@ frontend/
 │   │   │   └── TransactionClassifier.tsx     # NEW: category picker component
 │   │   └── bas/
 │   │       ├── ClassificationRequestButton.tsx  # NEW: trigger button
-│   │       └── ClassificationReview.tsx         # NEW: review screen
+│   │       └── ClassificationReview.tsx         # DEPRECATED: review logic merged into TaxCodeResolutionPanel
 │   └── lib/
 │       ├── api/
 │       │   └── portal.ts                     # MODIFIED: add classify.* methods

@@ -245,3 +245,40 @@ class InvalidClassificationActionError(DomainError):
             else f"Invalid classification action. Valid actions: {valid}."
         )
         super().__init__(message=message, code="INVALID_CLASSIFICATION_ACTION", status_code=422)
+
+
+class ClassificationValidationError(DomainError):
+    """Raised when portal classification submission fails validation (Spec 049)."""
+
+    def __init__(self, code: str, message: str | None = None, count: int = 0) -> None:
+        self.validation_code = code
+        self.count = count
+        super().__init__(
+            message=message or code,
+            code=code,
+            status_code=400,
+        )
+
+
+class SplitAmountMismatchError(DomainError):
+    """Raised when split line_amounts do not sum to the transaction total (Spec 049)."""
+
+    def __init__(self, expected: object, actual: object) -> None:
+        self.expected_total = expected
+        self.actual_total = actual
+        super().__init__(
+            message=f"Split amounts {actual} do not equal transaction total {expected}",
+            code="split_amount_mismatch",
+            status_code=422,
+        )
+
+
+class SplitOverrideNotFoundError(DomainError):
+    """Raised when a split override cannot be found by ID (Spec 049)."""
+
+    def __init__(self, override_id: object) -> None:
+        super().__init__(
+            message=f"Split override {override_id} not found",
+            code="split_override_not_found",
+            status_code=404,
+        )

@@ -1,0 +1,380 @@
+openapi: 3.1.0
+info:
+  title: Classification Workflow Extensions API
+  version: "1.0"
+  description: |
+    Extensions to the spec-047 classification workflow:
+    - Per-transaction agent notes (FR-024, FR-025)
+    - Send items back to client for further round (FR-026, FR-027, FR-028)
+    - Classification round history (FR-028)
+
+    Agent endpoints require Clerk JWT (tax agent role).
+    Portal endpoints use magic link token (client portal access).
+
+tags:
+  - name: agent-notes
+    description: Per-transaction notes from tax agent
+  - name: send-back
+    description: Send "I don't know" items back to client
+  - name: rounds
+    description: Classification round history
+
+paths:
+  # ─── Agent Notes ────────────────────────────────────────────────────────
+  /api/v1/bas/sessions/{session_id}/classification-requests/{request_id}/notes:
+    post:
+      summary: Add Per-Transaction Note
+      operationId: addAgentNote
+      tags: [agent-notes]
+      description: |
+        Adds a note to a specific transaction in a classification request.
+        Notes can be added before sending the initial request (is_send_back_comment=false)
+        or when sending items back (is_send_back_comment=true).
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentNoteCreate"
+      responses:
+        "201":
+          description: Note created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AgentNoteResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      summary: List Notes for Request
+      operationId: listAgentNotes
+      tags: [agent-notes]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Notes for this request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AgentNoteResponse"
+
+  # ─── Send-Back ───────────────────────────────────────────────────────────
+  /api/v1/bas/sessions/{session_id}/classification-requests/{request_id}/send-back:
+    post:
+      summary: Send Items Back to Client
+      operationId: sendItemsBack
+      tags: [send-back]
+      description: |
+        Creates a new ClassificationRequest for the specified items (round N+1),
+        generates a new single-use magic link, and sends the client an email.
+        Each item must include a mandatory agent comment.
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The source request containing the "I don't know" items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendBackRequest"
+      responses:
+        "201":
+          description: New round request created, email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SendBackResponse"
+        "400":
+          description: Validation error (e.g. missing comment, item not "I don't know")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Round History ────────────────────────────────────────────────────────
+  /api/v1/bas/sessions/{session_id}/transactions/{source_type}/{source_id}/{line_item_index}/rounds:
+    get:
+      summary: Get Classification Round History
+      operationId: getClassificationRounds
+      tags: [rounds]
+      description: |
+        Returns the full conversation thread for a specific transaction across all rounds.
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: source_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [invoice, bank_transaction, credit_note]
+        - name: source_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: line_item_index
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ordered list of classification rounds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ClassificationRoundResponse"
+
+  # ─── Portal Extensions (magic link authenticated) ────────────────────────
+  /api/v1/portal/classify/{token}/submit:
+    post:
+      summary: Submit Classification Responses
+      operationId: submitClassificationResponses
+      tags: [send-back]
+      description: |
+        Extended from spec-047. Validates:
+        - All transactions answered (400 if any unanswered)
+        - "I don't know" items have non-empty description (400 if missing)
+        Portal JWT from magic link required.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PortalSubmitRequest"
+      responses:
+        "200":
+          description: Submission accepted
+        "400":
+          description: |
+            Validation failure. Error codes:
+            - `unanswered_transactions`: Some items not answered
+            - `missing_idk_description`: "I don't know" item lacks description
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    AgentNoteCreate:
+      type: object
+      required: [source_type, source_id, line_item_index, note_text]
+      properties:
+        source_type:
+          type: string
+          enum: [invoice, bank_transaction, credit_note]
+        source_id:
+          type: string
+          format: uuid
+        line_item_index:
+          type: integer
+        note_text:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        is_send_back_comment:
+          type: boolean
+          default: false
+
+    AgentNoteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+          format: uuid
+        source_type:
+          type: string
+        source_id:
+          type: string
+          format: uuid
+        line_item_index:
+          type: integer
+        note_text:
+          type: string
+        is_send_back_comment:
+          type: boolean
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    SendBackRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [classification_id, agent_comment]
+            properties:
+              classification_id:
+                type: string
+                format: uuid
+                description: ClientClassification ID of the "I don't know" item to return
+              agent_comment:
+                type: string
+                minLength: 1
+                maxLength: 2000
+                description: Mandatory guidance from agent to client
+
+    SendBackResponse:
+      type: object
+      properties:
+        new_request_id:
+          type: string
+          format: uuid
+          description: The newly created ClassificationRequest for round N+1
+        round_number:
+          type: integer
+        item_count:
+          type: integer
+        client_email:
+          type: string
+          description: Email address the new link was sent to
+        expires_at:
+          type: string
+          format: date-time
+
+    ClassificationRoundResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        round_number:
+          type: integer
+        request_id:
+          type: string
+          format: uuid
+        agent_comment:
+          type: string
+          nullable: true
+          description: Agent's guidance for this round (null for round 1)
+        client_response_category:
+          type: string
+          nullable: true
+        client_response_description:
+          type: string
+          nullable: true
+        client_needs_help:
+          type: boolean
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    PortalSubmitRequest:
+      type: object
+      required: [responses]
+      properties:
+        responses:
+          type: array
+          items:
+            type: object
+            required: [classification_id, category]
+            properties:
+              classification_id:
+                type: string
+                format: uuid
+              category:
+                type: string
+                description: Selected category or "i_dont_know" or "personal"
+              description:
+                type: string
+                nullable: true
+                description: Required when category = "i_dont_know"
+              is_personal:
+                type: boolean
+                default: false
+
+    ErrorResponse:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

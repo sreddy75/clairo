@@ -80,6 +80,8 @@ export interface BASSession {
   lodgement_notes: string | null;
   created_at: string;
   updated_at: string;
+  // Spec 049: count of approved overrides not yet synced to Xero
+  approved_unsynced_count: number;
 }
 
 export interface BASSessionListResponse {
@@ -253,6 +255,100 @@ export interface LodgementSummaryResponse {
   fields: LodgementField[];
   total_payable: string;
   is_refund: boolean;
+}
+
+// =============================================================================
+// Writeback Types (Spec 049)
+// =============================================================================
+
+export type WritebackJobStatus = 'pending' | 'in_progress' | 'completed' | 'partial' | 'failed';
+export type WritebackItemStatus = 'pending' | 'success' | 'skipped' | 'failed';
+export type WritebackSkipReason =
+  | 'voided'
+  | 'deleted'
+  | 'period_locked'
+  | 'reconciled'
+  | 'authorised_locked'
+  | 'credit_note_applied'
+  | 'invalid_tax_type'
+  | 'conflict_changed';
+
+export interface WritebackTransactionContext {
+  contact_name: string | null;
+  transaction_date: string | null;
+  description: string | null;
+  total_line_amount: number | null;
+}
+
+export interface WritebackItemResponse {
+  id: string;
+  xero_document_id: string;
+  local_document_id: string;
+  source_type: string;
+  status: WritebackItemStatus;
+  skip_reason: WritebackSkipReason | null;
+  error_detail: string | null;
+  xero_http_status: number | null;
+  before_tax_types: Record<string, string> | null;
+  after_tax_types: Record<string, string> | null;
+  processed_at: string | null;
+  override_ids: string[];
+  transaction_context: WritebackTransactionContext | null;
+}
+
+export interface WritebackJobResponse {
+  id: string;
+  session_id: string;
+  status: WritebackJobStatus;
+  total_count: number;
+  succeeded_count: number;
+  skipped_count: number;
+  failed_count: number;
+  triggered_by: string;
+  started_at: string | null;
+  completed_at: string | null;
+  duration_seconds: number | null;
+  created_at: string;
+}
+
+export interface WritebackJobDetailResponse extends WritebackJobResponse {
+  items: WritebackItemResponse[];
+}
+
+// =============================================================================
+// Send-Back Types (Spec 049)
+// =============================================================================
+
+export interface AgentNoteResponse {
+  id: string;
+  classification_id: string;
+  note_text: string;
+  is_send_back_comment: boolean;
+  created_by: string;
+  created_by_name: string | null;
+  created_at: string;
+}
+
+export interface SendBackItem {
+  classification_id: string;
+  agent_comment: string;
+}
+
+export interface SendBackResponse {
+  new_request_id: string;
+  client_email: string;
+  expires_at: string;
+  round_number: number;
+  items_sent_back: number;
+}
+
+export interface ClassificationRoundResponse {
+  round_number: number;
+  agent_comment: string | null;
+  client_response_category: string | null;
+  client_response_description: string | null;
+  client_classified_at: string | null;
+  request_id: string;
 }
 
 // =============================================================================
@@ -550,6 +646,109 @@ export async function getBASSummary(
     }
   );
   return apiClient.handleResponse<BASSummary>(response);
+}
+
+// =============================================================================
+// Writeback API Functions (Spec 049)
+// =============================================================================
+
+export async function initiateWriteback(
+  token: string,
+  connectionId: string,
+  sessionId: string
+): Promise<WritebackJobResponse> {
+  const response = await apiClient.post(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/writeback`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return apiClient.handleResponse<WritebackJobResponse>(response);
+}
+
+export async function listWritebackJobs(
+  token: string,
+  connectionId: string,
+  sessionId: string
+): Promise<WritebackJobResponse[]> {
+  const response = await apiClient.get(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/writeback/jobs`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return apiClient.handleResponse<WritebackJobResponse[]>(response);
+}
+
+export async function getWritebackJob(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  jobId: string
+): Promise<WritebackJobDetailResponse> {
+  const response = await apiClient.get(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/writeback/jobs/${jobId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return apiClient.handleResponse<WritebackJobDetailResponse>(response);
+}
+
+export async function retryWritebackJob(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  jobId: string
+): Promise<WritebackJobResponse> {
+  const response = await apiClient.post(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/writeback/jobs/${jobId}/retry`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return apiClient.handleResponse<WritebackJobResponse>(response);
+}
+
+// =============================================================================
+// Send-Back API Functions (Spec 049)
+// =============================================================================
+
+export async function sendItemsBack(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  requestId: string,
+  items: SendBackItem[]
+): Promise<SendBackResponse> {
+  const response = await apiClient.post(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/classification-requests/${requestId}/send-back`,
+    {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    }
+  );
+  return apiClient.handleResponse<SendBackResponse>(response);
+}
+
+export async function listAgentNotes(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  requestId: string
+): Promise<AgentNoteResponse[]> {
+  const response = await apiClient.get(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/classification-requests/${requestId}/notes`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return apiClient.handleResponse<AgentNoteResponse[]>(response);
+}
+
+export async function getTransactionRounds(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  sourceType: string,
+  docId: string,
+  lineItemIndex: number
+): Promise<ClassificationRoundResponse[]> {
+  const response = await apiClient.get(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/transactions/${sourceType}/${docId}/${lineItemIndex}/rounds`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return apiClient.handleResponse<ClassificationRoundResponse[]>(response);
 }
 
 // =============================================================================
@@ -1287,21 +1486,198 @@ export async function recalculateBASWithSuggestions(
   return apiClient.handleResponse<RecalculateResult>(response);
 }
 
+/**
+ * Fetch the active tax types configured for this Xero org.
+ * Falls back to an empty array on error — caller should use VALID_TAX_TYPES as fallback.
+ */
+export async function fetchOrgTaxTypes(
+  token: string,
+  connectionId: string,
+): Promise<{ tax_type: string; name: string }[]> {
+  try {
+    const response = await apiClient.get(
+      `/api/v1/clients/${connectionId}/xero/tax-rates`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    const data = await apiClient.handleResponse<{ tax_types: { tax_type: string; name: string }[] }>(response);
+    return data.tax_types;
+  } catch {
+    return [];
+  }
+}
+
+// =============================================================================
+// Split overrides (Spec 049 US10/US11)
+// =============================================================================
+
+export type WritebackStatus = 'pending_sync' | 'synced' | 'failed' | 'skipped';
+
+export interface XeroLineItemView {
+  index: number;
+  tax_type: string | null;
+  line_amount: string | null;
+  description: string | null;
+  account_code: string | null;
+}
+
+export interface TransactionSplitsResponse {
+  original_line_items: XeroLineItemView[];
+  overrides: TaxCodeOverrideWithSplit[];
+}
+
+export interface TaxCodeOverrideWithSplit {
+  id: string;
+  source_type: string;
+  source_id: string;
+  line_item_index: number;
+  original_tax_type: string | null;
+  override_tax_type: string;
+  writeback_status: WritebackStatus;
+  is_new_split: boolean;
+  is_deleted: boolean;
+  line_amount: string | null;
+  line_description: string | null;
+  line_account_code: string | null;
+  is_active: boolean;
+  applied_at: string;
+}
+
+export interface SplitCreateRequest {
+  line_item_index: number;
+  override_tax_type: string;
+  line_amount?: string | null;
+  line_description?: string | null;
+  line_account_code?: string | null;
+  is_new_split?: boolean;
+  is_deleted?: boolean;
+}
+
+export interface SplitUpdateRequest {
+  override_tax_type?: string;
+  line_amount?: string;
+  line_description?: string | null;
+  line_account_code?: string | null;
+  is_deleted?: boolean;
+}
+
+export interface SplitValidationError {
+  detail: string;
+  expected_total: string;
+  actual_total: string;
+}
+
+/**
+ * List active split overrides for a bank transaction
+ */
+export async function listTransactionSplits(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  sourceId: string,
+): Promise<TransactionSplitsResponse> {
+  const response = await apiClient.get(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/bank-transactions/${sourceId}/splits`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return apiClient.handleResponse<TransactionSplitsResponse>(response);
+}
+
+/**
+ * Create a new split override on a bank transaction
+ */
+export async function createSplit(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  sourceId: string,
+  body: SplitCreateRequest,
+): Promise<TaxCodeOverrideWithSplit> {
+  const response = await apiClient.post(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/bank-transactions/${sourceId}/splits`,
+    {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  );
+  return apiClient.handleResponse<TaxCodeOverrideWithSplit>(response);
+}
+
+/**
+ * Update an existing split override
+ */
+export async function updateSplit(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  sourceId: string,
+  overrideId: string,
+  body: SplitUpdateRequest,
+): Promise<TaxCodeOverrideWithSplit> {
+  const response = await apiClient.patch(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/bank-transactions/${sourceId}/splits/${overrideId}`,
+    {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  );
+  return apiClient.handleResponse<TaxCodeOverrideWithSplit>(response);
+}
+
+/**
+ * Delete (soft-delete) a split override
+ */
+export async function deleteSplit(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  sourceId: string,
+  overrideId: string,
+): Promise<void> {
+  const response = await apiClient.delete(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/bank-transactions/${sourceId}/splits/${overrideId}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!response.ok && response.status !== 204) {
+    await apiClient.handleResponse<void>(response);
+  }
+}
+
+// =============================================================================
+// Xero Accounts (for account code autocomplete in splits)
+// =============================================================================
+
+export interface XeroAccountOption {
+  account_code: string;
+  account_name: string;
+  account_type: string;
+}
+
+/** Fetch synced chart of accounts for a connection (active accounts only). */
+export async function listXeroAccounts(
+  token: string,
+  connectionId: string,
+): Promise<XeroAccountOption[]> {
+  const response = await apiClient.get(
+    `/api/v1/integrations/xero/connections/${connectionId}/accounts?is_active=true`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  const data = await apiClient.handleResponse<{ accounts: Array<{ account_code: string | null; account_name: string; account_type: string }> }>(response);
+  return data.accounts
+    .filter((a) => a.account_code)
+    .map((a) => ({ account_code: a.account_code!, account_name: a.account_name, account_type: a.account_type }));
+}
+
 /** Valid tax types for override dropdown (non-excluded from TAX_TYPE_MAPPING) */
 export const VALID_TAX_TYPES = [
   { value: 'OUTPUT', label: 'GST on Sales (OUTPUT)', group: 'Sales' },
-  { value: 'OUTPUT2', label: 'GST on Sales 2 (OUTPUT2)', group: 'Sales' },
   { value: 'INPUT', label: 'GST on Purchases (INPUT)', group: 'Purchases' },
-  { value: 'INPUT2', label: 'GST on Purchases 2 (INPUT2)', group: 'Purchases' },
-  { value: 'INPUT3', label: 'GST on Purchases 3 (INPUT3)', group: 'Purchases' },
   { value: 'INPUTTAXED', label: 'Input Taxed (INPUTTAXED)', group: 'Purchases' },
   { value: 'CAPEXINPUT', label: 'Capital Purchase (CAPEXINPUT)', group: 'Capital' },
-  { value: 'CAPEXINPUT2', label: 'Capital Purchase 2 (CAPEXINPUT2)', group: 'Capital' },
+  { value: 'EXEMPTCAPITAL', label: 'GST-Free Capital (EXEMPTCAPITAL)', group: 'Exempt' },
   { value: 'EXEMPTOUTPUT', label: 'GST-Free Sale (EXEMPTOUTPUT)', group: 'Exempt' },
-  { value: 'EXEMPTINCOME', label: 'GST-Free Income (EXEMPTINCOME)', group: 'Exempt' },
   { value: 'EXEMPTEXPENSES', label: 'GST-Free Expense (EXEMPTEXPENSES)', group: 'Exempt' },
-  { value: 'EXEMPTEXPORT', label: 'Export Sale (EXEMPTEXPORT)', group: 'Export' },
-  { value: 'GSTONEXPORTS', label: 'GST on Exports (GSTONEXPORTS)', group: 'Export' },
-  { value: 'ZERORATEDINPUT', label: 'Zero-Rated Input (ZERORATEDINPUT)', group: 'Zero-Rated' },
-  { value: 'ZERORATEDOUTPUT', label: 'Zero-Rated Output (ZERORATEDOUTPUT)', group: 'Zero-Rated' },
+  { value: 'EXEMPTEXPORT', label: 'Export Sale (EXEMPTEXPORT)', group: 'Exempt' },
+  { value: 'GSTONIMPORTS', label: 'GST on Imports (GSTONIMPORTS)', group: 'Imports' },
+  { value: 'GSTONCAPIMPORTS', label: 'GST on Capital Imports (GSTONCAPIMPORTS)', group: 'Imports' },
+  { value: 'BASEXCLUDED', label: 'BAS Excluded (BASEXCLUDED)', group: 'BAS Excluded' },
 ] as const;

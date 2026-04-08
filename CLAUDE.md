@@ -40,6 +40,9 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - Always use `cn()` from `@/lib/utils` for conditional classes — never string concatenation
 - Use `stone-*` palette for dark mode grays — never `gray-*`
 - Status colors have meaning: green=good, amber=attention, red=urgent — never decorative
+- `TaxCodeOverride` has no `session_id` — join via `TaxCodeSuggestion.session_id` using `suggestion_id` FK
+- Xero write-back uses queue `xero_writeback`; Celery task is `process_writeback_job` in `app.tasks.xero_writeback`
+- `ClassificationRequest.session_id` is no longer unique — partial unique index `WHERE parent_request_id IS NULL` (round-1 only)
 
 ## Active Technologies
 - Python 3.12+ (backend), TypeScript/Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Celery, Anthropic SDK (Claude Sonnet for LLM tier), React 18 + shadcn/ui (046-ai-tax-code-resolution)
@@ -60,6 +63,14 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 (3 new columns on existing `users` table, no new tables) (052-beta-legal-compliance)
 - Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, pytest + pytest-asyncio, factory_boy (054-onboarding-hardening)
 - PostgreSQL 16 (16 new RLS policies, no schema changes) (054-onboarding-hardening)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Celery + Redis, anthropic SDK, Xero OAuth2 API, React 18, shadcn/ui, TanStack Query, Zustand (049-xero-taxcode-sync)
+- PostgreSQL 16 — 4 new tables, 2 modified tables (original scope); +4 columns on `tax_code_overrides` (split scope) (049-xero-taxcode-sync)
 
 ## Recent Changes
+- 049-xero-taxcode-sync: Xero write-back, multi-round client send-back, portal IDK validation, agent notes
+  - New: `xero_writeback_jobs`, `xero_writeback_items`, `agent_transaction_notes`, `client_classification_rounds`
+  - Altered: `tax_code_overrides` (+writeback_status), `classification_requests` (+parent_request_id, +round_number)
+  - New services: `XeroWritebackService`, Celery task `process_writeback_job` (queue: `xero_writeback`)
+  - New frontend: `SyncToXeroButton`, `WritebackProgressPanel`, `WritebackResultsSummary`, `SendBackModal`, `IdkItemsSection`
+  - `TaxCodeOverride.writeback_status`: pending_sync → synced after write-back
 - 046-ai-tax-code-resolution: Added Python 3.12+ (backend), TypeScript/Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Celery, Anthropic SDK (Claude Sonnet for LLM tier), React 18 + shadcn/ui

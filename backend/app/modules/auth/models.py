@@ -20,7 +20,7 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, func, text
 from sqlalchemy.dialects.postgresql import INET, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -207,7 +207,7 @@ class Tenant(Base, TimestampMixin):
         JSONB,
         nullable=False,
         default=dict,
-        server_default="'{}'::jsonb",
+        server_default=text("'{}'::jsonb"),
         comment="Tenant-specific configuration",
     )
 

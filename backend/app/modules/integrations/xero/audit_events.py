@@ -7,6 +7,18 @@ Defines audit events for:
 - Rate limiting
 """
 
+# Write-back audit event constants (Spec 049)
+WRITEBACK_INITIATED = "xero.taxcode.writeback_initiated"
+WRITEBACK_ITEM_SUCCESS = "xero.taxcode.writeback_item_success"
+WRITEBACK_ITEM_SKIPPED = "xero.taxcode.writeback_item_skipped"
+WRITEBACK_ITEM_FAILED = "xero.taxcode.writeback_item_failed"
+WRITEBACK_COMPLETED = "xero.taxcode.writeback_completed"
+WRITEBACK_RETRY_INITIATED = "xero.taxcode.writeback_retry_initiated"
+
+# Classification send-back audit events (Spec 049)
+CLASSIFICATION_ITEMS_SENT_BACK = "classification.items_sent_back"
+CLASSIFICATION_CLIENT_ANSWERED_ROUND = "classification.client_answered_round"
+
 XERO_AUDIT_EVENTS = {
     "integration.xero.oauth_started": {
         "category": "integration",

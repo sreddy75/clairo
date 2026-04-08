@@ -23,6 +23,7 @@ from app.modules.bas.models import (
     TaxCodeOverride,
     TaxCodeSuggestion,
 )
+from app.modules.integrations.xero.models import XeroBankTransaction
 
 
 class BASRepository:
@@ -823,6 +824,37 @@ class BASRepository:
             override.is_active = False
             await self.session.flush()
 
+    async def get_overrides_for_transaction(
+        self,
+        source_id: UUID,
+        tenant_id: UUID,
+    ) -> list[TaxCodeOverride]:
+        """Return all active overrides for a bank transaction, ordered by line_item_index."""
+        result = await self.session.execute(
+            select(TaxCodeOverride)
+            .where(
+                TaxCodeOverride.source_id == source_id,
+                TaxCodeOverride.tenant_id == tenant_id,
+                TaxCodeOverride.is_active.is_(True),
+            )
+            .order_by(TaxCodeOverride.line_item_index)
+        )
+        return list(result.scalars().all())
+
+    async def get_bank_transaction_total(
+        self,
+        source_id: UUID,
+        tenant_id: UUID,
+    ) -> Decimal | None:
+        """Return total_amount for a bank transaction, or None if not found."""
+        result = await self.session.execute(
+            select(XeroBankTransaction.total_amount).where(
+                XeroBankTransaction.id == source_id,
+                XeroBankTransaction.tenant_id == tenant_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
     # =================================================================
     # Classification Request Methods (Spec 047)
     # =================================================================
@@ -969,5 +1001,114 @@ class BASRepository:
                 ClientClassification.classified_at.isnot(None),
                 ClientClassification.ai_mapped_at.is_(None),
             )
+        )
+        return list(result.scalars().all())
+
+    # =========================================================================
+    # Classification Send-Back Operations (Spec 049)
+    # =========================================================================
+
+    async def get_idk_items_for_request(
+        self, request_id: UUID, tenant_id: UUID
+    ) -> list[ClientClassification]:
+        """Get IDK (I don't know) items for a classification request."""
+        result = await self.session.execute(
+            select(ClientClassification).where(
+                ClientClassification.request_id == request_id,
+                ClientClassification.tenant_id == tenant_id,
+                ClientClassification.client_needs_help.is_(True),
+            )
+        )
+        return list(result.scalars().all())
+
+    async def create_agent_note(
+        self,
+        tenant_id: UUID,
+        request_id: UUID,
+        source_type: str,
+        source_id: UUID,
+        line_item_index: int,
+        note_text: str,
+        is_send_back_comment: bool,
+        created_by: UUID | None,
+    ) -> Any:
+        """Create an AgentTransactionNote record."""
+        from app.modules.bas.classification_models import AgentTransactionNote
+
+        note = AgentTransactionNote(
+            tenant_id=tenant_id,
+            request_id=request_id,
+            source_type=source_type,
+            source_id=source_id,
+            line_item_index=line_item_index,
+            note_text=note_text,
+            is_send_back_comment=is_send_back_comment,
+            created_by=created_by,
+        )
+        self.session.add(note)
+        await self.session.flush()
+        return note
+
+    async def list_notes_for_request(
+        self, request_id: UUID, tenant_id: UUID
+    ) -> list[Any]:
+        """List AgentTransactionNote records for a classification request."""
+        from app.modules.bas.classification_models import AgentTransactionNote
+
+        result = await self.session.execute(
+            select(AgentTransactionNote).where(
+                AgentTransactionNote.request_id == request_id,
+                AgentTransactionNote.tenant_id == tenant_id,
+            ).order_by(AgentTransactionNote.created_at.asc())
+        )
+        return list(result.scalars().all())
+
+    async def create_classification_round(
+        self,
+        tenant_id: UUID,
+        session_id: UUID,
+        source_type: str,
+        source_id: UUID,
+        line_item_index: int,
+        round_number: int,
+        request_id: UUID,
+        agent_comment: str | None = None,
+    ) -> Any:
+        """Create a ClientClassificationRound record."""
+        from app.modules.bas.classification_models import ClientClassificationRound
+
+        round_rec = ClientClassificationRound(
+            tenant_id=tenant_id,
+            session_id=session_id,
+            source_type=source_type,
+            source_id=source_id,
+            line_item_index=line_item_index,
+            round_number=round_number,
+            request_id=request_id,
+            agent_comment=agent_comment,
+        )
+        self.session.add(round_rec)
+        await self.session.flush()
+        return round_rec
+
+    async def list_rounds_for_transaction(
+        self,
+        tenant_id: UUID,
+        session_id: UUID,
+        source_type: str,
+        source_id: UUID,
+        line_item_index: int,
+    ) -> list[Any]:
+        """List ClientClassificationRound records for a transaction, ordered by round."""
+        from app.modules.bas.classification_models import ClientClassificationRound
+
+        result = await self.session.execute(
+            select(ClientClassificationRound).where(
+                ClientClassificationRound.tenant_id == tenant_id,
+                ClientClassificationRound.session_id == session_id,
+                ClientClassificationRound.source_type == source_type,
+                ClientClassificationRound.source_id == source_id,
+                ClientClassificationRound.line_item_index == line_item_index,
+            ).order_by(ClientClassificationRound.round_number.asc())
         )
         return list(result.scalars().all())

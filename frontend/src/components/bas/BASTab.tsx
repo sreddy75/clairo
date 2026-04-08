@@ -39,7 +39,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ThresholdTooltip } from '@/components/insights/ThresholdTooltip';
 import {
@@ -51,6 +51,7 @@ import {
   type ExportFormat,
   type LodgementRecordRequest,
   type LodgementUpdateRequest,
+  type WritebackJobDetailResponse,
   listBASSessions,
   createBASSession,
   triggerBASCalculation,
@@ -66,6 +67,8 @@ import {
   getBASFieldTransactions,
   recordLodgement,
   updateLodgementDetails,
+  listWritebackJobs,
+  getWritebackJob,
   getSessionStatusLabel,
   formatBASCurrency,
   formatPercentage,
@@ -136,6 +139,7 @@ export function BASTab({
   // State
   const [sessions, setSessions] = useState<BASSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const hasLoadedSessionsRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -185,23 +189,32 @@ export function BASTab({
   const [taxCodeSummary, setTaxCodeSummary] = useState<TaxCodeSuggestionSummary | null>(null);
   const [showResolutionPanel, setShowResolutionPanel] = useState(false);
 
+  // Xero write-back state (Spec 049)
+  const [activeWritebackJobId, setActiveWritebackJobId] = useState<string | null>(null);
+  const [completedWritebackJob, setCompletedWritebackJob] = useState<WritebackJobDetailResponse | null>(null);
+
   // ==========================================================================
   // Data Fetching
   // ==========================================================================
 
   const fetchSessions = useCallback(async () => {
+    // Only show the full-page loading spinner on the very first load.
+    // Subsequent calls (triggered by onSessionUpdated, onJobComplete, etc.) run
+    // silently in the background so the panel doesn't flicker.
+    const isInitial = !hasLoadedSessionsRef.current;
     try {
-      setIsLoading(true);
+      if (isInitial) setIsLoading(true);
       setError(null);
       const token = await getToken();
       if (!token) throw new Error('Not authenticated');
 
       const response = await listBASSessions(token, connectionId);
       setSessions(response.sessions);
+      hasLoadedSessionsRef.current = true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load BAS sessions');
     } finally {
-      setIsLoading(false);
+      if (isInitial) setIsLoading(false);
     }
   }, [getToken, connectionId]);
 
@@ -251,6 +264,25 @@ export function BASTab({
       } else {
         console.log('[Spec046] No calculation yet, skipping');
       }
+
+      // Fetch latest writeback job (Spec 049)
+      try {
+        const jobs = await listWritebackJobs(token, connectionId, session.id);
+        const latest = jobs[0];
+        if (latest && (latest.status === 'in_progress' || latest.status === 'pending')) {
+          setActiveWritebackJobId(latest.id);
+          setCompletedWritebackJob(null);
+        } else if (latest) {
+          // Restore last completed job so sync status badges survive a page refresh
+          const detail = await getWritebackJob(token, connectionId, session.id, latest.id);
+          setCompletedWritebackJob(detail);
+          setActiveWritebackJobId(null);
+        } else {
+          setActiveWritebackJobId(null);
+        }
+      } catch {
+        // non-fatal — writeback history is optional
+      }
     } catch (err) {
       console.error('Failed to fetch session detail:', err);
     } finally {
@@ -262,16 +294,22 @@ export function BASTab({
     fetchSessions();
   }, [fetchSessions]);
 
-  // Auto-select the session matching the selected quarter, or first session
+  // Auto-select the session matching the selected quarter, or first session.
+  // Also re-sync selectedSession from the refreshed sessions list so fields like
+  // approved_unsynced_count stay current after fetchSessions() is called.
   useEffect(() => {
-    if (sessions.length > 0 && !selectedSession) {
+    if (sessions.length === 0) return;
+    if (!selectedSession) {
       const matching = sessions.find(
         (s) => s.period_display_name?.includes(`Q${selectedQuarter}`) &&
                s.period_display_name?.includes(`FY${selectedFyYear}`)
       );
       setSelectedSession(matching ?? sessions[0] ?? null);
+    } else {
+      const updated = sessions.find((s) => s.id === selectedSession.id);
+      if (updated) setSelectedSession(updated);
     }
-  }, [sessions, selectedSession, selectedQuarter, selectedFyYear]);
+  }, [sessions, selectedQuarter, selectedFyYear]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedSession) {
@@ -281,6 +319,8 @@ export function BASTab({
       setVariance(null);
       setAdjustments([]);
       setShowAdjustmentForm(false);
+      setActiveWritebackJobId(null);
+      setCompletedWritebackJob(null);
     }
   }, [selectedSession, fetchSessionDetail]);
 
@@ -1008,10 +1048,22 @@ export function BASTab({
                           getToken={getToken}
                           onSummaryChange={(summary) => setTaxCodeSummary(summary)}
                           onRecalculated={() => {
-                            // Refresh calculation data after recalculation
                             if (selectedSession) {
                               fetchSessionDetail(selectedSession);
                             }
+                          }}
+                          onSessionUpdated={fetchSessions}
+                          completedWritebackJob={completedWritebackJob}
+                          activeWritebackJobId={activeWritebackJobId}
+                          approvedUnsyncedCount={selectedSession.approved_unsynced_count ?? 0}
+                          onJobCreated={(job) => {
+                            setActiveWritebackJobId(job.id);
+                            setCompletedWritebackJob(null);
+                          }}
+                          onJobComplete={(job) => {
+                            setActiveWritebackJobId(null);
+                            setCompletedWritebackJob(job);
+                            fetchSessions();
                           }}
                         />
                       </div>

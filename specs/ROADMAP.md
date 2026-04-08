@@ -1845,6 +1845,15 @@ A2UI ARCHITECTURE
 | 024 | Credit Notes, Payments & Journals | `COMPLETE` ✅ | 023 ✓ |
 | 025 | Fixed Assets & Enhanced Analysis | `COMPLETE` ✅ | 023 ✓, 024 ✓ |
 
+### Spec 046–049: BAS AI Workflows (Implemented Out-of-Band)
+
+| Spec | Name | Status | Dependencies |
+|------|------|--------|--------------|
+| 046 | AI Tax Code Resolution | `COMPLETE` ✅ | Phase E ✓ |
+| 047 | Client Transaction Classification | `COMPLETE` ✅ | 046 |
+| 048 | Voice Feedback Portal | `COMPLETE` ✅ | 047 |
+| 049 | Xero Tax Code Write-Back | `COMPLETE` ✅ | 046, 047 |
+
 ### Phase E.5: ATOtrack
 
 | Spec | Name | Status | Dependencies |
@@ -1997,6 +2006,10 @@ const { tier, canAccess, limits, usage } = useTier();
 
 | Date | Change |
 |------|--------|
+| 2026-04-01 | **v6.0.0**: Specs 046-049 COMPLETE — AI Tax Code Resolution, Client Classification, Voice Portal, Xero Write-Back |
+| 2026-04-01 | Spec 049: Full Xero tax code write-back with retry, audit trail, multi-round client send-back |
+| 2026-04-01 | New tables: `xero_writeback_jobs`, `xero_writeback_items`, `agent_transaction_notes`, `client_classification_rounds` |
+| 2026-04-01 | Altered tables: `tax_code_overrides` (+writeback_status), `classification_requests` (+parent_request_id, +round_number) |
 | 2026-01-04 | **v5.9.0**: Added Spec 042 (CI/CD Pipeline & Production Deployment) |
 | 2026-01-04 | New spec for automated testing, deployment pipelines, and production readiness |
 | 2026-01-04 | Targets: Railway (backend), Vercel (frontend), GitHub Actions (CI/CD) |

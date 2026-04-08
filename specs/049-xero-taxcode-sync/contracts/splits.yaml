@@ -1,0 +1,248 @@
+openapi: 3.1.0
+info:
+  title: Bank Transaction Split Management API
+  version: "1.0"
+  description: |
+    Endpoints for creating and managing line item splits on bank transactions.
+    Split management applies to bank transactions only (invoices and credit notes are read-only structure).
+    All endpoints require Clerk JWT authentication (accountant/tax agent role).
+    All resources are scoped to the authenticated tenant.
+
+tags:
+  - name: splits
+    description: Bank transaction line item split operations
+
+paths:
+  /api/v1/bas/sessions/{session_id}/bank-transactions/{source_id}/splits:
+    get:
+      summary: List all active overrides/splits for a bank transaction
+      operationId: listTransactionSplits
+      tags: [splits]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: source_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+          description: Local XeroBankTransaction PK
+      responses:
+        "200":
+          description: List of active TaxCodeOverride records for this transaction, ordered by line_item_index
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaxCodeOverrideWithSplit"
+        "404":
+          description: Session or bank transaction not found
+
+    post:
+      summary: Create a new agent-defined split on a single-line bank transaction
+      operationId: createSplitOverride
+      tags: [splits]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: source_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SplitCreateRequest"
+      responses:
+        "201":
+          description: Split created. Returns the new TaxCodeOverride record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxCodeOverrideWithSplit"
+        "422":
+          description: |
+            Validation error. Possible reasons:
+            - split_amount_mismatch: sum of split amounts ≠ transaction total
+            - invalid_line_item_index: index already occupied by an active override
+            - invalid_tax_type: tax type not recognised for this Xero organisation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SplitValidationError"
+
+  /api/v1/bas/sessions/{session_id}/bank-transactions/{source_id}/splits/{override_id}:
+    patch:
+      summary: Update an existing split or override
+      operationId: updateSplitOverride
+      tags: [splits]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: source_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: override_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SplitUpdateRequest"
+      responses:
+        "200":
+          description: Updated override
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxCodeOverrideWithSplit"
+        "422":
+          description: split_amount_mismatch or invalid_tax_type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SplitValidationError"
+
+    delete:
+      summary: Remove a split (sets is_active=false)
+      operationId: deleteSplitOverride
+      tags: [splits]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: source_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: override_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Split removed
+        "422":
+          description: split_amount_mismatch (remaining splits unbalanced after removal)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SplitValidationError"
+
+components:
+  schemas:
+    SplitCreateRequest:
+      type: object
+      required: [line_item_index, override_tax_type, line_amount]
+      properties:
+        line_item_index:
+          type: integer
+          minimum: 0
+          description: |
+            Index in the LineItems array. For new splits on a single-line transaction,
+            use index 1, 2, etc. (index 0 is the existing line item).
+        override_tax_type:
+          type: string
+          example: "G11"
+          description: Xero TaxType code for this line item slot
+        line_amount:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+          description: Amount for this split. Must be positive. Sum of all splits must equal transaction total.
+        line_description:
+          type: string
+          nullable: true
+          description: Optional description. Defaults to original line item description if null.
+        line_account_code:
+          type: string
+          nullable: true
+          description: Optional Xero account code. Defaults to original line item account code if null.
+
+    SplitUpdateRequest:
+      type: object
+      properties:
+        override_tax_type:
+          type: string
+          nullable: true
+        line_amount:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+          nullable: true
+        line_description:
+          type: string
+          nullable: true
+        line_account_code:
+          type: string
+          nullable: true
+
+    TaxCodeOverrideWithSplit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        source_type:
+          type: string
+          enum: [invoice, bank_transaction, credit_note]
+        source_id:
+          type: string
+          format: uuid
+        line_item_index:
+          type: integer
+        original_tax_type:
+          type: string
+        override_tax_type:
+          type: string
+        writeback_status:
+          type: string
+          enum: [pending_sync, synced, skipped, failed]
+        is_new_split:
+          type: boolean
+          description: True if this override inserts a new line item; false if patching existing
+        line_amount:
+          type: number
+          format: decimal
+          nullable: true
+        line_description:
+          type: string
+          nullable: true
+        line_account_code:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        applied_at:
+          type: string
+          format: date-time
+
+    SplitValidationError:
+      type: object
+      properties:
+        detail:
+          type: string
+          enum: [split_amount_mismatch, invalid_line_item_index, invalid_tax_type]
+        expected_total:
+          type: number
+          format: decimal
+          nullable: true
+          description: The transaction total that splits must sum to (present for split_amount_mismatch)
+        actual_total:
+          type: number
+          format: decimal
+          nullable: true
+          description: The current sum of active split amounts (present for split_amount_mismatch)

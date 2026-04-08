@@ -44,6 +44,18 @@ export default function ClassifyPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Track answered items for submit gating (T039/T040)
+  const [answeredIds, setAnsweredIds] = useState<Set<string>>(new Set());
+
+  // Track per-item answered state
+  const handleAnsweredChange = useCallback((classificationId: string, answered: boolean) => {
+    setAnsweredIds((prev) => {
+      const next = new Set(prev);
+      if (answered) next.add(classificationId);
+      else next.delete(classificationId);
+      return next;
+    });
+  }, []);
 
   // Load classification request data
   useEffect(() => {
@@ -180,6 +192,11 @@ export default function ClassifyPage() {
       ? Math.round((data.progress.classified / data.progress.total) * 100)
       : 0;
 
+  // Count pre-classified (from server) + newly answered items
+  const totalAnswered = Math.max(data.progress.classified, answeredIds.size);
+  const unansweredCount = data.progress.total - totalAnswered;
+  const allAnswered = unansweredCount <= 0;
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       {/* Header */}
@@ -227,16 +244,17 @@ export default function ClassifyPage() {
               setExpandedId(expandedId === transaction.id ? null : transaction.id)
             }
             onSave={handleSave}
+            onAnsweredChange={handleAnsweredChange}
           />
         ))}
       </div>
 
-      {/* Submit button */}
-      <div className="sticky bottom-4 flex justify-center">
+      {/* Submit section with unanswered counter */}
+      <div className="sticky bottom-4 flex flex-col items-center gap-2">
         <Button
           size="lg"
           onClick={handleSubmit}
-          disabled={submitting || data.progress.classified === 0}
+          disabled={submitting || !allAnswered}
           className="shadow-lg"
         >
           {submitting ? (
@@ -247,10 +265,15 @@ export default function ClassifyPage() {
           ) : (
             <>
               <Send className="h-4 w-4 mr-2" />
-              Submit ({data.progress.classified} classified)
+              Submit
             </>
           )}
         </Button>
+        <p className="text-xs text-muted-foreground">
+          {allAnswered
+            ? `All ${data.progress.total} transactions answered — ready to submit`
+            : `${unansweredCount} of ${data.progress.total} still need${unansweredCount === 1 ? 's' : ''} your answer`}
+        </p>
       </div>
     </div>
   );

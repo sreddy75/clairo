@@ -129,6 +129,8 @@ class BASSessionResponse(BaseModel):
     lodgement_notes: str | None = None
     is_lodged: bool = False
     can_record_lodgement: bool = False
+    # Xero write-back tracking (Spec 049)
+    approved_unsynced_count: int = 0
     created_at: datetime
     updated_at: datetime
 
@@ -513,21 +515,16 @@ class LodgementWorkboardSummaryResponse(BaseModel):
 # Valid tax types that can be used for overrides (non-excluded from TAX_TYPE_MAPPING)
 VALID_TAX_TYPES = {
     "OUTPUT",
-    "OUTPUT2",
-    "OUTPUTSALES",
     "INPUT",
-    "INPUT2",
-    "INPUT3",
     "INPUTTAXED",
     "CAPEXINPUT",
-    "CAPEXINPUT2",
+    "EXEMPTCAPITAL",
     "EXEMPTOUTPUT",
-    "EXEMPTINCOME",
     "EXEMPTEXPENSES",
     "EXEMPTEXPORT",
-    "GSTONEXPORTS",
-    "ZERORATEDINPUT",
-    "ZERORATEDOUTPUT",
+    "GSTONIMPORTS",
+    "GSTONCAPIMPORTS",
+    "BASEXCLUDED",
 }
 
 
@@ -701,3 +698,88 @@ class ResolveConflictResponse(BaseModel):
     override_id: UUID
     resolution: str
     applied_tax_type: str
+
+
+# ---------------------------------------------------------------------------
+# Split management (Spec 049 line-items extension)
+# ---------------------------------------------------------------------------
+
+
+class TaxCodeOverrideWithSplitResponse(BaseModel):
+    """TaxCodeOverride row including split fields, returned by split endpoints."""
+
+    id: UUID
+    source_type: str
+    source_id: UUID
+    line_item_index: int
+    original_tax_type: str
+    override_tax_type: str
+    writeback_status: str
+    is_new_split: bool
+    is_deleted: bool = False
+    line_amount: Decimal | None = None
+    line_description: str | None = None
+    line_account_code: str | None = None
+    is_active: bool
+    applied_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SplitCreateRequest(BaseModel):
+    """Create or upsert a line item override on a bank transaction.
+
+    - is_new_split=True (default): add a new line item (line_amount required).
+    - is_new_split=False: edit or delete an existing original line item.
+    - is_deleted=True with is_new_split=False: remove that original from the Xero payload.
+    """
+
+    line_item_index: int = Field(..., ge=0)
+    override_tax_type: str = Field(..., min_length=1)
+    line_amount: Decimal | None = Field(None, gt=0)
+    line_description: str | None = None
+    line_account_code: str | None = None
+    is_new_split: bool = True
+    is_deleted: bool = False
+
+    @model_validator(mode="after")
+    def validate_new_split_requires_amount(self) -> "SplitCreateRequest":
+        if self.is_new_split and self.line_amount is None:
+            raise ValueError("line_amount is required when is_new_split=True")
+        return self
+
+
+class SplitUpdateRequest(BaseModel):
+    """Update an existing split or line item override."""
+
+    override_tax_type: str | None = None
+    line_amount: Decimal | None = Field(None, gt=0)
+    line_description: str | None = None
+    line_account_code: str | None = None
+    is_deleted: bool | None = None
+
+
+class SplitValidationError(BaseModel):
+    """422 response body for split balance violations."""
+
+    detail: str
+    expected_total: Decimal | None = None
+    actual_total: Decimal | None = None
+
+
+class XeroLineItemView(BaseModel):
+    """A single line item as stored on the Xero document (read-only view)."""
+
+    index: int
+    tax_type: str | None = None
+    line_amount: Decimal | None = None
+    description: str | None = None
+    account_code: str | None = None
+
+
+class TransactionSplitsResponse(BaseModel):
+    """Combined response for GET .../splits: original Xero line items + any overrides."""
+
+    original_line_items: list[XeroLineItemView]
+    overrides: list[TaxCodeOverrideWithSplitResponse]
+

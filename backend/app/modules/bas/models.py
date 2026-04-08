@@ -118,6 +118,18 @@ class TaxCodeSuggestionSourceType(str, enum.Enum):
         return self.value
 
 
+class TaxCodeOverrideWritebackStatus(str, enum.Enum):
+    """Write-back sync status for a TaxCodeOverride (Spec 049)."""
+
+    PENDING_SYNC = "pending_sync"
+    SYNCED = "synced"
+    SKIPPED = "skipped"
+    FAILED = "failed"
+
+    def __str__(self) -> str:
+        return self.value
+
+
 class TaxCodeSuggestionStatus(str, enum.Enum):
     """Resolution status of a tax code suggestion."""
 
@@ -1149,6 +1161,46 @@ class TaxCodeOverride(Base, TimestampMixin):
     conflict_resolved_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
+    )
+
+    # Write-back status (Spec 049)
+    writeback_status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default=TaxCodeOverrideWritebackStatus.PENDING_SYNC.value,
+        server_default=TaxCodeOverrideWritebackStatus.PENDING_SYNC.value,
+        comment="Xero write-back sync state: pending_sync | synced | skipped | failed",
+    )
+
+    # Split management (Spec 049 line-items extension)
+    line_amount: Mapped[Decimal | None] = mapped_column(
+        Numeric(15, 2),
+        nullable=True,
+        comment="Override LineAmount. Null = keep existing Xero amount. Required when is_new_split=True.",
+    )
+    line_description: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Override Description. Null = keep existing.",
+    )
+    line_account_code: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+        comment="Override AccountCode. Null = keep existing.",
+    )
+    is_new_split: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+        comment="True = insert new line item at line_item_index; False = patch existing.",
+    )
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+        comment="True = remove this original line item from the Xero payload. Only meaningful when is_new_split=False.",
     )
 
     # Relationships
