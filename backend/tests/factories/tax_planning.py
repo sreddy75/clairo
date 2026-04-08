@@ -21,15 +21,19 @@ class TaxPlanFactory(factory.Factory):
     entity_type = "individual"
     status = "draft"
     data_source = "xero"
-    financials_data = LazyFunction(lambda: {
-        "total_income": 120000,
-        "total_deductions": 15000,
-        "taxable_income": 105000,
-    })
-    tax_position = LazyFunction(lambda: {
-        "estimated_tax": 26092,
-        "tax_rate": 0.325,
-    })
+    financials_data = LazyFunction(
+        lambda: {
+            "total_income": 120000,
+            "total_deductions": 15000,
+            "taxable_income": 105000,
+        }
+    )
+    tax_position = LazyFunction(
+        lambda: {
+            "estimated_tax": 26092,
+            "tax_rate": 0.325,
+        }
+    )
 
 
 class TaxScenarioFactory(factory.Factory):

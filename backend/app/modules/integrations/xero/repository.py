@@ -209,7 +209,9 @@ class XeroConnectionRepository:
         await self.session.flush()
         return connection
 
-    async def get_by_id(self, connection_id: UUID, tenant_id: UUID | None = None) -> XeroConnection | None:
+    async def get_by_id(
+        self, connection_id: UUID, tenant_id: UUID | None = None
+    ) -> XeroConnection | None:
         """Get connection by ID.
 
         Note: RLS provides database-level isolation. The optional tenant_id
@@ -351,7 +353,9 @@ class XeroConnectionRepository:
         if not update_values:
             return await self.get_by_id(connection_id, tenant_id=tenant_id)
 
-        stmt = update(XeroConnection).where(XeroConnection.id == connection_id).values(**update_values)
+        stmt = (
+            update(XeroConnection).where(XeroConnection.id == connection_id).values(**update_values)
+        )
         if tenant_id is not None:
             stmt = stmt.where(XeroConnection.tenant_id == tenant_id)
         await self.session.execute(stmt)

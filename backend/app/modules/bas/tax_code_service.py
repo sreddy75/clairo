@@ -360,7 +360,11 @@ class TaxCodeService:
         await self.repo.update_suggestion(suggestion)
 
         # Create the TaxCodeOverride immediately so sync works without requiring Apply & Recalculate first.
-        source_type = str(suggestion.source_type.value if hasattr(suggestion.source_type, "value") else suggestion.source_type)
+        source_type = str(
+            suggestion.source_type.value
+            if hasattr(suggestion.source_type, "value")
+            else suggestion.source_type
+        )
         existing = await self.repo.get_active_override(
             bas_session.period.connection_id,
             source_type,
@@ -369,18 +373,20 @@ class TaxCodeService:
             tenant_id,
         )
         if not existing:
-            await self.repo.create_override({
-                "tenant_id": tenant_id,
-                "connection_id": bas_session.period.connection_id,
-                "source_type": suggestion.source_type,
-                "source_id": suggestion.source_id,
-                "line_item_index": suggestion.line_item_index,
-                "original_tax_type": suggestion.original_tax_type,
-                "override_tax_type": suggestion.applied_tax_type,
-                "applied_by": user_id,
-                "applied_at": datetime.now(UTC),
-                "suggestion_id": suggestion.id,
-            })
+            await self.repo.create_override(
+                {
+                    "tenant_id": tenant_id,
+                    "connection_id": bas_session.period.connection_id,
+                    "source_type": suggestion.source_type,
+                    "source_id": suggestion.source_id,
+                    "line_item_index": suggestion.line_item_index,
+                    "original_tax_type": suggestion.original_tax_type,
+                    "override_tax_type": suggestion.applied_tax_type,
+                    "applied_by": user_id,
+                    "applied_at": datetime.now(UTC),
+                    "suggestion_id": suggestion.id,
+                }
+            )
 
         await self.repo.create_audit_log(
             tenant_id=tenant_id,
@@ -526,18 +532,20 @@ class TaxCodeService:
         await self.repo.update_suggestion(suggestion)
 
         # Create the new override immediately so sync works without requiring Apply & Recalculate first.
-        await self.repo.create_override({
-            "tenant_id": tenant_id,
-            "connection_id": bas_session.period.connection_id,
-            "source_type": suggestion.source_type,
-            "source_id": suggestion.source_id,
-            "line_item_index": suggestion.line_item_index,
-            "original_tax_type": suggestion.original_tax_type,
-            "override_tax_type": tax_type,
-            "applied_by": user_id,
-            "applied_at": datetime.now(UTC),
-            "suggestion_id": suggestion.id,
-        })
+        await self.repo.create_override(
+            {
+                "tenant_id": tenant_id,
+                "connection_id": bas_session.period.connection_id,
+                "source_type": suggestion.source_type,
+                "source_id": suggestion.source_id,
+                "line_item_index": suggestion.line_item_index,
+                "original_tax_type": suggestion.original_tax_type,
+                "override_tax_type": tax_type,
+                "applied_by": user_id,
+                "applied_at": datetime.now(UTC),
+                "suggestion_id": suggestion.id,
+            }
+        )
 
         await self.repo.create_audit_log(
             tenant_id=tenant_id,
@@ -641,23 +649,27 @@ class TaxCodeService:
         for s in suggestions:
             if not s.applied_tax_type:
                 continue
-            source_type = str(s.source_type.value if hasattr(s.source_type, "value") else s.source_type)
+            source_type = str(
+                s.source_type.value if hasattr(s.source_type, "value") else s.source_type
+            )
             existing = await self.repo.get_active_override(
                 connection_id, source_type, s.source_id, s.line_item_index, tenant_id
             )
             if not existing:
-                await self.repo.create_override({
-                    "tenant_id": tenant_id,
-                    "connection_id": connection_id,
-                    "source_type": s.source_type,
-                    "source_id": s.source_id,
-                    "line_item_index": s.line_item_index,
-                    "original_tax_type": s.original_tax_type,
-                    "override_tax_type": s.applied_tax_type,
-                    "applied_by": user_id,
-                    "applied_at": now,
-                    "suggestion_id": s.id,
-                })
+                await self.repo.create_override(
+                    {
+                        "tenant_id": tenant_id,
+                        "connection_id": connection_id,
+                        "source_type": s.source_type,
+                        "source_id": s.source_id,
+                        "line_item_index": s.line_item_index,
+                        "original_tax_type": s.original_tax_type,
+                        "override_tax_type": s.applied_tax_type,
+                        "applied_by": user_id,
+                        "applied_at": now,
+                        "suggestion_id": s.id,
+                    }
+                )
 
         await self.repo.create_audit_log(
             tenant_id=tenant_id,

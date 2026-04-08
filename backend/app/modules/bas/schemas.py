@@ -782,4 +782,3 @@ class TransactionSplitsResponse(BaseModel):
 
     original_line_items: list[XeroLineItemView]
     overrides: list[TaxCodeOverrideWithSplitResponse]
-

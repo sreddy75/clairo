@@ -128,9 +128,15 @@ class XeroWritebackJob(Base, TimestampMixin):
 
     # Counts
     total_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    succeeded_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    skipped_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    failed_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    succeeded_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    skipped_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    failed_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
 
     # Timing
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

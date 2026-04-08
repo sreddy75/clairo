@@ -614,7 +614,9 @@ class ClassificationService:
         for c in classifications:
             if c.classified_at is None:
                 unanswered.append(c.id)
-            elif c.client_needs_help and not (c.client_description and c.client_description.strip()):
+            elif c.client_needs_help and not (
+                c.client_description and c.client_description.strip()
+            ):
                 raise ClassificationValidationError(
                     code="missing_idk_description",
                     message="A description is required for 'I don't know' responses.",
@@ -666,7 +668,9 @@ class ClassificationService:
                 event_metadata={
                     "request_id": str(request.id),
                     "round_number": request.round_number,
-                    "parent_request_id": str(request.parent_request_id) if request.parent_request_id else None,
+                    "parent_request_id": str(request.parent_request_id)
+                    if request.parent_request_id
+                    else None,
                     "classified_count": classified_count,
                 },
             )
@@ -1168,12 +1172,21 @@ class ClassificationService:
             raise ClassificationRequestNotFoundError(str(request_id))
 
         # Validate all items are IDK
-        classification_ids = [UUID(item["classification_id"]) if isinstance(item["classification_id"], str) else item["classification_id"] for item in items_with_comments]
+        classification_ids = [
+            UUID(item["classification_id"])
+            if isinstance(item["classification_id"], str)
+            else item["classification_id"]
+            for item in items_with_comments
+        ]
         classifications = await self.repo.get_classifications_by_request(request_id)
         idk_map = {c.id: c for c in classifications if c.client_needs_help}
 
         for item in items_with_comments:
-            cid = UUID(item["classification_id"]) if isinstance(item["classification_id"], str) else item["classification_id"]
+            cid = (
+                UUID(item["classification_id"])
+                if isinstance(item["classification_id"], str)
+                else item["classification_id"]
+            )
             if cid not in idk_map:
                 raise ClassificationValidationError(
                     code="not_idk_item",
@@ -1204,6 +1217,7 @@ class ClassificationService:
         )
         # Calculate 7-day expiry
         from datetime import timedelta, timezone
+
         new_request.expires_at = datetime.now(timezone.utc) + timedelta(days=7)
         self.session.add(new_request)
         await self.session.flush()
@@ -1213,7 +1227,11 @@ class ClassificationService:
         from app.modules.bas.classification_models import ClientClassification
 
         for item in items_with_comments:
-            cid = UUID(item["classification_id"]) if isinstance(item["classification_id"], str) else item["classification_id"]
+            cid = (
+                UUID(item["classification_id"])
+                if isinstance(item["classification_id"], str)
+                else item["classification_id"]
+            )
             orig = idk_map[cid]
             new_cc = ClientClassification(
                 tenant_id=tenant_id,
@@ -1285,10 +1303,14 @@ class ClassificationService:
                 ),
                 tags=[{"name": "type", "value": "classification_sendback"}],
             )
-            await magic_link_service.mark_invitation_sent(invitation_id=invitation.id, delivered=True)
+            await magic_link_service.mark_invitation_sent(
+                invitation_id=invitation.id, delivered=True
+            )
         except Exception:
             logger.warning("Failed to send send-back email", exc_info=True)
-            await magic_link_service.mark_invitation_sent(invitation_id=invitation.id, delivered=False)
+            await magic_link_service.mark_invitation_sent(
+                invitation_id=invitation.id, delivered=False
+            )
 
         # Update status to SENT
         await self.repo.update_request_status(new_request.id, ClassificationRequestStatus.SENT)

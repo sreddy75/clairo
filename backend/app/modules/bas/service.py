@@ -374,6 +374,7 @@ class BASService:
             TaxCodeOverrideWritebackStatus,
             TaxCodeSuggestion,
         )
+
         approved_unsynced_count = 0
         try:
             count_result = await self.session.execute(
@@ -384,7 +385,8 @@ class BASService:
                     and_(
                         TaxCodeSuggestion.session_id == session.id,
                         TaxCodeOverride.is_active.is_(True),
-                        TaxCodeOverride.writeback_status == TaxCodeOverrideWritebackStatus.PENDING_SYNC.value,
+                        TaxCodeOverride.writeback_status
+                        == TaxCodeOverrideWritebackStatus.PENDING_SYNC.value,
                     )
                 )
             )

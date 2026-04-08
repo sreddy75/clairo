@@ -859,9 +859,7 @@ class BASRepository:
     # Classification Request Methods (Spec 047)
     # =================================================================
 
-    async def create_classification_request(
-        self, **kwargs: Any
-    ) -> ClassificationRequest:
+    async def create_classification_request(self, **kwargs: Any) -> ClassificationRequest:
         """Create a classification request."""
         request = ClassificationRequest(**kwargs)
         self.session.add(request)
@@ -922,9 +920,7 @@ class BASRepository:
         await self.session.flush()
         return result.rowcount  # type: ignore[return-value]
 
-    async def get_classifications_by_request(
-        self, request_id: UUID
-    ) -> list[ClientClassification]:
+    async def get_classifications_by_request(self, request_id: UUID) -> list[ClientClassification]:
         """List all classifications for a request."""
         result = await self.session.execute(
             select(ClientClassification)
@@ -991,9 +987,7 @@ class BASRepository:
         )
         return result.scalar() or 0
 
-    async def get_unprocessed_classifications(
-        self, request_id: UUID
-    ) -> list[ClientClassification]:
+    async def get_unprocessed_classifications(self, request_id: UUID) -> list[ClientClassification]:
         """Get classifications that have been classified by client but not yet AI-mapped."""
         result = await self.session.execute(
             select(ClientClassification).where(
@@ -1049,17 +1043,17 @@ class BASRepository:
         await self.session.flush()
         return note
 
-    async def list_notes_for_request(
-        self, request_id: UUID, tenant_id: UUID
-    ) -> list[Any]:
+    async def list_notes_for_request(self, request_id: UUID, tenant_id: UUID) -> list[Any]:
         """List AgentTransactionNote records for a classification request."""
         from app.modules.bas.classification_models import AgentTransactionNote
 
         result = await self.session.execute(
-            select(AgentTransactionNote).where(
+            select(AgentTransactionNote)
+            .where(
                 AgentTransactionNote.request_id == request_id,
                 AgentTransactionNote.tenant_id == tenant_id,
-            ).order_by(AgentTransactionNote.created_at.asc())
+            )
+            .order_by(AgentTransactionNote.created_at.asc())
         )
         return list(result.scalars().all())
 
@@ -1103,12 +1097,14 @@ class BASRepository:
         from app.modules.bas.classification_models import ClientClassificationRound
 
         result = await self.session.execute(
-            select(ClientClassificationRound).where(
+            select(ClientClassificationRound)
+            .where(
                 ClientClassificationRound.tenant_id == tenant_id,
                 ClientClassificationRound.session_id == session_id,
                 ClientClassificationRound.source_type == source_type,
                 ClientClassificationRound.source_id == source_id,
                 ClientClassificationRound.line_item_index == line_item_index,
-            ).order_by(ClientClassificationRound.round_number.asc())
+            )
+            .order_by(ClientClassificationRound.round_number.asc())
         )
         return list(result.scalars().all())

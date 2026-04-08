@@ -335,7 +335,9 @@ class QualityRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_issue_by_id(self, issue_id: UUID, tenant_id: UUID | None = None) -> QualityIssue | None:
+    async def get_issue_by_id(
+        self, issue_id: UUID, tenant_id: UUID | None = None
+    ) -> QualityIssue | None:
         """Get a single issue by ID."""
         query = select(QualityIssue).where(QualityIssue.id == issue_id)
         if tenant_id is not None:

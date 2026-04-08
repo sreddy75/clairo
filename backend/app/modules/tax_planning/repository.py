@@ -158,7 +158,9 @@ class TaxScenarioRepository:
         await self.session.delete(scenario)
         await self.session.flush()
 
-    async def get_next_sort_order(self, tax_plan_id: uuid.UUID, tenant_id: uuid.UUID | None = None) -> int:
+    async def get_next_sort_order(
+        self, tax_plan_id: uuid.UUID, tenant_id: uuid.UUID | None = None
+    ) -> int:
         query = select(func.coalesce(func.max(TaxScenario.sort_order), -1)).where(
             TaxScenario.tax_plan_id == tax_plan_id
         )
@@ -329,9 +331,7 @@ class AnalysisRepository:
             .values(is_current=False)
         )
         mark_query = (
-            update(TaxPlanAnalysis)
-            .where(TaxPlanAnalysis.id == analysis_id)
-            .values(is_current=True)
+            update(TaxPlanAnalysis).where(TaxPlanAnalysis.id == analysis_id).values(is_current=True)
         )
         if tenant_id is not None:
             unmark_query = unmark_query.where(TaxPlanAnalysis.tenant_id == tenant_id)

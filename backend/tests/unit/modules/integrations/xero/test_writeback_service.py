@@ -351,7 +351,7 @@ class TestApplyOverridesToLineItems:
             {"TaxType": "BASEXCLUDED", "LineAmount": 50.0},
         ]
         overrides = [
-            _make_line_override(0, "OUTPUT"),        # edit: change TaxType
+            _make_line_override(0, "OUTPUT"),  # edit: change TaxType
             _make_line_override(1, "BASEXCLUDED", is_deleted=True),  # delete
         ]
 
@@ -397,7 +397,7 @@ class TestApplyOverridesToLineItems:
         result, before, after = apply_overrides_to_line_items(line_items, overrides)
 
         assert len(result) == 3
-        assert result[0]["TaxType"] == "OUTPUT"     # patched
+        assert result[0]["TaxType"] == "OUTPUT"  # patched
         assert result[1]["TaxType"] == "BASEXCLUDED"  # unchanged original
         assert result[2]["TaxType"] == "EXEMPTEXPENSES"  # new split
 

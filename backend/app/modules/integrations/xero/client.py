@@ -274,6 +274,7 @@ class XeroClient:
             try:
                 error_data = response.json()
                 import logging as _logging
+
                 _logging.getLogger(__name__).warning(
                     "Xero %s error body: %s", response.status_code, response.text[:2000]
                 )

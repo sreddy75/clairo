@@ -187,7 +187,9 @@ class TaxPlanningService:
             recon_date = None
 
         # Cap P&L to_date at the earlier of reconciliation date or today
-        effective_to = min(recon_date, date.today()).isoformat() if recon_date else date.today().isoformat()
+        effective_to = (
+            min(recon_date, date.today()).isoformat() if recon_date else date.today().isoformat()
+        )
 
         try:
             report_data = await report_service.get_report(
@@ -216,7 +218,9 @@ class TaxPlanningService:
         fy_start_year = int(plan.financial_year[:4])
         fy_start_date = date(fy_start_year, 7, 1)
         effective_date = recon_date or date.today()
-        months_elapsed = (effective_date.year - fy_start_date.year) * 12 + (effective_date.month - fy_start_date.month)
+        months_elapsed = (effective_date.year - fy_start_date.year) * 12 + (
+            effective_date.month - fy_start_date.month
+        )
         months_elapsed = max(1, min(months_elapsed, 12))
 
         financials_data["months_data_available"] = months_elapsed
@@ -247,7 +251,9 @@ class TaxPlanningService:
                 plan.xero_connection_id, plan.financial_year
             )
 
-            total_bank_balance = sum(a["closing_balance"] for a in bank_balances) if bank_balances else None
+            total_bank_balance = (
+                sum(a["closing_balance"] for a in bank_balances) if bank_balances else None
+            )
             recon_date_str = recon_date.isoformat() if recon_date else None
 
             # Build period coverage string
@@ -301,9 +307,19 @@ class TaxPlanningService:
                 "net_profit": prior_net_profit,
                 "period_coverage": f"1 Jul {prior_fy_year} – {effective_date.replace(year=effective_date.year - 1).strftime('%-d %b %Y')}",
                 "changes": {
-                    "revenue_pct": round((cur_revenue - prior_revenue) / prior_revenue * 100, 1) if prior_revenue else 0,
-                    "expenses_pct": round((cur_expenses - prior_total_expenses) / prior_total_expenses * 100, 1) if prior_total_expenses else 0,
-                    "profit_pct": round((cur_profit - prior_net_profit) / abs(prior_net_profit) * 100, 1) if prior_net_profit else 0,
+                    "revenue_pct": round((cur_revenue - prior_revenue) / prior_revenue * 100, 1)
+                    if prior_revenue
+                    else 0,
+                    "expenses_pct": round(
+                        (cur_expenses - prior_total_expenses) / prior_total_expenses * 100, 1
+                    )
+                    if prior_total_expenses
+                    else 0,
+                    "profit_pct": round(
+                        (cur_profit - prior_net_profit) / abs(prior_net_profit) * 100, 1
+                    )
+                    if prior_net_profit
+                    else 0,
                 },
             }
         except Exception:
@@ -325,12 +341,14 @@ class TaxPlanningService:
                 fy_income = float(fy_summary.get("total_income", 0))
                 fy_expenses = float(fy_summary.get("total_expenses", 0))
                 if fy_income > 0 or fy_expenses > 0:
-                    prior_years.append({
-                        "financial_year": f"FY{yr + 1}",
-                        "revenue": fy_revenue,
-                        "expenses": fy_expenses,
-                        "net_profit": fy_income - fy_expenses,
-                    })
+                    prior_years.append(
+                        {
+                            "financial_year": f"FY{yr + 1}",
+                            "revenue": fy_revenue,
+                            "expenses": fy_expenses,
+                            "net_profit": fy_income - fy_expenses,
+                        }
+                    )
             except Exception:
                 logger.debug(f"Prior FY {yr} pull failed or unavailable", exc_info=True)
         financials_data["prior_years"] = prior_years if prior_years else None
@@ -339,16 +357,27 @@ class TaxPlanningService:
         total_bank = financials_data.get("total_bank_balance")
         monthly_opex = financials_data["expenses"]["total_expenses"] / max(months_elapsed, 1)
         cash_buffer = monthly_opex * 3
-        asset_keywords = {"equipment", "depreciation", "asset", "computer", "furniture", "vehicle", "plant"}
+        asset_keywords = {
+            "equipment",
+            "depreciation",
+            "asset",
+            "computer",
+            "furniture",
+            "vehicle",
+            "plant",
+        }
         existing_asset_spend = sum(
-            abs(item["amount"]) for item in financials_data["expenses"].get("breakdown", [])
+            abs(item["amount"])
+            for item in financials_data["expenses"].get("breakdown", [])
             if any(kw in item["category"].lower() for kw in asset_keywords)
         )
         financials_data["strategy_context"] = {
             "available_cash": total_bank,
             "monthly_operating_expenses": round(monthly_opex, 2),
             "cash_buffer_3mo": round(cash_buffer, 2),
-            "max_strategy_budget": round(total_bank - cash_buffer, 2) if total_bank and total_bank > cash_buffer else None,
+            "max_strategy_budget": round(total_bank - cash_buffer, 2)
+            if total_bank and total_bank > cash_buffer
+            else None,
             "existing_asset_spend": round(existing_asset_spend, 2),
         }
 
@@ -389,7 +418,13 @@ class TaxPlanningService:
                     "total_tax_withheld_ytd": sum(float(pr.total_tax or 0) for pr in pay_runs),
                     "has_owners": has_owners,
                     "employees": [
-                        {"name": e.full_name, "job_title": e.job_title, "status": e.status.value if hasattr(e.status, "value") else str(e.status)}
+                        {
+                            "name": e.full_name,
+                            "job_title": e.job_title,
+                            "status": e.status.value
+                            if hasattr(e.status, "value")
+                            else str(e.status),
+                        }
                         for e in employees[:20]  # Cap at 20 for JSONB size
                     ],
                 }
@@ -1088,9 +1123,15 @@ class TaxPlanningService:
                 action="create",
                 outcome="success",
                 metadata={
-                    "model": response.token_usage.get("model", "claude-sonnet") if response.token_usage else None,
-                    "input_tokens": response.token_usage.get("input_tokens") if response.token_usage else None,
-                    "output_tokens": response.token_usage.get("output_tokens") if response.token_usage else None,
+                    "model": response.token_usage.get("model", "claude-sonnet")
+                    if response.token_usage
+                    else None,
+                    "input_tokens": response.token_usage.get("input_tokens")
+                    if response.token_usage
+                    else None,
+                    "output_tokens": response.token_usage.get("output_tokens")
+                    if response.token_usage
+                    else None,
                     "scenarios_count": len(response.scenarios),
                 },
             )

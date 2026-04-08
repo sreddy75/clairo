@@ -111,17 +111,13 @@ class XeroWritebackService:
         for (source_type, source_id), doc_overrides in grouped.items():
             # Determine before/after tax type snapshots
             before_tax_types = {
-                str(ov.line_item_index): ov.original_tax_type
-                for ov in doc_overrides
+                str(ov.line_item_index): ov.original_tax_type for ov in doc_overrides
             }
             after_tax_types = {
-                str(ov.line_item_index): ov.override_tax_type
-                for ov in doc_overrides
+                str(ov.line_item_index): ov.override_tax_type for ov in doc_overrides
             }
             # Determine the Xero document ID from the first override's suggestion
-            xero_doc_id = await self._resolve_xero_document_id(
-                source_type, source_id, tenant_id
-            )
+            xero_doc_id = await self._resolve_xero_document_id(source_type, source_id, tenant_id)
             await self.repo.create_item(
                 tenant_id=tenant_id,
                 job_id=job.id,
@@ -137,6 +133,7 @@ class XeroWritebackService:
         # Emit audit event
         from app.modules.bas.repository import BASRepository
         from app.modules.integrations.xero.audit_events import WRITEBACK_INITIATED
+
         bas_repo = BASRepository(self.db)
         await bas_repo.create_audit_log(
             tenant_id=tenant_id,
@@ -255,6 +252,7 @@ class XeroWritebackService:
         # Emit audit event
         from app.modules.bas.repository import BASRepository
         from app.modules.integrations.xero.audit_events import WRITEBACK_RETRY_INITIATED
+
         bas_repo = BASRepository(self.db)
         await bas_repo.create_audit_log(
             tenant_id=tenant_id,

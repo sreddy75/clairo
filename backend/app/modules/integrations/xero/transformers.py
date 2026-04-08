@@ -1265,14 +1265,16 @@ class BankSummaryTransformer(XeroReportTransformer):
                     account_id = attr.get("Value")
                     break
 
-            accounts.append({
-                "account_name": account_name,
-                "account_id": account_id,
-                "opening_balance": float(cls.parse_decimal(cells[1].get("Value"))),
-                "cash_received": float(cls.parse_decimal(cells[2].get("Value"))),
-                "cash_spent": float(cls.parse_decimal(cells[3].get("Value"))),
-                "closing_balance": float(cls.parse_decimal(cells[4].get("Value"))),
-            })
+            accounts.append(
+                {
+                    "account_name": account_name,
+                    "account_id": account_id,
+                    "opening_balance": float(cls.parse_decimal(cells[1].get("Value"))),
+                    "cash_received": float(cls.parse_decimal(cells[2].get("Value"))),
+                    "cash_spent": float(cls.parse_decimal(cells[3].get("Value"))),
+                    "closing_balance": float(cls.parse_decimal(cells[4].get("Value"))),
+                }
+            )
         return accounts
 
 

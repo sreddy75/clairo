@@ -305,26 +305,18 @@ def register_routes(app: FastAPI) -> None:
                 )
                 clients_managed = clients_result.scalar_one()
 
-                tenants_result = await db.execute(
-                    text("SELECT count(*) FROM tenants")
-                )
+                tenants_result = await db.execute(text("SELECT count(*) FROM tenants"))
                 practices = tenants_result.scalar_one()
 
-                tax_plans_result = await db.execute(
-                    text("SELECT count(*) FROM tax_plans")
-                )
+                tax_plans_result = await db.execute(text("SELECT count(*) FROM tax_plans"))
                 tax_plans = tax_plans_result.scalar_one()
 
                 # Count BAS periods generated (any status)
-                bas_result = await db.execute(
-                    text("SELECT count(*) FROM bas_periods")
-                )
+                bas_result = await db.execute(text("SELECT count(*) FROM bas_periods"))
                 bas_generated = bas_result.scalar_one()
 
                 # Count AI scenarios modelled
-                scenarios_result = await db.execute(
-                    text("SELECT count(*) FROM tax_scenarios")
-                )
+                scenarios_result = await db.execute(text("SELECT count(*) FROM tax_scenarios"))
                 scenarios = scenarios_result.scalar_one()
 
             return {
@@ -579,7 +571,9 @@ def register_routes(app: FastAPI) -> None:
     try:
         from app.modules.portal.classification_router import router as classification_client_router
 
-        app.include_router(classification_client_router, prefix="/api/v1", tags=["portal-classification"])
+        app.include_router(
+            classification_client_router, prefix="/api/v1", tags=["portal-classification"]
+        )
         logger.info("Classification client router registered at /api/v1/client-portal/classify")
     except Exception as e:
         logger.warning("Classification client router registration skipped", error=str(e))

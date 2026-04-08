@@ -1612,7 +1612,9 @@ async def get_writeback_job(
                     "contact_name": row.contact_name,
                     "transaction_date": row.transaction_date,
                     "description": row.description,
-                    "total_line_amount": float(row.line_amount) if row.line_amount is not None else None,
+                    "total_line_amount": float(row.line_amount)
+                    if row.line_amount is not None
+                    else None,
                 }
             else:
                 if row.line_amount is not None:

@@ -220,9 +220,7 @@ async def run(db_url: str | None = None, dry_run: bool = False) -> dict:
                         effective_date=content.effective_date.date()
                         if content.effective_date
                         else None,
-                        expiry_date=content.expiry_date.date()
-                        if content.expiry_date
-                        else None,
+                        expiry_date=content.expiry_date.date() if content.expiry_date else None,
                         entity_types=content.entity_types,
                         industries=content.industries,
                         ruling_number=content.ruling_number,

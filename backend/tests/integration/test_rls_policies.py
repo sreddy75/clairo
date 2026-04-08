@@ -166,14 +166,16 @@ async def _ensure_app_role(session: AsyncSession) -> None:
     global _app_role_created  # noqa: PLW0603
     if _app_role_created:
         return
-    await session.execute(text("""
+    await session.execute(
+        text("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'clairo_app') THEN
                 CREATE ROLE clairo_app NOLOGIN;
             END IF;
         END $$
-    """))
+    """)
+    )
     await session.execute(text("GRANT USAGE ON SCHEMA public TO clairo_app"))
     await session.execute(text("GRANT ALL ON ALL TABLES IN SCHEMA public TO clairo_app"))
     await session.execute(text("GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO clairo_app"))
@@ -566,10 +568,7 @@ class TestSpec054RLSPolicies:
     async def test_rls_enabled_and_forced(self, db_session: AsyncSession, table: str) -> None:
         """Table has RLS enabled and forced (applies even to table owner)."""
         result = await db_session.execute(
-            text(
-                "SELECT relrowsecurity, relforcerowsecurity "
-                "FROM pg_class WHERE relname = :table"
-            ),
+            text("SELECT relrowsecurity, relforcerowsecurity FROM pg_class WHERE relname = :table"),
             {"table": table},
         )
         row = result.one_or_none()
@@ -578,7 +577,9 @@ class TestSpec054RLSPolicies:
         assert row[1] is True, f"Table {table}: RLS not forced (relforcerowsecurity=False)"
 
     @pytest.mark.parametrize("table", TABLES_REQUIRING_RLS)
-    async def test_tenant_isolation_policy_exists(self, db_session: AsyncSession, table: str) -> None:
+    async def test_tenant_isolation_policy_exists(
+        self, db_session: AsyncSession, table: str
+    ) -> None:
         """Table has a tenant isolation policy with the correct USING clause."""
         result = await db_session.execute(
             text(
@@ -590,10 +591,16 @@ class TestSpec054RLSPolicies:
         row = result.one_or_none()
         assert row is not None, f"Table {table}: no tenant_isolation policy found"
         assert row[1] == "ALL", f"Table {table}: policy cmd should be ALL, got {row[1]}"
-        assert "current_setting" in row[2], f"Table {table}: policy USING doesn't reference current_setting"
-        assert "app.current_tenant_id" in row[2], f"Table {table}: policy USING doesn't reference app.current_tenant_id"
+        assert "current_setting" in row[2], (
+            f"Table {table}: policy USING doesn't reference current_setting"
+        )
+        assert "app.current_tenant_id" in row[2], (
+            f"Table {table}: policy USING doesn't reference app.current_tenant_id"
+        )
 
-    async def test_document_request_templates_system_read_policy(self, db_session: AsyncSession) -> None:
+    async def test_document_request_templates_system_read_policy(
+        self, db_session: AsyncSession
+    ) -> None:
         """document_request_templates has a second policy for system templates (tenant_id IS NULL)."""
         result = await db_session.execute(
             text(

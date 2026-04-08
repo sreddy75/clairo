@@ -3725,9 +3725,7 @@ class XeroReportService:
         # different caps (e.g. different reconciliation dates) get
         # separate cache entries.
         cache_period_key = (
-            f"{period_key}__to_{to_date_override}"
-            if to_date_override
-            else period_key
+            f"{period_key}__to_{to_date_override}" if to_date_override else period_key
         )
 
         # Check cache first (unless forcing refresh)

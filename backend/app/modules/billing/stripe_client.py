@@ -217,7 +217,10 @@ class StripeClient:
         so we fall back to getting it from the latest invoice's line items.
         """
         # Try direct access first
-        if hasattr(subscription, "current_period_end") and subscription.current_period_end is not None:
+        if (
+            hasattr(subscription, "current_period_end")
+            and subscription.current_period_end is not None
+        ):
             return subscription.current_period_end
 
         # Fall back to invoice line items

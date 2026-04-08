@@ -277,18 +277,28 @@ def format_financial_context(
             [
                 "",
                 "--- Strategy Constraints ---",
-                f"Available Cash: ${strategy_ctx['available_cash']:,.2f}" if strategy_ctx.get("available_cash") is not None else "Available Cash: Not available",
+                f"Available Cash: ${strategy_ctx['available_cash']:,.2f}"
+                if strategy_ctx.get("available_cash") is not None
+                else "Available Cash: Not available",
                 f"Monthly Operating Expenses: ${strategy_ctx['monthly_operating_expenses']:,.2f}",
                 f"3-Month Cash Buffer: ${strategy_ctx['cash_buffer_3mo']:,.2f}",
             ]
         )
         if strategy_ctx.get("max_strategy_budget") is not None:
-            lines.append(f"Maximum Available for Strategies: ${strategy_ctx['max_strategy_budget']:,.2f}")
+            lines.append(
+                f"Maximum Available for Strategies: ${strategy_ctx['max_strategy_budget']:,.2f}"
+            )
         else:
-            lines.append("Maximum Available for Strategies: Limited — cash reserves below 3-month buffer")
+            lines.append(
+                "Maximum Available for Strategies: Limited — cash reserves below 3-month buffer"
+            )
         if strategy_ctx.get("existing_asset_spend", 0) > 0:
-            lines.append(f"Existing Asset/Equipment Spend YTD: ${strategy_ctx['existing_asset_spend']:,.2f}")
-        lines.append("IMPORTANT: Do not recommend strategies exceeding available cash without explicit justification.")
+            lines.append(
+                f"Existing Asset/Equipment Spend YTD: ${strategy_ctx['existing_asset_spend']:,.2f}"
+            )
+        lines.append(
+            "IMPORTANT: Do not recommend strategies exceeding available cash without explicit justification."
+        )
 
     # Payroll data (Spec 056 - US6)
     payroll = financials_data.get("payroll_summary")
@@ -304,8 +314,12 @@ def format_financial_context(
             ]
         )
         if payroll.get("has_owners"):
-            lines.append("Note: Business has owner/director employees — consider salary vs dividend optimisation and super contribution strategies.")
-        lines.append("Consider: maximising concessional super contributions ($30,000 cap), catch-up contributions (if eligible), salary packaging options.")
+            lines.append(
+                "Note: Business has owner/director employees — consider salary vs dividend optimisation and super contribution strategies."
+            )
+        lines.append(
+            "Consider: maximising concessional super contributions ($30,000 cap), catch-up contributions (if eligible), salary packaging options."
+        )
 
     return "\n".join(lines)
 

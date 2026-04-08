@@ -383,7 +383,9 @@ class DocumentRequestRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_with_details(self, request_id: UUID, tenant_id: UUID | None = None) -> DocumentRequest | None:
+    async def get_with_details(
+        self, request_id: UUID, tenant_id: UUID | None = None
+    ) -> DocumentRequest | None:
         """Get request with related responses, documents, and events."""
         query = (
             select(DocumentRequest)

@@ -112,9 +112,7 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
 
         # Load all pending items
         items = await repo.get_items_for_job(job_id)
-        pending_items = [
-            i for i in items if i.status != XeroWritebackItemStatus.SUCCESS.value
-        ]
+        pending_items = [i for i in items if i.status != XeroWritebackItemStatus.SUCCESS.value]
 
         succeeded = 0
         skipped = 0
@@ -133,7 +131,9 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
                 tax_rates = await xero_client.get_tax_rates(access_token, xero_tenant_id)
                 valid_tax_types = {r["TaxType"] for r in tax_rates if r.get("TaxType")}
             except Exception as e:
-                logger.warning("Could not fetch tax rates for validation (will skip validation): %s", e)
+                logger.warning(
+                    "Could not fetch tax rates for validation (will skip validation): %s", e
+                )
                 valid_tax_types = None  # Skip validation if TaxRates endpoint fails
 
             for item in pending_items:
@@ -189,16 +189,23 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
                     # Validate tax type codes against org's known rates — but only for
                     # codes the accountant has *changed* (not codes that came from Xero
                     # originally, which are always valid by definition).
-                    if valid_tax_types is not None and item.after_tax_types and item.before_tax_types:
+                    if (
+                        valid_tax_types is not None
+                        and item.after_tax_types
+                        and item.before_tax_types
+                    ):
                         new_codes = {
-                            code for idx, code in item.after_tax_types.items()
+                            code
+                            for idx, code in item.after_tax_types.items()
                             if code != item.before_tax_types.get(idx)
                         }
                         invalid = [code for code in new_codes if code not in valid_tax_types]
                         if invalid:
                             logger.warning(
                                 "Invalid tax type(s) %s for item %s — valid: %s",
-                                invalid, item.id, sorted(valid_tax_types),
+                                invalid,
+                                item.id,
+                                sorted(valid_tax_types),
                             )
                             raise XeroDocumentNotEditableError(
                                 "invalid_tax_type", item.xero_document_id
@@ -218,9 +225,7 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
 
                     # Load overrides for this item
                     overrides_result = await db.execute(
-                        select(TaxCodeOverride).where(
-                            TaxCodeOverride.id.in_(item.override_ids)
-                        )
+                        select(TaxCodeOverride).where(TaxCodeOverride.id.in_(item.override_ids))
                     )
                     overrides = list(overrides_result.scalars().all())
 
@@ -233,31 +238,56 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
                     )
                     logger.warning(
                         "Sending to Xero %s: before=%s after=%s payload=%s",
-                        item.xero_document_id, before_types, after_types,
-                        [{k: v for k, v in li.items() if k in ("TaxType", "TaxAmount", "LineItemID")} for li in modified_line_items],
+                        item.xero_document_id,
+                        before_types,
+                        after_types,
+                        [
+                            {
+                                k: v
+                                for k, v in li.items()
+                                if k in ("TaxType", "TaxAmount", "LineItemID")
+                            }
+                            for li in modified_line_items
+                        ],
                     )
 
                     # Write to Xero — idempotency key prevents double-writes on Celery retry
                     idempotency_key = str(item.id)
                     if item.source_type == "invoice":
                         updated_doc, rate_state = await xero_client.update_invoice(
-                            access_token, xero_tenant_id, item.xero_document_id, modified_line_items,
+                            access_token,
+                            xero_tenant_id,
+                            item.xero_document_id,
+                            modified_line_items,
                             idempotency_key=idempotency_key,
                         )
                         local_entity.line_items = updated_doc.get("LineItems", modified_line_items)
                     elif item.source_type == "bank_transaction":
                         updated_doc, rate_state = await xero_client.update_bank_transaction(
-                            access_token, xero_tenant_id, item.xero_document_id, modified_line_items,
+                            access_token,
+                            xero_tenant_id,
+                            item.xero_document_id,
+                            modified_line_items,
                             idempotency_key=idempotency_key,
                         )
                         logger.warning(
                             "Xero response line items: %s",
-                            [{k: v for k, v in li.items() if k in ("TaxType", "TaxAmount", "LineItemID")} for li in updated_doc.get("LineItems", [])],
+                            [
+                                {
+                                    k: v
+                                    for k, v in li.items()
+                                    if k in ("TaxType", "TaxAmount", "LineItemID")
+                                }
+                                for li in updated_doc.get("LineItems", [])
+                            ],
                         )
                         local_entity.line_items = updated_doc.get("LineItems", modified_line_items)
                     elif item.source_type == "credit_note":
                         updated_doc, rate_state = await xero_client.update_credit_note(
-                            access_token, xero_tenant_id, item.xero_document_id, modified_line_items,
+                            access_token,
+                            xero_tenant_id,
+                            item.xero_document_id,
+                            modified_line_items,
                             idempotency_key=idempotency_key,
                         )
                         local_entity.line_items = updated_doc.get("LineItems", modified_line_items)
@@ -267,6 +297,7 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
                     # Update local xero_updated_at from Xero's response so the next
                     # writeback doesn't falsely detect a conflict against this write.
                     from app.modules.integrations.xero.transformers import parse_xero_date
+
                     new_updated_at = parse_xero_date(updated_doc.get("UpdatedDateUTC"))
                     if new_updated_at is not None and hasattr(local_entity, "xero_updated_at"):
                         local_entity.xero_updated_at = new_updated_at

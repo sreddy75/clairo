@@ -12,7 +12,6 @@ These are unit tests that validate the logic in service.py and prompts.py
 without requiring a live Xero connection.
 """
 
-
 import pytest
 
 from app.modules.tax_planning.prompts import format_financial_context
@@ -20,6 +19,7 @@ from app.modules.tax_planning.prompts import format_financial_context
 # =============================================================================
 # Helpers: Build financials_data dicts for testing
 # =============================================================================
+
 
 def _base_financials(
     revenue: float = 100000,
@@ -64,9 +64,7 @@ def _financials_with_bank(balance: float | None = 50000.0) -> dict:
     data = _base_financials()
     if balance is not None:
         data["total_bank_balance"] = balance
-        data["bank_balances"] = [
-            {"account_name": "Business Account", "closing_balance": balance}
-        ]
+        data["bank_balances"] = [{"account_name": "Business Account", "closing_balance": balance}]
     else:
         data["total_bank_balance"] = None
         data["bank_balances"] = []
@@ -151,6 +149,7 @@ def _financials_with_payroll() -> dict:
 # US1: Bank Balance Fix
 # =============================================================================
 
+
 class TestBankBalanceFix:
     """US1: Bank balance should show actual value or null — never $0 for empty data."""
 
@@ -195,6 +194,7 @@ class TestBankBalanceFix:
 # =============================================================================
 # US2: Revenue Forecasting
 # =============================================================================
+
 
 class TestRevenueForecasting:
     """US2: Project full-year figures from YTD monthly averages."""
@@ -254,6 +254,7 @@ class TestRevenueForecasting:
 # US3: Prior Year Comparison
 # =============================================================================
 
+
 class TestPriorYearComparison:
     """US3: Same-period-last-year comparison with growth percentages."""
 
@@ -298,6 +299,7 @@ class TestPriorYearComparison:
 # US4: Multi-Year Trends
 # =============================================================================
 
+
 class TestMultiYearTrends:
     """US4: Full FY data for FY-1 and FY-2 trend analysis."""
 
@@ -328,6 +330,7 @@ class TestMultiYearTrends:
 # US5: Strategy Context
 # =============================================================================
 
+
 class TestStrategyContext:
     """US5: Strategy recommendations grounded in actual financial data."""
 
@@ -356,9 +359,18 @@ class TestStrategyContext:
             {"category": "Office supplies", "amount": 2000},
             {"category": "Vehicle depreciation", "amount": 3000},
         ]
-        asset_keywords = {"equipment", "depreciation", "asset", "computer", "furniture", "vehicle", "plant"}
+        asset_keywords = {
+            "equipment",
+            "depreciation",
+            "asset",
+            "computer",
+            "furniture",
+            "vehicle",
+            "plant",
+        }
         asset_spend = sum(
-            abs(item["amount"]) for item in breakdown
+            abs(item["amount"])
+            for item in breakdown
             if any(kw in item["category"].lower() for kw in asset_keywords)
         )
         assert asset_spend == 8000  # computer equipment + vehicle depreciation
@@ -391,6 +403,7 @@ class TestStrategyContext:
 # =============================================================================
 # US6: Payroll Intelligence
 # =============================================================================
+
 
 class TestPayrollIntelligence:
     """US6: Payroll data factored into tax planning."""
@@ -445,6 +458,7 @@ class TestPayrollIntelligence:
 # Integration: Full financials_data with all enrichments
 # =============================================================================
 
+
 class TestFullEnrichedFinancials:
     """Test that all enrichments work together in a single financials_data."""
 
@@ -463,20 +477,30 @@ class TestFullEnrichedFinancials:
             "projection_method": "linear_average",
         }
         data["prior_year_ytd"] = {
-            "revenue": 85000, "total_income": 85000, "total_expenses": 55000,
-            "net_profit": 30000, "period_coverage": "1 Jul 2024 – 15 Mar 2025",
+            "revenue": 85000,
+            "total_income": 85000,
+            "total_expenses": 55000,
+            "net_profit": 30000,
+            "period_coverage": "1 Jul 2024 – 15 Mar 2025",
             "changes": {"revenue_pct": 17.6, "expenses_pct": 9.1, "profit_pct": 33.3},
         }
         data["prior_years"] = [
             {"financial_year": "FY2025", "revenue": 110000, "expenses": 70000, "net_profit": 40000},
         ]
         data["strategy_context"] = {
-            "available_cash": 50000, "monthly_operating_expenses": 6666.67,
-            "cash_buffer_3mo": 20000, "max_strategy_budget": 30000, "existing_asset_spend": 5000,
+            "available_cash": 50000,
+            "monthly_operating_expenses": 6666.67,
+            "cash_buffer_3mo": 20000,
+            "max_strategy_budget": 30000,
+            "existing_asset_spend": 5000,
         }
         data["payroll_summary"] = {
-            "employee_count": 2, "total_wages_ytd": 120000, "total_super_ytd": 13200,
-            "total_tax_withheld_ytd": 30000, "has_owners": True, "employees": [],
+            "employee_count": 2,
+            "total_wages_ytd": 120000,
+            "total_super_ytd": 13200,
+            "total_tax_withheld_ytd": 30000,
+            "has_owners": True,
+            "employees": [],
         }
 
         prompt = format_financial_context(data, None, "company")

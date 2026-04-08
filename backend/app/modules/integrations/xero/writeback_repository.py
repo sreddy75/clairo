@@ -121,9 +121,7 @@ class XeroWritebackRepository:
             values["error_detail"] = error_detail
 
         await self.session.execute(
-            update(XeroWritebackJob)
-            .where(XeroWritebackJob.id == job_id)
-            .values(**values)
+            update(XeroWritebackJob).where(XeroWritebackJob.id == job_id).values(**values)
         )
         await self.session.flush()
 
@@ -145,9 +143,7 @@ class XeroWritebackRepository:
 
         if values:
             await self.session.execute(
-                update(XeroWritebackJob)
-                .where(XeroWritebackJob.id == job_id)
-                .values(**values)
+                update(XeroWritebackJob).where(XeroWritebackJob.id == job_id).values(**values)
             )
             await self.session.flush()
 
@@ -226,8 +222,6 @@ class XeroWritebackRepository:
             values["xero_http_status"] = xero_http_status
 
         await self.session.execute(
-            update(XeroWritebackItem)
-            .where(XeroWritebackItem.id == item_id)
-            .values(**values)
+            update(XeroWritebackItem).where(XeroWritebackItem.id == item_id).values(**values)
         )
         await self.session.flush()

@@ -785,7 +785,7 @@ www.clairo.com.au | support@clairo.com.au
 <p style="color: {cls.TEXT_COLOR}; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
     <strong>{accountant_name}</strong> from <strong>{practice_name}</strong> is preparing the BAS for
     <strong>{business_name}</strong> and needs your help classifying
-    <strong>{transaction_count} transaction{'s' if transaction_count != 1 else ''}</strong>.
+    <strong>{transaction_count} transaction{"s" if transaction_count != 1 else ""}</strong>.
 </p>
 {message_section}
 <p style="color: {cls.TEXT_COLOR}; font-size: 16px; line-height: 1.6; margin: 0 0 8px 0;">
@@ -817,7 +817,7 @@ www.clairo.com.au | support@clairo.com.au
 
 Hi there,
 
-{accountant_name} from {practice_name} is preparing the BAS for {business_name} and needs your help classifying {transaction_count} transaction{'s' if transaction_count != 1 else ''}.
+{accountant_name} from {practice_name} is preparing the BAS for {business_name} and needs your help classifying {transaction_count} transaction{"s" if transaction_count != 1 else ""}.
 
 {f"Message from {accountant_name}: {message}" if message else ""}
 

@@ -727,9 +727,7 @@ async def get_audit_summary(
 
     # Total
     total = (
-        await session.execute(
-            select(func.count()).where(AuditLog.tenant_id == tenant_id)
-        )
+        await session.execute(select(func.count()).where(AuditLog.tenant_id == tenant_id))
     ).scalar() or 0
 
     # By category
@@ -837,17 +835,33 @@ async def export_audit_csv(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "occurred_at", "event_type", "event_category", "actor_email",
-        "resource_type", "resource_id", "action", "outcome", "metadata",
-    ])
+    writer.writerow(
+        [
+            "occurred_at",
+            "event_type",
+            "event_category",
+            "actor_email",
+            "resource_type",
+            "resource_id",
+            "action",
+            "outcome",
+            "metadata",
+        ]
+    )
     for r in rows:
-        writer.writerow([
-            r.occurred_at.isoformat() if r.occurred_at else "",
-            r.event_type, r.event_category, r.actor_email or "",
-            r.resource_type or "", str(r.resource_id) if r.resource_id else "",
-            r.action, r.outcome, str(r.metadata) if r.metadata else "",
-        ])
+        writer.writerow(
+            [
+                r.occurred_at.isoformat() if r.occurred_at else "",
+                r.event_type,
+                r.event_category,
+                r.actor_email or "",
+                r.resource_type or "",
+                str(r.resource_id) if r.resource_id else "",
+                r.action,
+                r.outcome,
+                str(r.metadata) if r.metadata else "",
+            ]
+        )
 
     output.seek(0)
     return StreamingResponse(

@@ -412,9 +412,7 @@ class TestPartnershipTax:
             medicare_rates=MEDICARE_RATES,
             lito_rates=LITO_RATES,
         )
-        assert float(result.total_tax_payable) == float(
-            individual_result.total_tax_payable
-        )
+        assert float(result.total_tax_payable) == float(individual_result.total_tax_payable)
 
 
 # ===========================================================================

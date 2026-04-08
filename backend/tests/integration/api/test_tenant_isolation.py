@@ -80,14 +80,30 @@ class TestClientDataIsolation:
     async def test_xero_connections_isolated(
         self, db_session: AsyncSession, tenant_a: Tenant, tenant_b: Tenant
     ) -> None:
-        await _insert(db_session, "xero_connections", {
-            "tenant_id": str(tenant_a.id), "xero_tenant_id": "xa",
-            "organization_name": "Alpha Xero", "access_token": "tok_a", "refresh_token": "ref_a", "status": "active",
-        })
-        await _insert(db_session, "xero_connections", {
-            "tenant_id": str(tenant_b.id), "xero_tenant_id": "xb",
-            "organization_name": "Beta Xero", "access_token": "tok_b", "refresh_token": "ref_b", "status": "active",
-        })
+        await _insert(
+            db_session,
+            "xero_connections",
+            {
+                "tenant_id": str(tenant_a.id),
+                "xero_tenant_id": "xa",
+                "organization_name": "Alpha Xero",
+                "access_token": "tok_a",
+                "refresh_token": "ref_a",
+                "status": "active",
+            },
+        )
+        await _insert(
+            db_session,
+            "xero_connections",
+            {
+                "tenant_id": str(tenant_b.id),
+                "xero_tenant_id": "xb",
+                "organization_name": "Beta Xero",
+                "access_token": "tok_b",
+                "refresh_token": "ref_b",
+                "status": "active",
+            },
+        )
         await db_session.commit()
 
         await _set_ctx(db_session, tenant_a.id)
@@ -108,25 +124,51 @@ class TestBASDataIsolation:
         self, db_session: AsyncSession, tenant_a: Tenant, tenant_b: Tenant
     ) -> None:
         # Create periods first (FK dependency)
-        pa = await _insert(db_session, "bas_periods", {
-            "tenant_id": str(tenant_a.id), "connection_id": str(uuid.uuid4()),
-            "fy_year": 2026, "start_date": "2025-07-01", "end_date": "2025-09-30",
-            "due_date": "2025-10-28", "quarter": 1,
-        })
-        pb = await _insert(db_session, "bas_periods", {
-            "tenant_id": str(tenant_b.id), "connection_id": str(uuid.uuid4()),
-            "fy_year": 2026, "start_date": "2025-07-01", "end_date": "2025-09-30",
-            "due_date": "2025-10-28", "quarter": 1,
-        })
+        pa = await _insert(
+            db_session,
+            "bas_periods",
+            {
+                "tenant_id": str(tenant_a.id),
+                "connection_id": str(uuid.uuid4()),
+                "fy_year": 2026,
+                "start_date": "2025-07-01",
+                "end_date": "2025-09-30",
+                "due_date": "2025-10-28",
+                "quarter": 1,
+            },
+        )
+        pb = await _insert(
+            db_session,
+            "bas_periods",
+            {
+                "tenant_id": str(tenant_b.id),
+                "connection_id": str(uuid.uuid4()),
+                "fy_year": 2026,
+                "start_date": "2025-07-01",
+                "end_date": "2025-09-30",
+                "due_date": "2025-10-28",
+                "quarter": 1,
+            },
+        )
 
-        await _insert(db_session, "bas_sessions", {
-            "tenant_id": str(tenant_a.id), "period_id": str(pa),
-            "created_by": str(uuid.uuid4()),
-        })
-        await _insert(db_session, "bas_sessions", {
-            "tenant_id": str(tenant_b.id), "period_id": str(pb),
-            "created_by": str(uuid.uuid4()),
-        })
+        await _insert(
+            db_session,
+            "bas_sessions",
+            {
+                "tenant_id": str(tenant_a.id),
+                "period_id": str(pa),
+                "created_by": str(uuid.uuid4()),
+            },
+        )
+        await _insert(
+            db_session,
+            "bas_sessions",
+            {
+                "tenant_id": str(tenant_b.id),
+                "period_id": str(pb),
+                "created_by": str(uuid.uuid4()),
+            },
+        )
         await db_session.commit()
 
         await _set_ctx(db_session, tenant_a.id)
@@ -144,24 +186,54 @@ class TestTaxPlanDataIsolation:
         self, db_session: AsyncSession, tenant_a: Tenant, tenant_b: Tenant
     ) -> None:
         # Need xero_connections for FK
-        xca = await _insert(db_session, "xero_connections", {
-            "tenant_id": str(tenant_a.id), "xero_tenant_id": "tpa",
-            "organization_name": "A", "access_token": "tpa_tok", "refresh_token": "tpa_ref", "status": "active",
-        })
-        xcb = await _insert(db_session, "xero_connections", {
-            "tenant_id": str(tenant_b.id), "xero_tenant_id": "tpb",
-            "organization_name": "B", "access_token": "tpb_tok", "refresh_token": "tpb_ref", "status": "active",
-        })
-        await _insert(db_session, "tax_plans", {
-            "tenant_id": str(tenant_a.id), "xero_connection_id": str(xca),
-            "financial_year": "2026", "entity_type": "individual",
-            "data_source": "xero", "status": "draft",
-        })
-        await _insert(db_session, "tax_plans", {
-            "tenant_id": str(tenant_b.id), "xero_connection_id": str(xcb),
-            "financial_year": "2026", "entity_type": "company",
-            "data_source": "xero", "status": "draft",
-        })
+        xca = await _insert(
+            db_session,
+            "xero_connections",
+            {
+                "tenant_id": str(tenant_a.id),
+                "xero_tenant_id": "tpa",
+                "organization_name": "A",
+                "access_token": "tpa_tok",
+                "refresh_token": "tpa_ref",
+                "status": "active",
+            },
+        )
+        xcb = await _insert(
+            db_session,
+            "xero_connections",
+            {
+                "tenant_id": str(tenant_b.id),
+                "xero_tenant_id": "tpb",
+                "organization_name": "B",
+                "access_token": "tpb_tok",
+                "refresh_token": "tpb_ref",
+                "status": "active",
+            },
+        )
+        await _insert(
+            db_session,
+            "tax_plans",
+            {
+                "tenant_id": str(tenant_a.id),
+                "xero_connection_id": str(xca),
+                "financial_year": "2026",
+                "entity_type": "individual",
+                "data_source": "xero",
+                "status": "draft",
+            },
+        )
+        await _insert(
+            db_session,
+            "tax_plans",
+            {
+                "tenant_id": str(tenant_b.id),
+                "xero_connection_id": str(xcb),
+                "financial_year": "2026",
+                "entity_type": "company",
+                "data_source": "xero",
+                "status": "draft",
+            },
+        )
         await db_session.commit()
 
         await _set_ctx(db_session, tenant_a.id)
@@ -182,16 +254,30 @@ class TestPortalDataIsolation:
         self, db_session: AsyncSession, tenant_a: Tenant, tenant_b: Tenant
     ) -> None:
         future = (datetime.now(UTC) + timedelta(days=1)).isoformat()
-        await _insert(db_session, "portal_invitations", {
-            "tenant_id": str(tenant_a.id), "connection_id": str(uuid.uuid4()),
-            "email": "client-a@test.com", "token_hash": "h" + uuid.uuid4().hex[:63],
-            "expires_at": future, "invited_by": str(uuid.uuid4()),
-        })
-        await _insert(db_session, "portal_invitations", {
-            "tenant_id": str(tenant_b.id), "connection_id": str(uuid.uuid4()),
-            "email": "client-b@test.com", "token_hash": "h" + uuid.uuid4().hex[:63],
-            "expires_at": future, "invited_by": str(uuid.uuid4()),
-        })
+        await _insert(
+            db_session,
+            "portal_invitations",
+            {
+                "tenant_id": str(tenant_a.id),
+                "connection_id": str(uuid.uuid4()),
+                "email": "client-a@test.com",
+                "token_hash": "h" + uuid.uuid4().hex[:63],
+                "expires_at": future,
+                "invited_by": str(uuid.uuid4()),
+            },
+        )
+        await _insert(
+            db_session,
+            "portal_invitations",
+            {
+                "tenant_id": str(tenant_b.id),
+                "connection_id": str(uuid.uuid4()),
+                "email": "client-b@test.com",
+                "token_hash": "h" + uuid.uuid4().hex[:63],
+                "expires_at": future,
+                "invited_by": str(uuid.uuid4()),
+            },
+        )
         await db_session.commit()
 
         await _set_ctx(db_session, tenant_a.id)

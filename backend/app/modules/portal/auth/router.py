@@ -163,7 +163,8 @@ async def request_magic_link(
                 tags=[{"name": "type", "value": "portal_login_request"}],
             )
             await magic_link_service.mark_invitation_sent(
-                invitation_id=invitation.id, delivered=True,
+                invitation_id=invitation.id,
+                delivered=True,
             )
             await db.commit()
     except Exception:

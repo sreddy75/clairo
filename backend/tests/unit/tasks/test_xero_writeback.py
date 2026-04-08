@@ -109,11 +109,7 @@ def _validate_tax_codes(
         return []
     if not after_tax_types or not before_tax_types:
         return []
-    new_codes = {
-        code
-        for idx, code in after_tax_types.items()
-        if code != before_tax_types.get(idx)
-    }
+    new_codes = {code for idx, code in after_tax_types.items() if code != before_tax_types.get(idx)}
     return [code for code in new_codes if code not in valid_tax_types]
 
 
