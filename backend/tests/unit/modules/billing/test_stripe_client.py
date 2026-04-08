@@ -459,9 +459,11 @@ class TestGetSubscriptionPeriodEnd:
             mock_sub.latest_invoice = "in_123"
             mock_sub.billing_cycle_anchor = 1704067200
 
+            mock_period = MagicMock()
+            mock_period.end = 1735689600
             mock_invoice = MagicMock()
             mock_invoice.lines.data = [MagicMock()]
-            mock_invoice.lines.data[0].period = {"end": 1735689600}
+            mock_invoice.lines.data[0].period = mock_period
             mock_invoice_retrieve.return_value = mock_invoice
 
             result = client._get_subscription_period_end(mock_sub)

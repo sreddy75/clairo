@@ -12,6 +12,7 @@ Usage:
         pass
 """
 
+import contextlib
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -25,11 +26,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.config import get_settings
-from app.database import get_db
-from app.modules.action_items import models as action_items_models  # noqa: F401
-from app.modules.agents import models as agents_models  # noqa: F401
-
 # ==============================================================================
 # Import all models to ensure SQLAlchemy relationships are resolved
 # ==============================================================================
@@ -38,6 +34,10 @@ from app.modules.agents import models as agents_models  # noqa: F401
 # we ensure that all model classes are registered before any tests run.
 # noqa comments suppress unused import warnings - these imports are for side effects
 import app.modules.admin.models as admin_models  # noqa: F401
+from app.config import get_settings
+from app.database import get_db
+from app.modules.action_items import models as action_items_models  # noqa: F401
+from app.modules.agents import models as agents_models  # noqa: F401
 from app.modules.auth import models as auth_models  # noqa: F401
 from app.modules.bas import models as bas_models  # noqa: F401
 from app.modules.billing import models as billing_models  # noqa: F401
@@ -54,22 +54,14 @@ from app.modules.triggers import models as triggers_models  # noqa: F401
 # Models added in later specs — import models.py directly to register
 # SQLAlchemy classes without triggering router/service imports that pull
 # in heavy dependencies (minio, anthropic, etc.)
-try:
+with contextlib.suppress(Exception):
     import app.modules.portal.models as portal_models  # noqa: F401
-except Exception:
-    pass
-try:
+with contextlib.suppress(Exception):
     import app.modules.bas.classification_models as classification_models  # noqa: F401
-except Exception:
-    pass
-try:
+with contextlib.suppress(Exception):
     import app.modules.feedback.models as feedback_models  # noqa: F401
-except Exception:
-    pass
-try:
+with contextlib.suppress(Exception):
     import app.modules.tax_planning.models as tax_planning_models  # noqa: F401
-except Exception:
-    pass
 
 # ==============================================================================
 # Database Fixtures

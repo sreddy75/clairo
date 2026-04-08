@@ -29,15 +29,15 @@ class TestTierFeatures:
         assert set(TIER_FEATURES.keys()) == expected_tiers
 
     def test_starter_tier_limits(self):
-        """Starter tier should have restricted features."""
+        """Starter tier is an all-inclusive $299 plan with unlimited clients."""
         features = TIER_FEATURES["starter"]
-        assert features["max_clients"] == 25
-        assert features["ai_insights"] == "basic"
-        assert features["client_portal"] is False
-        assert features["custom_triggers"] is False
+        assert features["max_clients"] is None
+        assert features["ai_insights"] == "full"
+        assert features["client_portal"] is True
+        assert features["custom_triggers"] is True
         assert features["api_access"] is False
-        assert features["knowledge_base"] is False
-        assert features["magic_zone"] is False
+        assert features["knowledge_base"] is True
+        assert features["magic_zone"] is True
 
     def test_professional_tier_features(self):
         """Professional tier should have extended features."""
@@ -69,7 +69,7 @@ class TestGetTierFeatures:
     def test_valid_tier(self):
         """Should return features for valid tier."""
         features = get_tier_features("starter")
-        assert features["max_clients"] == 25
+        assert features["max_clients"] is None
 
     def test_invalid_tier_raises(self):
         """Should raise KeyError for invalid tier."""
@@ -85,13 +85,13 @@ class TestHasFeature:
         """Starter tier should have AI insights (basic level)."""
         assert has_feature("starter", "ai_insights") is True
 
-    def test_starter_no_client_portal(self):
-        """Starter tier should not have client portal."""
-        assert has_feature("starter", "client_portal") is False
+    def test_starter_has_client_portal(self):
+        """Starter tier has client portal (all-inclusive plan)."""
+        assert has_feature("starter", "client_portal") is True
 
-    def test_starter_no_custom_triggers(self):
-        """Starter tier should not have custom triggers."""
-        assert has_feature("starter", "custom_triggers") is False
+    def test_starter_has_custom_triggers(self):
+        """Starter tier has custom triggers (all-inclusive plan)."""
+        assert has_feature("starter", "custom_triggers") is True
 
     def test_professional_has_client_portal(self):
         """Professional tier should have client portal."""
@@ -142,8 +142,8 @@ class TestGetClientLimit:
     """Tests for get_client_limit function."""
 
     def test_starter_limit(self):
-        """Starter tier should have 25 client limit."""
-        assert get_client_limit("starter") == 25
+        """Starter tier has unlimited clients (None)."""
+        assert get_client_limit("starter") is None
 
     def test_professional_limit(self):
         """Professional tier should have 100 client limit."""
@@ -252,8 +252,8 @@ class TestTierPricing:
     """Tests for TIER_PRICING configuration."""
 
     def test_starter_pricing(self):
-        """Starter should be $99 (9900 cents)."""
-        assert TIER_PRICING["starter"] == 9900
+        """Starter should be $299 (29900 cents)."""
+        assert TIER_PRICING["starter"] == 29900
 
     def test_professional_pricing(self):
         """Professional should be $299 (29900 cents)."""

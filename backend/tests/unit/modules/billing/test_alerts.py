@@ -127,7 +127,7 @@ class TestCheckAndSendThresholdAlerts:
     @pytest.mark.asyncio
     async def test_80_threshold_alert_sent(self, mock_session, mock_email_service, mock_usage_repo):
         """At 80% should send threshold_80 alert."""
-        tenant = MockTenant(tier="starter", client_count=20)  # 80% of 25
+        tenant = MockTenant(tier="professional", client_count=80)  # 80% of 100
 
         with patch.object(UsageAlertService, "__init__", lambda self, s, e=None: None):
             service = UsageAlertService.__new__(UsageAlertService)
@@ -163,7 +163,7 @@ class TestCheckAndSendThresholdAlerts:
         self, mock_session, mock_email_service, mock_usage_repo
     ):
         """At 100% should send limit_reached alert."""
-        tenant = MockTenant(tier="starter", client_count=25)  # 100% of 25
+        tenant = MockTenant(tier="professional", client_count=100)  # 100% of 100
 
         with patch.object(UsageAlertService, "__init__", lambda self, s, e=None: None):
             service = UsageAlertService.__new__(UsageAlertService)
@@ -221,7 +221,7 @@ class TestCheckAndSendThresholdAlerts:
         self, mock_session, mock_email_service, mock_usage_repo
     ):
         """Should create alert record after sending email."""
-        tenant = MockTenant(tier="starter", client_count=20)  # 80% of 25
+        tenant = MockTenant(tier="professional", client_count=80)  # 80% of 100
 
         with patch.object(UsageAlertService, "__init__", lambda self, s, e=None: None):
             service = UsageAlertService.__new__(UsageAlertService)
@@ -237,8 +237,8 @@ class TestCheckAndSendThresholdAlerts:
         assert call_kwargs["tenant_id"] == tenant.id
         assert call_kwargs["alert_type"] == UsageAlertType.THRESHOLD_80
         assert call_kwargs["threshold_percentage"] == 80
-        assert call_kwargs["client_count_at_alert"] == 20
-        assert call_kwargs["client_limit_at_alert"] == 25
+        assert call_kwargs["client_count_at_alert"] == 80
+        assert call_kwargs["client_limit_at_alert"] == 100
 
 
 class TestGetAlertsForTenant:

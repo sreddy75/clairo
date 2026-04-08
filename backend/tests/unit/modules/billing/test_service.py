@@ -388,18 +388,18 @@ class TestGetUsageInfo:
         assert usage.is_approaching_limit is False
         assert usage.percentage_used is None
 
-    def test_starter_tier_below_limit(self, mock_session):
-        """Starter tier below limit should show correct percentage."""
+    def test_starter_tier_unlimited(self, mock_session):
+        """Starter tier is unlimited — no client limit or percentage."""
         service = BillingService(mock_session)
         tenant = MockTenant(tier="starter", client_count=10)
 
         usage = service.get_usage_info(tenant)
 
         assert usage.client_count == 10
-        assert usage.client_limit == 25
+        assert usage.client_limit is None
         assert usage.is_at_limit is False
         assert usage.is_approaching_limit is False
-        assert usage.percentage_used == 40.0
+        assert usage.percentage_used is None
 
     def test_professional_tier_at_limit(self, mock_session):
         """Tier at limit should show is_at_limit=True."""
@@ -417,7 +417,7 @@ class TestGetUsageInfo:
     def test_approaching_limit_threshold(self, mock_session):
         """Should be approaching limit at 80% or above."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=20)  # 80% of 25
+        tenant = MockTenant(tier="professional", client_count=80)  # 80% of 100
 
         usage = service.get_usage_info(tenant)
 
@@ -427,7 +427,7 @@ class TestGetUsageInfo:
     def test_not_approaching_limit_below_threshold(self, mock_session):
         """Should not be approaching limit below 80%."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=19)  # 76% of 25
+        tenant = MockTenant(tier="professional", client_count=76)  # 76% of 100
 
         usage = service.get_usage_info(tenant)
 
@@ -464,24 +464,24 @@ class TestCheckClientLimit:
     def test_at_limit_raises_error(self, mock_session):
         """At limit should raise ClientLimitExceededError."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=25)
+        tenant = MockTenant(tier="professional", client_count=100)
 
         with pytest.raises(ClientLimitExceededError) as exc_info:
             service.check_client_limit(tenant)
 
-        assert exc_info.value.current_count == 25
-        assert exc_info.value.limit == 25
-        assert exc_info.value.required_tier == "professional"
+        assert exc_info.value.current_count == 100
+        assert exc_info.value.limit == 100
+        assert exc_info.value.required_tier == "growth"
 
     def test_above_limit_raises_error(self, mock_session):
         """Above limit (legacy data) should raise error."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=30)
+        tenant = MockTenant(tier="professional", client_count=110)
 
         with pytest.raises(ClientLimitExceededError) as exc_info:
             service.check_client_limit(tenant)
 
-        assert exc_info.value.current_count == 30
+        assert exc_info.value.current_count == 110
 
 
 class TestGetTierFeaturesForTenant:
@@ -493,19 +493,19 @@ class TestGetTierFeaturesForTenant:
         return AsyncMock()
 
     def test_starter_tier_features(self, mock_session):
-        """Starter tier should have restricted features."""
+        """Starter tier is all-inclusive — unlimited clients and all features."""
         service = BillingService(mock_session)
         tenant = MockTenant(tier="starter")
 
         features = service.get_tier_features_for_tenant(tenant)
 
-        assert features.max_clients == 25
-        assert features.ai_insights == "basic"
-        assert features.client_portal is False
-        assert features.custom_triggers is False
+        assert features.max_clients is None
+        assert features.ai_insights == "full"
+        assert features.client_portal is True
+        assert features.custom_triggers is True
         assert features.api_access is False
-        assert features.knowledge_base is False
-        assert features.magic_zone is False
+        assert features.knowledge_base is True
+        assert features.magic_zone is True
 
     def test_professional_tier_features(self, mock_session):
         """Professional tier should have extended features."""
@@ -668,25 +668,25 @@ class TestCheckCanAddClients:
     def test_batch_clients_exceeds_limit(self, mock_session):
         """Adding batch that exceeds limit should raise error."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=20)  # 20/25
+        tenant = MockTenant(tier="professional", client_count=95)  # 95/100
 
         with pytest.raises(ClientLimitExceededError) as exc_info:
-            service.check_can_add_clients(tenant, count=10)  # Would be 30/25
+            service.check_can_add_clients(tenant, count=10)  # Would be 105/100
 
-        assert exc_info.value.current_count == 20
-        assert exc_info.value.limit == 25
-        assert exc_info.value.required_tier == "professional"
+        assert exc_info.value.current_count == 95
+        assert exc_info.value.limit == 100
+        assert exc_info.value.required_tier == "growth"
 
     def test_already_at_limit_single_client(self, mock_session):
         """Adding one client when at limit should raise error."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=25)  # 25/25
+        tenant = MockTenant(tier="professional", client_count=100)  # 100/100
 
         with pytest.raises(ClientLimitExceededError) as exc_info:
             service.check_can_add_clients(tenant, count=1)
 
-        assert exc_info.value.current_count == 25
-        assert exc_info.value.limit == 25
+        assert exc_info.value.current_count == 100
+        assert exc_info.value.limit == 100
 
     def test_default_count_is_one(self, mock_session):
         """Default count parameter should be 1."""
@@ -750,13 +750,13 @@ class TestGetRemainingClientSlots:
         assert result is None
 
     def test_starter_tier_remaining_slots(self, mock_session):
-        """Starter tier should return correct remaining slots."""
+        """Starter tier is unlimited — returns None for remaining slots."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=10)  # 10/25
+        tenant = MockTenant(tier="starter", client_count=10)
 
         result = service.get_remaining_client_slots(tenant)
 
-        assert result == 15  # 25 - 10
+        assert result is None
 
     def test_professional_tier_remaining_slots(self, mock_session):
         """Professional tier should return correct remaining slots."""
@@ -770,7 +770,7 @@ class TestGetRemainingClientSlots:
     def test_at_limit_returns_zero(self, mock_session):
         """At limit should return 0 remaining slots."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=25)  # 25/25
+        tenant = MockTenant(tier="professional", client_count=100)  # 100/100
 
         result = service.get_remaining_client_slots(tenant)
 
@@ -779,20 +779,20 @@ class TestGetRemainingClientSlots:
     def test_over_limit_returns_zero(self, mock_session):
         """Over limit (legacy data) should return 0, not negative."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=30)  # 30/25
+        tenant = MockTenant(tier="professional", client_count=110)  # 110/100
 
         result = service.get_remaining_client_slots(tenant)
 
-        assert result == 0  # max(0, 25 - 30) = 0
+        assert result == 0  # max(0, 100 - 110) = 0
 
     def test_empty_tenant_full_slots(self, mock_session):
         """Empty tenant should have full slots available."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=0)
+        tenant = MockTenant(tier="professional", client_count=0)
 
         result = service.get_remaining_client_slots(tenant)
 
-        assert result == 25  # Full starter limit
+        assert result == 100  # Full professional limit
 
 
 class TestGetUsageMetrics:
@@ -828,12 +828,12 @@ class TestGetUsageMetrics:
         # Enterprise returns 'enterprise' as next tier (already at highest)
         assert metrics.next_tier == "enterprise"
 
-    def test_starter_tier_below_80(self, mock_session):
-        """Starter below 80% should not have warnings."""
+    def test_starter_tier_unlimited_metrics(self, mock_session):
+        """Starter tier is unlimited — no client limit or percentage warnings."""
         service = BillingService(mock_session)
         tenant = MockTenant(
             tier="starter",
-            client_count=15,  # 60%
+            client_count=15,
             ai_queries_month=50,
             documents_month=10,
         )
@@ -841,8 +841,8 @@ class TestGetUsageMetrics:
         metrics = service.get_usage_metrics(tenant)
 
         assert metrics.client_count == 15
-        assert metrics.client_limit == 25
-        assert metrics.client_percentage == 60.0
+        assert metrics.client_limit is None
+        assert metrics.client_percentage is None
         assert metrics.ai_queries_month == 50
         assert metrics.documents_month == 10
         assert metrics.is_at_limit is False
@@ -854,7 +854,7 @@ class TestGetUsageMetrics:
     def test_threshold_warning_at_80(self, mock_session):
         """At 80% should show 80% warning."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=20)  # 80%
+        tenant = MockTenant(tier="professional", client_count=80)  # 80% of 100
 
         metrics = service.get_usage_metrics(tenant)
 
@@ -874,7 +874,7 @@ class TestGetUsageMetrics:
     def test_threshold_warning_at_100(self, mock_session):
         """At 100% should show 100% warning."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=25)  # 100%
+        tenant = MockTenant(tier="professional", client_count=100)  # 100% of 100
 
         metrics = service.get_usage_metrics(tenant)
 
@@ -885,7 +885,7 @@ class TestGetUsageMetrics:
     def test_over_100_still_shows_100_warning(self, mock_session):
         """Over 100% (legacy) should still show 100% warning."""
         service = BillingService(mock_session)
-        tenant = MockTenant(tier="starter", client_count=30)  # 120%
+        tenant = MockTenant(tier="professional", client_count=110)  # 110% of 100
 
         metrics = service.get_usage_metrics(tenant)
 

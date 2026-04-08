@@ -12,15 +12,10 @@ These are unit tests that validate the logic in service.py and prompts.py
 without requiring a live Xero connection.
 """
 
-import uuid
-from datetime import UTC, date, datetime
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from app.modules.tax_planning.prompts import format_financial_context
-from app.modules.tax_planning.service import TaxPlanningService
-
 
 # =============================================================================
 # Helpers: Build financials_data dicts for testing
@@ -205,7 +200,7 @@ class TestRevenueForecasting:
     """US2: Project full-year figures from YTD monthly averages."""
 
     def test_projection_calculation_9_months(self):
-        """9 months of data → monthly avg × 12 = projected full year."""
+        """9 months of data -> monthly avg x 12 = projected full year."""
         months = 9
         revenue = 90000  # $10K/month
         expenses = 54000  # $6K/month
