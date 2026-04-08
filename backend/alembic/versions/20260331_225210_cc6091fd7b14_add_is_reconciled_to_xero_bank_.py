@@ -12,8 +12,8 @@ from alembic import op
 
 
 # Revision identifiers
-revision: str = 'cc6091fd7b14'
-down_revision: str | None = 'd146710cbb84'
+revision: str = "cc6091fd7b14"
+down_revision: str | None = "d146710cbb84"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

@@ -186,5 +186,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("client_classifications")
-    op.drop_index("ix_classification_request_connection_status", table_name="classification_requests")
+    op.drop_index(
+        "ix_classification_request_connection_status", table_name="classification_requests"
+    )
     op.drop_table("classification_requests")

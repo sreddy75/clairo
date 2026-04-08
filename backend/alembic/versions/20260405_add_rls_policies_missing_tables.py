@@ -77,7 +77,9 @@ def downgrade() -> None:
         op.execute(NO_FORCE_RLS.format(table=table))
         op.execute(DISABLE_RLS.format(table=table))
 
-    op.execute("DROP POLICY IF EXISTS document_request_templates_system_read ON document_request_templates")
+    op.execute(
+        "DROP POLICY IF EXISTS document_request_templates_system_read ON document_request_templates"
+    )
     op.execute(DROP_POLICY.format(table="document_request_templates"))
     op.execute(NO_FORCE_RLS.format(table="document_request_templates"))
     op.execute(DISABLE_RLS.format(table="document_request_templates"))

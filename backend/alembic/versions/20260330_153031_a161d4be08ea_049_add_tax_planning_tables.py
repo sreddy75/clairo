@@ -77,7 +77,9 @@ def upgrade() -> None:
         sa.Column(
             "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
-        sa.UniqueConstraint("xero_connection_id", "financial_year", name="uq_tax_plan_connection_fy"),
+        sa.UniqueConstraint(
+            "xero_connection_id", "financial_year", name="uq_tax_plan_connection_fy"
+        ),
     )
     op.create_index("ix_tax_plans_tenant_status", "tax_plans", ["tenant_id", "status"])
     op.create_index("ix_tax_plans_xero_connection_id", "tax_plans", ["xero_connection_id"])

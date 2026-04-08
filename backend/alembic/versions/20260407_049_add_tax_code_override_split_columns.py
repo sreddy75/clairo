@@ -40,6 +40,8 @@ def upgrade() -> None:
             server_default="false",
         ),
     )
+
+
 def downgrade() -> None:
     op.drop_column("tax_code_overrides", "is_new_split")
     op.drop_column("tax_code_overrides", "line_account_code")

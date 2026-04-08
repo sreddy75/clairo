@@ -18,8 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.execute(
-        "ALTER TABLE tax_code_suggestions "
-        "ALTER COLUMN status TYPE VARCHAR(20) USING status::text"
+        "ALTER TABLE tax_code_suggestions ALTER COLUMN status TYPE VARCHAR(20) USING status::text"
     )
     op.execute(
         "ALTER TABLE tax_code_suggestions "
