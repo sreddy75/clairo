@@ -275,27 +275,12 @@ class BASService:
         except Exception as e:
             logger.debug(f"Could not batch-fetch approved_unsynced_count: {e}")
 
-        # Batch query: quality scores per (connection_id, quarter, fy_year)
-        quality_map: dict = {}
-        try:
-            quality_service = QualityService(self.session)
-            period_keys = [(s.period.connection_id, s.period.quarter, s.period.fy_year) for s in sessions]
-            unique_keys = list(set(period_keys))
-            for conn_id, quarter, fy_year in unique_keys:
-                quality = await quality_service.get_quality_summary(
-                    connection_id=conn_id, quarter=quarter, fy_year=fy_year,
-                )
-                if quality.has_score:
-                    quality_map[(conn_id, quarter, fy_year)] = quality.overall_score
-        except Exception as e:
-            logger.debug(f"Could not batch-fetch quality scores: {e}")
+        # Quality scores are skipped in the list endpoint for performance.
+        # They are fetched per-session when a specific session is selected.
 
         responses = []
         for session in sessions:
-            period = session.period
-            quality_score = quality_map.get(
-                (period.connection_id, period.quarter, period.fy_year)
-            )
+            quality_score = None
             approved_unsynced_count = unsynced_map.get(session.id, 0)
             responses.append(self._session_to_list_response(
                 session, quality_score, approved_unsynced_count
