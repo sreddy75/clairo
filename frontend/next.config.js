@@ -83,9 +83,11 @@ const nextConfig = {
     NEXT_PUBLIC_APP_VERSION: '0.1.0',
   },
 
-  // Redirect API requests to backend in development
+  // Proxy API requests to backend.
+  // BACKEND_INTERNAL_URL bypasses Cloudflare (direct Railway URL) for server-side rewrites.
+  // Falls back to NEXT_PUBLIC_API_URL, then localhost for development.
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const apiUrl = process.env.BACKEND_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     return [
       {
         source: '/api/:path*',

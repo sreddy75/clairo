@@ -48,12 +48,6 @@
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://api.clairo.ai/api/:path*"
-    }
-  ],
   "redirects": [
     {
       "source": "/docs",
