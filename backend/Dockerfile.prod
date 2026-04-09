@@ -47,7 +47,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
     # Gunicorn configuration
-    GUNICORN_WORKERS=2 \
+    GUNICORN_WORKERS=4 \
     GUNICORN_TIMEOUT=120 \
     # Port (Railway sets this dynamically)
     PORT=8000
@@ -81,10 +81,11 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health/ready || exit 1
 
-# Startup script: Run migrations then start server
-# Using shell form to allow variable expansion
-CMD sh -c "python -m alembic upgrade head && \
-    gunicorn app.main:app \
+# Migration entrypoint (run separately before deploy, e.g. as a release command)
+# Usage: docker run --rm <image> python -m alembic upgrade head
+
+# Start server (migrations should be run separately as a pre-deploy step)
+CMD ["sh", "-c", "gunicorn app.main:app \
     --bind 0.0.0.0:${PORT} \
     --workers ${GUNICORN_WORKERS} \
     --worker-class uvicorn.workers.UvicornWorker \
@@ -92,4 +93,4 @@ CMD sh -c "python -m alembic upgrade head && \
     --keep-alive 120 \
     --access-logfile - \
     --error-logfile - \
-    --capture-output"
+    --capture-output"]

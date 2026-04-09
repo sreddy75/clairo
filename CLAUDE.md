@@ -65,6 +65,12 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 (16 new RLS policies, no schema changes) (054-onboarding-hardening)
 - Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Celery + Redis, anthropic SDK, Xero OAuth2 API, React 18, shadcn/ui, TanStack Query, Zustand (049-xero-taxcode-sync)
 - PostgreSQL 16 — 4 new tables, 2 modified tables (original scope); +4 columns on `tax_code_overrides` (split scope) (049-xero-taxcode-sync)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, stripe SDK, React 18 + shadcn/ui, Clerk (auth) (043-stripe-billing)
+- PostgreSQL 16 (no schema changes — all models exist) (043-stripe-billing)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, gunicorn, Celery, Docker, GitHub Actions, Vercel CLI (045-infra-launch-polish)
+- PostgreSQL 16 (managed), Redis (managed), S3-compatible object storage (045-infra-launch-polish)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Anthropic SDK (Claude Sonnet) (046-tax-planning-intelligence)
+- PostgreSQL 16 — existing `financials_data` JSONB field on TaxPlan model (046-tax-planning-intelligence)
 
 ## Recent Changes
 - 049-xero-taxcode-sync: Xero write-back, multi-round client send-back, portal IDK validation, agent notes

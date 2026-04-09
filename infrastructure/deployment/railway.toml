@@ -22,6 +22,9 @@ watchPatterns = [
 # Number of replicas (1 for beta, scale up later)
 numReplicas = 1
 
+# Run migrations before starting the app (Railway release command)
+releaseCommand = "python -m alembic upgrade head"
+
 # Health check configuration
 healthcheckPath = "/health/ready"
 healthcheckTimeout = 30

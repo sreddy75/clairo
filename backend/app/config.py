@@ -30,9 +30,9 @@ class DatabaseSettings(BaseSettings):
         default="postgresql+asyncpg://clairo:clairo_dev@localhost:5432/clairo",
         description="Full database URL for async SQLAlchemy connection",
     )
-    pool_size: int = Field(default=3, ge=1, le=100, description="Connection pool size")
+    pool_size: int = Field(default=10, ge=1, le=100, description="Connection pool size")
     max_overflow: int = Field(
-        default=5, ge=0, le=100, description="Max connections above pool_size"
+        default=20, ge=0, le=100, description="Max connections above pool_size"
     )
     pool_timeout: int = Field(
         default=30, ge=1, le=300, description="Seconds to wait for connection"
