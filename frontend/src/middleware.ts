@@ -55,10 +55,11 @@ export default clerkMiddleware((auth, request) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals, static files, and Clerk proxy path
-    '/((?!_next/static|_next/image|favicon\\.ico|clerk-proxy|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Run for trpc routes only. /api/v1/* is proxied to backend (handles its own auth).
-    // /api/health is Docker healthcheck.
+    // Skip Next.js internals, static files, Clerk proxy path, and backend API proxy.
+    // /api/v1/* is proxied to the backend which handles its own JWT auth — running
+    // Clerk middleware here adds redundant session validation + Vercel edge latency.
+    '/((?!_next/static|_next/image|favicon\\.ico|clerk-proxy|api/v1/|api/health|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Run for trpc routes only.
     '/(trpc)(.*)',
   ],
 };
