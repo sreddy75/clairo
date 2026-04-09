@@ -74,14 +74,22 @@ async function request<T = unknown>(
 ): Promise<ApiResponse<T>> {
   const url = buildUrl(path);
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-  return response as ApiResponse<T>;
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        ...options.headers,
+      },
+    });
+
+    return response as ApiResponse<T>;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**
