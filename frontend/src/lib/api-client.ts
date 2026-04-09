@@ -75,18 +75,23 @@ async function request<T = unknown>(
   const url = buildUrl(path);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
 
   try {
     const response = await fetch(url, {
       ...options,
-      signal: controller.signal,
+      signal: options.signal ?? controller.signal,
       headers: {
         ...options.headers,
       },
     });
 
     return response as ApiResponse<T>;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new ApiError('Request timed out. Please try again.', 408);
+    }
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }
