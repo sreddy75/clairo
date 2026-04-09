@@ -664,17 +664,46 @@ class XeroConnectionService:
             raise XeroOAuthError(f"Token refresh failed: {e}") from e
 
         # Update with new tokens
+        encrypted_access = self.encryption.encrypt(token_response.access_token)
+        encrypted_refresh = self.encryption.encrypt(token_response.refresh_token)
+
         updated = await self.connection_repo.update(
             connection_id,
             XeroConnectionUpdate(
-                access_token=self.encryption.encrypt(token_response.access_token),
-                refresh_token=self.encryption.encrypt(token_response.refresh_token),
+                access_token=encrypted_access,
+                refresh_token=encrypted_refresh,
                 token_expires_at=token_expires_at,
             ),
         )
 
         if updated is None:
             raise XeroConnectionNotFoundError(f"Connection {connection_id} not found")
+
+        # Propagate refreshed token to sibling connections (same tenant) that share
+        # the same Xero OAuth grant. Bulk-imported connections share a single token,
+        # and Xero rotates refresh tokens — so siblings go stale after first refresh.
+        try:
+            siblings = await self.connection_repo.list_by_tenant(
+                connection.tenant_id, include_disconnected=False
+            )
+            for sibling in siblings:
+                if sibling.id != connection_id and sibling.status == XeroConnectionStatus.NEEDS_REAUTH:
+                    await self.connection_repo.update(
+                        sibling.id,
+                        XeroConnectionUpdate(
+                            access_token=encrypted_access,
+                            refresh_token=encrypted_refresh,
+                            token_expires_at=token_expires_at,
+                            status=XeroConnectionStatus.ACTIVE,
+                        ),
+                    )
+                    logger.info(
+                        "Restored sibling connection with refreshed token",
+                        connection_id=str(sibling.id),
+                        organization=sibling.organization_name,
+                    )
+        except Exception as e:
+            logger.warning("Failed to propagate token to siblings", error=str(e))
 
         return updated
 

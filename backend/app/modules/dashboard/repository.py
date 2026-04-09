@@ -280,10 +280,14 @@ class DashboardRepository:
             .outerjoin(txn_subq, XeroConnection.id == txn_subq.c.connection_id)
         )
 
-        # Build filter conditions
+        # Build filter conditions — include NEEDS_REAUTH so clients remain visible
+        # with a reauth prompt, rather than silently disappearing from the list
         filters = [
             XeroConnection.tenant_id == tenant_id,
-            XeroConnection.status == XeroConnectionStatus.ACTIVE,
+            XeroConnection.status.in_([
+                XeroConnectionStatus.ACTIVE,
+                XeroConnectionStatus.NEEDS_REAUTH,
+            ]),
         ]
 
         if search:
