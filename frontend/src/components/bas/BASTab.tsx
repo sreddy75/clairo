@@ -83,7 +83,6 @@ import {
   requestChanges,
   reopenBASSession,
   type TaxCodeSuggestionSummary,
-  generateTaxCodeSuggestions,
   getTaxCodeSuggestionSummary,
 } from '@/lib/bas';
 import { cn } from '@/lib/utils';
@@ -242,46 +241,41 @@ export function BASTab({
         setAdjustments(adjustmentsResult.value.adjustments);
       }
 
-      // Fetch tax code suggestion summary (Spec 046)
-      // Auto-generate suggestions on first load if none exist yet
-      if (session.has_calculation) {
-        try {
-          console.log('[Spec046] Fetching tax code summary for session', session.id);
-          let summaryData = await getTaxCodeSuggestionSummary(token, connectionId, session.id);
-          console.log('[Spec046] Summary:', summaryData);
-          if (!summaryData.has_suggestions && summaryData.excluded_count === 0) {
-            console.log('[Spec046] No suggestions yet, generating...');
-            const genResult = await generateTaxCodeSuggestions(token, connectionId, session.id);
-            console.log('[Spec046] Generation result:', genResult);
-            summaryData = await getTaxCodeSuggestionSummary(token, connectionId, session.id);
-            console.log('[Spec046] Updated summary:', summaryData);
-          }
-          setTaxCodeSummary(summaryData);
-        } catch (err) {
-          console.error('[Spec046] Tax code suggestion error:', err);
-          setTaxCodeSummary(null);
-        }
+      // Fetch tax code suggestions and writeback jobs in PARALLEL (no dependency between them)
+      const [suggestionsResult, writebackResult] = await Promise.allSettled([
+        // Tax code suggestion summary (Spec 046) — fetch only, no auto-generation on page load
+        session.has_calculation
+          ? getTaxCodeSuggestionSummary(token, connectionId, session.id)
+          : Promise.resolve(null),
+        // Latest writeback job (Spec 049)
+        listWritebackJobs(token, connectionId, session.id),
+      ]);
+
+      // Handle suggestions result
+      if (suggestionsResult.status === 'fulfilled' && suggestionsResult.value) {
+        setTaxCodeSummary(suggestionsResult.value);
       } else {
-        console.log('[Spec046] No calculation yet, skipping');
+        setTaxCodeSummary(null);
       }
 
-      // Fetch latest writeback job (Spec 049)
-      try {
-        const jobs = await listWritebackJobs(token, connectionId, session.id);
-        const latest = jobs[0];
-        if (latest && (latest.status === 'in_progress' || latest.status === 'pending')) {
-          setActiveWritebackJobId(latest.id);
-          setCompletedWritebackJob(null);
-        } else if (latest) {
-          // Restore last completed job so sync status badges survive a page refresh
-          const detail = await getWritebackJob(token, connectionId, session.id, latest.id);
-          setCompletedWritebackJob(detail);
-          setActiveWritebackJobId(null);
-        } else {
-          setActiveWritebackJobId(null);
+      // Handle writeback result
+      if (writebackResult.status === 'fulfilled') {
+        try {
+          const jobs = writebackResult.value;
+          const latest = jobs[0];
+          if (latest && (latest.status === 'in_progress' || latest.status === 'pending')) {
+            setActiveWritebackJobId(latest.id);
+            setCompletedWritebackJob(null);
+          } else if (latest) {
+            const detail = await getWritebackJob(token, connectionId, session.id, latest.id);
+            setCompletedWritebackJob(detail);
+            setActiveWritebackJobId(null);
+          } else {
+            setActiveWritebackJobId(null);
+          }
+        } catch {
+          // non-fatal — writeback history is optional
         }
-      } catch {
-        // non-fatal — writeback history is optional
       }
     } catch (err) {
       console.error('Failed to fetch session detail:', err);
