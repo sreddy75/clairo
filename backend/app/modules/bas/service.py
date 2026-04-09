@@ -236,9 +236,70 @@ class BASService:
             connection_id, lodgement_status, limit
         )
 
+        if not sessions:
+            return BASSessionListResponse(sessions=[], total=0)
+
+        # Batch-fetch quality scores and override counts to avoid N+1 queries
+        from sqlalchemy import and_, func, select
+
+        from app.modules.bas.models import (
+            TaxCodeOverride,
+            TaxCodeOverrideWritebackStatus,
+            TaxCodeSuggestion,
+        )
+
+        session_ids = [s.id for s in sessions]
+
+        # Batch query: approved unsynced override counts per session
+        unsynced_map: dict = {}
+        try:
+            count_result = await self.session.execute(
+                select(
+                    TaxCodeSuggestion.session_id,
+                    func.count().label("cnt"),
+                )
+                .select_from(TaxCodeOverride)
+                .join(TaxCodeSuggestion, TaxCodeOverride.suggestion_id == TaxCodeSuggestion.id)
+                .where(
+                    and_(
+                        TaxCodeSuggestion.session_id.in_(session_ids),
+                        TaxCodeOverride.is_active.is_(True),
+                        TaxCodeOverride.writeback_status
+                        == TaxCodeOverrideWritebackStatus.PENDING_SYNC.value,
+                    )
+                )
+                .group_by(TaxCodeSuggestion.session_id)
+            )
+            for row in count_result:
+                unsynced_map[row.session_id] = row.cnt
+        except Exception as e:
+            logger.debug(f"Could not batch-fetch approved_unsynced_count: {e}")
+
+        # Batch query: quality scores per (connection_id, quarter, fy_year)
+        quality_map: dict = {}
+        try:
+            quality_service = QualityService(self.session)
+            period_keys = [(s.period.connection_id, s.period.quarter, s.period.fy_year) for s in sessions]
+            unique_keys = list(set(period_keys))
+            for conn_id, quarter, fy_year in unique_keys:
+                quality = await quality_service.get_quality_summary(
+                    connection_id=conn_id, quarter=quarter, fy_year=fy_year,
+                )
+                if quality.has_score:
+                    quality_map[(conn_id, quarter, fy_year)] = quality.overall_score
+        except Exception as e:
+            logger.debug(f"Could not batch-fetch quality scores: {e}")
+
         responses = []
         for session in sessions:
-            responses.append(await self._session_to_response(session))
+            period = session.period
+            quality_score = quality_map.get(
+                (period.connection_id, period.quarter, period.fy_year)
+            )
+            approved_unsynced_count = unsynced_map.get(session.id, 0)
+            responses.append(self._session_to_list_response(
+                session, quality_score, approved_unsynced_count
+            ))
 
         return BASSessionListResponse(
             sessions=responses,
@@ -348,8 +409,57 @@ class BASService:
 
         return await self._session_to_response(session)
 
+    def _session_to_list_response(
+        self,
+        session: "BASSession",
+        quality_score: float | None,
+        approved_unsynced_count: int,
+    ) -> BASSessionResponse:
+        """Convert session model to response with pre-fetched data (no extra queries)."""
+        period = session.period
+        return BASSessionResponse(
+            id=session.id,
+            period_id=session.period_id,
+            status=session.status,
+            period_display_name=period.display_name,
+            quarter=period.quarter,
+            fy_year=period.fy_year,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            due_date=period.due_date,
+            created_by=session.created_by,
+            created_by_name=session.created_by_user.email if session.created_by_user else None,
+            approved_by=session.approved_by,
+            approved_at=session.approved_at,
+            gst_calculated_at=session.gst_calculated_at,
+            payg_calculated_at=session.payg_calculated_at,
+            internal_notes=session.internal_notes,
+            has_calculation=session.calculation is not None,
+            quality_score=quality_score,
+            auto_created=session.auto_created,
+            reviewed_by=session.reviewed_by,
+            reviewed_at=session.reviewed_at,
+            reviewed_by_name=session.reviewed_by_user.email if session.reviewed_by_user else None,
+            lodged_at=session.lodged_at,
+            lodged_by=session.lodged_by,
+            lodged_by_name=(
+                session.lodged_by_user.email
+                if hasattr(session, "lodged_by_user") and session.lodged_by_user
+                else None
+            ),
+            lodgement_method=session.lodgement_method,
+            lodgement_method_description=session.lodgement_method_description,
+            ato_reference_number=session.ato_reference_number,
+            lodgement_notes=session.lodgement_notes,
+            is_lodged=session.is_lodged,
+            can_record_lodgement=session.can_record_lodgement,
+            approved_unsynced_count=approved_unsynced_count,
+            created_at=session.created_at,
+            updated_at=session.updated_at,
+        )
+
     async def _session_to_response(self, session: "BASSession") -> BASSessionResponse:
-        """Convert session model to response."""
+        """Convert session model to response (single session — used by get_session)."""
         period = session.period
 
         # Get quality score if available
