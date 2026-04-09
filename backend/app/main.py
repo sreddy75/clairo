@@ -274,9 +274,11 @@ def register_routes(app: FastAPI) -> None:
             import redis.asyncio as aioredis
 
             redis_client = aioredis.from_url(settings.redis.url)  # type: ignore[no-untyped-call]
-            await redis_client.ping()
-            await redis_client.close()
-            checks["redis"] = "ok"
+            try:
+                await redis_client.ping()
+                checks["redis"] = "ok"
+            finally:
+                await redis_client.aclose()
         except Exception as e:
             checks["redis"] = f"error: {e}"
 
