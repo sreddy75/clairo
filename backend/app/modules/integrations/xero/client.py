@@ -1977,3 +1977,89 @@ class XeroClient:
         credit_notes = data.get("CreditNotes", [])
         rate_limit = self._extract_rate_limit_state(response.headers)
         return credit_notes[0] if credit_notes else {}, rate_limit
+
+    # =========================================================================
+    # History & Notes API (Spec 056)
+    # =========================================================================
+
+    # Map source_type → Xero entity path for History & Notes
+    _HISTORY_ENTITY_PATHS: dict[str, str] = {
+        "bank_transaction": "BankTransactions",
+        "invoice": "Invoices",
+        "credit_note": "CreditNotes",
+    }
+
+    async def add_history_note(
+        self,
+        access_token: str,
+        xero_tenant_id: str,
+        source_type: str,
+        entity_id: str,
+        note_text: str,
+    ) -> tuple[dict[str, Any], "RateLimitState"]:
+        """Add a note to a Xero entity via the History & Notes API.
+
+        Args:
+            access_token: Valid Xero access token.
+            xero_tenant_id: Xero tenant ID.
+            source_type: One of 'bank_transaction', 'invoice', 'credit_note'.
+            entity_id: Xero entity UUID.
+            note_text: Note text (truncated to 450 chars if necessary).
+
+        Returns:
+            Tuple of (response data, rate limit state).
+        """
+        entity_path = self._HISTORY_ENTITY_PATHS.get(source_type)
+        if not entity_path:
+            raise XeroClientError(f"Unsupported source type for History & Notes: {source_type}")
+
+        # Xero Details field max is 450 chars
+        if len(note_text) > 450:
+            note_text = note_text[:447] + "..."
+
+        headers: dict[str, str] = {
+            "Authorization": f"Bearer {access_token}",
+            "Xero-Tenant-Id": xero_tenant_id,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        response = await self.client.put(
+            f"https://api.xero.com/api.xro/2.0/{entity_path}/{entity_id}/History",
+            headers=headers,
+            json={"HistoryRecords": [{"Details": note_text}]},
+        )
+        self._check_response(response)
+        data = response.json()
+        rate_limit = self._extract_rate_limit_state(response.headers)
+        return data, rate_limit
+
+    # =========================================================================
+    # BAS Report API (Spec 056)
+    # =========================================================================
+
+    async def get_bas_report(
+        self,
+        access_token: str,
+        tenant_id: str,
+    ) -> tuple[dict[str, Any], "RateLimitState"]:
+        """Fetch the BAS report from Xero.
+
+        Returns the raw report JSON containing BAS label rows (1A, 1B, etc.)
+        with their amounts. Does NOT include lodgement status.
+
+        Returns:
+            Tuple of (report data, rate limit state).
+        """
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Xero-Tenant-Id": tenant_id,
+            "Accept": "application/json",
+        }
+        response = await self.client.get(
+            f"{self.settings.api_url}/Reports/BAS",
+            headers=headers,
+        )
+        self._check_response(response)
+        data = response.json()
+        rate_limit = self._extract_rate_limit_state(response.headers)
+        return data, rate_limit

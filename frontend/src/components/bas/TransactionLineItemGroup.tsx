@@ -21,7 +21,6 @@ interface TransactionLineItemGroupProps {
   sessionId: string;
   getToken: () => Promise<string | null>;
   onApprove: (id: string) => Promise<void>;
-  onReject: (id: string) => Promise<void>;
   onOverride: (id: string, taxType: string) => Promise<void>;
   onDismiss: (id: string) => Promise<void>;
   disabled?: boolean;
@@ -36,6 +35,8 @@ interface TransactionLineItemGroupProps {
   syncSkipReason?: string | null;
   /** Called after any split is added, edited, or deleted — lets parent reset recalculation state */
   onSplitsChanged?: () => void;
+  onNoteChanged?: () => void;
+  onUnpark?: (id: string) => Promise<void>;
 }
 
 /**
@@ -52,7 +53,6 @@ export function TransactionLineItemGroup({
   sessionId,
   getToken,
   onApprove,
-  onReject,
   onOverride,
   onDismiss,
   disabled = false,
@@ -63,6 +63,8 @@ export function TransactionLineItemGroup({
   completedWritebackJobId,
   syncSkipReason,
   onSplitsChanged,
+  onNoteChanged,
+  onUnpark,
 }: TransactionLineItemGroupProps) {
   const first = suggestions[0] ?? null;
   const isBankTransaction = first?.source_type === 'bank_transaction';
@@ -149,7 +151,7 @@ export function TransactionLineItemGroup({
       <TaxCodeSuggestionCard
         suggestion={first}
         onApprove={onApprove}
-        onReject={onReject}
+
         onOverride={onOverride}
         onDismiss={onDismiss}
         disabled={disabled}
@@ -158,6 +160,9 @@ export function TransactionLineItemGroup({
         xeroSyncBadge={xeroSyncBadgeFor?.(first)}
         getToken={getToken}
         connectionId={connectionId}
+        sessionId={sessionId}
+        onNoteChanged={onNoteChanged}
+        onUnpark={onUnpark}
       />
     );
   }
@@ -257,7 +262,7 @@ export function TransactionLineItemGroup({
               key={s.id}
               suggestion={displaySuggestion}
               onApprove={onApprove}
-              onReject={onReject}
+      
               onOverride={onOverride}
               onDismiss={onDismiss}
               disabled={disabled}
@@ -266,6 +271,9 @@ export function TransactionLineItemGroup({
               xeroSyncBadge={xeroSyncBadgeFor?.(s)}
               getToken={getToken}
               connectionId={connectionId}
+              sessionId={sessionId}
+              onNoteChanged={onNoteChanged}
+              onUnpark={onUnpark}
             />
           );
         })}

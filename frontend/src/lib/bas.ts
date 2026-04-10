@@ -1261,6 +1261,10 @@ export interface TaxCodeSuggestion {
   resolved_by: string | null;
   resolved_at: string | null;
   dismissal_reason: string | null;
+  note_text: string | null;
+  note_updated_by: string | null;
+  note_updated_by_name: string | null;
+  note_updated_at: string | null;
   account_code: string | null;
   account_name: string | null;
   description: string | null;
@@ -1268,6 +1272,93 @@ export interface TaxCodeSuggestion {
   tax_amount: number | null;
   contact_name: string | null;
   transaction_date: string | null;
+}
+
+/**
+ * Save or update a note on a suggestion.
+ */
+export async function saveNote(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  suggestionId: string,
+  noteText: string,
+  syncToXero: boolean = false,
+): Promise<SuggestionNoteResponse> {
+  const response = await apiClient.put(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/tax-code-suggestions/${suggestionId}/note`,
+    {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note_text: noteText, sync_to_xero: syncToXero }),
+    },
+  );
+  return apiClient.handleResponse<SuggestionNoteResponse>(response);
+}
+
+/**
+ * Delete a note from a suggestion.
+ */
+export async function deleteNote(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  suggestionId: string,
+): Promise<void> {
+  const response = await apiClient.delete(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/tax-code-suggestions/${suggestionId}/note`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  if (!response.ok && response.status !== 204) {
+    await apiClient.handleResponse(response);
+  }
+}
+
+export interface SuggestionNoteResponse {
+  suggestion_id: string;
+  note_text: string;
+  note_updated_by: string | null;
+  note_updated_by_name: string | null;
+  note_updated_at: string | null;
+}
+
+/**
+ * Xero BAS cross-check data.
+ */
+export interface XeroBASCrossCheckResponse {
+  xero_report_found: boolean | null;
+  xero_figures: {
+    label_1a_gst_on_sales: number;
+    label_1b_gst_on_purchases: number;
+    net_gst: number;
+  } | null;
+  clairo_figures: {
+    label_1a_gst_on_sales: number;
+    label_1b_gst_on_purchases: number;
+    net_gst: number;
+  } | null;
+  differences: Record<string, { xero: number; clairo: number; delta: number; material: boolean }> | null;
+  period_label: string;
+  fetched_at: string;
+  xero_error?: string;
+}
+
+/**
+ * Fetch Xero BAS cross-check for a session.
+ */
+export async function getXeroBASCrossCheck(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+): Promise<XeroBASCrossCheckResponse> {
+  const response = await apiClient.get(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/xero-crosscheck`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  return apiClient.handleResponse<XeroBASCrossCheckResponse>(response);
 }
 
 export interface TaxCodeSuggestionSummary {
@@ -1386,7 +1477,7 @@ export async function approveSuggestion(
 }
 
 /**
- * Reject a suggestion
+ * @deprecated Spec 056: Use dismissSuggestion instead. This endpoint maps to dismiss internally.
  */
 export async function rejectSuggestion(
   token: string,
@@ -1441,6 +1532,24 @@ export async function dismissSuggestion(
     {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason: reason || null }),
+    }
+  );
+  return apiClient.handleResponse<SuggestionResolution>(response);
+}
+
+/**
+ * Unpark a suggestion — return to Manual Required (pending).
+ */
+export async function unparkSuggestion(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+  suggestionId: string,
+): Promise<SuggestionResolution> {
+  const response = await apiClient.post(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/tax-code-suggestions/${suggestionId}/unpark`,
+    {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     }
   );
   return apiClient.handleResponse<SuggestionResolution>(response);

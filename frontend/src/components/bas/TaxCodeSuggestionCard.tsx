@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Ban, Check, ChevronDown, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Ban, Check, ChevronDown, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SuggestionNoteEditor } from '@/components/bas/SuggestionNoteEditor';
 import type { TaxCodeSuggestion } from '@/lib/bas';
 import { VALID_TAX_TYPES, fetchOrgTaxTypes } from '@/lib/bas';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -20,9 +21,9 @@ import { cn } from '@/lib/utils';
 interface TaxCodeSuggestionCardProps {
   suggestion: TaxCodeSuggestion;
   onApprove: (id: string) => Promise<void>;
-  onReject: (id: string) => Promise<void>;
   onOverride: (id: string, taxType: string) => Promise<void>;
   onDismiss: (id: string) => Promise<void>;
+  onUnpark?: (id: string) => Promise<void>;
   disabled?: boolean;
   /** Optional badge rendered after the status pill (used to show Xero sync state in Resolved rows). */
   xeroSyncBadge?: React.ReactNode;
@@ -32,6 +33,8 @@ interface TaxCodeSuggestionCardProps {
   /** Token + connectionId used to fetch org-specific valid tax types for the override dropdown. */
   getToken?: () => Promise<string | null>;
   connectionId?: string;
+  sessionId?: string;
+  onNoteChanged?: () => void;
 }
 
 /**
@@ -41,15 +44,17 @@ interface TaxCodeSuggestionCardProps {
 export function TaxCodeSuggestionCard({
   suggestion,
   onApprove,
-  onReject,
   onOverride,
   onDismiss,
+  onUnpark,
   disabled = false,
   xeroSyncBadge,
   showClientSaidCol = false,
   clientSaid,
   getToken,
   connectionId,
+  sessionId,
+  onNoteChanged,
 }: TaxCodeSuggestionCardProps) {
   const [showOverride, setShowOverride] = useState(false);
   const [overrideType, setOverrideType] = useState<string>('');
@@ -58,7 +63,8 @@ export function TaxCodeSuggestionCard({
   const [isLoadingTaxTypes, setIsLoadingTaxTypes] = useState(false);
 
   const isPending = suggestion.status === 'pending';
-  const isResolved = !isPending;
+  const isParked = suggestion.status === 'dismissed' || suggestion.status === 'rejected';
+  const isResolved = !isPending && !isParked;
   const canReOverride = suggestion.status === 'approved' || suggestion.status === 'overridden';
 
   async function handleAction(action: string, fn: () => Promise<void>) {
@@ -99,8 +105,7 @@ export function TaxCodeSuggestionCard({
           'hover:bg-muted/30 transition-colors',
           isResolved && 'opacity-60',
           suggestion.status === 'approved' && 'bg-emerald-50/50',
-          suggestion.status === 'rejected' && 'bg-red-50/30',
-          suggestion.status === 'dismissed' && 'bg-muted/30',
+          (suggestion.status === 'rejected' || suggestion.status === 'dismissed') && 'bg-amber-50/30',
         )}
       >
         {/* Date */}
@@ -156,12 +161,23 @@ export function TaxCodeSuggestionCard({
             <span className="text-xs text-emerald-600 flex items-center gap-1"><Check className="w-3 h-3" />{suggestion.applied_tax_type}</span>
           ) : suggestion.status === 'overridden' ? (
             <span className="text-xs text-primary flex items-center gap-1"><ArrowRight className="w-3 h-3" />{suggestion.applied_tax_type}</span>
-          ) : suggestion.status === 'rejected' ? (
-            <span className="text-xs text-red-600 flex items-center gap-1"><X className="w-3 h-3" />Rejected</span>
-          ) : suggestion.status === 'dismissed' ? (
-            <span className="text-xs text-muted-foreground flex items-center gap-1"><Ban className="w-3 h-3" />Excluded</span>
+          ) : (suggestion.status === 'rejected' || suggestion.status === 'dismissed') ? (
+            <span className="text-xs text-amber-600 flex items-center gap-1"><Ban className="w-3 h-3" />Parked</span>
           ) : (
             <span className="text-xs text-muted-foreground">—</span>
+          )}
+        </td>
+
+        {/* Note */}
+        <td className="px-1 py-1.5 w-8">
+          {getToken && connectionId && sessionId && onNoteChanged && (
+            <SuggestionNoteEditor
+              suggestion={suggestion}
+              getToken={getToken}
+              connectionId={connectionId}
+              sessionId={sessionId}
+              onNoteChanged={onNoteChanged}
+            />
           )}
         </td>
 
@@ -194,19 +210,36 @@ export function TaxCodeSuggestionCard({
                 variant="ghost"
                 className="text-[10px] h-6 px-1.5 text-muted-foreground"
                 disabled={disabled || isLoading !== null}
-                onClick={() => handleAction('reject', () => onReject(suggestion.id))}
-              >
-                {isLoading === 'reject' ? '...' : 'Reject'}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-[10px] h-6 px-1.5 text-muted-foreground"
-                disabled={disabled || isLoading !== null}
                 onClick={() => handleAction('dismiss', () => onDismiss(suggestion.id))}
               >
-                {isLoading === 'dismiss' ? '...' : 'Dismiss'}
+                {isLoading === 'dismiss' ? '...' : 'Park it'}
               </Button>
+            </div>
+          )}
+          {isParked && (
+            <div className="flex items-center justify-end gap-1">
+              {suggestion.suggested_tax_type && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-[10px] h-6 px-2 text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                  disabled={disabled || isLoading !== null}
+                  onClick={() => handleAction('approve', () => onApprove(suggestion.id))}
+                >
+                  {isLoading === 'approve' ? '...' : 'Approve'}
+                </Button>
+              )}
+              {onUnpark && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-[10px] h-6 px-1.5 text-muted-foreground"
+                  disabled={disabled || isLoading !== null}
+                  onClick={() => handleAction('unpark', () => onUnpark(suggestion.id))}
+                >
+                  {isLoading === 'unpark' ? '...' : 'Back to Manual'}
+                </Button>
+              )}
             </div>
           )}
           {isResolved && (

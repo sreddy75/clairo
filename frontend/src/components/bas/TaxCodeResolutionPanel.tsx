@@ -29,8 +29,8 @@ import {
   listTaxCodeSuggestions,
   overrideSuggestion,
   recalculateBASWithSuggestions,
-  rejectSuggestion,
   retryWritebackJob,
+  unparkSuggestion,
 } from '@/lib/bas';
 
 import { ClassificationRequestButton } from './ClassificationRequestButton';
@@ -228,13 +228,6 @@ export function TaxCodeResolutionPanel({
     onSessionUpdated?.();
   }
 
-  async function handleReject(id: string) {
-    const token = await getToken();
-    if (!token) return;
-    await rejectSuggestion(token, connectionId, sessionId, id);
-    await loadSuggestions();
-  }
-
   async function handleOverride(id: string, taxType: string) {
     const token = await getToken();
     if (!token) return;
@@ -248,6 +241,13 @@ export function TaxCodeResolutionPanel({
     const token = await getToken();
     if (!token) return;
     await dismissSuggestion(token, connectionId, sessionId, id);
+    await loadSuggestions();
+  }
+
+  async function handleUnpark(id: string) {
+    const token = await getToken();
+    if (!token) return;
+    await unparkSuggestion(token, connectionId, sessionId, id);
     await loadSuggestions();
   }
 
@@ -329,7 +329,8 @@ export function TaxCodeResolutionPanel({
   const manual = pending.filter(
     (s) => s.confidence_score === null || (s.confidence_score ?? 0) < 0.7
   );
-  const resolved = suggestions.filter((s) => s.status !== 'pending');
+  const parked = suggestions.filter((s) => s.status === 'dismissed' || s.status === 'rejected');
+  const resolved = suggestions.filter((s) => s.status === 'approved' || s.status === 'overridden');
 
   // Banner shows when any approved/overridden suggestion hasn't been included in a recalculation yet.
   const hasApprovedNotApplied = suggestions.some(
@@ -464,7 +465,7 @@ export function TaxCodeResolutionPanel({
                 High Confidence ({highConfidence.length})
               </AccordionTrigger>
               <AccordionContent>
-                <SuggestionTable suggestions={highConfidence} classifMap={classifMap} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} />
+                <SuggestionTable suggestions={highConfidence} classifMap={classifMap} onApprove={handleApprove} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} onNoteChanged={loadSuggestions} />
               </AccordionContent>
             </AccordionItem>
           )}
@@ -475,7 +476,7 @@ export function TaxCodeResolutionPanel({
                 Needs Review ({needsReview.length})
               </AccordionTrigger>
               <AccordionContent>
-                <SuggestionTable suggestions={needsReview} classifMap={classifMap} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} />
+                <SuggestionTable suggestions={needsReview} classifMap={classifMap} onApprove={handleApprove} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} onNoteChanged={loadSuggestions} />
               </AccordionContent>
             </AccordionItem>
           )}
@@ -486,7 +487,18 @@ export function TaxCodeResolutionPanel({
                 Manual Required ({manual.length})
               </AccordionTrigger>
               <AccordionContent>
-                <SuggestionTable suggestions={manual} classifMap={classifMap} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} />
+                <SuggestionTable suggestions={manual} classifMap={classifMap} onApprove={handleApprove} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} onNoteChanged={loadSuggestions} />
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {parked.length > 0 && (
+            <AccordionItem value="parked">
+              <AccordionTrigger className="text-sm font-medium py-2 text-amber-700">
+                Parked ({parked.length})
+              </AccordionTrigger>
+              <AccordionContent>
+                <SuggestionTable suggestions={parked} classifMap={classifMap} onApprove={handleApprove} onOverride={handleOverride} onDismiss={handleDismiss} onUnpark={handleUnpark} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} onNoteChanged={loadSuggestions} />
               </AccordionContent>
             </AccordionItem>
           )}
@@ -515,7 +527,7 @@ export function TaxCodeResolutionPanel({
                     </div>
                   )}
                   {resolved.length > 0 && (
-                    <SuggestionTable suggestions={resolved} classifMap={classifMap} xeroSyncBadgeFor={xeroSyncBadgeFor} onApprove={handleApprove} onReject={handleReject} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} />
+                    <SuggestionTable suggestions={resolved} classifMap={classifMap} xeroSyncBadgeFor={xeroSyncBadgeFor} onApprove={handleApprove} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} onNoteChanged={loadSuggestions} />
                   )}
                   {/* Compact retry row below table — only shown when previous sync had failures */}
                   {completedWritebackJob && !activeWritebackJobId && completedWritebackJob.failed_count > 0 && (
@@ -560,15 +572,16 @@ interface SuggestionTableProps {
   classifMap: Map<string, string | null>;
   xeroSyncBadgeFor?: (s: TaxCodeSuggestion) => React.ReactNode;
   onApprove: (id: string) => Promise<void>;
-  onReject: (id: string) => Promise<void>;
   onOverride: (id: string, taxType: string) => Promise<void>;
   onDismiss: (id: string) => Promise<void>;
+  onUnpark?: (id: string) => Promise<void>;
   getToken?: () => Promise<string | null>;
   connectionId?: string;
   sessionId?: string;
   completedWritebackJobId?: string | null;
   syncMap?: Map<string, { status: string; skip_reason: string | null; error_detail: string | null }>;
   onSplitsChanged?: () => void;
+  onNoteChanged?: () => void;
 }
 
 function SuggestionTable({
@@ -576,18 +589,19 @@ function SuggestionTable({
   classifMap,
   xeroSyncBadgeFor,
   onApprove,
-  onReject,
   onOverride,
   onDismiss,
+  onUnpark,
   getToken,
   connectionId,
   sessionId,
   completedWritebackJobId,
   syncMap,
   onSplitsChanged,
+  onNoteChanged,
 }: SuggestionTableProps) {
   const hasClientSaid = classifMap.size > 0;
-  const colCount = hasClientSaid ? 6 : 5;
+  const colCount = hasClientSaid ? 7 : 6;
 
   // Group suggestions by source_id to support multi-line-item bank transactions
   const grouped = new Map<string, TaxCodeSuggestion[]>();
@@ -631,7 +645,7 @@ function SuggestionTable({
                   sessionId={sessionId}
                   getToken={getToken}
                   onApprove={onApprove}
-                  onReject={onReject}
+
                   onOverride={onOverride}
                   onDismiss={onDismiss}
                   showClientSaidCol={hasClientSaid}
@@ -641,6 +655,8 @@ function SuggestionTable({
                   completedWritebackJobId={completedWritebackJobId}
                   syncSkipReason={syncEntry?.skip_reason ?? null}
                   onSplitsChanged={onSplitsChanged}
+                  onNoteChanged={onNoteChanged}
+                  onUnpark={onUnpark}
                 />
               );
             }
@@ -651,14 +667,16 @@ function SuggestionTable({
                 key={first.id}
                 suggestion={first}
                 onApprove={onApprove}
-                onReject={onReject}
                 onOverride={onOverride}
                 onDismiss={onDismiss}
+                onUnpark={onUnpark}
                 showClientSaidCol={hasClientSaid}
                 clientSaid={classifMap.get(first.id) ?? null}
                 xeroSyncBadge={xeroSyncBadgeFor?.(first)}
                 getToken={getToken}
                 connectionId={connectionId}
+                sessionId={sessionId}
+                onNoteChanged={onNoteChanged}
               />
             );
           })}

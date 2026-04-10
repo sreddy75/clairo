@@ -1033,9 +1033,24 @@ class TaxCodeSuggestion(Base, TimestampMixin):
     dismissal_reason: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
-        comment="Reason if dismissed",
+        comment="Reason if dismissed (soft-deprecated — use note_text for new records)",
     )
 
+    # Per-suggestion note (Spec 056)
+    note_text: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Free-text note (max 2000 chars, enforced in app layer)",
+    )
+    note_updated_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("practice_users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    note_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     # Denormalized transaction context (snapshot at detection time)
     account_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
     account_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -1050,6 +1065,11 @@ class TaxCodeSuggestion(Base, TimestampMixin):
     resolved_by_user: Mapped["PracticeUser | None"] = relationship(
         "PracticeUser",
         foreign_keys=[resolved_by],
+        lazy="joined",
+    )
+    note_updated_by_user: Mapped["PracticeUser | None"] = relationship(
+        "PracticeUser",
+        foreign_keys=[note_updated_by],
         lazy="joined",
     )
 

@@ -67,12 +67,15 @@ from app.modules.bas.schemas import (
     ResolveConflictResponse,
     SplitCreateRequest,
     SplitUpdateRequest,
+    SuggestionNoteRequest,
+    SuggestionNoteResponse,
     SuggestionResolutionResponse,
     TaxCodeOverrideWithSplitResponse,
     TaxCodeSuggestionListResponse,
     TaxCodeSuggestionSummaryResponse,
     TransactionSplitsResponse,
     VarianceAnalysisResponse,
+    XeroBASCrossCheckResponse,
     XeroLineItemView,
 )
 from app.modules.bas.service import BASService
@@ -1217,6 +1220,94 @@ async def dismiss_suggestion(
         suggestion_id, user.tenant_id, user.id, body.reason if body else None
     )
     return SuggestionResolutionResponse.model_validate(suggestion)
+
+
+@router.post(
+    "/{connection_id}/bas/sessions/{session_id}/tax-code-suggestions/{suggestion_id}/unpark",
+    response_model=SuggestionResolutionResponse,
+    summary="Unpark — return suggestion to Manual Required",
+)
+async def unpark_suggestion(
+    connection_id: UUID,
+    session_id: UUID,
+    suggestion_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> SuggestionResolutionResponse:
+    """Reset a parked (dismissed) suggestion back to pending for manual review."""
+    await verify_connection_access(connection_id, session, user)
+    service = TaxCodeService(session)
+    suggestion = await service.unpark_suggestion(suggestion_id, user.tenant_id, user.id)
+    return SuggestionResolutionResponse.model_validate(suggestion)
+
+
+@router.put(
+    "/{connection_id}/bas/sessions/{session_id}/tax-code-suggestions/{suggestion_id}/note",
+    response_model=SuggestionNoteResponse,
+    summary="Save or update a note on a suggestion",
+)
+async def save_suggestion_note(
+    connection_id: UUID,
+    session_id: UUID,
+    suggestion_id: UUID,
+    body: SuggestionNoteRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> SuggestionNoteResponse:
+    """Save or update a free-text note on a tax code suggestion."""
+    await verify_connection_access(connection_id, session, user)
+    service = TaxCodeService(session)
+    suggestion = await service.save_note(
+        suggestion_id, user.tenant_id, user.id, body.note_text, body.sync_to_xero,
+        connection_id=connection_id,
+    )
+    return SuggestionNoteResponse(
+        suggestion_id=suggestion.id,
+        note_text=suggestion.note_text or "",
+        note_updated_by=suggestion.note_updated_by,
+        note_updated_by_name=(
+            suggestion.note_updated_by_user.user.email
+            if suggestion.note_updated_by_user
+            else None
+        ),
+        note_updated_at=suggestion.note_updated_at,
+    )
+
+
+@router.delete(
+    "/{connection_id}/bas/sessions/{session_id}/tax-code-suggestions/{suggestion_id}/note",
+    status_code=204,
+    summary="Delete a note from a suggestion",
+)
+async def delete_suggestion_note(
+    connection_id: UUID,
+    session_id: UUID,
+    suggestion_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> None:
+    """Remove a note from a tax code suggestion."""
+    await verify_connection_access(connection_id, session, user)
+    service = TaxCodeService(session)
+    await service.delete_note(suggestion_id, user.tenant_id, user.id)
+
+
+@router.get(
+    "/{connection_id}/bas/sessions/{session_id}/xero-crosscheck",
+    response_model=XeroBASCrossCheckResponse,
+    summary="Xero BAS cross-check — compare figures",
+)
+async def xero_bas_crosscheck(
+    connection_id: UUID,
+    session_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> XeroBASCrossCheckResponse:
+    """Fetch BAS report from Xero and compare key figures with Clairo's calculation."""
+    await verify_connection_access(connection_id, session, user)
+    service = TaxCodeService(session)
+    result = await service.get_xero_bas_crosscheck(session_id, connection_id, user.tenant_id)
+    return XeroBASCrossCheckResponse(**result)
 
 
 @router.post(

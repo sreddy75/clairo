@@ -439,51 +439,8 @@ class TaxCodeService:
         user_id: UUID,
         reason: str | None = None,
     ) -> TaxCodeSuggestion:
-        """Reject a suggestion — transaction remains excluded."""
-        suggestion = await self._get_pending_suggestion(suggestion_id, tenant_id)
-        await self._get_editable_session(suggestion.session_id, tenant_id)
-
-        suggestion.status = "rejected"
-        suggestion.resolved_by = user_id
-        suggestion.resolved_at = datetime.now(UTC)
-
-        await self.repo.update_suggestion(suggestion)
-
-        await self.repo.create_audit_log(
-            tenant_id=tenant_id,
-            session_id=suggestion.session_id,
-            event_type="tax_code_suggestion_rejected",
-            event_description=f"Rejected tax code suggestion for {suggestion.original_tax_type}",
-            performed_by=user_id,
-            event_metadata={
-                "suggestion_id": str(suggestion.id),
-                "suggested_tax_type": suggestion.suggested_tax_type,
-                "reason": reason,
-            },
-        )
-
-        # Core audit trail for AI suggestion rejection
-        try:
-            from app.core.audit import AuditService
-
-            audit = AuditService(self.session)
-            await audit.log_event(
-                event_type="ai.suggestion.rejected",
-                event_category="data",
-                actor_type="user",
-                actor_id=user_id,
-                tenant_id=tenant_id,
-                resource_type="tax_code_suggestion",
-                resource_id=suggestion_id,
-                action="update",
-                outcome="success",
-                old_values={"ai_suggested": suggestion.suggested_tax_type},
-                new_values={"rejected": True, "reason": reason},
-            )
-        except Exception:
-            pass
-
-        return suggestion
+        """Deprecated: maps to dismiss_suggestion internally (Spec 056)."""
+        return await self.dismiss_suggestion(suggestion_id, tenant_id, user_id, reason)
 
     async def override_suggestion(
         self,
@@ -599,6 +556,11 @@ class TaxCodeService:
         suggestion.resolved_by = user_id
         suggestion.resolved_at = datetime.now(UTC)
         suggestion.dismissal_reason = reason
+        # Spec 056: also write reason to unified note_text field
+        if reason:
+            suggestion.note_text = reason
+            suggestion.note_updated_by = user_id
+            suggestion.note_updated_at = datetime.now(UTC)
 
         await self.repo.update_suggestion(suggestion)
 
@@ -616,6 +578,327 @@ class TaxCodeService:
         )
 
         return suggestion
+
+    async def unpark_suggestion(
+        self,
+        suggestion_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+    ) -> TaxCodeSuggestion:
+        """Unpark a dismissed suggestion — reset to pending (Manual Required)."""
+        suggestion = await self.repo.get_suggestion(suggestion_id, tenant_id)
+        if not suggestion:
+            raise SuggestionNotFoundError(str(suggestion_id))
+        if suggestion.status not in ("dismissed", "rejected"):
+            raise SuggestionNotFoundError(str(suggestion_id))
+
+        await self._get_editable_session(suggestion.session_id, tenant_id)
+
+        suggestion.status = "pending"
+        suggestion.resolved_by = None
+        suggestion.resolved_at = None
+        suggestion.dismissal_reason = None
+
+        await self.repo.update_suggestion(suggestion)
+
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=suggestion.session_id,
+            event_type="tax_code_suggestion_unparked",
+            event_description=f"Unparked suggestion (back to manual): {suggestion.original_tax_type}",
+            performed_by=user_id,
+            event_metadata={
+                "suggestion_id": str(suggestion.id),
+            },
+        )
+
+        return suggestion
+
+    async def save_note(
+        self,
+        suggestion_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+        note_text: str,
+        sync_to_xero: bool = False,
+        connection_id: UUID | None = None,
+    ) -> TaxCodeSuggestion:
+        """Save or update a note on a suggestion (any status)."""
+        suggestion = await self.repo.get_suggestion(suggestion_id, tenant_id)
+        if not suggestion:
+            raise SuggestionNotFoundError(str(suggestion_id))
+
+        old_text = suggestion.note_text
+        is_update = old_text is not None
+
+        suggestion.note_text = note_text
+        suggestion.note_updated_by = user_id
+        suggestion.note_updated_at = datetime.now(UTC)
+
+        await self.repo.update_suggestion(suggestion)
+
+        event_type = "suggestion.note_updated" if is_update else "suggestion.note_created"
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=suggestion.session_id,
+            event_type=event_type,
+            event_description=f"{'Updated' if is_update else 'Created'} note on suggestion",
+            performed_by=user_id,
+            event_metadata={
+                "suggestion_id": str(suggestion.id),
+                "note_text": note_text,
+                **({"old_text": old_text} if is_update else {}),
+                "sync_to_xero": sync_to_xero,
+            },
+        )
+
+        # Xero sync (Spec 056 - US3)
+        logger.info("save_note sync check: sync_to_xero=%s connection_id=%s", sync_to_xero, connection_id)
+        if sync_to_xero and connection_id:
+            await self._sync_note_to_xero(suggestion, tenant_id, user_id, connection_id)
+
+        return suggestion
+
+    async def _sync_note_to_xero(
+        self,
+        suggestion: TaxCodeSuggestion,
+        tenant_id: UUID,
+        user_id: UUID,
+        connection_id: UUID | None = None,
+    ) -> None:
+        """Push suggestion note to Xero History & Notes API (fire-and-forget)."""
+        logger.info("_sync_note_to_xero called: connection_id=%s", connection_id)
+        try:
+            from app.modules.integrations.xero.client import XeroClient
+            from app.modules.integrations.xero.repository import XeroConnectionRepository
+            from app.modules.integrations.xero.service import XeroConnectionService
+
+            xero_repo = XeroConnectionRepository(self.session)
+            connection = await xero_repo.get_by_id(connection_id, tenant_id) if connection_id else None
+            if not connection:
+                return
+
+            from app.config import get_settings
+
+            settings = get_settings()
+
+            # Ensure token is fresh (refreshes if expired)
+            xero_svc = XeroConnectionService(self.session, settings)
+            access_token = await xero_svc.ensure_valid_token(connection_id)
+
+            # Resolve local ID → Xero document ID
+            from app.modules.integrations.xero.writeback_service import XeroWritebackService
+            wb_service = XeroWritebackService(self.session)
+            xero_doc_id = await wb_service._resolve_xero_document_id(
+                suggestion.source_type, suggestion.source_id, tenant_id
+            )
+
+            note_for_xero = f"Clairo: {suggestion.note_text or ''}"
+            logger.info(
+                "Syncing note to Xero History & Notes: source_type=%s xero_id=%s note_length=%d preview=%s",
+                suggestion.source_type, xero_doc_id, len(note_for_xero), note_for_xero[:100],
+            )
+            async with XeroClient(settings.xero) as client:
+                result, _rl = await client.add_history_note(
+                    access_token=access_token,
+                    xero_tenant_id=connection.xero_tenant_id,
+                    source_type=suggestion.source_type,
+                    entity_id=xero_doc_id,
+                    note_text=note_for_xero,
+                )
+            logger.info("Xero History & Notes sync result: %s", result)
+
+            await self.repo.create_audit_log(
+                tenant_id=tenant_id,
+                session_id=suggestion.session_id,
+                event_type="suggestion.note_xero_synced",
+                event_description="Note synced to Xero History & Notes",
+                performed_by=user_id,
+                event_metadata={
+                    "suggestion_id": str(suggestion.id),
+                    "source_type": suggestion.source_type,
+                    "source_id": str(suggestion.source_id),
+                },
+            )
+        except Exception:
+            logger.exception("Xero note sync failed")
+
+    async def delete_note(
+        self,
+        suggestion_id: UUID,
+        tenant_id: UUID,
+        user_id: UUID,
+    ) -> TaxCodeSuggestion:
+        """Remove a note from a suggestion."""
+        suggestion = await self.repo.get_suggestion(suggestion_id, tenant_id)
+        if not suggestion:
+            raise SuggestionNotFoundError(str(suggestion_id))
+        if not suggestion.note_text:
+            raise SuggestionNotFoundError(str(suggestion_id))
+
+        old_text = suggestion.note_text
+        suggestion.note_text = None
+        suggestion.note_updated_by = None
+        suggestion.note_updated_at = None
+
+        await self.repo.update_suggestion(suggestion)
+
+        await self.repo.create_audit_log(
+            tenant_id=tenant_id,
+            session_id=suggestion.session_id,
+            event_type="suggestion.note_deleted",
+            event_description="Deleted note from suggestion",
+            performed_by=user_id,
+            event_metadata={
+                "suggestion_id": str(suggestion.id),
+                "old_text": old_text,
+            },
+        )
+
+        return suggestion
+
+    async def get_xero_bas_crosscheck(
+        self,
+        session_id: UUID,
+        connection_id: UUID,
+        tenant_id: UUID,
+    ) -> dict[str, Any]:
+        """Fetch BAS report from Xero and compare with Clairo's calculation."""
+        from decimal import Decimal as D
+
+        # Get the BAS session and its calculation
+        bas_session = await self.repo.get_session(session_id, tenant_id)
+        if not bas_session:
+            raise SuggestionNotFoundError(str(session_id))
+
+        period_label = bas_session.period.display_name if bas_session.period else "Unknown"
+
+        # Get Clairo figures from calculation
+        clairo_figures = None
+        if bas_session.calculation:
+            calc = bas_session.calculation
+            clairo_figures = {
+                "label_1a_gst_on_sales": calc.field_1a_gst_on_sales,
+                "label_1b_gst_on_purchases": calc.field_1b_gst_on_purchases,
+                "net_gst": calc.gst_payable,
+            }
+
+        now = datetime.now(UTC)
+
+        # Fetch from Xero
+        try:
+            from app.modules.integrations.xero.client import XeroClient
+            from app.modules.integrations.xero.repository import XeroConnectionRepository
+
+            xero_repo = XeroConnectionRepository(self.session)
+            connection = await xero_repo.get_by_id(connection_id, tenant_id)
+            if not connection or not connection.access_token:
+                return {
+                    "xero_report_found": None,
+                    "xero_figures": None,
+                    "clairo_figures": clairo_figures,
+                    "differences": None,
+                    "period_label": period_label,
+                    "fetched_at": now,
+                    "xero_error": "Xero connection not available",
+                }
+
+            from app.config import get_settings
+            from app.modules.integrations.xero.service import XeroConnectionService
+
+            settings = get_settings()
+            xero_svc = XeroConnectionService(self.session, settings)
+            access_token = await xero_svc.ensure_valid_token(connection_id)
+
+            async with XeroClient(settings.xero) as client:
+                data, _rate_limit = await client.get_bas_report(
+                    access_token=access_token,
+                    tenant_id=connection.xero_tenant_id,
+                )
+
+            # Parse BAS labels from report rows
+            xero_1a = D("0")
+            xero_1b = D("0")
+            reports = data.get("Reports", [])
+            if reports:
+                for row in reports[0].get("Rows", []):
+                    if row.get("RowType") != "Row":
+                        continue
+                    cells = row.get("Cells", [])
+                    if len(cells) >= 2:
+                        label = cells[0].get("Value", "")
+                        amount_str = cells[1].get("Value", "0")
+                        try:
+                            amount = D(amount_str.replace(",", ""))
+                        except (ValueError, ArithmeticError):
+                            continue
+                        if label == "1A":
+                            xero_1a = amount
+                        elif label == "1B":
+                            xero_1b = amount
+
+            xero_net = xero_1a - xero_1b
+            has_data = reports and any(
+                row.get("RowType") == "Row" for row in reports[0].get("Rows", [])
+            )
+
+            xero_figures = {
+                "label_1a_gst_on_sales": xero_1a,
+                "label_1b_gst_on_purchases": xero_1b,
+                "net_gst": xero_net,
+            }
+
+            # Compute differences
+            differences = None
+            if clairo_figures and has_data:
+                diffs = {}
+                for key in ("label_1a_gst_on_sales", "label_1b_gst_on_purchases", "net_gst"):
+                    x = xero_figures[key]
+                    c = clairo_figures[key]
+                    delta = x - c
+                    if abs(delta) > 1:
+                        diffs[key] = {
+                            "xero": x,
+                            "clairo": c,
+                            "delta": delta,
+                            "material": True,
+                        }
+                differences = diffs if diffs else None
+
+            return {
+                "xero_report_found": has_data,
+                "xero_figures": xero_figures if has_data else None,
+                "clairo_figures": clairo_figures,
+                "differences": differences,
+                "period_label": period_label,
+                "fetched_at": now,
+            }
+
+        except Exception as e:
+            from app.modules.integrations.xero.client import XeroClientError
+
+            error_msg = str(e)
+            if "404" in error_msg or (isinstance(e, XeroClientError) and "404" in str(e)):
+                # No BAS report exists in Xero for this org — not an error
+                return {
+                    "xero_report_found": False,
+                    "xero_figures": None,
+                    "clairo_figures": clairo_figures,
+                    "differences": None,
+                    "period_label": period_label,
+                    "fetched_at": now,
+                }
+
+            logger.warning("Xero BAS cross-check failed: %s", e)
+            return {
+                "xero_report_found": None,
+                "xero_figures": None,
+                "clairo_figures": clairo_figures,
+                "differences": None,
+                "period_label": period_label,
+                "fetched_at": now,
+                "xero_error": "Could not fetch BAS data from Xero",
+            }
 
     async def bulk_approve(
         self,
@@ -855,11 +1138,11 @@ class TaxCodeService:
     async def _get_pending_suggestion(
         self, suggestion_id: UUID, tenant_id: UUID
     ) -> TaxCodeSuggestion:
-        """Get a suggestion and verify it's still pending."""
+        """Get a suggestion and verify it's actionable (pending or parked)."""
         suggestion = await self.repo.get_suggestion(suggestion_id, tenant_id)
         if not suggestion:
             raise SuggestionNotFoundError(str(suggestion_id))
-        if suggestion.status != "pending":
+        if suggestion.status not in ("pending", "dismissed", "rejected"):
             raise SuggestionAlreadyResolvedError(str(suggestion_id), str(suggestion.status))
         return suggestion
 
