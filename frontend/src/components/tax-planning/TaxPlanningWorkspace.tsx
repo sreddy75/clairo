@@ -733,7 +733,7 @@ export function TaxPlanningWorkspace({
                     </div>
 
                     {/* Hero metrics */}
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                       <div>
                         <p className="text-3xl font-bold text-emerald-600">
                           ${(analysis.combined_strategy as Record<string, number>)?.total_tax_saving?.toLocaleString() ?? '0'}
@@ -1015,7 +1015,7 @@ function AnalysisDetailDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>AI Analysis Detail</DialogTitle>
         </DialogHeader>

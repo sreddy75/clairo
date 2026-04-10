@@ -245,7 +245,7 @@ export function TrackingStats({ summary, className }: TrackingStatsProps) {
   return (
     <div className={cn('space-y-4', className)}>
       {/* Status Counts */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {stats.map((stat) => (
           <div
             key={stat.label}

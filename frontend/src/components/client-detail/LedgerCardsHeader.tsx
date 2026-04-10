@@ -461,7 +461,7 @@ export function LedgerCardsHeader({
 
       {/* Row 2 - Navigation tabs (subtle gray tint) */}
       <div className="bg-muted/80 px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-1 overflow-visible">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
           {/* Primary text tabs */}
           {primaryTabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -469,7 +469,7 @@ export function LedgerCardsHeader({
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
+                className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 transition-colors flex-shrink-0 ${
                   isActive
                     ? 'border-foreground text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'

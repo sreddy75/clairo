@@ -135,7 +135,7 @@ export function SyncHistoryView({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden bg-card border border-border rounded-lg">
+      <div className="overflow-x-auto bg-card border border-border rounded-lg">
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-muted">
             <tr>

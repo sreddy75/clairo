@@ -50,6 +50,7 @@ import { DomainSelector } from '@/components/knowledge/domain-selector';
 import { EnhancedCitationPanel } from '@/components/knowledge/enhanced-citation-panel';
 import type { Citation as EnhancedCitation } from '@/components/knowledge/enhanced-citation-panel';
 import { SupersessionBanner } from '@/components/knowledge/supersession-banner';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { A2UIRenderer } from '@/lib/a2ui/renderer';
 import type { A2UIMessage } from '@/lib/a2ui/types';
 import { enrichAIContentForExport } from '@/lib/ai-export-utils';
@@ -606,9 +607,71 @@ export default function AssistantPage() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* History Sidebar (conditional) */}
+        {/* Mobile history drawer */}
+        <Sheet open={showHistory} onOpenChange={setShowHistory}>
+          <SheetContent side="left" className="w-72 p-0 flex flex-col">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Chat History</SheetTitle>
+            </SheetHeader>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h2 className="text-sm font-semibold text-foreground">Conversations</h2>
+              <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-muted rounded">
+                <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {loadingConversations ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="px-4 py-12 text-center">
+                  <MessageSquare className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No conversations yet</p>
+                </div>
+              ) : (
+                <div className="py-1">
+                  {conversations.map((conv) => (
+                    <button
+                      key={conv.id}
+                      onClick={() => loadConversation(conv.id)}
+                      className={`w-full group flex items-start gap-2.5 px-3 py-2.5 text-left transition-all hover:bg-muted ${
+                        conversationId === conv.id ? 'bg-primary/10 border-l-2 border-primary' : 'border-l-2 border-transparent'
+                      }`}
+                    >
+                      {conv.client_id ? (
+                        <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Building2 className="h-3 w-3 text-primary" />
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                          <BookOpen className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        {conv.client_name && (
+                          <span className="text-[10px] font-medium text-primary uppercase tracking-wide">{conv.client_name}</span>
+                        )}
+                        <p className="text-xs font-medium text-foreground truncate leading-tight">{conv.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{formatRelativeDate(conv.updated_at)}</p>
+                      </div>
+                      <button
+                        onClick={(e) => handleDeleteConversation(conv.id, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded"
+                      >
+                        <Trash2 className="h-3 w-3 text-muted-foreground hover:text-status-danger" />
+                      </button>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* History Sidebar — desktop only */}
         {showHistory && (
-          <aside className="w-72 border-r border-border bg-card flex flex-col flex-shrink-0">
+          <aside className="hidden lg:flex w-72 border-r border-border bg-card flex-col flex-shrink-0">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h2 className="text-sm font-semibold text-foreground">Conversations</h2>
               <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-muted rounded">

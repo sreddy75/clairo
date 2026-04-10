@@ -96,7 +96,7 @@ export function ManualEntryForm({ onSubmit, onCancel, initialValues }: ManualEnt
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Income
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <CurrencyField form={form} name="revenue" label="Revenue" />
                 <CurrencyField form={form} name="other_income" label="Other Income" />
               </div>
@@ -107,7 +107,7 @@ export function ManualEntryForm({ onSubmit, onCancel, initialValues }: ManualEnt
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Expenses
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <CurrencyField form={form} name="cost_of_sales" label="Cost of Sales" />
                 <CurrencyField form={form} name="operating_expenses" label="Operating Expenses" />
               </div>
@@ -118,7 +118,7 @@ export function ManualEntryForm({ onSubmit, onCancel, initialValues }: ManualEnt
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Tax Credits
               </p>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <CurrencyField form={form} name="payg_instalments" label="PAYG Instalments" />
                 <CurrencyField form={form} name="payg_withholding" label="PAYG Withholding" />
                 <CurrencyField form={form} name="franking_credits" label="Franking Credits" />

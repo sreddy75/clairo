@@ -151,7 +151,7 @@ export function ReportSelector({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
-          flex items-center justify-between w-[240px] px-3 py-2
+          flex items-center justify-between w-full sm:w-[240px] px-3 py-2
           bg-white border border-input rounded-md shadow-sm
           text-sm text-left
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'}
@@ -342,7 +342,7 @@ export function PeriodSelector({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
-          flex items-center justify-between w-[180px] px-3 py-2
+          flex items-center justify-between w-full sm:w-[180px] px-3 py-2
           bg-white border border-input rounded-md shadow-sm
           text-sm text-left
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'}

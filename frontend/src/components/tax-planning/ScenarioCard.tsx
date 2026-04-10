@@ -65,7 +65,7 @@ export function ScenarioCard({ scenario, onDelete }: ScenarioCardProps) {
 
         {/* Impact summary */}
         {scenario.impact_data && (
-          <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
             <ImpactCell
               label="Income Change"
               value={change?.taxable_income_change}

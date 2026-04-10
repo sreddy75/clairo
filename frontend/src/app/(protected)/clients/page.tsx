@@ -309,7 +309,7 @@ export default function ClientsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <CardFooter className="justify-between border-t px-6 py-3">
+          <CardFooter className="flex-wrap justify-between gap-2 border-t px-3 sm:px-6 py-3">
             <span className="text-xs text-muted-foreground">
               {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
             </span>

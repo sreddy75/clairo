@@ -274,7 +274,7 @@ export default function LodgementsPage() {
       </div>
 
       {/* Summary Stat Cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:grid-cols-5">
         {[
           { label: 'Overdue', value: summary?.overdue, color: 'text-status-danger', dot: 'bg-status-danger', filter: 'overdue' },
           { label: 'Due This Week', value: summary?.due_this_week, color: 'text-status-warning', dot: 'bg-status-warning', filter: 'due_this_week' },
@@ -329,10 +329,10 @@ export default function LodgementsPage() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {/* Quarter Filter */}
               <Select value={quarterFilter} onValueChange={(v) => { setQuarterFilter(v); setPage(1); }}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-full sm:w-[130px]">
                   <SelectValue placeholder="Quarter" />
                 </SelectTrigger>
                 <SelectContent>
@@ -346,7 +346,7 @@ export default function LodgementsPage() {
 
               {/* FY Filter */}
               <Select value={fyFilter || 'all'} onValueChange={(v) => { setFyFilter(v === 'all' ? '' : v); setPage(1); }}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-full sm:w-[130px]">
                   <SelectValue placeholder="FY" />
                 </SelectTrigger>
                 <SelectContent>
@@ -405,7 +405,7 @@ export default function LodgementsPage() {
                   <TableHead className="cursor-pointer select-none" onClick={() => handleSort('due_date')}>
                     <div className="flex items-center gap-1">Due Date <SortIcon column="due_date" /></div>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort('days_remaining')}>
+                  <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => handleSort('days_remaining')}>
                     <div className="flex items-center gap-1">Days Left <SortIcon column="days_remaining" /></div>
                   </TableHead>
                   <TableHead className="cursor-pointer select-none text-center" onClick={() => handleSort('status')}>
@@ -461,7 +461,7 @@ export default function LodgementsPage() {
                         <TableCell className="tabular-nums">
                           {formatDate(item.due_date)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <DaysRemainingBadge days={item.days_remaining} isLodged={item.is_lodged} />
                         </TableCell>
                         <TableCell className="text-center">
@@ -485,7 +485,7 @@ export default function LodgementsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <CardFooter className="justify-between border-t px-6 py-3">
+          <CardFooter className="flex-wrap justify-between gap-2 border-t px-3 sm:px-6 py-3">
             <div className="flex items-center gap-4">
               <span className="text-xs text-muted-foreground">
                 {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}

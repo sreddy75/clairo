@@ -422,7 +422,7 @@ export default function QueriesPage() {
             </Card>
             <div className="mt-6 space-y-4">
               <Skeleton className="h-32 w-full" />
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Skeleton className="h-24" />
                 <Skeleton className="h-24" />
                 <Skeleton className="h-24" />

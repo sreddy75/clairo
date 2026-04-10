@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   Library,
   ListChecks,
+  Menu,
   MessageSquareText,
   Mic,
   ScrollText,
@@ -33,6 +34,8 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { ProductTour } from '@/components/onboarding/ProductTour';
 import { ThemeToggle } from '@/components/theme';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useChecklist } from '@/hooks/useChecklist';
 import { useTour } from '@/hooks/useTour';
 import { apiClient } from '@/lib/api-client';
@@ -133,6 +136,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const [showHelpMenu, setShowHelpMenu] = useState(false);
   const [adminExpanded, setAdminExpanded] = useState(true);
   const [commandOpen, setCommandOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Badge counts
   const [notificationCount, setNotificationCount] = useState(0);
@@ -302,12 +306,178 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     bootstrap();
   }, [isLoaded, getToken, router, pathname]);
 
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  // ─── Sidebar Content (shared between desktop and mobile) ─────────────────
+  const renderSidebarNav = (onNavigate?: () => void) => (
+    <>
+      {/* Sidebar Header */}
+      <div className="flex items-center gap-2.5 h-14 px-3 border-b border-border flex-shrink-0">
+        <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0" onClick={onNavigate}>
+          <ClairoLogo size="sm" showText={false} variant="light" className="dark:hidden" />
+          <ClairoLogo size="sm" showText={false} variant="dark" className="hidden dark:flex" />
+        </Link>
+        <button
+          onClick={() => { setCommandOpen(true); onNavigate?.(); }}
+          className="flex items-center gap-2 flex-1 min-w-0 px-2.5 py-1.5 text-sm text-muted-foreground bg-muted/50 border border-border rounded-lg hover:bg-muted transition-colors"
+          aria-label="Search"
+        >
+          <Search className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="flex-1 text-left text-muted-foreground/70 text-xs truncate">Search...</span>
+          <kbd className="text-[10px] font-mono text-muted-foreground/50 bg-background border border-border px-1 py-0.5 rounded">
+            ⌘K
+          </kbd>
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1" data-tour="client-list">
+        {navigation.map((item) => {
+          const isActive = pathname.startsWith(item.href);
+          const isLocked = item.requiredFeature && !hasFeature(item.requiredFeature);
+          if (isLocked) return null;
+
+          return (
+            <div key={item.name} onClick={onNavigate}>
+              <NavLink
+                item={item}
+                isActive={isActive}
+                badgeCount={getBadgeCount(item.badgeKey)}
+              />
+            </div>
+          );
+        })}
+
+        {/* Admin Section */}
+        {isSuperAdmin && (
+          <div className="pt-3 mt-3">
+            <button
+              onClick={() => setAdminExpanded(!adminExpanded)}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+            >
+              <ChevronDown
+                className={cn(
+                  'w-3 h-3 transition-transform duration-200',
+                  !adminExpanded && '-rotate-90'
+                )}
+              />
+              Admin
+            </button>
+            {adminExpanded && (
+              <div className="mt-1 space-y-1">
+                {adminNavigation.map((item) => {
+                  const isActive = pathname.startsWith(item.href);
+                  return (
+                    <div key={item.name} onClick={onNavigate}>
+                      <NavLink item={item} isActive={isActive} />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </nav>
+
+      {/* Onboarding Checklist */}
+      {shouldShowChecklist && checklist && (
+        <div className="px-4 pb-2 border-t border-border pt-3">
+          <OnboardingChecklist
+            checklist={checklist}
+            onDismiss={dismissChecklist}
+          />
+        </div>
+      )}
+
+      {/* Bottom Section */}
+      <div className="border-t border-border p-3 space-y-0.5">
+        <div className="flex items-center gap-3 px-3 py-2 mb-1">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate">
+              {user?.fullName || 'My Practice'}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {user?.primaryEmailAddress?.emailAddress}
+            </p>
+          </div>
+        </div>
+        <div onClick={onNavigate}>
+          <Link
+            href="/settings"
+            data-tour="settings-menu"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+              pathname.startsWith('/settings')
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            )}
+          >
+            <Settings className="w-[18px] h-[18px] flex-shrink-0" />
+            <span>Settings</span>
+          </Link>
+        </div>
+
+        {/* Help Menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowHelpMenu(!showHelpMenu)}
+            className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
+          >
+            <HelpCircle className="w-[18px] h-[18px] flex-shrink-0" />
+            <span>Help &amp; Support</span>
+          </button>
+          {showHelpMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowHelpMenu(false)}
+              />
+              <div className="absolute left-full bottom-0 ml-2 w-52 bg-card border border-border rounded-xl shadow-lg z-50 py-1 lg:block hidden">
+                <button
+                  onClick={() => { setShowHelpMenu(false); startTour(); onNavigate?.(); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                >
+                  Restart Product Tour
+                </button>
+                <a href="mailto:support@clairo.ai" className="block px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                  Contact Support
+                </a>
+                <a href="/docs" className="block px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors">
+                  Documentation
+                </a>
+              </div>
+              {/* Mobile help menu — renders inline below button instead of flyout */}
+              <div className="lg:hidden w-full bg-muted/50 rounded-lg py-1 mt-1">
+                <button
+                  onClick={() => { setShowHelpMenu(false); startTour(); onNavigate?.(); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors rounded-lg"
+                >
+                  Restart Product Tour
+                </button>
+                <a href="mailto:support@clairo.ai" className="block px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors rounded-lg">
+                  Contact Support
+                </a>
+                <a href="/docs" className="block px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors rounded-lg">
+                  Documentation
+                </a>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
   // ─── Skeleton ────────────────────────────────────────────────────────────
 
   if (isCheckingRegistration || !isRegistered) {
     return (
       <div className="min-h-screen bg-background">
-        <aside className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col">
+        {/* Desktop skeleton sidebar */}
+        <aside className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border hidden lg:flex flex-col">
           <div className="flex items-center gap-2.5 h-14 px-3 border-b border-border">
             <div className="h-6 w-6 bg-muted rounded-lg animate-pulse flex-shrink-0" />
             <div className="flex-1 h-8 bg-muted rounded-lg animate-pulse" />
@@ -318,12 +488,18 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
             ))}
           </div>
         </aside>
-        <div className="pl-64">
-          <header className="h-14 bg-card border-b border-border" />
+        <div className="lg:pl-64">
+          <header className="h-14 bg-card border-b border-border flex items-center px-4">
+            {/* Mobile skeleton header */}
+            <div className="lg:hidden flex items-center gap-2">
+              <div className="h-8 w-8 bg-muted rounded animate-pulse" />
+              <div className="h-6 w-20 bg-muted rounded animate-pulse" />
+            </div>
+          </header>
           <main className="p-6">
             <div className="space-y-4">
               <div className="h-8 w-48 bg-muted rounded animate-pulse" />
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="h-28 bg-card rounded-xl border border-border animate-pulse" />
                 ))}
@@ -340,171 +516,51 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col z-30">
-        {/* Sidebar Header — exact h-14 to align with main content header */}
-        <div className="flex items-center gap-2.5 h-14 px-3 border-b border-border flex-shrink-0">
-          <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0">
-            <ClairoLogo size="sm" showText={false} variant="light" className="dark:hidden" />
-            <ClairoLogo size="sm" showText={false} variant="dark" className="hidden dark:flex" />
-          </Link>
-          <button
-            onClick={() => setCommandOpen(true)}
-            className="flex items-center gap-2 flex-1 min-w-0 px-2.5 py-1.5 text-sm text-muted-foreground bg-muted/50 border border-border rounded-lg hover:bg-muted transition-colors"
-            aria-label="Search"
-          >
-            <Search className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="flex-1 text-left text-muted-foreground/70 text-xs truncate">Search...</span>
-            <kbd className="text-[10px] font-mono text-muted-foreground/50 bg-background border border-border px-1 py-0.5 rounded">
-              ⌘K
-            </kbd>
-          </button>
-        </div>
-
-        {/* Navigation — scrollable middle section */}
-        <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1" data-tour="client-list">
-          {navigation.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            const isLocked = item.requiredFeature && !hasFeature(item.requiredFeature);
-            if (isLocked) return null;
-
-            return (
-              <NavLink
-                key={item.name}
-                item={item}
-                isActive={isActive}
-                badgeCount={getBadgeCount(item.badgeKey)}
-              />
-            );
-          })}
-
-          {/* Admin Section — collapsible */}
-          {isSuperAdmin && (
-            <div className="pt-3 mt-3">
-              <button
-                onClick={() => setAdminExpanded(!adminExpanded)}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 hover:text-muted-foreground transition-colors"
-              >
-                <ChevronDown
-                  className={cn(
-                    'w-3 h-3 transition-transform duration-200',
-                    !adminExpanded && '-rotate-90'
-                  )}
-                />
-                Admin
-              </button>
-              {adminExpanded && (
-                <div className="mt-1 space-y-1">
-                  {adminNavigation.map((item) => {
-                    const isActive = pathname.startsWith(item.href);
-                    return (
-                      <NavLink key={item.name} item={item} isActive={isActive} />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </nav>
-
-        {/* Onboarding Checklist */}
-        {shouldShowChecklist && checklist && (
-          <div className="px-4 pb-2 border-t border-border pt-3">
-            <OnboardingChecklist
-              checklist={checklist}
-              onDismiss={dismissChecklist}
-            />
-          </div>
-        )}
-
-        {/* Bottom Section */}
-        <div className="border-t border-border p-3 space-y-0.5">
-          {/* Practice Identity */}
-          <div className="flex items-center gap-3 px-3 py-2 mb-1">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">
-                {user?.fullName || 'My Practice'}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user?.primaryEmailAddress?.emailAddress}
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/settings"
-            data-tour="settings-menu"
-            className={cn(
-              'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors',
-              pathname.startsWith('/settings')
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-            )}
-          >
-            <Settings className="w-[18px] h-[18px] flex-shrink-0" />
-            <span>Settings</span>
-          </Link>
-
-          {/* Help Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowHelpMenu(!showHelpMenu)}
-              className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
-            >
-              <HelpCircle className="w-[18px] h-[18px] flex-shrink-0" />
-              <span>Help &amp; Support</span>
-            </button>
-            {showHelpMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowHelpMenu(false)}
-                />
-                <div className="absolute left-full bottom-0 ml-2 w-52 bg-card border border-border rounded-xl shadow-lg z-50 py-1">
-                  <button
-                    onClick={() => {
-                      setShowHelpMenu(false);
-                      startTour();
-                    }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                  >
-                    Restart Product Tour
-                  </button>
-                  <a
-                    href="mailto:support@clairo.ai"
-                    className="block px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                  >
-                    Contact Support
-                  </a>
-                  <a
-                    href="/docs"
-                    className="block px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                  >
-                    Documentation
-                  </a>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+      {/* ── Desktop Sidebar (hidden on mobile) ──────────────────────────── */}
+      <aside className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border hidden lg:flex flex-col z-30">
+        {renderSidebarNav()}
       </aside>
 
+      {/* ── Mobile Sidebar Drawer ───────────────────────────────────────── */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" className="w-72 p-0 flex flex-col">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation</SheetTitle>
+          </SheetHeader>
+          {renderSidebarNav(() => setSidebarOpen(false))}
+        </SheetContent>
+      </Sheet>
+
       {/* ── Main Content ────────────────────────────────────────────────── */}
-      <div className="pl-64">
-        {/* Slim top bar */}
+      <div className="lg:pl-64">
+        {/* Top bar */}
         <header
-          className="sticky top-0 z-20 h-14 bg-card/80 backdrop-blur-sm border-b border-border flex items-center justify-end gap-2 px-6"
+          className="sticky top-0 z-20 h-14 bg-card/80 backdrop-blur-sm border-b border-border flex items-center gap-2 px-4 lg:px-6 lg:justify-end"
           data-tour="dashboard-header"
         >
-          <ThemeToggle />
-          <NotificationBell />
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: 'w-8 h-8',
-              },
-            }}
-            afterSignOutUrl="/"
-          />
+          {/* Mobile: hamburger + logo */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
+              <Menu className="h-5 w-5" />
+            </Button>
+            <Link href="/dashboard">
+              <ClairoLogo size="sm" showText={false} variant="light" className="dark:hidden" />
+              <ClairoLogo size="sm" showText={false} variant="dark" className="hidden dark:flex" />
+            </Link>
+          </div>
+          {/* Right side actions */}
+          <div className="flex items-center gap-2 ml-auto">
+            <ThemeToggle />
+            <NotificationBell />
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: 'w-8 h-8',
+                },
+              }}
+              afterSignOutUrl="/"
+            />
+          </div>
         </header>
 
         {/* Subscription Status Banners */}

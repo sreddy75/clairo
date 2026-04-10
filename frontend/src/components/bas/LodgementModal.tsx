@@ -184,7 +184,7 @@ export function LodgementModal({
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Lodgement Method
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {LODGEMENT_METHODS.map((method) => {
                   const Icon = getMethodIcon(method);
                   const isSelected = selectedMethod === method;

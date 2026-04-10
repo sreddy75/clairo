@@ -99,7 +99,7 @@ export function ViewContentModal({
         onClick={onClose}
       />
 
-      <div className="relative bg-card rounded-2xl shadow-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden border border-border">
+      <div className="relative bg-card rounded-2xl shadow-lg w-full sm:max-w-4xl mx-4 max-h-[90vh] overflow-hidden border border-border">
         {/* Header */}
         <div className="px-6 py-4 bg-muted border-b border-border">
           <div className="flex items-center justify-between">
