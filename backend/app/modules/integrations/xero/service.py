@@ -3602,7 +3602,7 @@ class XpmClientService:
         unmatched = [
             conn
             for conn in all_connections
-            if conn.id not in linked_connection_ids and conn.status == XeroConnectionStatus.ACTIVE
+            if conn.id not in linked_connection_ids and conn.status != XeroConnectionStatus.DISCONNECTED
         ]
 
         return [XeroConnectionResponse.model_validate(conn) for conn in unmatched]

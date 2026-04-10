@@ -264,7 +264,10 @@ class XeroConnectionRepository:
         result = await self.session.execute(
             select(XeroConnection).where(
                 XeroConnection.xero_tenant_id == xero_tenant_id,
-                XeroConnection.status == XeroConnectionStatus.ACTIVE,
+                XeroConnection.status.in_([
+                    XeroConnectionStatus.ACTIVE,
+                    XeroConnectionStatus.NEEDS_REAUTH,
+                ]),
             )
         )
         return list(result.scalars().all())
@@ -394,7 +397,10 @@ class XeroConnectionRepository:
         result = await self.session.execute(
             select(XeroConnection).where(
                 XeroConnection.tenant_id == tenant_id,
-                XeroConnection.status == XeroConnectionStatus.ACTIVE,
+                XeroConnection.status.in_([
+                    XeroConnectionStatus.ACTIVE,
+                    XeroConnectionStatus.NEEDS_REAUTH,
+                ]),
             )
         )
         return len(result.scalars().all())
@@ -453,7 +459,10 @@ class XeroConnectionRepository:
         result = await self.session.execute(
             select(XeroConnection).where(
                 XeroConnection.tenant_id == tenant_id,
-                XeroConnection.status == XeroConnectionStatus.ACTIVE,
+                XeroConnection.status.in_([
+                    XeroConnectionStatus.ACTIVE,
+                    XeroConnectionStatus.NEEDS_REAUTH,
+                ]),
             )
         )
         return list(result.scalars().all())

@@ -154,7 +154,10 @@ class DashboardRepository:
             .where(
                 and_(
                     XeroConnection.tenant_id == tenant_id,
-                    XeroConnection.status == XeroConnectionStatus.ACTIVE,
+                    XeroConnection.status.in_([
+                        XeroConnectionStatus.ACTIVE,
+                        XeroConnectionStatus.NEEDS_REAUTH,
+                    ]),
                 )
             )
         )
