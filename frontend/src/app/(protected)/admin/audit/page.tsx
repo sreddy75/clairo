@@ -222,7 +222,7 @@ export default function AuditLogPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[160px]">Time</TableHead>
+                <TableHead className="w-auto">Time</TableHead>
                 <TableHead>Event</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Actor</TableHead>

@@ -555,7 +555,7 @@ export function BulkRequestWizard({
       ) : preview ? (
         <div className="space-y-4">
           {/* Preview Stats */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Total Clients</CardDescription>

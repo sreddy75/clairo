@@ -241,7 +241,7 @@ export function RevenueTrendsChart({ className = '' }: RevenueTrendsChartProps) 
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-muted rounded-lg p-3">
           <p className="text-xs text-muted-foreground">MRR Growth</p>
           <p

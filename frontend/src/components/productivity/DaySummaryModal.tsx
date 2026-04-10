@@ -170,7 +170,7 @@ export function DaySummaryModal({
       />
 
       {/* Modal */}
-      <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl">
+      <div className="relative flex max-h-[90vh] w-full sm:max-w-2xl flex-col rounded-2xl bg-white shadow-2xl">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-3">
@@ -248,7 +248,7 @@ export function DaySummaryModal({
             <div className="space-y-4">
               {/* Quick Stats Bar */}
               {summary.metrics && (
-                <div className="grid grid-cols-4 gap-3 rounded-xl bg-muted p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl bg-muted p-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-foreground">
                       {summary.metrics.clients_worked}

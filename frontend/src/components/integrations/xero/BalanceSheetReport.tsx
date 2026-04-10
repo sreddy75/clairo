@@ -95,7 +95,7 @@ function ReportSection({
         )}
       </button>
       {isOpen && (
-        <div className="border-t">
+        <div className="border-t overflow-x-auto">
           <table className="w-full text-sm">
             <tbody>
               {rows.map((row, idx) => (

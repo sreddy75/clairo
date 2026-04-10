@@ -231,7 +231,7 @@ export default function BulkImportProgressPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-4 gap-4 pt-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">
               Total

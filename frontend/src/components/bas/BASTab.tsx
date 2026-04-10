@@ -774,15 +774,15 @@ export function BASTab({
               <div className="space-y-4">
                 {/* Workflow Progress Bar */}
                 <div className="bg-card rounded-2xl border border-border p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between overflow-x-auto">
                     {WORKFLOW_STEPS.map((step, index) => {
                       const StepIcon = step.icon;
                       const isCompleted = index < currentWorkflowStep;
                       const isCurrent = index === currentWorkflowStep - 1;
 
                       return (
-                        <div key={step.id} className="flex items-center">
-                          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+                        <div key={step.id} className="flex items-center flex-shrink-0">
+                          <div className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg ${
                             isCompleted
                               ? 'bg-status-success/10 text-status-success'
                               : isCurrent
@@ -790,13 +790,13 @@ export function BASTab({
                                 : 'text-muted-foreground'
                           }`}>
                             <StepIcon className="w-4 h-4" />
-                            <span className="text-xs font-semibold uppercase tracking-wide">
+                            <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wide">
                               {step.label}
                             </span>
                             {isCompleted && <CheckCircle2 className="w-3.5 h-3.5" />}
                           </div>
                           {index < WORKFLOW_STEPS.length - 1 && (
-                            <ArrowRight className={`w-4 h-4 mx-2 ${
+                            <ArrowRight className={`w-4 h-4 mx-1 sm:mx-2 hidden sm:block ${
                               index < currentWorkflowStep - 1 ? 'text-status-success' : 'text-border'
                             }`} />
                           )}
@@ -812,7 +812,7 @@ export function BASTab({
                     ? 'bg-primary'
                     : 'bg-foreground'
                 }`}>
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-3 mb-1">
                         <h3 className="text-white/70 text-sm font-medium uppercase tracking-wider">
@@ -838,7 +838,7 @@ export function BASTab({
                           <p className="text-3xl font-bold text-white tracking-tight tabular-nums">
                             {formatBASCurrency(Math.abs(parseFloat(calculation.total_payable)))}
                           </p>
-                          <div className="flex items-center gap-6 mt-4">
+                          <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-4">
                             <div>
                               <p className="text-white/40 text-[10px] font-medium uppercase tracking-wider">1A GST Collected</p>
                               <p className="text-white text-lg font-semibold tabular-nums">
@@ -875,7 +875,7 @@ export function BASTab({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex flex-col sm:items-end gap-2">
                       <button
                         onClick={handleCalculate}
                         disabled={isCalculating}
@@ -890,8 +890,8 @@ export function BASTab({
                       </button>
 
                       {calculation && (
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:items-end gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               onClick={() => handleExport('pdf')}
                               disabled={isExporting !== null}
@@ -1171,7 +1171,7 @@ export function BASTab({
                 {calculation && (
                   <div className="bg-card rounded-2xl border border-border overflow-hidden">
                     {/* Tab Headers */}
-                    <div className="flex border-b border-border">
+                    <div className="flex border-b border-border overflow-x-auto">
                       {[
                         { id: 'gst' as DetailTab, label: 'GST Details', icon: Calculator },
                         { id: 'payg' as DetailTab, label: 'PAYG', icon: FileText, badge: parseFloat(calculation.w1_total_wages) > 0 },
@@ -1185,7 +1185,7 @@ export function BASTab({
                           <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-all ${
+                            className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-all flex-shrink-0 ${
                               isActive
                                 ? 'border-foreground text-foreground bg-muted/50'
                                 : 'border-transparent text-muted-foreground hover:text-foreground  hover:bg-muted/30 '
@@ -1218,11 +1218,11 @@ export function BASTab({
                           {/* GST Tab */}
                           {activeTab === 'gst' && (
                             <div className="space-y-4">
-                              <div className="grid grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {/* Sales Section */}
                                 <div className="col-span-3">
                                   <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Sales</h5>
-                                  <div className="grid grid-cols-3 gap-3">
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div className="bg-muted rounded-xl p-4">
                                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">G1 Total Sales</p>
                                       <p className="text-lg font-bold text-foreground tabular-nums">
@@ -1247,7 +1247,7 @@ export function BASTab({
                                 {/* Purchases Section */}
                                 <div className="col-span-3">
                                   <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Purchases</h5>
-                                  <div className="grid grid-cols-2 gap-3">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="bg-muted rounded-xl p-4">
                                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">G11 Non-Capital</p>
                                       <p className="text-lg font-bold text-foreground tabular-nums">
@@ -1266,7 +1266,7 @@ export function BASTab({
                                 {/* GST Summary */}
                                 <div className="col-span-3">
                                   <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">GST Summary</h5>
-                                  <div className="grid grid-cols-3 gap-3">
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div className="bg-status-success/10 rounded-xl p-4 border border-status-success/20">
                                       <p className="text-[10px] font-semibold text-status-success uppercase tracking-wider mb-1">1A GST Collected</p>
                                       <p className="text-lg font-bold text-status-success tabular-nums">
@@ -1305,7 +1305,7 @@ export function BASTab({
                           {activeTab === 'payg' && (
                             <div>
                               {parseFloat(calculation.w1_total_wages) > 0 ? (
-                                <div className="grid grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                   <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
                                     <p className="text-[10px] font-semibold text-accent-foreground uppercase tracking-wider mb-1">W1 Total Wages</p>
                                     <p className="text-lg font-bold text-accent-foreground tabular-nums">
@@ -1561,7 +1561,7 @@ export function BASTab({
 
                               {showAdjustmentForm && (
                                 <form onSubmit={handleAddAdjustment} className="bg-muted rounded-xl p-4 space-y-4">
-                                  <div className="grid grid-cols-2 gap-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                                         Field
@@ -1597,7 +1597,7 @@ export function BASTab({
                                       />
                                     </div>
                                   </div>
-                                  <div className="grid grid-cols-2 gap-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                       <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
                                         Reason
@@ -1743,7 +1743,7 @@ export function BASTab({
           />
 
           {/* Modal */}
-          <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden mx-4">
+          <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden mx-2 sm:mx-4">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <div>
@@ -1818,7 +1818,7 @@ export function BASTab({
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-4 ml-4">
+                          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-4 ml-2 sm:ml-4">
                             <div className="text-right">
                               <p className="text-xs text-muted-foreground">Date</p>
                               <p className="text-sm text-foreground">{formatDate(txn.date)}</p>

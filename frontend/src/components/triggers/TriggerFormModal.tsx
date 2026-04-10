@@ -314,7 +314,7 @@ export function TriggerFormModal({
             <h3 className="text-sm font-medium text-foreground mb-3">
               Start from a template
             </h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {TEMPLATES.map((template) => (
                 <button
                   key={template.id}
@@ -396,7 +396,7 @@ export function TriggerFormModal({
               <label className="block text-sm font-medium text-foreground mb-2">
                 Trigger Type
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   type="button"
                   onClick={() => setTriggerType('data_threshold')}
@@ -475,7 +475,7 @@ export function TriggerFormModal({
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-muted-foreground mb-1">
                       Condition

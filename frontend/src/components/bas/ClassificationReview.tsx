@@ -252,14 +252,14 @@ export function ClassificationReview({
       </Card>
 
       {/* Classification table — compact rows for fast review */}
-      <div className="border border-border rounded-lg overflow-hidden">
+      <div className="border border-border rounded-lg overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider">
-              <th className="px-3 py-2 text-left font-medium">Date</th>
+              <th className="hidden md:table-cell px-3 py-2 text-left font-medium">Date</th>
               <th className="px-3 py-2 text-right font-medium">Amount</th>
               <th className="px-3 py-2 text-left font-medium">Description</th>
-              <th className="px-3 py-2 text-left font-medium">Client Said</th>
+              <th className="hidden lg:table-cell px-3 py-2 text-left font-medium">Client Said</th>
               <th className="px-3 py-2 text-left font-medium">AI Suggests</th>
               <th className="px-3 py-2 text-right font-medium">Action</th>
             </tr>
@@ -282,7 +282,7 @@ export function ClassificationReview({
                     item.needs_attention && !item.accountant_action && "bg-amber-50/30"
                   )}
                 >
-                  <td className="px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap tabular-nums">
+                  <td className="hidden md:table-cell px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap tabular-nums">
                     {item.transaction_date || "—"}
                   </td>
                   <td className="px-3 py-1.5 text-right font-medium tabular-nums whitespace-nowrap">
@@ -291,7 +291,7 @@ export function ClassificationReview({
                   <td className="px-3 py-1.5 max-w-[200px]">
                     <span className="truncate block text-xs">{item.description || "—"}</span>
                   </td>
-                  <td className="px-3 py-1.5 max-w-[180px]">
+                  <td className="hidden lg:table-cell px-3 py-1.5 max-w-[180px]">
                     <div className="flex items-center gap-1">
                       {item.client_is_personal && <User className="h-3 w-3 text-amber-500 shrink-0" />}
                       {item.client_needs_help && <HelpCircle className="h-3 w-3 text-red-500 shrink-0" />}

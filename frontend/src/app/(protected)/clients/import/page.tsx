@@ -246,7 +246,7 @@ function ImportConfigContent() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-card rounded-xl border border-border p-4">
           <p className="text-sm text-muted-foreground">New Organizations</p>
           <p className="text-2xl font-bold text-primary">
