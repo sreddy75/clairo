@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Literal, Self
+from typing import Any, Literal, Self
 from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
@@ -546,6 +546,22 @@ class TaxCodeSuggestionResponse(BaseModel):
     resolved_by: UUID | None
     resolved_at: datetime | None
     dismissal_reason: str | None
+    note_text: str | None = None
+    note_updated_by: UUID | None = None
+    note_updated_by_name: str | None = None
+    note_updated_at: datetime | None = None
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def _populate_note_author_name(cls, data: Any, handler: Any) -> Any:
+        """Extract note_updated_by_name from the ORM relationship if available."""
+        instance = handler(data)
+        if instance.note_updated_by_name is None and hasattr(data, "note_updated_by_user"):
+            user = data.note_updated_by_user
+            if user is not None:
+                instance.note_updated_by_name = getattr(getattr(user, "user", None), "email", None) or str(user.id)
+        return instance
+
     account_code: str | None
     account_name: str | None
     description: str | None
@@ -619,6 +635,23 @@ class DismissSuggestionRequest(BaseModel):
     """Request to dismiss a suggestion (confirm exclusion is correct)."""
 
     reason: str | None = None
+
+
+class SuggestionNoteRequest(BaseModel):
+    """Request to save or update a note on a suggestion."""
+
+    note_text: str = Field(..., min_length=1, max_length=2000)
+    sync_to_xero: bool = False
+
+
+class SuggestionNoteResponse(BaseModel):
+    """Response after saving a note."""
+
+    suggestion_id: UUID
+    note_text: str
+    note_updated_by: UUID | None
+    note_updated_by_name: str | None
+    note_updated_at: datetime | None
 
 
 class BulkApproveRequest(BaseModel):
@@ -782,3 +815,37 @@ class TransactionSplitsResponse(BaseModel):
 
     original_line_items: list[XeroLineItemView]
     overrides: list[TaxCodeOverrideWithSplitResponse]
+
+
+# =============================================================================
+# Xero BAS Cross-Check (Spec 056)
+# =============================================================================
+
+
+class XeroBASFigures(BaseModel):
+    """Key BAS figures from Xero or Clairo."""
+
+    label_1a_gst_on_sales: Decimal
+    label_1b_gst_on_purchases: Decimal
+    net_gst: Decimal
+
+
+class XeroBASCrossCheckDifference(BaseModel):
+    """A single material difference between Xero and Clairo figures."""
+
+    xero: Decimal
+    clairo: Decimal
+    delta: Decimal
+    material: bool
+
+
+class XeroBASCrossCheckResponse(BaseModel):
+    """Response for the Xero BAS cross-check endpoint."""
+
+    xero_report_found: bool | None
+    xero_figures: XeroBASFigures | None = None
+    clairo_figures: XeroBASFigures | None = None
+    differences: dict[str, XeroBASCrossCheckDifference] | None = None
+    period_label: str
+    fetched_at: datetime
+    xero_error: str | None = None

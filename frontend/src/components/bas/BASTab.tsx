@@ -83,13 +83,16 @@ import {
   requestChanges,
   reopenBASSession,
   type TaxCodeSuggestionSummary,
+  type XeroBASCrossCheckResponse,
   getTaxCodeSuggestionSummary,
+  getXeroBASCrossCheck,
 } from '@/lib/bas';
 import { cn } from '@/lib/utils';
 
 import { LodgementBadge } from './LodgementBadge';
 import { LodgementModal } from './LodgementModal';
 import { TaxCodeResolutionPanel } from './TaxCodeResolutionPanel';
+import { XeroBASCrossCheck } from './XeroBASCrossCheck';
 
 // =============================================================================
 // Types
@@ -188,6 +191,9 @@ export function BASTab({
   const [taxCodeSummary, setTaxCodeSummary] = useState<TaxCodeSuggestionSummary | null>(null);
   const [showResolutionPanel, setShowResolutionPanel] = useState(false);
 
+  // Xero BAS cross-check state (Spec 056)
+  const [xeroCrossCheck, setXeroCrossCheck] = useState<XeroBASCrossCheckResponse | null>(null);
+
   // Xero write-back state (Spec 049)
   const [activeWritebackJobId, setActiveWritebackJobId] = useState<string | null>(null);
   const [completedWritebackJob, setCompletedWritebackJob] = useState<WritebackJobDetailResponse | null>(null);
@@ -241,14 +247,16 @@ export function BASTab({
         setAdjustments(adjustmentsResult.value.adjustments);
       }
 
-      // Fetch tax code suggestions and writeback jobs in PARALLEL (no dependency between them)
-      const [suggestionsResult, writebackResult] = await Promise.allSettled([
+      // Fetch tax code suggestions, writeback jobs, and Xero cross-check in PARALLEL
+      const [suggestionsResult, writebackResult, crossCheckResult] = await Promise.allSettled([
         // Tax code suggestion summary (Spec 046) — fetch only, no auto-generation on page load
         session.has_calculation
           ? getTaxCodeSuggestionSummary(token, connectionId, session.id)
           : Promise.resolve(null),
         // Latest writeback job (Spec 049)
         listWritebackJobs(token, connectionId, session.id),
+        // Xero BAS cross-check (Spec 056)
+        getXeroBASCrossCheck(token, connectionId, session.id),
       ]);
 
       // Handle suggestions result
@@ -256,6 +264,13 @@ export function BASTab({
         setTaxCodeSummary(suggestionsResult.value);
       } else {
         setTaxCodeSummary(null);
+      }
+
+      // Handle Xero cross-check result
+      if (crossCheckResult.status === 'fulfilled') {
+        setXeroCrossCheck(crossCheckResult.value);
+      } else {
+        setXeroCrossCheck(null);
       }
 
       // Handle writeback result
@@ -1215,6 +1230,9 @@ export function BASTab({
                         </div>
                       ) : (
                         <>
+                          {/* Xero BAS Cross-Check (Spec 056) */}
+                          {xeroCrossCheck && <XeroBASCrossCheck data={xeroCrossCheck} />}
+
                           {/* GST Tab */}
                           {activeTab === 'gst' && (
                             <div className="space-y-4">
