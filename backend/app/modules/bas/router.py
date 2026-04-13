@@ -1102,6 +1102,7 @@ async def list_suggestions(
     service = TaxCodeService(session)
 
     from app.modules.bas.repository import BASRepository
+    from app.modules.bas.schemas import PeriodBankTransactionResponse
 
     repo = BASRepository(session)
 
@@ -1110,9 +1111,27 @@ async def list_suggestions(
     )
     summary = await service.get_summary(session_id, user.tenant_id)
 
+    # Spec 057: Fetch ALL bank transactions for the period to populate
+    # reconciled/unreconciled sections regardless of tax code status.
+    period_bank_transactions: list[PeriodBankTransactionResponse] = []
+    bas_session = await repo.get_session(session_id, user.tenant_id)
+    if bas_session and bas_session.period:
+        period = bas_session.period
+        raw_txns = await repo.get_period_bank_transactions(
+            connection_id=period.connection_id,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            session_id=session_id,
+            tenant_id=user.tenant_id,
+        )
+        period_bank_transactions = [
+            PeriodBankTransactionResponse(**t) for t in raw_txns
+        ]
+
     return TaxCodeSuggestionListResponse(
         suggestions=suggestions,
         summary=TaxCodeSuggestionSummaryResponse(**summary),
+        period_bank_transactions=period_bank_transactions,
     )
 
 
@@ -1132,6 +1151,38 @@ async def generate_suggestions(
     service = TaxCodeService(session)
     result = await service.detect_and_generate(session_id, user.tenant_id)
     return GenerateSuggestionsResponse(**result)
+
+
+@router.post(
+    "/{connection_id}/bas/sessions/{session_id}/tax-code-suggestions/refresh-reconciliation",
+    summary="Refresh Xero reconciliation status for suggestions",
+)
+async def refresh_reconciliation_status(
+    connection_id: UUID,
+    session_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> dict:
+    """Re-fetch Xero reconciliation status and reclassify auto-parked suggestions.
+
+    Spec 057: Moves newly reconciled suggestions from Parked to the Reconciled section
+    and auto-parks newly unreconciled pending suggestions. Accountant decisions are preserved.
+    """
+    from app.core.exceptions import ExternalServiceError
+
+    await verify_connection_access(connection_id, session, user)
+    service = TaxCodeService(session)
+    try:
+        result = await service.refresh_reconciliation_status(
+            session_id, user.tenant_id, connection_id
+        )
+    except ExternalServiceError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Xero connection unavailable",
+            headers={"X-Error-Code": "xero_connection_unavailable"},
+        ) from exc
+    return {"data": result}
 
 
 @router.post(

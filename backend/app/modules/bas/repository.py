@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import Text, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -712,6 +712,32 @@ class BASRepository:
         high_conf_result = await self.session.execute(high_conf_q)
         high_conf_count = high_conf_result.scalar() or 0
 
+        # Spec 057: Reconciliation grouping counts
+        reconciled_q = select(func.count(TaxCodeSuggestion.id)).where(
+            TaxCodeSuggestion.session_id == session_id,
+            TaxCodeSuggestion.tenant_id == tenant_id,
+            TaxCodeSuggestion.is_reconciled.is_(True),
+        )
+        reconciled_result = await self.session.execute(reconciled_q)
+        reconciled_count = reconciled_result.scalar() or 0
+
+        reconciled_needs_review_q = select(func.count(TaxCodeSuggestion.id)).where(
+            TaxCodeSuggestion.session_id == session_id,
+            TaxCodeSuggestion.tenant_id == tenant_id,
+            TaxCodeSuggestion.is_reconciled.is_(True),
+            TaxCodeSuggestion.status == "pending",
+        )
+        reconciled_needs_review_result = await self.session.execute(reconciled_needs_review_q)
+        reconciled_needs_review_count = reconciled_needs_review_result.scalar() or 0
+
+        auto_parked_q = select(func.count(TaxCodeSuggestion.id)).where(
+            TaxCodeSuggestion.session_id == session_id,
+            TaxCodeSuggestion.tenant_id == tenant_id,
+            TaxCodeSuggestion.auto_park_reason == "unreconciled_in_xero",
+        )
+        auto_parked_result = await self.session.execute(auto_parked_q)
+        auto_parked_count = auto_parked_result.scalar() or 0
+
         return {
             "excluded_count": total_row.total,
             "excluded_amount": total_row.total_amount,
@@ -721,6 +747,9 @@ class BASRepository:
             "high_confidence_pending": high_conf_count,
             "can_bulk_approve": high_conf_count > 0,
             "blocks_approval": pending_count > 0,
+            "reconciled_count": reconciled_count,
+            "reconciled_needs_review_count": reconciled_needs_review_count,
+            "auto_parked_count": auto_parked_count,
         }
 
     async def count_unresolved(self, session_id: UUID, tenant_id: UUID) -> int:
@@ -733,6 +762,159 @@ class BASRepository:
             )
         )
         return result.scalar() or 0
+
+    async def get_bank_transaction_source_ids(
+        self, session_id: UUID, tenant_id: UUID
+    ) -> list[str]:
+        """Return distinct xero_transaction_id strings for bank_transaction suggestions.
+
+        Spec 057: Used to fetch reconciliation status from XeroBankTransaction.
+        Returns source_id values cast to string (matching xero_transaction_id format).
+        """
+        result = await self.session.execute(
+            select(func.cast(TaxCodeSuggestion.source_id, Text)).where(
+                TaxCodeSuggestion.session_id == session_id,
+                TaxCodeSuggestion.tenant_id == tenant_id,
+                TaxCodeSuggestion.source_type == "bank_transaction",
+            ).distinct()
+        )
+        return list(result.scalars().all())
+
+    async def apply_reconciliation_refresh(
+        self,
+        session_id: UUID,
+        tenant_id: UUID,
+        reconciled_map: dict[str, bool],
+    ) -> dict[str, int]:
+        """Update is_reconciled on suggestions and reclassify auto-parked items.
+
+        Spec 057: Called by refresh_reconciliation_status service method.
+        Only reclassifies suggestions that have not been acted on by the accountant:
+        - Auto-parked (auto_park_reason='unreconciled_in_xero') + now reconciled → pending
+        - Pending (no manual park) + now unreconciled → auto-parked
+
+        Returns counts of newly_reconciled and newly_unreconciled reclassifications.
+        """
+        newly_reconciled = 0
+        newly_unreconciled = 0
+
+        for xero_id, is_reconciled_now in reconciled_map.items():
+            try:
+                source_uuid = UUID(xero_id)
+            except ValueError:
+                continue
+
+            result = await self.session.execute(
+                select(TaxCodeSuggestion).where(
+                    TaxCodeSuggestion.session_id == session_id,
+                    TaxCodeSuggestion.tenant_id == tenant_id,
+                    TaxCodeSuggestion.source_type == "bank_transaction",
+                    TaxCodeSuggestion.source_id == source_uuid,
+                )
+            )
+            suggestions = list(result.scalars().all())
+
+            for s in suggestions:
+                # Never touch suggestions the accountant has already acted on
+                if s.status in ("approved", "overridden"):
+                    s.is_reconciled = is_reconciled_now
+                    continue
+
+                status_changed = False
+
+                if is_reconciled_now and s.auto_park_reason == "unreconciled_in_xero":
+                    # Was auto-parked due to being unreconciled — now reconciled → restore to pending
+                    s.status = "pending"
+                    s.auto_park_reason = None
+                    s.resolved_by = None
+                    s.resolved_at = None
+                    newly_reconciled += 1
+                    status_changed = True
+                elif (
+                    not is_reconciled_now
+                    and s.status == "pending"
+                    and s.auto_park_reason is None
+                ):
+                    # Was pending (not manually parked) — now unreconciled → auto-park
+                    s.status = "dismissed"
+                    s.auto_park_reason = "unreconciled_in_xero"
+                    newly_unreconciled += 1
+                    status_changed = True
+
+                s.is_reconciled = is_reconciled_now
+                _ = status_changed  # consumed above
+
+        await self.session.flush()
+        return {"newly_reconciled": newly_reconciled, "newly_unreconciled": newly_unreconciled}
+
+    async def get_period_bank_transactions(
+        self,
+        connection_id: UUID,
+        start_date: date,
+        end_date: date,
+        session_id: UUID,
+        tenant_id: UUID,
+    ) -> list[dict[str, Any]]:
+        """Fetch ALL authorised bank transactions for a BAS period.
+
+        Spec 057: Returns lightweight dicts for every bank transaction in the period,
+        with is_reconciled and a flag indicating whether the transaction has a suggestion.
+        This powers the full-period reconciled/unreconciled grouping in the UI.
+        """
+        from app.modules.integrations.xero.models import XeroBankTransaction
+
+        result = await self.session.execute(
+            select(XeroBankTransaction).where(
+                XeroBankTransaction.tenant_id == tenant_id,
+                XeroBankTransaction.connection_id == connection_id,
+                XeroBankTransaction.transaction_date >= start_date,
+                XeroBankTransaction.transaction_date <= end_date,
+                XeroBankTransaction.status == "AUTHORISED",
+            )
+        )
+        transactions = list(result.scalars().all())
+
+        # Build set of source_ids that have suggestions
+        suggestion_source_ids: set[str] = set()
+        if transactions:
+            sug_result = await self.session.execute(
+                select(TaxCodeSuggestion.source_id).where(
+                    TaxCodeSuggestion.session_id == session_id,
+                    TaxCodeSuggestion.tenant_id == tenant_id,
+                    TaxCodeSuggestion.source_type == "bank_transaction",
+                )
+            )
+            suggestion_source_ids = {str(row[0]) for row in sug_result.all()}
+
+        items = []
+        for txn in transactions:
+            # Extract description and tax types from line_items JSONB
+            description = None
+            tax_types: list[str] = []
+            if txn.line_items and isinstance(txn.line_items, list):
+                for li in txn.line_items:
+                    if not description and li.get("description"):
+                        description = li["description"]
+                    tt = li.get("tax_type") or li.get("TaxType")
+                    if tt and tt not in tax_types:
+                        tax_types.append(tt)
+
+            # Get contact name from client relationship if available
+            contact_name = None
+            if txn.client:
+                contact_name = getattr(txn.client, "name", None)
+
+            items.append({
+                "id": txn.id,
+                "transaction_date": txn.transaction_date.date() if txn.transaction_date else None,
+                "total_amount": txn.total_amount,
+                "description": description,
+                "contact_name": contact_name,
+                "is_reconciled": txn.is_reconciled,
+                "tax_types": tax_types,
+                "has_suggestion": str(txn.id) in suggestion_source_ids,
+            })
+        return items
 
     async def update_suggestion(self, suggestion: TaxCodeSuggestion) -> TaxCodeSuggestion:
         """Update a suggestion (flush only)."""

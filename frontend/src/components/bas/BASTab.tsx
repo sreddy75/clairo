@@ -1017,66 +1017,65 @@ export function BASTab({
                   </div>
                 )}
 
-                {/* Tax Code Exclusion Banner (Spec 046) */}
+                {/* Tax Code Exclusion Banner (Spec 046) — only when there are excluded items */}
                 {calculation && taxCodeSummary && taxCodeSummary.excluded_count > 0 && (
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => setShowResolutionPanel(!showResolutionPanel)}
-                      className="w-full bg-status-warning/10 border border-status-warning/20 rounded-xl p-4 text-left hover:bg-status-warning/15 transition-all"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-status-warning/20 rounded-xl flex items-center justify-center">
-                            <AlertCircle className="w-5 h-5 text-status-warning" />
-                          </div>
-                          <div>
-                            <h5 className="font-semibold text-status-warning text-sm">
-                              {taxCodeSummary.unresolved_count > 0
-                                ? `${taxCodeSummary.excluded_count} transactions (${formatBASCurrency(taxCodeSummary.excluded_amount)}) excluded from this BAS`
-                                : 'All excluded transactions resolved'}
-                            </h5>
-                            <p className="text-status-warning/70 text-xs">
-                              {taxCodeSummary.unresolved_count > 0
-                                ? `${taxCodeSummary.unresolved_count} need tax codes · ${taxCodeSummary.resolved_count} resolved`
-                                : `${taxCodeSummary.resolved_count} resolved — recalculate to update BAS`}
-                            </p>
-                          </div>
+                  <button
+                    onClick={() => setShowResolutionPanel(!showResolutionPanel)}
+                    className="w-full bg-status-warning/10 border border-status-warning/20 rounded-xl p-4 text-left hover:bg-status-warning/15 transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-status-warning/20 rounded-xl flex items-center justify-center">
+                          <AlertCircle className="w-5 h-5 text-status-warning" />
                         </div>
-                        <ChevronDown className={cn(
-                          'w-5 h-5 text-status-warning transition-transform',
-                          showResolutionPanel && 'rotate-180'
-                        )} />
+                        <div>
+                          <h5 className="font-semibold text-status-warning text-sm">
+                            {taxCodeSummary.unresolved_count > 0
+                              ? `${taxCodeSummary.excluded_count} transactions (${formatBASCurrency(taxCodeSummary.excluded_amount)}) excluded from this BAS`
+                              : 'All excluded transactions resolved'}
+                          </h5>
+                          <p className="text-status-warning/70 text-xs">
+                            {taxCodeSummary.unresolved_count > 0
+                              ? `${taxCodeSummary.unresolved_count} need tax codes · ${taxCodeSummary.resolved_count} resolved`
+                              : `${taxCodeSummary.resolved_count} resolved — recalculate to update BAS`}
+                          </p>
+                        </div>
                       </div>
-                    </button>
+                      <ChevronDown className={cn(
+                        'w-5 h-5 text-status-warning transition-transform',
+                        showResolutionPanel && 'rotate-180'
+                      )} />
+                    </div>
+                  </button>
+                )}
 
-                    {showResolutionPanel && (
-                      <div className="border border-border rounded-xl p-4">
-                        <TaxCodeResolutionPanel
-                          connectionId={connectionId}
-                          sessionId={selectedSession.id}
-                          getToken={getToken}
-                          onSummaryChange={(summary) => setTaxCodeSummary(summary)}
-                          onRecalculated={() => {
-                            if (selectedSession) {
-                              fetchSessionDetail(selectedSession);
-                            }
-                          }}
-                          onSessionUpdated={fetchSessions}
-                          completedWritebackJob={completedWritebackJob}
-                          activeWritebackJobId={activeWritebackJobId}
-                          approvedUnsyncedCount={selectedSession.approved_unsynced_count ?? 0}
-                          onJobCreated={(job) => {
-                            setActiveWritebackJobId(job.id);
-                            setCompletedWritebackJob(null);
-                          }}
-                          onJobComplete={(job) => {
-                            setActiveWritebackJobId(null);
-                            setCompletedWritebackJob(job);
-                            fetchSessions();
-                          }}
-                        />
-                      </div>
-                    )}
+                {/* Transaction Resolution Panel — always shown when session has calculations (Spec 057) */}
+                {calculation && selectedSession && (
+                  <div className="border border-border rounded-xl p-4">
+                    <TaxCodeResolutionPanel
+                      connectionId={connectionId}
+                      sessionId={selectedSession.id}
+                      getToken={getToken}
+                      onSummaryChange={(summary) => setTaxCodeSummary(summary)}
+                      onRecalculated={() => {
+                        if (selectedSession) {
+                          fetchSessionDetail(selectedSession);
+                        }
+                      }}
+                      onSessionUpdated={fetchSessions}
+                      completedWritebackJob={completedWritebackJob}
+                      activeWritebackJobId={activeWritebackJobId}
+                      approvedUnsyncedCount={selectedSession.approved_unsynced_count ?? 0}
+                      onJobCreated={(job) => {
+                        setActiveWritebackJobId(job.id);
+                        setCompletedWritebackJob(null);
+                      }}
+                      onJobComplete={(job) => {
+                        setActiveWritebackJobId(null);
+                        setCompletedWritebackJob(job);
+                        fetchSessions();
+                      }}
+                    />
                   </div>
                 )}
 

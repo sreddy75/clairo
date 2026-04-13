@@ -3,6 +3,7 @@
 import { ArrowRight, Ban, Check, ChevronDown, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
+import { SuggestionNoteEditor } from '@/components/bas/SuggestionNoteEditor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { SuggestionNoteEditor } from '@/components/bas/SuggestionNoteEditor';
 import type { TaxCodeSuggestion } from '@/lib/bas';
 import { VALID_TAX_TYPES, fetchOrgTaxTypes } from '@/lib/bas';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -158,11 +158,30 @@ export function TaxCodeSuggestionCard({
               )}
             </div>
           ) : suggestion.status === 'approved' ? (
-            <span className="text-xs text-emerald-600 flex items-center gap-1"><Check className="w-3 h-3" />{suggestion.applied_tax_type}</span>
+            <span className="text-xs text-emerald-600 flex items-center gap-1 flex-wrap">
+              <span className="flex items-center gap-1"><Check className="w-3 h-3" />{suggestion.applied_tax_type}</span>
+              {suggestion.source_type === 'bank_transaction' && suggestion.is_reconciled === false && (
+                <span className="px-1 py-0.5 text-[10px] font-medium rounded border border-amber-300 text-amber-600 leading-none">
+                  Unreconciled in Xero
+                </span>
+              )}
+              {suggestion.source_type === 'bank_transaction' && suggestion.is_reconciled === true && (
+                <span className="px-1 py-0.5 text-[10px] font-medium rounded border border-emerald-300 text-emerald-600 leading-none">
+                  Reconciled in Xero
+                </span>
+              )}
+            </span>
           ) : suggestion.status === 'overridden' ? (
-            <span className="text-xs text-primary flex items-center gap-1"><ArrowRight className="w-3 h-3" />{suggestion.applied_tax_type}</span>
+            <span className="text-xs text-primary flex items-center gap-1">{suggestion.applied_tax_type && <ArrowRight className="w-3 h-3" />}{suggestion.applied_tax_type}</span>
           ) : (suggestion.status === 'rejected' || suggestion.status === 'dismissed') ? (
-            <span className="text-xs text-amber-600 flex items-center gap-1"><Ban className="w-3 h-3" />Parked</span>
+            <span className="text-xs text-amber-600 flex items-center gap-1">
+              <Ban className="w-3 h-3" />Parked
+              {(suggestion.auto_park_reason === 'unreconciled_in_xero' || suggestion.is_reconciled === false) && (
+                <span className="ml-1 px-1 py-0.5 text-[10px] font-medium rounded border border-amber-300 text-amber-600 leading-none">
+                  Unreconciled in Xero
+                </span>
+              )}
+            </span>
           ) : (
             <span className="text-xs text-muted-foreground">—</span>
           )}

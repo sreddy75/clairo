@@ -1272,6 +1272,8 @@ export interface TaxCodeSuggestion {
   tax_amount: number | null;
   contact_name: string | null;
   transaction_date: string | null;
+  is_reconciled: boolean | null;
+  auto_park_reason: string | null;
 }
 
 /**
@@ -1345,6 +1347,23 @@ export interface XeroBASCrossCheckResponse {
 }
 
 /**
+ * Spec 057: Refresh Xero reconciliation status for all bank-transaction suggestions.
+ * Re-fetches is_reconciled from local DB and reclassifies auto-parked suggestions.
+ */
+export async function refreshReconciliationStatus(
+  token: string,
+  connectionId: string,
+  sessionId: string,
+): Promise<{ reclassified_count: number; newly_reconciled: number; newly_unreconciled: number }> {
+  const response = await apiClient.post(
+    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/tax-code-suggestions/refresh-reconciliation`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  const body = await apiClient.handleResponse<{ data: { reclassified_count: number; newly_reconciled: number; newly_unreconciled: number } }>(response);
+  return body.data;
+}
+
+/**
  * Fetch Xero BAS cross-check for a session.
  */
 export async function getXeroBASCrossCheck(
@@ -1370,11 +1389,29 @@ export interface TaxCodeSuggestionSummary {
   high_confidence_pending: number;
   can_bulk_approve: boolean;
   blocks_approval: boolean;
+  // Spec 057: Reconciliation grouping counts
+  reconciled_count: number;
+  reconciled_needs_review_count: number;
+  auto_parked_count: number;
+}
+
+/** Lightweight bank transaction for period-level reconciliation view (Spec 057). */
+export interface PeriodBankTransaction {
+  id: string;
+  transaction_date: string | null;
+  total_amount: number;
+  description: string | null;
+  contact_name: string | null;
+  is_reconciled: boolean;
+  tax_types: string[];
+  has_suggestion: boolean;
 }
 
 export interface TaxCodeSuggestionListResponse {
   suggestions: TaxCodeSuggestion[];
   summary: TaxCodeSuggestionSummary;
+  /** ALL bank transactions for the period, regardless of tax code status (Spec 057). */
+  period_bank_transactions: PeriodBankTransaction[];
 }
 
 export interface GenerateSuggestionsResult {

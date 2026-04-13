@@ -1036,6 +1036,20 @@ class TaxCodeSuggestion(Base, TimestampMixin):
         comment="Reason if dismissed (soft-deprecated — use note_text for new records)",
     )
 
+    # Xero reconciliation grouping (Spec 057)
+    is_reconciled: Mapped[bool | None] = mapped_column(
+        Boolean,
+        nullable=True,
+        default=None,
+        comment="Mirrors XeroBankTransaction.is_reconciled. NULL for invoices/credit notes.",
+    )
+    auto_park_reason: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+        default=None,
+        comment="'unreconciled_in_xero' when system auto-parked; NULL for manual park or non-auto-parked.",
+    )
+
     # Per-suggestion note (Spec 056)
     note_text: Mapped[str | None] = mapped_column(
         Text,

@@ -550,6 +550,8 @@ class TaxCodeSuggestionResponse(BaseModel):
     note_updated_by: UUID | None = None
     note_updated_by_name: str | None = None
     note_updated_at: datetime | None = None
+    is_reconciled: bool | None = None
+    auto_park_reason: str | None = None
 
     @model_validator(mode="wrap")
     @classmethod
@@ -584,6 +586,27 @@ class TaxCodeSuggestionSummaryResponse(BaseModel):
     high_confidence_pending: int
     can_bulk_approve: bool
     blocks_approval: bool
+    # Spec 057: Reconciliation grouping counts
+    reconciled_count: int = 0
+    reconciled_needs_review_count: int = 0
+    auto_parked_count: int = 0
+
+
+class PeriodBankTransactionResponse(BaseModel):
+    """Lightweight bank transaction for period-level reconciliation view.
+
+    Spec 057: Shows ALL bank transactions in the period regardless of tax code status,
+    so the reconciled/unreconciled grouping reflects the full picture.
+    """
+
+    id: UUID
+    transaction_date: date | None
+    total_amount: Decimal
+    description: str | None
+    contact_name: str | None
+    is_reconciled: bool
+    tax_types: list[str]
+    has_suggestion: bool
 
 
 class TaxCodeSuggestionListResponse(BaseModel):
@@ -591,6 +614,8 @@ class TaxCodeSuggestionListResponse(BaseModel):
 
     suggestions: list[TaxCodeSuggestionResponse]
     summary: TaxCodeSuggestionSummaryResponse
+    # Spec 057: ALL bank transactions for the period, regardless of tax code status
+    period_bank_transactions: list[PeriodBankTransactionResponse] = []
 
 
 class GenerateSuggestionsResponse(BaseModel):
