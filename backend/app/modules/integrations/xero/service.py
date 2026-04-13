@@ -4368,6 +4368,45 @@ class XeroReportService:
             return None
         return max_date.date() if hasattr(max_date, "date") else max_date
 
+    async def get_reconciliation_status_map(
+        self,
+        connection_id: UUID,
+        bank_transaction_ids: list[str],
+    ) -> dict[str, bool]:
+        """Return a mapping of XeroBankTransaction.id (str) → is_reconciled for the given IDs.
+
+        Spec 057: Used by TaxCodeService to populate is_reconciled on suggestions
+        and to perform reconciliation refresh.
+
+        Args:
+            connection_id: The Xero connection ID.
+            bank_transaction_ids: List of XeroBankTransaction.id (PostgreSQL UUID) strings.
+
+        Returns:
+            Dict mapping str(XeroBankTransaction.id) to is_reconciled (bool).
+        """
+        if not bank_transaction_ids:
+            return {}
+
+        import uuid as _uuid
+
+        from sqlalchemy import select
+
+        from app.modules.integrations.xero.models import XeroBankTransaction
+
+        uuids = [_uuid.UUID(bid) for bid in bank_transaction_ids]
+        result = await self.session.execute(
+            select(
+                XeroBankTransaction.id,
+                XeroBankTransaction.is_reconciled,
+            ).where(
+                XeroBankTransaction.connection_id == connection_id,
+                XeroBankTransaction.id.in_(uuids),
+            )
+        )
+        rows = result.all()
+        return {str(row.id): bool(row.is_reconciled) for row in rows}
+
     async def _call_xero_report_api(
         self,
         client: XeroClient,

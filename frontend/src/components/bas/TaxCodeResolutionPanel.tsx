@@ -13,7 +13,9 @@ import { AIDisclaimer } from '@/components/ui/AIDisclaimer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
 import type {
+  PeriodBankTransaction,
   TaxCodeSuggestion,
   TaxCodeSuggestionSummary,
   WritebackJobDetailResponse,
@@ -29,9 +31,12 @@ import {
   listTaxCodeSuggestions,
   overrideSuggestion,
   recalculateBASWithSuggestions,
+  refreshReconciliationStatus,
   retryWritebackJob,
   unparkSuggestion,
 } from '@/lib/bas';
+
+import { formatCurrency, formatDate } from '@/lib/formatters';
 
 import { ClassificationRequestButton } from './ClassificationRequestButton';
 import { SyncToXeroButton } from './SyncToXeroButton';
@@ -79,6 +84,7 @@ export function TaxCodeResolutionPanel({
   onJobComplete,
 }: TaxCodeResolutionPanelProps) {
   const [suggestions, setSuggestions] = useState<TaxCodeSuggestion[]>([]);
+  const [periodTxns, setPeriodTxns] = useState<PeriodBankTransaction[]>([]);
   const [summary, setSummary] = useState<TaxCodeSuggestionSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -103,6 +109,8 @@ export function TaxCodeResolutionPanel({
   }, [approvedUnsyncedCount, activeWritebackJobId, completedWritebackJob]);
 
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
 
   // IDs of approved/overridden suggestions that were included in the last recalculation.
   // Banner shows when any approved suggestion is NOT in this set.
@@ -113,6 +121,10 @@ export function TaxCodeResolutionPanel({
   onSummaryChangeRef.current = onSummaryChange;
   const onJobCompleteRef = useRef(onJobComplete);
   onJobCompleteRef.current = onJobComplete;
+
+  // Spec 057: Track whether we've auto-enriched reconciliation status for this session.
+  // Resets when sessionId changes so each new session gets enriched on first load.
+  const reconciliationEnrichedRef = useRef(false);
 
   // Poll active writeback job until it finishes
   useEffect(() => {
@@ -138,8 +150,28 @@ export function TaxCodeResolutionPanel({
     try {
       const token = await getToken();
       if (!token) return;
-      const data = await listTaxCodeSuggestions(token, connectionId, sessionId);
+      let data = await listTaxCodeSuggestions(token, connectionId, sessionId);
+
+      // Spec 057: Auto-enrich reconciliation status on first load for sessions created
+      // before this feature (is_reconciled = NULL on existing bank_transaction suggestions).
+      // Runs silently once per session mount; user sees correct grouping immediately.
+      if (!reconciliationEnrichedRef.current) {
+        const needsEnrichment = data.suggestions.some(
+          (s) => s.source_type === 'bank_transaction' && s.is_reconciled === null,
+        );
+        if (needsEnrichment) {
+          reconciliationEnrichedRef.current = true;
+          try {
+            await refreshReconciliationStatus(token, connectionId, sessionId);
+            data = await listTaxCodeSuggestions(token, connectionId, sessionId);
+          } catch {
+            // Non-fatal: proceed with un-enriched data if Xero is unavailable
+          }
+        }
+      }
+
       setSuggestions(data.suggestions);
+      setPeriodTxns(data.period_bank_transactions ?? []);
       setSummary(data.summary);
       onSummaryChangeRef.current?.(data.summary);
 
@@ -194,6 +226,7 @@ export function TaxCodeResolutionPanel({
   useEffect(() => {
     if (loadedSessionRef.current === sessionId) return;
     loadedSessionRef.current = sessionId;
+    reconciliationEnrichedRef.current = false; // Reset so new session gets auto-enriched
     loadSuggestions();
   }, [sessionId, loadSuggestions]);
 
@@ -273,6 +306,31 @@ export function TaxCodeResolutionPanel({
     }
   }
 
+  async function handleRefreshReconciliation() {
+    setIsRefreshing(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const result = await refreshReconciliationStatus(token, connectionId, sessionId);
+      await loadSuggestions();
+      toast({
+        title: 'Reconciliation status updated',
+        description:
+          result.reclassified_count > 0
+            ? `${result.reclassified_count} transaction${result.reclassified_count !== 1 ? 's' : ''} reclassified`
+            : 'No changes',
+      });
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status;
+      toast({
+        title: status === 503 ? 'Unable to refresh — Xero connection unavailable' : 'Failed to refresh reconciliation status',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
   function handleSplitsChanged() {
     // Splits affect BAS amounts — clear the recalculated snapshot so the banner reappears.
     setRecalculatedIds(new Set());
@@ -311,7 +369,8 @@ export function TaxCodeResolutionPanel({
     );
   }
 
-  if (!summary || suggestions.length === 0) {
+  // No suggestions AND no period bank transactions — nothing to show
+  if ((!summary || suggestions.length === 0) && periodTxns.length === 0) {
     return (
       <div className="flex items-center gap-2 p-4 text-status-success text-sm">
         <CheckCircle2 className="w-4 h-4" />
@@ -320,7 +379,7 @@ export function TaxCodeResolutionPanel({
     );
   }
 
-  // Group by status
+  // Group suggestions by status
   const pending = suggestions.filter((s) => s.status === 'pending');
   const highConfidence = pending.filter((s) => (s.confidence_score ?? 0) >= 0.9);
   const needsReview = pending.filter(
@@ -331,6 +390,10 @@ export function TaxCodeResolutionPanel({
   );
   const parked = suggestions.filter((s) => s.status === 'dismissed' || s.status === 'rejected');
   const resolved = suggestions.filter((s) => s.status === 'approved' || s.status === 'overridden');
+
+  // Spec 057: Period-level reconciliation grouping — ALL bank transactions, not just flagged ones.
+  const reconciledTxns = periodTxns.filter((t) => t.is_reconciled);
+  const unreconciledTxns = periodTxns.filter((t) => !t.is_reconciled);
 
   // Banner shows when any approved/overridden suggestion hasn't been included in a recalculation yet.
   const hasApprovedNotApplied = suggestions.some(
@@ -438,7 +501,7 @@ export function TaxCodeResolutionPanel({
       )}
 
       {/* Bulk actions bar */}
-      {pending.length > 0 && (
+      {pending.length > 0 && summary && (
         <TaxCodeBulkActions
           summary={summary}
           onBulkApprove={handleBulkApprove}
@@ -448,13 +511,32 @@ export function TaxCodeResolutionPanel({
       )}
 
       {/* Recalculate prompt when all resolved */}
-      {pending.length === 0 && hasApprovedNotApplied && (
+      {pending.length === 0 && hasApprovedNotApplied && summary && (
         <TaxCodeBulkActions
           summary={summary}
           onBulkApprove={handleBulkApprove}
           onRecalculate={handleRecalculate}
           hasApprovedNotApplied={hasApprovedNotApplied}
         />
+      )}
+
+      {/* Spec 057: Reconciliation status summary + refresh button */}
+      {periodTxns.length > 0 && (
+        <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+          <span>
+            {reconciledTxns.length} reconciled · {unreconciledTxns.length} unreconciled of {periodTxns.length} bank transactions
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs h-7"
+            disabled={isRefreshing}
+            onClick={handleRefreshReconciliation}
+          >
+            {isRefreshing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+            Refresh reconciliation status
+          </Button>
+        </div>
       )}
 
       <div className="max-h-[600px] overflow-y-auto">
@@ -546,6 +628,17 @@ export function TaxCodeResolutionPanel({
                     </div>
                   )}
                 </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+          {/* Spec 057: Reconciled section — ALL reconciled bank transactions, info only */}
+          {reconciledTxns.length > 0 && (
+            <AccordionItem value="reconciled">
+              <AccordionTrigger className="text-sm font-medium py-2 text-muted-foreground">
+                Reconciled in Xero ({reconciledTxns.length})
+              </AccordionTrigger>
+              <AccordionContent>
+                <BankTransactionTable transactions={reconciledTxns} />
               </AccordionContent>
             </AccordionItem>
           )}
@@ -680,6 +773,54 @@ function SuggestionTable({
               />
             );
           })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Spec 057: Read-only bank transaction table for period-level reconciliation view
+// ---------------------------------------------------------------------------
+
+function BankTransactionTable({ transactions }: { transactions: PeriodBankTransaction[] }) {
+  return (
+    <div className="border border-border rounded-lg overflow-hidden">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="bg-muted/50 text-xs text-muted-foreground uppercase tracking-wider">
+            <th className="px-3 py-1.5 text-left font-medium">Date</th>
+            <th className="px-3 py-1.5 text-right font-medium">Amount</th>
+            <th className="px-3 py-1.5 text-left font-medium">Description</th>
+            <th className="px-3 py-1.5 text-left font-medium">Tax Code</th>
+            <th className="px-3 py-1.5 text-right font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {transactions.map((txn) => (
+            <tr key={txn.id} className="opacity-60">
+              <td className="px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap tabular-nums">
+                {txn.transaction_date ? formatDate(txn.transaction_date) : '—'}
+              </td>
+              <td className="px-3 py-1.5 text-right font-medium tabular-nums whitespace-nowrap text-sm">
+                {formatCurrency(txn.total_amount)}
+              </td>
+              <td className="px-3 py-1.5 max-w-[220px]">
+                <span className="truncate block text-xs">{txn.description || '—'}</span>
+                {txn.contact_name && (
+                  <span className="truncate block text-[10px] text-muted-foreground">{txn.contact_name}</span>
+                )}
+              </td>
+              <td className="px-3 py-1.5 whitespace-nowrap text-xs text-muted-foreground">
+                {txn.tax_types.length > 0 ? txn.tax_types.join(', ') : '—'}
+              </td>
+              <td className="px-3 py-1.5 text-right whitespace-nowrap">
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {txn.is_reconciled ? 'Reconciled' : 'Unreconciled'}
+                </Badge>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
