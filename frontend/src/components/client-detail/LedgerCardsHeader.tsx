@@ -461,7 +461,7 @@ export function LedgerCardsHeader({
 
       {/* Row 2 - Navigation tabs (subtle gray tint) */}
       <div className="bg-muted/80 px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center gap-1 flex-wrap">
           {/* Primary text tabs */}
           {primaryTabs.map((tab) => {
             const isActive = activeTab === tab.id;
