@@ -87,9 +87,16 @@ function XeroCallbackContent() {
         setStatus('success');
         toast.success(`Connected to ${data.organization_name}`);
 
-        // Redirect to integrations page after a short delay
+        // Check if we should return to a specific page (e.g., Tax Plan after re-auth)
+        const returnTo = sessionStorage.getItem('xero_reauth_return_to');
+        sessionStorage.removeItem('xero_reauth_return_to');
+
         setTimeout(() => {
-          router.push('/settings/integrations');
+          if (returnTo) {
+            router.push(returnTo);
+          } else {
+            router.push('/settings/integrations');
+          }
         }, 2000);
       } catch (err) {
         setStatus('error');
@@ -130,7 +137,7 @@ function XeroCallbackContent() {
             Your Xero organization <strong>{organizationName}</strong> is now connected.
           </p>
           <p className="text-sm text-muted-foreground">
-            Redirecting to integrations...
+            Redirecting...
           </p>
         </div>
       </div>

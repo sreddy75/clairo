@@ -1,7 +1,9 @@
 'use client';
 
 import { useAuth } from '@clerk/nextjs';
-import { useCallback, useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -38,6 +40,7 @@ import {
   shareAnalysis,
   updateTaxPlan,
 } from '@/lib/api/tax-planning';
+import { apiClient } from '@/lib/api-client';
 import type {
   EntityType,
   FinancialsInput,
@@ -76,6 +79,8 @@ export function TaxPlanningWorkspace({
   clientName,
 }: TaxPlanningWorkspaceProps) {
   const { getToken } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [plan, setPlan] = useState<TaxPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,10 +89,13 @@ export function TaxPlanningWorkspace({
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [showCreateNew, setShowCreateNew] = useState(false);
   const [xeroAuthNeeded, setXeroAuthNeeded] = useState(false);
+  const [pullingXero, setPullingXero] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generatingStage, setGeneratingStage] = useState(0);
   const [showAnalysisDetail, setShowAnalysisDetail] = useState(false);
+  const autoRefreshDone = useRef(false);
 
   // Load existing analysis for this plan
   const loadAnalysis = useCallback(async (planId: string) => {
@@ -147,6 +155,76 @@ export function TaxPlanningWorkspace({
   useEffect(() => {
     loadPlan();
   }, [loadPlan]);
+
+  // Auto-pull financials after returning from Xero re-auth
+  useEffect(() => {
+    if (autoRefreshDone.current) return;
+    if (searchParams.get('reauth') !== 'success') return;
+    if (!plan) return;
+
+    autoRefreshDone.current = true;
+
+    // Clean up the query param from the URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('reauth');
+    router.replace(url.pathname + url.search, { scroll: false });
+
+    // Auto-pull financials
+    (async () => {
+      setPullingXero(true);
+      setXeroAuthNeeded(false);
+      setError(null);
+      try {
+        const token = await getToken();
+        if (!token) return;
+        await pullXeroFinancials(token, plan.id, true);
+        const updated = await getTaxPlan(token, plan.id);
+        setPlan(updated);
+      } catch {
+        setError('Failed to pull financial data after reconnecting. Try the Refresh button.');
+      } finally {
+        setPullingXero(false);
+      }
+    })();
+  }, [searchParams, plan, getToken, router]);
+
+  // Initiate Xero re-auth inline (no tab switch)
+  const handleReconnectXero = async () => {
+    setReconnecting(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const callbackUrl = `${window.location.origin}/settings/integrations/xero/callback`;
+
+      const response = await apiClient.post('/api/v1/integrations/xero/connect', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ redirect_uri: callbackUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate Xero re-authorisation');
+      }
+
+      const data = await response.json();
+
+      // Store OAuth state for validation + return destination
+      sessionStorage.setItem('xero_oauth_state', data.state);
+      sessionStorage.setItem(
+        'xero_reauth_return_to',
+        `${window.location.pathname}?reauth=success`,
+      );
+
+      // Redirect to Xero consent screen
+      window.location.href = data.auth_url;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to start Xero re-authorisation');
+      setReconnecting(false);
+    }
+  };
 
   // Generate tax plan analysis via multi-agent pipeline
   const handleGenerateAnalysis = async () => {
@@ -482,35 +560,22 @@ export function TaxPlanningWorkspace({
                     : 'Reconnect Xero to pull financial data into this plan.'}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900"
-                  onClick={() => window.open('/settings/integrations', '_blank')}
-                >
-                  Reconnect Xero
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    try {
-                      setXeroAuthNeeded(false);
-                      setError(null);
-                      const token = await getToken();
-                      if (!token) return;
-                      await pullXeroFinancials(token, plan.id, true);
-                      const updated = await getTaxPlan(token, plan.id);
-                      setPlan(updated);
-                    } catch {
-                      setXeroAuthNeeded(true);
-                    }
-                  }}
-                >
-                  Retry Pull
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900"
+                onClick={handleReconnectXero}
+                disabled={reconnecting}
+              >
+                {reconnecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                    Connecting...
+                  </>
+                ) : (
+                  'Reconnect Xero'
+                )}
+              </Button>
             </div>
           </div>
         )}
@@ -550,8 +615,62 @@ export function TaxPlanningWorkspace({
         )}
       </div>
 
+      {/* Pulling financials from Xero after re-auth */}
+      {pullingXero && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-3">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+            <p className="text-sm font-medium">Pulling financial data from Xero...</p>
+            <p className="text-xs text-muted-foreground">This may take a few seconds</p>
+          </div>
+        </div>
+      )}
+
+      {/* No financials + needs reauth — clear empty state instead of misleading $0 form */}
+      {!pullingXero && !plan.financials_data && !showManualEntry &&
+        (plan.xero_connection_status === 'needs_reauth' || xeroAuthNeeded) && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4 max-w-sm">
+            <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center mx-auto">
+              <svg className="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Xero connection expired</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Re-authorise your Xero connection to pull financial data into this plan.
+                You&apos;ll be redirected back here automatically.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleReconnectXero}
+                disabled={reconnecting}
+              >
+                {reconnecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                    Connecting...
+                  </>
+                ) : (
+                  'Reconnect Xero'
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowManualEntry(true)}
+              >
+                Enter financials manually instead
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Full-width workflow tabs — fills remaining viewport height */}
-      {plan.financials_data && !showManualEntry ? (
+      {!pullingXero && plan.financials_data && !showManualEntry ? (
         <Tabs
           defaultValue="position"
           className="flex-1 min-h-0 flex flex-col"
@@ -824,7 +943,7 @@ export function TaxPlanningWorkspace({
             )}
           </TabsContent>
         </Tabs>
-      ) : (
+      ) : !pullingXero && (showManualEntry || !(plan.xero_connection_status === 'needs_reauth' || xeroAuthNeeded)) ? (
         <div className="flex-1 overflow-y-auto">
           <ManualEntryForm
             onSubmit={handleSaveManual}
@@ -845,7 +964,7 @@ export function TaxPlanningWorkspace({
             }
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
