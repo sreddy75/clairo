@@ -150,9 +150,7 @@ def refresh_connection_tax_plans(
     """
     import asyncio
 
-    return asyncio.run(
-        _refresh_connection_tax_plans_async(UUID(connection_id), UUID(tenant_id))
-    )
+    return asyncio.run(_refresh_connection_tax_plans_async(UUID(connection_id), UUID(tenant_id)))
 
 
 async def _refresh_connection_tax_plans_async(
@@ -176,10 +174,7 @@ async def _refresh_connection_tax_plans_async(
         plans = await repo.list_by_connection(connection_id, tenant_id)
 
         # Only refresh plans that have missing or stale data
-        plans_to_refresh = [
-            p for p in plans
-            if not p.financials_data or p.data_source == "xero"
-        ]
+        plans_to_refresh = [p for p in plans if not p.financials_data or p.data_source == "xero"]
 
         if not plans_to_refresh:
             return {"refreshed": [], "skipped": len(plans), "failed": []}
@@ -206,7 +201,9 @@ async def _refresh_connection_tax_plans_async(
     except Exception as e:
         logger.error(
             "Connection tax plan refresh failed for connection %s: %s",
-            connection_id, e, exc_info=True,
+            connection_id,
+            e,
+            exc_info=True,
         )
         return {"refreshed": refreshed, "failed": failed, "error": str(e)}
 
