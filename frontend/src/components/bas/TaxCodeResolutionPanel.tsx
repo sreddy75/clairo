@@ -14,15 +14,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import type {
-  PeriodBankTransaction,
-  TaxCodeSuggestion,
-  TaxCodeSuggestionSummary,
-  WritebackJobDetailResponse,
-  WritebackJobResponse,
-  WritebackSkipReason,
-} from '@/lib/bas';
 import {
+  type PeriodBankTransaction,
+  type TaxCodeSuggestion,
+  type TaxCodeSuggestionSummary,
+  type WritebackJobDetailResponse,
+  type WritebackJobResponse,
+  type WritebackSkipReason,
   approveSuggestion,
   bulkApproveSuggestions,
   dismissSuggestion,
@@ -35,7 +33,6 @@ import {
   retryWritebackJob,
   unparkSuggestion,
 } from '@/lib/bas';
-
 import { formatCurrency, formatDate } from '@/lib/formatters';
 
 import { ClassificationRequestButton } from './ClassificationRequestButton';

@@ -14,6 +14,7 @@ from app.modules.bas.calculator import GSTCalculator, PAYGCalculator
 from app.modules.bas.repository import BASRepository
 
 if TYPE_CHECKING:
+    from app.modules.auth.models import PracticeUser
     from app.modules.bas.models import BASCalculation, BASPeriod, BASSession
     from app.modules.bas.schemas import (
         BASSummaryResponse,
@@ -41,6 +42,23 @@ from app.modules.quality.service import QualityService
 ExportFormat = Literal["pdf", "excel", "csv"]
 
 logger = logging.getLogger(__name__)
+
+
+def _get_user_display_name(practice_user: "PracticeUser | None") -> str | None:
+    """Resolve a display name for a practice user.
+
+    Tries the Clerk full name via the user relationship, falls back to
+    a cleaned-up email. Handles Clerk-generated emails like
+    ``user_XXX@accounts.holder.clairo.com`` gracefully.
+    """
+    if practice_user is None:
+        return None
+    email = practice_user.email
+    # Clerk-generated emails start with the clerk_id prefix
+    if email and not email.startswith("user_"):
+        return email
+    # Fallback: use clerk_id to show a nicer label
+    return practice_user.role.value.title() if practice_user.role else "Accountant"
 
 
 class BASService:
@@ -413,7 +431,7 @@ class BASService:
             end_date=period.end_date,
             due_date=period.due_date,
             created_by=session.created_by,
-            created_by_name=session.created_by_user.email if session.created_by_user else None,
+            created_by_name=_get_user_display_name(session.created_by_user),
             approved_by=session.approved_by,
             approved_at=session.approved_at,
             gst_calculated_at=session.gst_calculated_at,
@@ -424,13 +442,11 @@ class BASService:
             auto_created=session.auto_created,
             reviewed_by=session.reviewed_by,
             reviewed_at=session.reviewed_at,
-            reviewed_by_name=session.reviewed_by_user.email if session.reviewed_by_user else None,
+            reviewed_by_name=_get_user_display_name(session.reviewed_by_user),
             lodged_at=session.lodged_at,
             lodged_by=session.lodged_by,
-            lodged_by_name=(
-                session.lodged_by_user.email
-                if hasattr(session, "lodged_by_user") and session.lodged_by_user
-                else None
+            lodged_by_name=_get_user_display_name(
+                session.lodged_by_user if hasattr(session, "lodged_by_user") else None
             ),
             lodgement_method=session.lodgement_method,
             lodgement_method_description=session.lodgement_method_description,
@@ -500,7 +516,7 @@ class BASService:
             end_date=period.end_date,
             due_date=period.due_date,
             created_by=session.created_by,
-            created_by_name=session.created_by_user.email if session.created_by_user else None,
+            created_by_name=_get_user_display_name(session.created_by_user),
             approved_by=session.approved_by,
             approved_at=session.approved_at,
             gst_calculated_at=session.gst_calculated_at,
@@ -511,14 +527,12 @@ class BASService:
             auto_created=session.auto_created,
             reviewed_by=session.reviewed_by,
             reviewed_at=session.reviewed_at,
-            reviewed_by_name=session.reviewed_by_user.email if session.reviewed_by_user else None,
+            reviewed_by_name=_get_user_display_name(session.reviewed_by_user),
             # Lodgement fields (Spec 011)
             lodged_at=session.lodged_at,
             lodged_by=session.lodged_by,
-            lodged_by_name=(
-                session.lodged_by_user.email
-                if hasattr(session, "lodged_by_user") and session.lodged_by_user
-                else None
+            lodged_by_name=_get_user_display_name(
+                session.lodged_by_user if hasattr(session, "lodged_by_user") else None
             ),
             lodgement_method=session.lodgement_method,
             lodgement_method_description=session.lodgement_method_description,

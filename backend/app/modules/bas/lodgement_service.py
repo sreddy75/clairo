@@ -30,6 +30,7 @@ from app.modules.bas.schemas import (
     LodgementSummaryResponse,
     LodgementUpdateRequest,
 )
+from app.modules.bas.service import _get_user_display_name
 
 
 class LodgementService:
@@ -250,9 +251,7 @@ class LodgementService:
             is_lodged=bas_session.is_lodged,
             lodged_at=bas_session.lodged_at,
             lodged_by=bas_session.lodged_by,
-            lodged_by_name=(
-                bas_session.lodged_by_user.email if bas_session.lodged_by_user else None
-            ),
+            lodged_by_name=_get_user_display_name(bas_session.lodged_by_user),
             lodgement_method=bas_session.lodgement_method,
             lodgement_method_description=bas_session.lodgement_method_description,
             ato_reference_number=bas_session.ato_reference_number,
@@ -274,9 +273,7 @@ class LodgementService:
             end_date=period.end_date if period else datetime.now(UTC).date(),
             due_date=period.due_date if period else datetime.now(UTC).date(),
             created_by=bas_session.created_by,
-            created_by_name=(
-                bas_session.created_by_user.email if bas_session.created_by_user else None
-            ),
+            created_by_name=_get_user_display_name(bas_session.created_by_user),
             approved_by=bas_session.approved_by,
             approved_at=bas_session.approved_at,
             gst_calculated_at=bas_session.gst_calculated_at,
@@ -286,15 +283,11 @@ class LodgementService:
             auto_created=bas_session.auto_created,
             reviewed_by=bas_session.reviewed_by,
             reviewed_at=bas_session.reviewed_at,
-            reviewed_by_name=(
-                bas_session.reviewed_by_user.email if bas_session.reviewed_by_user else None
-            ),
+            reviewed_by_name=_get_user_display_name(bas_session.reviewed_by_user),
             # Lodgement fields
             lodged_at=bas_session.lodged_at,
             lodged_by=bas_session.lodged_by,
-            lodged_by_name=(
-                bas_session.lodged_by_user.email if bas_session.lodged_by_user else None
-            ),
+            lodged_by_name=_get_user_display_name(bas_session.lodged_by_user),
             lodgement_method=bas_session.lodgement_method,
             lodgement_method_description=bas_session.lodgement_method_description,
             ato_reference_number=bas_session.ato_reference_number,

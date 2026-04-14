@@ -89,6 +89,19 @@ export function TaxPlanningWorkspace({
   const [generatingStage, setGeneratingStage] = useState(0);
   const [showAnalysisDetail, setShowAnalysisDetail] = useState(false);
 
+  // Load existing analysis for this plan
+  const loadAnalysis = useCallback(async (planId: string) => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const data = await getAnalysis(token, planId);
+      setAnalysis(data);
+    } catch {
+      // No analysis yet — that's fine
+      setAnalysis(null);
+    }
+  }, [getToken]);
+
   // Load existing plan for this connection + FY
   const loadPlan = useCallback(async () => {
     setLoading(true);
@@ -129,24 +142,11 @@ export function TaxPlanningWorkspace({
     } finally {
       setLoading(false);
     }
-  }, [connectionId, getToken]);
+  }, [connectionId, getToken, loadAnalysis]);
 
   useEffect(() => {
     loadPlan();
   }, [loadPlan]);
-
-  // Load existing analysis for this plan
-  const loadAnalysis = useCallback(async (planId: string) => {
-    try {
-      const token = await getToken();
-      if (!token) return;
-      const data = await getAnalysis(token, planId);
-      setAnalysis(data);
-    } catch {
-      // No analysis yet — that's fine
-      setAnalysis(null);
-    }
-  }, [getToken]);
 
   // Generate tax plan analysis via multi-agent pipeline
   const handleGenerateAnalysis = async () => {
