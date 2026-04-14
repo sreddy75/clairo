@@ -232,8 +232,6 @@ class TestSelectTier:
                 await service.select_tier(
                     tenant_id=tenant_id,
                     tier="professional",
-                    success_url="https://test.com/success",
-                    cancel_url="https://test.com/cancel",
                 )
 
             assert "not found" in str(exc_info.value)
@@ -256,21 +254,16 @@ class TestSelectTier:
             mock_onboarding.return_value.update = AsyncMock()
             mock_onboarding.return_value.get_by_tenant_id = AsyncMock(return_value=progress)
             mock_tenant.return_value.get_by_id = AsyncMock(return_value=tenant)
-            mock_billing.return_value.create_checkout_session = AsyncMock(
-                return_value=("https://checkout.stripe.com/...", "cs_test123")
-            )
+            mock_billing.return_value.start_trial = AsyncMock(return_value={"id": "sub_test123"})
 
             service = OnboardingService(mock_session)
-            result_progress, checkout_url, session_id = await service.select_tier(
+            result_progress = await service.select_tier(
                 tenant_id=tenant_id,
                 tier="professional",
-                success_url="https://test.com/success",
-                cancel_url="https://test.com/cancel",
             )
 
-            assert checkout_url == "https://checkout.stripe.com/..."
-            assert session_id == "cs_test123"
-            mock_billing.return_value.create_checkout_session.assert_called_once()
+            assert result_progress is not None
+            mock_billing.return_value.start_trial.assert_called_once()
 
 
 # =============================================================================

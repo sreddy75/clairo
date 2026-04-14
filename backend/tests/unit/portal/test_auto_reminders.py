@@ -177,7 +177,7 @@ class TestProcessReminders:
             mock_db_context.return_value = mock_db
 
             with patch(
-                "app.tasks.portal.auto_reminders.DocumentRequestRepository"
+                "app.modules.portal.repository.DocumentRequestRepository"
             ) as mock_repo_class:
                 mock_repo = MagicMock()
                 mock_repo.get_pending_reminders = AsyncMock(return_value=[])
@@ -213,13 +213,13 @@ class TestProcessReminders:
             mock_db_context.return_value = mock_db
 
             with patch(
-                "app.tasks.portal.auto_reminders.DocumentRequestRepository"
+                "app.modules.portal.repository.DocumentRequestRepository"
             ) as mock_repo_class:
                 mock_repo = MagicMock()
                 mock_repo.get_pending_reminders = AsyncMock(return_value=[request])
                 mock_repo_class.return_value = mock_repo
 
-                with patch("app.tasks.portal.auto_reminders.DocumentRequestService"):
+                with patch("app.modules.portal.requests.service.DocumentRequestService"):
                     result = await _process_reminders(
                         days_before_due=3,
                         overdue_reminder_days=[1, 3, 7],
@@ -239,7 +239,7 @@ class TestAutoRemindToggle:
         """Test enabling auto-remind for a request."""
         from app.modules.portal.requests.service import DocumentRequestService
 
-        mock_db = MagicMock()
+        mock_db = AsyncMock()
         service = DocumentRequestService(mock_db)
 
         request = MagicMock()
@@ -248,11 +248,14 @@ class TestAutoRemindToggle:
         request.auto_remind = False
         request.status = RequestStatus.PENDING.value
 
-        with patch.object(service, "repo") as mock_repo:
-            mock_repo.get_by_id = AsyncMock(return_value=request)
+        with (
+            patch.object(service, "request_repo") as mock_repo,
+            patch.object(service, "event_repo"),
+        ):
+            mock_repo.get_by_id_and_tenant = AsyncMock(return_value=request)
             mock_repo.update = AsyncMock(return_value=request)
 
-            result = await service.toggle_auto_remind(
+            await service.toggle_auto_remind(
                 request_id=request.id,
                 tenant_id=request.tenant_id,
                 user_id=uuid4(),
@@ -261,14 +264,14 @@ class TestAutoRemindToggle:
 
             mock_repo.update.assert_called_once()
             call_args = mock_repo.update.call_args
-            assert call_args[1]["auto_remind"] is True
+            assert call_args[0][1]["auto_remind"] is True
 
     @pytest.mark.asyncio
     async def test_toggle_auto_remind_disables(self):
         """Test disabling auto-remind for a request."""
         from app.modules.portal.requests.service import DocumentRequestService
 
-        mock_db = MagicMock()
+        mock_db = AsyncMock()
         service = DocumentRequestService(mock_db)
 
         request = MagicMock()
@@ -277,11 +280,14 @@ class TestAutoRemindToggle:
         request.auto_remind = True
         request.status = RequestStatus.PENDING.value
 
-        with patch.object(service, "repo") as mock_repo:
-            mock_repo.get_by_id = AsyncMock(return_value=request)
+        with (
+            patch.object(service, "request_repo") as mock_repo,
+            patch.object(service, "event_repo"),
+        ):
+            mock_repo.get_by_id_and_tenant = AsyncMock(return_value=request)
             mock_repo.update = AsyncMock(return_value=request)
 
-            result = await service.toggle_auto_remind(
+            await service.toggle_auto_remind(
                 request_id=request.id,
                 tenant_id=request.tenant_id,
                 user_id=uuid4(),
@@ -290,7 +296,7 @@ class TestAutoRemindToggle:
 
             mock_repo.update.assert_called_once()
             call_args = mock_repo.update.call_args
-            assert call_args[1]["auto_remind"] is False
+            assert call_args[0][1]["auto_remind"] is False
 
 
 class TestReminderSettings:

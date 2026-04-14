@@ -164,7 +164,7 @@ class TestSystemTemplateToDict:
         d = template.to_dict()
 
         assert isinstance(d["default_priority"], str)
-        assert d["default_priority"] in ["low", "normal", "high", "urgent"]
+        assert d["default_priority"] in ["LOW", "NORMAL", "HIGH", "URGENT"]
 
 
 class TestTemplateDocumentTypes:

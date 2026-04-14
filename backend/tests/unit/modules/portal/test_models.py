@@ -40,7 +40,7 @@ class TestRequestStatus:
         assert RequestStatus.DRAFT.value == "DRAFT"
         assert RequestStatus.PENDING.value == "PENDING"
         assert RequestStatus.VIEWED.value == "VIEWED"
-        assert RequestStatus.RESPONDED.value == "RESPONDED"
+        assert RequestStatus.IN_PROGRESS.value == "IN_PROGRESS"
         assert RequestStatus.COMPLETE.value == "COMPLETE"
         assert RequestStatus.CANCELLED.value == "CANCELLED"
 

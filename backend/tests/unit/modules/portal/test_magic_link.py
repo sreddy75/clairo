@@ -323,6 +323,7 @@ class TestMagicLinkServiceSession:
         tokens = service.create_session_tokens(
             connection_id=connection_id,
             tenant_id=tenant_id,
+            session_id=uuid4(),
             refresh_token=refresh_token,
             session_expires_at=expires_at,
         )
@@ -421,11 +422,11 @@ class TestMagicLinkServiceUrl:
         token = "test_token_abc123"
         url = service.build_magic_link_url(token)
 
-        assert url == "https://app.clairo.com/portal/auth/verify?token=test_token_abc123"
+        assert url == "https://app.clairo.com/portal/verify?token=test_token_abc123"
 
     def test_build_magic_link_url_custom_base(self, service):
         """Should use custom base URL when provided."""
         token = "test_token"
         url = service.build_magic_link_url(token, base_url="https://custom.example.com")
 
-        assert url == "https://custom.example.com/portal/auth/verify?token=test_token"
+        assert url == "https://custom.example.com/portal/verify?token=test_token"

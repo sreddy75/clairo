@@ -127,7 +127,7 @@ class TestXeroClientServiceListClients:
         mock_client_repo.list_all_for_tenant.return_value = ([sample_client], 1)
 
         with patch(
-            "app.modules.integrations.xero.service.XeroClientRepository",
+            "app.modules.integrations.xero.client_service.XeroClientRepository",
             return_value=mock_client_repo,
         ):
             service = XeroClientService(mock_session)
@@ -150,7 +150,7 @@ class TestXeroClientServiceListClients:
         mock_client_repo.list_all_for_tenant.return_value = ([], 0)
 
         with patch(
-            "app.modules.integrations.xero.service.XeroClientRepository",
+            "app.modules.integrations.xero.client_service.XeroClientRepository",
             return_value=mock_client_repo,
         ):
             service = XeroClientService(mock_session)
@@ -192,11 +192,11 @@ class TestXeroClientServiceGetClientDetail:
 
         with (
             patch(
-                "app.modules.integrations.xero.service.XeroClientRepository",
+                "app.modules.integrations.xero.client_service.XeroClientRepository",
                 return_value=mock_client_repo,
             ),
             patch(
-                "app.modules.integrations.xero.service.XeroConnectionRepository",
+                "app.modules.integrations.xero.client_service.XeroConnectionRepository",
                 return_value=mock_connection_repo,
             ),
         ):
@@ -218,7 +218,7 @@ class TestXeroClientServiceGetClientDetail:
         mock_client_repo.get_by_id.return_value = None
 
         with patch(
-            "app.modules.integrations.xero.service.XeroClientRepository",
+            "app.modules.integrations.xero.client_service.XeroClientRepository",
             return_value=mock_client_repo,
         ):
             service = XeroClientService(mock_session)
@@ -245,11 +245,11 @@ class TestXeroClientServiceGetClientInvoices:
 
         with (
             patch(
-                "app.modules.integrations.xero.service.XeroClientRepository",
+                "app.modules.integrations.xero.client_service.XeroClientRepository",
                 return_value=mock_client_repo,
             ),
             patch(
-                "app.modules.integrations.xero.service.XeroInvoiceRepository",
+                "app.modules.integrations.xero.client_service.XeroInvoiceRepository",
                 return_value=mock_invoice_repo,
             ),
         ):
@@ -271,7 +271,7 @@ class TestXeroClientServiceGetClientInvoices:
         mock_client_repo.get_by_id.return_value = None
 
         with patch(
-            "app.modules.integrations.xero.service.XeroClientRepository",
+            "app.modules.integrations.xero.client_service.XeroClientRepository",
             return_value=mock_client_repo,
         ):
             service = XeroClientService(mock_session)
@@ -306,15 +306,15 @@ class TestXeroClientServiceGetFinancialSummary:
 
         with (
             patch(
-                "app.modules.integrations.xero.service.XeroClientRepository",
+                "app.modules.integrations.xero.client_service.XeroClientRepository",
                 return_value=mock_client_repo,
             ),
             patch(
-                "app.modules.integrations.xero.service.XeroInvoiceRepository",
+                "app.modules.integrations.xero.client_service.XeroInvoiceRepository",
                 return_value=mock_invoice_repo,
             ),
             patch(
-                "app.modules.integrations.xero.service.XeroBankTransactionRepository",
+                "app.modules.integrations.xero.client_service.XeroBankTransactionRepository",
                 return_value=mock_transaction_repo,
             ),
         ):
@@ -347,7 +347,7 @@ class TestXeroClientServiceGetFinancialSummary:
         mock_client_repo.get_by_id.return_value = None
 
         with patch(
-            "app.modules.integrations.xero.service.XeroClientRepository",
+            "app.modules.integrations.xero.client_service.XeroClientRepository",
             return_value=mock_client_repo,
         ):
             service = XeroClientService(mock_session)
