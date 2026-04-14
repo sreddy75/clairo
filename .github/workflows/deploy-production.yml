@@ -89,7 +89,6 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Deploy to Vercel
-        working-directory: frontend
         run: |
           DEPLOYMENT_URL=$(vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }})
           echo "Deployed to: $DEPLOYMENT_URL"
