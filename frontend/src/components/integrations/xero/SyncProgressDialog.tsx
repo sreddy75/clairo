@@ -134,22 +134,46 @@ function getEntityLabel(entityType: string): string {
 }
 
 /**
- * Calculates an overall progress percentage from a list of entity progress
- * records. Each entity contributes equally.
+ * Calculates an overall progress percentage factoring in the current phase.
+ *
+ * Without phase awareness, progress jumps to 100% between phases because
+ * all *reported* entities are complete — even though later phases haven't
+ * started yet.
  */
-function calculateOverallProgress(entities: EntityProgressResponse[]): number {
-  if (entities.length === 0) return 0;
+function calculateOverallProgress(
+  entities: EntityProgressResponse[],
+  currentPhase: number,
+  totalPhases: number
+): number {
+  if (totalPhases <= 0) return 0;
 
-  const completedOrFailed = entities.filter(
+  // What fraction of the total work does each phase represent?
+  const phaseWeight = 100 / totalPhases;
+
+  // Progress from fully completed phases
+  const completedPhaseProgress = (currentPhase - 1) * phaseWeight;
+
+  // Progress within the current phase based on entity statuses
+  const currentPhaseEntities = entities.filter(
+    (e) => e.status === 'in_progress' || e.status === 'pending'
+  );
+  const completedEntities = entities.filter(
     (e) => e.status === 'completed' || e.status === 'failed' || e.status === 'skipped'
+  );
+
+  // If no entities reported yet for this phase, show 0% within the phase
+  const totalReported = entities.length;
+  if (totalReported === 0) return Math.round(completedPhaseProgress);
+
+  const inProgress = currentPhaseEntities.filter(
+    (e) => e.status === 'in_progress'
   ).length;
+  const done = completedEntities.length;
 
-  const inProgress = entities.filter((e) => e.status === 'in_progress').length;
+  const effectiveComplete = done + inProgress * 0.5;
+  const withinPhaseProgress = (effectiveComplete / totalReported) * phaseWeight;
 
-  // In-progress entities count as 50% done for the progress bar
-  const effectiveComplete = completedOrFailed + inProgress * 0.5;
-
-  return Math.round((effectiveComplete / entities.length) * 100);
+  return Math.min(99, Math.round(completedPhaseProgress + withinPhaseProgress));
 }
 
 /**
@@ -495,7 +519,9 @@ export function SyncProgressDialog({
   const currentPhase = syncStatus?.phase ?? job?.sync_phase ?? null;
   const totalPhases = syncStatus?.total_phases ?? 3;
   const isActive = job?.status === 'pending' || job?.status === 'in_progress';
-  const overallProgress = isActive ? calculateOverallProgress(entities) : 100;
+  const overallProgress = isActive
+    ? calculateOverallProgress(entities, currentPhase ?? 1, totalPhases)
+    : 100;
 
   const phaseLabel =
     currentPhase != null && PHASE_LABELS[currentPhase]
