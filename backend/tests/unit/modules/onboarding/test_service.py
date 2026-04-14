@@ -69,6 +69,7 @@ class MockTenant:
         self.tier = MagicMock(value=tier)
         self.owner_email = "test@example.com"
         self.stripe_customer_id = stripe_customer_id
+        self.stripe_subscription_id = None
 
 
 class MockBulkImportJob:

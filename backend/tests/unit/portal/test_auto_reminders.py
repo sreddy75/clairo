@@ -250,10 +250,11 @@ class TestAutoRemindToggle:
 
         with (
             patch.object(service, "request_repo") as mock_repo,
-            patch.object(service, "event_repo"),
+            patch.object(service, "event_repo") as mock_event_repo,
         ):
             mock_repo.get_by_id_and_tenant = AsyncMock(return_value=request)
             mock_repo.update = AsyncMock(return_value=request)
+            mock_event_repo.create = AsyncMock()
 
             await service.toggle_auto_remind(
                 request_id=request.id,
@@ -282,10 +283,11 @@ class TestAutoRemindToggle:
 
         with (
             patch.object(service, "request_repo") as mock_repo,
-            patch.object(service, "event_repo"),
+            patch.object(service, "event_repo") as mock_event_repo,
         ):
             mock_repo.get_by_id_and_tenant = AsyncMock(return_value=request)
             mock_repo.update = AsyncMock(return_value=request)
+            mock_event_repo.create = AsyncMock()
 
             await service.toggle_auto_remind(
                 request_id=request.id,

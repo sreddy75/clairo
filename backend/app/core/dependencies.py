@@ -18,6 +18,8 @@ Usage:
         ...
 """
 
+from __future__ import annotations
+
 import uuid
 from typing import TYPE_CHECKING, Annotated, Any
 
@@ -162,7 +164,7 @@ OptionalUser = Annotated[TokenPayload | None, Depends(get_optional_user)]
 # to provide user/tenant context from Clerk JWT claims.
 
 
-async def get_clerk_user(request: Request) -> "ClerkTokenPayload":
+async def get_clerk_user(request: Request) -> ClerkTokenPayload:
     """Get current user from Clerk JWT (set by JWTMiddleware).
 
     This dependency retrieves the user claims that were validated
@@ -209,7 +211,6 @@ async def get_current_tenant_id(
     """
     from sqlalchemy import select
 
-    from app.modules.auth.clerk import ClerkTokenPayload
     from app.modules.auth.models import PracticeUser
 
     user: ClerkTokenPayload | None = getattr(request.state, "user", None)
@@ -261,7 +262,6 @@ async def get_or_create_onboarding_tenant(
     """
     from sqlalchemy import select
 
-    from app.modules.auth.clerk import ClerkTokenPayload
     from app.modules.auth.models import PracticeUser, Tenant, User
 
     user: ClerkTokenPayload | None = getattr(request.state, "user", None)
@@ -334,7 +334,7 @@ async def get_or_create_onboarding_tenant(
 async def get_current_practice_user(
     request: Request,
     session: Annotated[AsyncSession, Depends(get_db)],
-) -> "PracticeUser":
+) -> PracticeUser:
     """Get current practice user with full database record.
 
     This dependency:
@@ -354,7 +354,6 @@ async def get_current_practice_user(
     Raises:
         HTTPException: If user is not authenticated or not found.
     """
-    from app.modules.auth.clerk import ClerkTokenPayload
     from app.modules.auth.repository import PracticeUserRepository
 
     # Get user claims from middleware
@@ -381,7 +380,7 @@ async def get_current_practice_user(
 async def get_current_active_user(
     request: Request,
     session: Annotated[AsyncSession, Depends(get_db)],
-) -> "PracticeUser":
+) -> PracticeUser:
     """Get current active practice user.
 
     Same as get_current_practice_user but also verifies the user is active.
@@ -437,11 +436,11 @@ if False:  # TYPE_CHECKING equivalent that avoids circular imports
 # =============================================================================
 
 # Cached service instances
-_pinecone_service: "PineconeService | None" = None
-_voyage_service: "VoyageService | None" = None
+_pinecone_service: PineconeService | None = None
+_voyage_service: VoyageService | None = None
 
 
-async def get_pinecone_service() -> "PineconeService":
+async def get_pinecone_service() -> PineconeService:
     """Get cached Pinecone service instance.
 
     The service is created lazily on first request and cached for reuse.
@@ -462,7 +461,7 @@ async def get_pinecone_service() -> "PineconeService":
     return _pinecone_service
 
 
-async def get_voyage_service() -> "VoyageService":
+async def get_voyage_service() -> VoyageService:
     """Get cached Voyage embedding service instance.
 
     The service is created lazily on first request and cached for reuse.
@@ -494,10 +493,10 @@ VoyageDep = Annotated["VoyageService", Depends(get_voyage_service)]
 
 
 # Cached chatbot instance
-_chatbot_service: "KnowledgeChatbot | None" = None
+_chatbot_service: KnowledgeChatbot | None = None
 
 
-async def get_chatbot_service() -> "KnowledgeChatbot":
+async def get_chatbot_service() -> KnowledgeChatbot:
     """Get cached Knowledge Chatbot service instance.
 
     The service is created lazily on first request and cached for reuse.
@@ -525,7 +524,7 @@ async def get_chatbot_service() -> "KnowledgeChatbot":
 async def get_current_tenant(
     request: Request,
     session: Annotated[AsyncSession, Depends(get_db)],
-) -> "Tenant":
+) -> Tenant:
     """Get current tenant with full database record.
 
     This dependency:

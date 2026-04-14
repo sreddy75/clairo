@@ -205,7 +205,7 @@ class TestHandleBulkCallback:
         mock_session.scalar.return_value = mock_tenant
 
         with (
-            patch("app.modules.integrations.xero.service.XeroClient") as MockClient,
+            patch("app.modules.integrations.xero.bulk_import_service.XeroClient") as MockClient,
             patch(
                 "app.core.feature_flags.get_client_limit",
                 return_value=100,
@@ -249,7 +249,7 @@ class TestHandleBulkCallback:
         mock_session.scalar.return_value = mock_tenant
 
         with (
-            patch("app.modules.integrations.xero.service.XeroClient") as MockClient,
+            patch("app.modules.integrations.xero.bulk_import_service.XeroClient") as MockClient,
             patch(
                 "app.core.feature_flags.get_client_limit",
                 return_value=100,
@@ -289,7 +289,7 @@ class TestHandleBulkCallback:
         mock_session.scalar.return_value = mock_tenant
 
         with (
-            patch("app.modules.integrations.xero.service.XeroClient") as MockClient,
+            patch("app.modules.integrations.xero.bulk_import_service.XeroClient") as MockClient,
             patch(
                 "app.core.feature_flags.get_client_limit",
                 return_value=25,
@@ -326,7 +326,7 @@ class TestHandleBulkCallback:
         mock_session.scalar.return_value = mock_tenant
 
         with (
-            patch("app.modules.integrations.xero.service.XeroClient") as MockClient,
+            patch("app.modules.integrations.xero.bulk_import_service.XeroClient") as MockClient,
             patch(
                 "app.core.feature_flags.get_client_limit",
                 return_value=None,
@@ -371,7 +371,7 @@ class TestHandleBulkCallback:
         token_resp = make_token_response()
         token_expires_at = datetime.now(UTC) + timedelta(hours=1)
 
-        with patch("app.modules.integrations.xero.service.XeroClient") as MockClient:
+        with patch("app.modules.integrations.xero.bulk_import_service.XeroClient") as MockClient:
             client_instance = AsyncMock()
             client_instance.exchange_code.return_value = (token_resp, token_expires_at)
             client_instance.get_connections.return_value = []
