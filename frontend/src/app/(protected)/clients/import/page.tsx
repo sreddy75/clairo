@@ -85,9 +85,11 @@ function ImportConfigContent() {
       for (const org of callbackResult.organizations) {
         initial.set(org.xero_tenant_id, {
           xero_tenant_id: org.xero_tenant_id,
+          organization_name: org.organization_name,
           selected: !org.already_connected,
           connection_type: 'client',
           assigned_user_id: null,
+          already_connected: org.already_connected,
         });
       }
       setSelections(initial);

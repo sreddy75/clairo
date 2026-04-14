@@ -155,3 +155,60 @@ class WritebackJobNotFoundError(WritebackError):
     def __init__(self, job_id: UUID):
         self.job_id = job_id
         super().__init__(f"Write-back job {job_id} not found", code="job_not_found")
+
+
+# =============================================================================
+# OAuth & Service-level exceptions
+# =============================================================================
+
+
+class XeroOAuthError(Exception):
+    """Error during Xero OAuth flow."""
+
+    pass
+
+
+class XeroServiceConnectionNotFoundError(Exception):
+    """Xero connection not found (service-layer lookup)."""
+
+    pass
+
+
+class XeroClientNotFoundError(Exception):
+    """Xero client not found."""
+
+    def __init__(self, client_id: UUID) -> None:
+        self.client_id = client_id
+        super().__init__(f"Xero client {client_id} not found")
+
+
+class XpmClientNotFoundError(Exception):
+    """XPM client not found."""
+
+    def __init__(self, client_id: UUID) -> None:
+        self.client_id = client_id
+        super().__init__(f"XPM client {client_id} not found")
+
+
+# =============================================================================
+# Bulk import exceptions
+# =============================================================================
+
+
+class BulkImportInProgressError(Exception):
+    """Raised when a bulk import is already in progress for the tenant."""
+
+    def __init__(self, tenant_id: UUID, job_id: UUID):
+        self.tenant_id = tenant_id
+        self.job_id = job_id
+        super().__init__(
+            f"A bulk import is already in progress for tenant {tenant_id} (job {job_id})"
+        )
+
+
+class BulkImportValidationError(Exception):
+    """Raised when bulk import validation fails."""
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)

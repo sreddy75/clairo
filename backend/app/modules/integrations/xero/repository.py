@@ -16,6 +16,7 @@ Provides repositories for:
 - XeroWebhookEventRepository: CRUD for XeroWebhookEvent (webhook event processing)
 """
 
+import contextlib
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import Any, Literal
@@ -205,6 +206,14 @@ class XeroConnectionRepository:
             connected_by=data.connected_by,
             connected_at=datetime.now(UTC),
         )
+        # Set auth_event_id if provided (bulk import flow)
+        if data.auth_event_id:
+            connection.auth_event_id = data.auth_event_id
+        # Set connection_type (defaults to 'practice' if not specified)
+        if data.connection_type and data.connection_type != "practice":
+            from app.modules.integrations.xero.models import XeroConnectionType
+            with contextlib.suppress(ValueError):
+                connection.connection_type = XeroConnectionType(data.connection_type)
         self.session.add(connection)
         await self.session.flush()
         return connection

@@ -308,6 +308,8 @@ class XeroConnectionCreate(BaseModel):
     scopes: list[str]
     connected_by: UUID | None = None
     has_payroll_access: bool = False
+    auth_event_id: str | None = None
+    connection_type: str = "practice"
 
     @property
     def has_payroll_scopes(self) -> bool:
@@ -1965,6 +1967,10 @@ class ImportOrgSelection(BaseModel):
     """User's selection for a single organization in bulk import."""
 
     xero_tenant_id: str = Field(..., description="Xero organization identifier")
+    organization_name: str = Field(
+        default="",
+        description="Xero organization display name",
+    )
     selected: bool = Field(..., description="Whether to import this organization")
     connection_type: str = Field(
         default="client",
@@ -1973,6 +1979,10 @@ class ImportOrgSelection(BaseModel):
     assigned_user_id: UUID | None = Field(
         default=None,
         description="Assigned team member UUID",
+    )
+    already_connected: bool = Field(
+        default=False,
+        description="Whether this org is already connected for this tenant",
     )
 
 

@@ -14,9 +14,11 @@ export interface BulkImportInitiateRequest {
 
 export interface ImportOrgSelection {
   xero_tenant_id: string;
+  organization_name: string;
   selected: boolean;
   connection_type?: 'practice' | 'client';
   assigned_user_id?: string | null;
+  already_connected?: boolean;
 }
 
 export interface BulkImportConfirmRequest {
