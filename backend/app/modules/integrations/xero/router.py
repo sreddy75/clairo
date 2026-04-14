@@ -428,6 +428,17 @@ async def handle_callback(
     except Exception as e:
         logger.warning("Failed to update onboarding progress for Xero connect", error=str(e))
 
+    # Auto-refresh Tax Plan financials now that the connection is active
+    try:
+        from app.tasks.tax_planning import refresh_connection_tax_plans
+
+        refresh_connection_tax_plans.delay(
+            connection_id=str(connection.id),
+            tenant_id=str(current_user.tenant_id),
+        )
+    except Exception as e:
+        logger.warning("Failed to queue tax plan refresh after reconnection", error=str(e))
+
     # Build message
     message = "Successfully connected to Xero"
     if xpm_client_id:

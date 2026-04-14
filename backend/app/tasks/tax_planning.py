@@ -1,7 +1,7 @@
 """Celery tasks for the multi-agent tax planning pipeline.
 
-Provides background task execution for autonomous tax plan generation.
-The pipeline runs 5 agents sequentially with progress reporting.
+Provides background task execution for autonomous tax plan generation
+and automatic financial data refresh on Xero reconnection.
 """
 
 import logging
@@ -124,6 +124,91 @@ async def _run_analysis_pipeline_async(
             "status": "failed",
             "error_message": str(e),
         }
+
+    finally:
+        await session.close()
+
+
+@celery_app.task(
+    name="app.tasks.tax_planning.refresh_connection_tax_plans",
+    bind=True,
+    max_retries=1,
+    default_retry_delay=10,
+    time_limit=60,
+    soft_time_limit=45,
+)
+def refresh_connection_tax_plans(
+    self: Task,
+    connection_id: str,
+    tenant_id: str,
+) -> dict[str, Any]:
+    """Refresh Tax Plan financials after a Xero connection is re-activated.
+
+    Finds all active (draft/in_progress) Tax Plans for this connection and
+    pulls fresh P&L data from Xero. Dispatched automatically when a
+    connection transitions from needs_reauth to active.
+    """
+    import asyncio
+
+    return asyncio.run(
+        _refresh_connection_tax_plans_async(UUID(connection_id), UUID(tenant_id))
+    )
+
+
+async def _refresh_connection_tax_plans_async(
+    connection_id: UUID,
+    tenant_id: UUID,
+) -> dict[str, Any]:
+    """Async implementation of connection tax plan refresh."""
+    from app.modules.tax_planning.repository import TaxPlanRepository
+    from app.modules.tax_planning.service import TaxPlanningService
+
+    settings = get_settings()
+    session = await _get_async_session()
+
+    refreshed: list[str] = []
+    failed: list[str] = []
+
+    try:
+        await _set_tenant_context(session, tenant_id)
+
+        repo = TaxPlanRepository(session)
+        plans = await repo.list_by_connection(connection_id, tenant_id)
+
+        # Only refresh plans that have missing or stale data
+        plans_to_refresh = [
+            p for p in plans
+            if not p.financials_data or p.data_source == "xero"
+        ]
+
+        if not plans_to_refresh:
+            return {"refreshed": [], "skipped": len(plans), "failed": []}
+
+        service = TaxPlanningService(session, settings)
+        for plan in plans_to_refresh:
+            try:
+                await service.pull_xero_financials(plan.id, tenant_id, force_refresh=True)
+                await session.commit()
+                refreshed.append(str(plan.id))
+                logger.info("Auto-refreshed tax plan %s after Xero reconnection", plan.id)
+            except Exception:
+                await session.rollback()
+                await _set_tenant_context(session, tenant_id)
+                failed.append(str(plan.id))
+                logger.warning(
+                    "Failed to auto-refresh tax plan %s after Xero reconnection",
+                    plan.id,
+                    exc_info=True,
+                )
+
+        return {"refreshed": refreshed, "failed": failed}
+
+    except Exception as e:
+        logger.error(
+            "Connection tax plan refresh failed for connection %s: %s",
+            connection_id, e, exc_info=True,
+        )
+        return {"refreshed": refreshed, "failed": failed, "error": str(e)}
 
     finally:
         await session.close()

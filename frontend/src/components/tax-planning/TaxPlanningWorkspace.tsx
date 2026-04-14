@@ -169,7 +169,8 @@ export function TaxPlanningWorkspace({
     url.searchParams.delete('reauth');
     router.replace(url.pathname + url.search, { scroll: false });
 
-    // Auto-pull financials
+    // The backend queues a background refresh on reconnection.
+    // Pull here too as a fallback (the API is idempotent).
     (async () => {
       setPullingXero(true);
       setXeroAuthNeeded(false);
