@@ -19,10 +19,10 @@ from typing import Any
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
-    async_sessionmaker,
     create_async_engine,
 )
 
@@ -97,24 +97,33 @@ async def db_session(
     Each test gets its own session with a transaction that is rolled back
     after the test completes. This ensures test isolation without needing
     to recreate the database for each test.
+
+    Uses a nested transaction (savepoint) so that tests which call
+    session.commit() (e.g. RLS tests) only commit the savepoint, not
+    the outer transaction. The outer transaction is always rolled back.
     """
     connection = await test_engine.connect()
     transaction = await connection.begin()
 
-    session_factory = async_sessionmaker(
-        bind=connection,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
+    # Start a savepoint so session.commit() inside tests doesn't
+    # commit the real transaction — it only releases the savepoint.
+    await connection.begin_nested()
 
-    session = session_factory()
+    session = AsyncSession(bind=connection, expire_on_commit=False, autoflush=False)
+
+    # After each commit (savepoint release), start a new savepoint
+    # so subsequent operations in the same test still work.
+    @event.listens_for(session.sync_session, "after_transaction_end")
+    def restart_savepoint(sess: Any, trans: Any) -> None:
+        if trans.nested and not trans._parent.nested:
+            sess.begin_nested()
 
     try:
         yield session
     finally:
         await session.close()
-        await transaction.rollback()
+        if transaction.is_active:
+            await transaction.rollback()
         await connection.close()
 
 
