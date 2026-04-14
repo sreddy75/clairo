@@ -302,7 +302,10 @@ class XeroConnectionService:
                 connection.tenant_id, include_disconnected=False
             )
             for sibling in siblings:
-                if sibling.id != connection_id and sibling.status == XeroConnectionStatus.NEEDS_REAUTH:
+                if (
+                    sibling.id != connection_id
+                    and sibling.status == XeroConnectionStatus.NEEDS_REAUTH
+                ):
                     await self.connection_repo.update(
                         sibling.id,
                         XeroConnectionUpdate(
@@ -393,4 +396,3 @@ class XeroConnectionService:
                 return connection
         finally:
             await redis_client.aclose()
-

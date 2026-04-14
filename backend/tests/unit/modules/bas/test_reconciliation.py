@@ -14,10 +14,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from app.modules.bas.tax_code_service import TaxCodeService
-
 
 # =============================================================================
 # Helpers
@@ -117,10 +114,18 @@ class TestBuildSuggestionRecord:
         service = TaxCodeService(session)
 
         items = [
-            {"source_type": "bank_transaction", "source_id": str(uuid.uuid4()),
-             "line_item_index": 0, "tax_type": "GST"},
-            {"source_type": "invoice", "source_id": str(uuid.uuid4()),
-             "line_item_index": 0, "tax_type": "NONE"},
+            {
+                "source_type": "bank_transaction",
+                "source_id": str(uuid.uuid4()),
+                "line_item_index": 0,
+                "tax_type": "GST",
+            },
+            {
+                "source_type": "invoice",
+                "source_id": str(uuid.uuid4()),
+                "line_item_index": 0,
+                "tax_type": "NONE",
+            },
         ]
         dicts = [service._build_suggestion_record(i, uuid.uuid4(), uuid.uuid4()) for i in items]
 

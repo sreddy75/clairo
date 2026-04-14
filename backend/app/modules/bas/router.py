@@ -1124,9 +1124,7 @@ async def list_suggestions(
             session_id=session_id,
             tenant_id=user.tenant_id,
         )
-        period_bank_transactions = [
-            PeriodBankTransactionResponse(**t) for t in raw_txns
-        ]
+        period_bank_transactions = [PeriodBankTransactionResponse(**t) for t in raw_txns]
 
     return TaxCodeSuggestionListResponse(
         suggestions=suggestions,
@@ -1309,7 +1307,11 @@ async def save_suggestion_note(
     await verify_connection_access(connection_id, session, user)
     service = TaxCodeService(session)
     suggestion = await service.save_note(
-        suggestion_id, user.tenant_id, user.id, body.note_text, body.sync_to_xero,
+        suggestion_id,
+        user.tenant_id,
+        user.id,
+        body.note_text,
+        body.sync_to_xero,
         connection_id=connection_id,
     )
     return SuggestionNoteResponse(
@@ -1317,9 +1319,7 @@ async def save_suggestion_note(
         note_text=suggestion.note_text or "",
         note_updated_by=suggestion.note_updated_by,
         note_updated_by_name=(
-            suggestion.note_updated_by_user.user.email
-            if suggestion.note_updated_by_user
-            else None
+            suggestion.note_updated_by_user.user.email if suggestion.note_updated_by_user else None
         ),
         note_updated_at=suggestion.note_updated_at,
     )

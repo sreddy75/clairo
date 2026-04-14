@@ -300,9 +300,9 @@ class BASService:
         for session in sessions:
             quality_score = None
             approved_unsynced_count = unsynced_map.get(session.id, 0)
-            responses.append(self._session_to_list_response(
-                session, quality_score, approved_unsynced_count
-            ))
+            responses.append(
+                self._session_to_list_response(session, quality_score, approved_unsynced_count)
+            )
 
         return BASSessionListResponse(
             sessions=responses,

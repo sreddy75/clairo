@@ -763,20 +763,20 @@ class BASRepository:
         )
         return result.scalar() or 0
 
-    async def get_bank_transaction_source_ids(
-        self, session_id: UUID, tenant_id: UUID
-    ) -> list[str]:
+    async def get_bank_transaction_source_ids(self, session_id: UUID, tenant_id: UUID) -> list[str]:
         """Return distinct xero_transaction_id strings for bank_transaction suggestions.
 
         Spec 057: Used to fetch reconciliation status from XeroBankTransaction.
         Returns source_id values cast to string (matching xero_transaction_id format).
         """
         result = await self.session.execute(
-            select(func.cast(TaxCodeSuggestion.source_id, Text)).where(
+            select(func.cast(TaxCodeSuggestion.source_id, Text))
+            .where(
                 TaxCodeSuggestion.session_id == session_id,
                 TaxCodeSuggestion.tenant_id == tenant_id,
                 TaxCodeSuggestion.source_type == "bank_transaction",
-            ).distinct()
+            )
+            .distinct()
         )
         return list(result.scalars().all())
 
@@ -830,11 +830,7 @@ class BASRepository:
                     s.resolved_at = None
                     newly_reconciled += 1
                     status_changed = True
-                elif (
-                    not is_reconciled_now
-                    and s.status == "pending"
-                    and s.auto_park_reason is None
-                ):
+                elif not is_reconciled_now and s.status == "pending" and s.auto_park_reason is None:
                     # Was pending (not manually parked) — now unreconciled → auto-park
                     s.status = "dismissed"
                     s.auto_park_reason = "unreconciled_in_xero"
@@ -904,16 +900,20 @@ class BASRepository:
             if txn.client:
                 contact_name = getattr(txn.client, "name", None)
 
-            items.append({
-                "id": txn.id,
-                "transaction_date": txn.transaction_date.date() if txn.transaction_date else None,
-                "total_amount": txn.total_amount,
-                "description": description,
-                "contact_name": contact_name,
-                "is_reconciled": txn.is_reconciled,
-                "tax_types": tax_types,
-                "has_suggestion": str(txn.id) in suggestion_source_ids,
-            })
+            items.append(
+                {
+                    "id": txn.id,
+                    "transaction_date": txn.transaction_date.date()
+                    if txn.transaction_date
+                    else None,
+                    "total_amount": txn.total_amount,
+                    "description": description,
+                    "contact_name": contact_name,
+                    "is_reconciled": txn.is_reconciled,
+                    "tax_types": tax_types,
+                    "has_suggestion": str(txn.id) in suggestion_source_ids,
+                }
+            )
         return items
 
     async def update_suggestion(self, suggestion: TaxCodeSuggestion) -> TaxCodeSuggestion:

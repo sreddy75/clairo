@@ -38,6 +38,7 @@ from app.modules.integrations.xero.schemas import (
 
 logger = logging.getLogger(__name__)
 
+
 class XeroOAuthService:
     """Service for handling Xero OAuth 2.0 flow."""
 

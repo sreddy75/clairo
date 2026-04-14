@@ -1242,4 +1242,3 @@ class XeroReportService:
             "is_current_period": True,
             "is_stale": False,
         }
-

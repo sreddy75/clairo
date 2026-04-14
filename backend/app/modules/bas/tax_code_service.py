@@ -73,7 +73,11 @@ class TaxCodeService:
         excluded = gst_result.excluded_items
 
         # Enrich excluded items with contact names and dates
-        enriched = await self._enrich_excluded_items(excluded, period.connection_id, tenant_id) if excluded else []
+        enriched = (
+            await self._enrich_excluded_items(excluded, period.connection_id, tenant_id)
+            if excluded
+            else []
+        )
 
         # Build account lookup for Tier 1
         accounts_map = await self._build_accounts_map(period.connection_id)
@@ -155,8 +159,12 @@ class TaxCodeService:
         # Spec 057: Enrich suggestions with Xero reconciliation status and
         # create auto-parked suggestions for ALL unreconciled bank transactions.
         await self._apply_reconciliation_to_suggestions(
-            suggestions_data, period.connection_id, tenant_id,
-            session_id, period.start_date, period.end_date,
+            suggestions_data,
+            period.connection_id,
+            tenant_id,
+            session_id,
+            period.start_date,
+            period.end_date,
         )
 
         # Bulk insert (idempotent via ON CONFLICT DO NOTHING)
@@ -752,7 +760,9 @@ class TaxCodeService:
         )
 
         # Xero sync (Spec 056 - US3)
-        logger.info("save_note sync check: sync_to_xero=%s connection_id=%s", sync_to_xero, connection_id)
+        logger.info(
+            "save_note sync check: sync_to_xero=%s connection_id=%s", sync_to_xero, connection_id
+        )
         if sync_to_xero and connection_id:
             await self._sync_note_to_xero(suggestion, tenant_id, user_id, connection_id)
 
@@ -773,7 +783,9 @@ class TaxCodeService:
             from app.modules.integrations.xero.service import XeroConnectionService
 
             xero_repo = XeroConnectionRepository(self.session)
-            connection = await xero_repo.get_by_id(connection_id, tenant_id) if connection_id else None
+            connection = (
+                await xero_repo.get_by_id(connection_id, tenant_id) if connection_id else None
+            )
             if not connection:
                 return
 
@@ -787,6 +799,7 @@ class TaxCodeService:
 
             # Resolve local ID → Xero document ID
             from app.modules.integrations.xero.writeback_service import XeroWritebackService
+
             wb_service = XeroWritebackService(self.session)
             xero_doc_id = await wb_service._resolve_xero_document_id(
                 suggestion.source_type, suggestion.source_id, tenant_id
@@ -795,7 +808,10 @@ class TaxCodeService:
             note_for_xero = f"Clairo: {suggestion.note_text or ''}"
             logger.info(
                 "Syncing note to Xero History & Notes: source_type=%s xero_id=%s note_length=%d preview=%s",
-                suggestion.source_type, xero_doc_id, len(note_for_xero), note_for_xero[:100],
+                suggestion.source_type,
+                xero_doc_id,
+                len(note_for_xero),
+                note_for_xero[:100],
             )
             async with XeroClient(settings.xero) as client:
                 result, _rl = await client.add_history_note(
@@ -1352,12 +1368,14 @@ class TaxCodeService:
 
         # Fetch ALL bank transactions for the period
         result = await self.session.execute(
-            select(XeroBankTransaction).where(
+            select(XeroBankTransaction)
+            .where(
                 XeroBankTransaction.connection_id == connection_id,
                 XeroBankTransaction.transaction_date >= start_date,
                 XeroBankTransaction.transaction_date <= end_date,
                 XeroBankTransaction.status == "AUTHORISED",
-            ).where(
+            )
+            .where(
                 # tenant_id filter for RLS — connection_id already scopes, but belt-and-suspenders
                 XeroBankTransaction.tenant_id == tenant_id,
             )
@@ -1365,9 +1383,7 @@ class TaxCodeService:
         all_txns = list(result.scalars().all())
 
         # Build reconciled lookup
-        reconciled_map: dict[str, bool] = {
-            str(t.id): bool(t.is_reconciled) for t in all_txns
-        }
+        reconciled_map: dict[str, bool] = {str(t.id): bool(t.is_reconciled) for t in all_txns}
 
         # Tag existing suggestions with is_reconciled
         existing_source_ids: set[str] = set()
@@ -1410,27 +1426,31 @@ class TaxCodeService:
 
             line_item_id = None
             if txn.line_items and isinstance(txn.line_items, list):
-                line_item_id = txn.line_items[0].get("line_item_id") or txn.line_items[0].get("LineItemID")
+                line_item_id = txn.line_items[0].get("line_item_id") or txn.line_items[0].get(
+                    "LineItemID"
+                )
 
-            suggestions_data.append({
-                "tenant_id": tenant_id,
-                "session_id": session_id,
-                "source_type": "bank_transaction",
-                "source_id": txn.id,
-                "line_item_index": 0,
-                "line_item_id": line_item_id,
-                "original_tax_type": tax_type,
-                "account_code": account_code,
-                "account_name": None,
-                "description": description,
-                "line_amount": line_amount,
-                "tax_amount": tax_amount,
-                "contact_name": contact_name,
-                "transaction_date": txn.transaction_date,
-                "status": "dismissed",
-                "auto_park_reason": "unreconciled_in_xero",
-                "is_reconciled": False,
-            })
+            suggestions_data.append(
+                {
+                    "tenant_id": tenant_id,
+                    "session_id": session_id,
+                    "source_type": "bank_transaction",
+                    "source_id": txn.id,
+                    "line_item_index": 0,
+                    "line_item_id": line_item_id,
+                    "original_tax_type": tax_type,
+                    "account_code": account_code,
+                    "account_name": None,
+                    "description": description,
+                    "line_amount": line_amount,
+                    "tax_amount": tax_amount,
+                    "contact_name": contact_name,
+                    "transaction_date": txn.transaction_date,
+                    "status": "dismissed",
+                    "auto_park_reason": "unreconciled_in_xero",
+                    "is_reconciled": False,
+                }
+            )
 
     def _build_suggestion_record(
         self,

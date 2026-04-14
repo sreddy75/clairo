@@ -133,10 +133,14 @@ class WorkboardService:
                 ),
             )
             .where(XeroConnection.tenant_id == tenant_id)
-            .where(XeroConnection.status.in_([
-                XeroConnectionStatus.ACTIVE,
-                XeroConnectionStatus.NEEDS_REAUTH,
-            ]))
+            .where(
+                XeroConnection.status.in_(
+                    [
+                        XeroConnectionStatus.ACTIVE,
+                        XeroConnectionStatus.NEEDS_REAUTH,
+                    ]
+                )
+            )
         )
 
         # Apply status filter
@@ -317,10 +321,14 @@ class WorkboardService:
                 ),
             )
             .where(XeroConnection.tenant_id == tenant_id)
-            .where(XeroConnection.status.in_([
-                XeroConnectionStatus.ACTIVE,
-                XeroConnectionStatus.NEEDS_REAUTH,
-            ]))
+            .where(
+                XeroConnection.status.in_(
+                    [
+                        XeroConnectionStatus.ACTIVE,
+                        XeroConnectionStatus.NEEDS_REAUTH,
+                    ]
+                )
+            )
         )
 
         result = await self.session.execute(base_stmt)

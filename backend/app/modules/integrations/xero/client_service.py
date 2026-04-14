@@ -342,4 +342,3 @@ class XeroClientService:
             quarters=quarter_infos,
             current=current_info,
         )
-

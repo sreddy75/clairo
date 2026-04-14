@@ -1622,4 +1622,3 @@ class XeroDataService:
 
         result.completed_at = datetime.now(UTC)
         return result
-

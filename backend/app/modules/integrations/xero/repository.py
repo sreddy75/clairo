@@ -212,6 +212,7 @@ class XeroConnectionRepository:
         # Set connection_type (defaults to 'practice' if not specified)
         if data.connection_type and data.connection_type != "practice":
             from app.modules.integrations.xero.models import XeroConnectionType
+
             with contextlib.suppress(ValueError):
                 connection.connection_type = XeroConnectionType(data.connection_type)
         self.session.add(connection)
@@ -273,10 +274,12 @@ class XeroConnectionRepository:
         result = await self.session.execute(
             select(XeroConnection).where(
                 XeroConnection.xero_tenant_id == xero_tenant_id,
-                XeroConnection.status.in_([
-                    XeroConnectionStatus.ACTIVE,
-                    XeroConnectionStatus.NEEDS_REAUTH,
-                ]),
+                XeroConnection.status.in_(
+                    [
+                        XeroConnectionStatus.ACTIVE,
+                        XeroConnectionStatus.NEEDS_REAUTH,
+                    ]
+                ),
             )
         )
         return list(result.scalars().all())
@@ -406,10 +409,12 @@ class XeroConnectionRepository:
         result = await self.session.execute(
             select(XeroConnection).where(
                 XeroConnection.tenant_id == tenant_id,
-                XeroConnection.status.in_([
-                    XeroConnectionStatus.ACTIVE,
-                    XeroConnectionStatus.NEEDS_REAUTH,
-                ]),
+                XeroConnection.status.in_(
+                    [
+                        XeroConnectionStatus.ACTIVE,
+                        XeroConnectionStatus.NEEDS_REAUTH,
+                    ]
+                ),
             )
         )
         return len(result.scalars().all())
@@ -468,10 +473,12 @@ class XeroConnectionRepository:
         result = await self.session.execute(
             select(XeroConnection).where(
                 XeroConnection.tenant_id == tenant_id,
-                XeroConnection.status.in_([
-                    XeroConnectionStatus.ACTIVE,
-                    XeroConnectionStatus.NEEDS_REAUTH,
-                ]),
+                XeroConnection.status.in_(
+                    [
+                        XeroConnectionStatus.ACTIVE,
+                        XeroConnectionStatus.NEEDS_REAUTH,
+                    ]
+                ),
             )
         )
         return list(result.scalars().all())

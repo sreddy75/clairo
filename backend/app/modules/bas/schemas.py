@@ -561,7 +561,9 @@ class TaxCodeSuggestionResponse(BaseModel):
         if instance.note_updated_by_name is None and hasattr(data, "note_updated_by_user"):
             user = data.note_updated_by_user
             if user is not None:
-                instance.note_updated_by_name = getattr(getattr(user, "user", None), "email", None) or str(user.id)
+                instance.note_updated_by_name = getattr(
+                    getattr(user, "user", None), "email", None
+                ) or str(user.id)
         return instance
 
     account_code: str | None

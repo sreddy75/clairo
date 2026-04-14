@@ -154,10 +154,12 @@ class DashboardRepository:
             .where(
                 and_(
                     XeroConnection.tenant_id == tenant_id,
-                    XeroConnection.status.in_([
-                        XeroConnectionStatus.ACTIVE,
-                        XeroConnectionStatus.NEEDS_REAUTH,
-                    ]),
+                    XeroConnection.status.in_(
+                        [
+                            XeroConnectionStatus.ACTIVE,
+                            XeroConnectionStatus.NEEDS_REAUTH,
+                        ]
+                    ),
                 )
             )
         )
@@ -287,10 +289,12 @@ class DashboardRepository:
         # with a reauth prompt, rather than silently disappearing from the list
         filters = [
             XeroConnection.tenant_id == tenant_id,
-            XeroConnection.status.in_([
-                XeroConnectionStatus.ACTIVE,
-                XeroConnectionStatus.NEEDS_REAUTH,
-            ]),
+            XeroConnection.status.in_(
+                [
+                    XeroConnectionStatus.ACTIVE,
+                    XeroConnectionStatus.NEEDS_REAUTH,
+                ]
+            ),
         ]
 
         if search:
