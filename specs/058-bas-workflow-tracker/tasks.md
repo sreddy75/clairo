@@ -13,7 +13,7 @@
 
 ## Phase 0: Git Setup
 
-- [ ] T000 Verify on feature branch `058-bas-workflow-tracker`
+- [x] T000 Verify on feature branch `058-bas-workflow-tracker`
   - Run: `git branch --show-current` → should output `058-bas-workflow-tracker`
   - If not: `git checkout 058-bas-workflow-tracker`
 
@@ -23,7 +23,7 @@
 
 **Purpose**: New models, migration, and foundational schemas
 
-- [ ] T001 Create `PracticeClient` SQLAlchemy model in `backend/app/modules/clients/models.py`
+- [x] T001 Create `PracticeClient` SQLAlchemy model in `backend/app/modules/clients/models.py`
   - Fields: id (UUID PK), tenant_id (FK tenants), name (VARCHAR 255), abn (VARCHAR 11 nullable), accounting_software (VARCHAR 20, default 'unknown'), xero_connection_id (FK xero_connections nullable UNIQUE), assigned_user_id (FK practice_users nullable), notes (TEXT nullable), notes_updated_at (TIMESTAMPTZ nullable), notes_updated_by (FK practice_users nullable), manual_status (VARCHAR 20 nullable), created_at, updated_at
   - Include `AuditableMixin` per constitution
   - RLS policy: `tenant_id = current_setting('app.current_tenant_id')::uuid`
@@ -32,28 +32,28 @@
   - Add `AccountingSoftwareType` enum: xero, quickbooks, myob, email, other, unknown
   - Add `ManualBASStatus` enum: not_started, in_progress, completed, lodged
 
-- [ ] T002 [P] Create `ClientQuarterExclusion` SQLAlchemy model in `backend/app/modules/clients/models.py`
+- [x] T002 [P] Create `ClientQuarterExclusion` SQLAlchemy model in `backend/app/modules/clients/models.py`
   - Fields: id (UUID PK), tenant_id (FK tenants), client_id (FK practice_clients), quarter (SMALLINT 1-4), fy_year (VARCHAR 7), reason (VARCHAR 30 nullable), reason_detail (TEXT nullable), excluded_by (FK practice_users), excluded_at (TIMESTAMPTZ), reversed_at (TIMESTAMPTZ nullable), reversed_by (FK practice_users nullable)
   - Unique partial index: (client_id, quarter, fy_year) WHERE reversed_at IS NULL
   - Index: (tenant_id, quarter, fy_year)
   - Add `ExclusionReason` enum: dormant, lodged_externally, gst_cancelled, left_practice, other
 
-- [ ] T003 [P] Create `ClientNoteHistory` SQLAlchemy model in `backend/app/modules/clients/models.py`
+- [x] T003 [P] Create `ClientNoteHistory` SQLAlchemy model in `backend/app/modules/clients/models.py`
   - Fields: id (UUID PK), tenant_id (FK tenants), client_id (FK practice_clients), note_text (TEXT), edited_by (FK practice_users), edited_at (TIMESTAMPTZ)
   - Index: (client_id, edited_at DESC)
   - Immutable: add no-update/no-delete rules (same pattern as audit_logs)
 
-- [ ] T004 [P] Add `display_name` column (VARCHAR 100, nullable) to `PracticeUser` model in `backend/app/modules/auth/models.py`
+- [x] T004 [P] Add `display_name` column (VARCHAR 100, nullable) to `PracticeUser` model in `backend/app/modules/auth/models.py`
   - Add `display_name` field to model class
   - Add `display_name` to `PracticeUserResponse` schema in `backend/app/modules/auth/schemas.py`
 
-- [ ] T005 Create Alembic migration for new tables and column in `backend/app/alembic/versions/`
+- [x] T005 Create Alembic migration for new tables and column in `backend/app/alembic/versions/`
   - Run: `cd backend && uv run alembic revision --autogenerate -m "add practice_clients, exclusions, note_history tables"`
   - Review generated migration — ensure RLS policies, partial unique indexes, and check constraints are correct
   - Add immutability rules (no-update, no-delete) for `client_note_history`
   - Run: `cd backend && uv run alembic upgrade head`
 
-- [ ] T006 Create backfill migration in `backend/app/alembic/versions/`
+- [x] T006 Create backfill migration in `backend/app/alembic/versions/`
   - Run: `cd backend && uv run alembic revision -m "backfill practice_clients from xero_connections"`
   - INSERT INTO practice_clients from xero_connections WHERE status IN ('active', 'needs_reauth')
   - UPDATE practice_clients SET assigned_user_id from bulk_import_organizations where available (match via xero_tenant_id)

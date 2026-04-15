@@ -23,6 +23,11 @@ from app.modules.onboarding.models import (  # noqa: F401
     EmailDrip,
     OnboardingProgress,
 )
+from app.modules.clients.models import (  # noqa: F401
+    ClientNoteHistory,
+    ClientQuarterExclusion,
+    PracticeClient,
+)
 from app.modules.integrations.xero.models import *  # noqa: F401, F403
 
 # Alembic Config object

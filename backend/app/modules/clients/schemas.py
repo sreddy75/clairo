@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class BASStatus(str, Enum):
@@ -57,6 +57,193 @@ class TransactionType(str, Enum):
     SPEND_OVERPAYMENT = "spend_overpayment"
     RECEIVE_PREPAYMENT = "receive_prepayment"
     SPEND_PREPAYMENT = "spend_prepayment"
+
+
+# =============================================================================
+# Practice Client Schemas (Spec 058)
+# =============================================================================
+
+
+class PracticeClientCreate(BaseModel):
+    """Schema for creating a non-Xero client manually."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=1, max_length=255, description="Client business name")
+    abn: str | None = Field(None, max_length=11, description="Australian Business Number")
+    accounting_software: str = Field(
+        ..., description="Software type: quickbooks, myob, email, other"
+    )
+    assigned_user_id: UUID | None = Field(None, description="Team member to assign")
+    notes: str | None = Field(None, max_length=5000, description="Persistent client notes")
+
+    @field_validator("abn")
+    @classmethod
+    def validate_abn(cls, v: str | None) -> str | None:
+        if v is not None:
+            v = v.strip().replace(" ", "")
+            if not v.isdigit() or len(v) != 11:
+                raise ValueError("ABN must be exactly 11 digits")
+        return v
+
+    @field_validator("accounting_software")
+    @classmethod
+    def validate_software(cls, v: str) -> str:
+        allowed = {"quickbooks", "myob", "email", "other"}
+        if v not in allowed:
+            raise ValueError(f"Must be one of: {', '.join(sorted(allowed))}")
+        return v
+
+
+class PracticeClientUpdate(BaseModel):
+    """Schema for updating a practice client."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(None, min_length=1, max_length=255)
+    abn: str | None = Field(None, max_length=11)
+    assigned_user_id: UUID | None = None
+
+
+class PracticeClientResponse(BaseModel):
+    """Full response for a practice client."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    tenant_id: UUID
+    name: str
+    abn: str | None = None
+    accounting_software: str
+    xero_connection_id: UUID | None = None
+    has_xero_connection: bool = False
+    assigned_user_id: UUID | None = None
+    assigned_user_name: str | None = None
+    notes: str | None = None
+    notes_preview: str | None = None
+    notes_updated_at: datetime | None = None
+    notes_updated_by_name: str | None = None
+    manual_status: str | None = None
+    created_at: datetime
+
+
+class PracticeClientAssignRequest(BaseModel):
+    """Schema for assigning a team member to a client."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    assigned_user_id: UUID | None = Field(
+        ..., description="Team member ID, or null to unassign"
+    )
+
+
+class PracticeClientBulkAssignRequest(BaseModel):
+    """Schema for bulk-assigning team members."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    client_ids: list[UUID] = Field(..., min_length=1, max_length=100)
+    assigned_user_id: UUID | None = Field(
+        ..., description="Team member ID, or null to unassign all"
+    )
+
+
+class BulkAssignResponse(BaseModel):
+    """Response for bulk assignment."""
+
+    updated_count: int
+    clients: list[PracticeClientResponse]
+
+
+class PracticeClientNotesUpdate(BaseModel):
+    """Schema for updating persistent client notes."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    notes: str = Field(..., max_length=5000, description="Note content (empty string to clear)")
+
+
+class ManualStatusUpdate(BaseModel):
+    """Schema for updating BAS status on non-Xero clients."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    manual_status: str = Field(..., description="not_started, in_progress, completed, lodged")
+
+    @field_validator("manual_status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        allowed = {"not_started", "in_progress", "completed", "lodged"}
+        if v not in allowed:
+            raise ValueError(f"Must be one of: {', '.join(sorted(allowed))}")
+        return v
+
+
+class NoteHistoryEntry(BaseModel):
+    """Single entry in note change history."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    note_text: str
+    edited_by_name: str | None = None
+    edited_at: datetime
+
+
+class NoteHistoryResponse(BaseModel):
+    """Response for note change history."""
+
+    history: list[NoteHistoryEntry]
+
+
+# =============================================================================
+# Client Exclusion Schemas (Spec 058)
+# =============================================================================
+
+
+class ClientExclusionCreate(BaseModel):
+    """Schema for excluding a client from a quarter."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    quarter: int = Field(..., ge=1, le=4, description="Quarter number (1-4)")
+    fy_year: str = Field(..., description="Financial year (e.g., '2025-26')")
+    reason: str | None = Field(
+        None,
+        description="Reason: dormant, lodged_externally, gst_cancelled, left_practice, other",
+    )
+    reason_detail: str | None = Field(None, max_length=500, description="Free text (for 'other')")
+
+
+class ClientExclusionResponse(BaseModel):
+    """Response for a client exclusion."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    client_id: UUID
+    quarter: int
+    fy_year: str
+    reason: str | None = None
+    reason_detail: str | None = None
+    excluded_by_name: str | None = None
+    excluded_at: datetime
+
+
+class ClientExclusionReversedResponse(BaseModel):
+    """Response when an exclusion is reversed."""
+
+    id: UUID
+    reversed_at: datetime
+    reversed_by_name: str | None = None
+
+
+class ClientExclusionBrief(BaseModel):
+    """Brief exclusion info for dashboard display."""
+
+    id: UUID
+    reason: str | None = None
+    excluded_by_name: str | None = None
+    excluded_at: datetime
 
 
 # =============================================================================

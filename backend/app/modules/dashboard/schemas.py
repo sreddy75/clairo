@@ -47,11 +47,20 @@ class QualitySummary(BaseModel):
     total_critical_issues: int = Field(default=0, description="Total critical issues")
 
 
+class TeamMemberSummary(BaseModel):
+    """Team member with client count for summary display."""
+
+    id: UUID | None = None
+    name: str
+    client_count: int = 0
+
+
 class DashboardSummaryResponse(BaseModel):
     """Aggregated dashboard summary metrics across all client businesses."""
 
-    total_clients: int  # Count of XeroConnections (businesses)
-    active_clients: int  # Connections with activity this quarter
+    total_clients: int  # Count of practice clients (active, non-excluded)
+    active_clients: int  # Clients with activity this quarter
+    excluded_count: int = 0  # Clients excluded from this quarter
     total_sales: Decimal = Field(default=Decimal("0.00"))
     total_purchases: Decimal = Field(default=Decimal("0.00"))
     gst_collected: Decimal = Field(default=Decimal("0.00"))
@@ -59,6 +68,7 @@ class DashboardSummaryResponse(BaseModel):
     net_gst: Decimal = Field(default=Decimal("0.00"))
     status_counts: StatusCounts
     quality: QualitySummary = Field(default_factory=QualitySummary)
+    team_members: list[TeamMemberSummary] = Field(default_factory=list)
     quarter_label: str
     quarter: int
     fy_year: int
@@ -69,15 +79,32 @@ class DashboardSummaryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ClientPortfolioItem(BaseModel):
-    """Single client business (XeroConnection) with financial summary.
+class ClientExclusionBrief(BaseModel):
+    """Brief exclusion info for dashboard display."""
 
-    Each item represents one Xero organization = one business = one BAS to lodge.
-    NOT a contact within an organization.
+    id: UUID
+    reason: str | None = None
+    excluded_by_name: str | None = None
+    excluded_at: datetime
+
+
+class ClientPortfolioItem(BaseModel):
+    """Single practice client with financial summary.
+
+    Each item represents one PracticeClient = one business the practice manages.
+    May or may not have a Xero connection.
     """
 
-    id: UUID  # XeroConnection ID
-    organization_name: str  # The business name from Xero
+    id: UUID  # PracticeClient ID
+    organization_name: str  # The business name
+    assigned_user_id: UUID | None = None
+    assigned_user_name: str | None = None
+    accounting_software: str = "xero"
+    has_xero_connection: bool = True
+    notes_preview: str | None = None
+    unreconciled_count: int = 0
+    manual_status: str | None = None
+    exclusion: ClientExclusionBrief | None = None
     total_sales: Decimal = Field(default=Decimal("0.00"))
     total_purchases: Decimal = Field(default=Decimal("0.00"))
     gst_collected: Decimal = Field(default=Decimal("0.00"))

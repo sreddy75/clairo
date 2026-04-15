@@ -599,6 +599,13 @@ class PracticeUser(Base, TimestampMixin):
         comment="Role within the tenant",
     )
 
+    # Display
+    display_name: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="Cached display name from Clerk. Falls back to email when NULL.",
+    )
+
     # Security
     mfa_enabled: Mapped[bool] = mapped_column(
         Boolean,
