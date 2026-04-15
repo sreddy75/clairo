@@ -11,7 +11,7 @@
  * Each row = one XeroConnection = one client business = one BAS to lodge.
  */
 
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import {
   ArrowDown,
   ArrowUp,
@@ -174,7 +174,9 @@ const STATUS_TABS = [
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
+  const { user: clerkUser } = useUser();
+  const userRole = clerkUser?.publicMetadata?.role as string | undefined;
   const searchParams = useSearchParams();
   const isDemo = searchParams.get('demo') === 'true';
 
@@ -206,6 +208,9 @@ export default function DashboardPage() {
   const [addClientSoftware, setAddClientSoftware] = useState('quickbooks');
   const [addingClient, setAddingClient] = useState(false);
   const [insightsExpanded, setInsightsExpanded] = useState(false);
+  const [excludeClientId, setExcludeClientId] = useState<string | null>(null);
+  const [excludeReason, setExcludeReason] = useState('dormant');
+  const [excluding, setExcluding] = useState(false);
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -284,7 +289,15 @@ export default function DashboardPage() {
           await Promise.all([
             fetchSummary(token, quarter),
             fetchClients(token, quarter),
-            listTenantUsers(token).then((r) => setTeamMembers(r.users.filter((u) => u.is_active))).catch(() => {}),
+            listTenantUsers(token).then((r) => {
+              const active = r.users.filter((u) => u.is_active);
+              setTeamMembers(active);
+              // Default to "My Clients" for non-admin users
+              if (userRole && userRole !== 'admin' && userRole !== 'super_admin' && userId) {
+                const me = active.find((u) => u.clerk_id === userId);
+                if (me) setSelectedAssignee(me.id);
+              }
+            }).catch(() => {}),
           ]);
         }
       } catch {
@@ -381,22 +394,27 @@ export default function DashboardPage() {
     }
   };
 
-  const handleExclude = async (clientId: string) => {
-    if (!selectedQuarter) return;
-    const token = await getToken();
-    if (!token) return;
-    const fyYearStr = `${selectedQuarter.fy_year - 1}-${String(selectedQuarter.fy_year).slice(-2)}`;
-    const resp = await apiClient.post(`/api/v1/clients/${clientId}/exclusions`, {
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        quarter: selectedQuarter.quarter,
-        fy_year: fyYearStr,
-        reason: 'other',
-      }),
-    });
-    if (resp.ok || resp.status === 409) {
-      // 409 = already excluded, just refresh
-      await Promise.all([fetchSummary(token, selectedQuarter), fetchClients(token, selectedQuarter)]);
+  const handleExcludeConfirm = async () => {
+    if (!excludeClientId || !selectedQuarter) return;
+    setExcluding(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const fyYearStr = `${selectedQuarter.fy_year - 1}-${String(selectedQuarter.fy_year).slice(-2)}`;
+      const resp = await apiClient.post(`/api/v1/clients/${excludeClientId}/exclusions`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quarter: selectedQuarter.quarter,
+          fy_year: fyYearStr,
+          reason: excludeReason,
+        }),
+      });
+      if (resp.ok || resp.status === 409) {
+        setExcludeClientId(null);
+        await Promise.all([fetchSummary(token, selectedQuarter), fetchClients(token, selectedQuarter)]);
+      }
+    } finally {
+      setExcluding(false);
     }
   };
 
@@ -882,7 +900,7 @@ export default function DashboardPage() {
                             </button>
                           ) : selectedStatus !== 'excluded' ? (
                             <button
-                              onClick={() => handleExclude(client.id)}
+                              onClick={() => { setExcludeClientId(client.id); setExcludeReason('dormant'); }}
                               className="text-xs text-muted-foreground hover:text-foreground"
                               title="Exclude from this quarter"
                             >
@@ -984,6 +1002,51 @@ export default function DashboardPage() {
             <Button onClick={handleAddClient} disabled={addingClient || !addClientName.trim()}>
               {addingClient ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
               Add Client
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exclude Client Dialog */}
+      <Dialog open={!!excludeClientId} onOpenChange={(open) => { if (!open) setExcludeClientId(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Exclude from Quarter</DialogTitle>
+            <DialogDescription>
+              This client won&apos;t appear in the active list for this quarter.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Label>Reason</Label>
+            <div className="space-y-2">
+              {[
+                { value: 'dormant', label: 'Dormant entity' },
+                { value: 'lodged_externally', label: 'Lodged externally' },
+                { value: 'gst_cancelled', label: 'GST cancelled' },
+                { value: 'left_practice', label: 'Left practice' },
+                { value: 'other', label: 'Other' },
+              ].map((opt) => (
+                <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="exclude-reason"
+                    value={opt.value}
+                    checked={excludeReason === opt.value}
+                    onChange={() => setExcludeReason(opt.value)}
+                    className="accent-primary"
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcludeClientId(null)} disabled={excluding}>
+              Cancel
+            </Button>
+            <Button onClick={handleExcludeConfirm} disabled={excluding}>
+              {excluding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Exclude
             </Button>
           </DialogFooter>
         </DialogContent>
