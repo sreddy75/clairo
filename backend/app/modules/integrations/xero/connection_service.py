@@ -276,7 +276,7 @@ class XeroConnectionService:
                 connection_id,
                 XeroConnectionUpdate(status=XeroConnectionStatus.NEEDS_REAUTH),
             )
-            raise XeroOAuthError(f"Token refresh failed: {e}") from e
+            raise XeroOAuthError(str(e)) from e
 
         # Update with new tokens
         encrypted_access = self.encryption.encrypt(token_response.access_token)

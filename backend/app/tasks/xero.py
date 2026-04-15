@@ -59,6 +59,25 @@ SYNC_TASK_CONFIG = {
 }
 
 
+def _friendly_sync_error(raw: str) -> str:
+    """Map raw exception text to a user-friendly sync error message."""
+    lowered = raw.lower()
+    if "token refresh failed" in lowered or "invalid_client" in lowered:
+        return "Xero connection expired. Please reconnect your Xero account."
+    if "invalid or expired access token" in lowered or "401" in lowered:
+        return "Xero access expired. Please reconnect your Xero account."
+    if "rate limit" in lowered or "429" in lowered:
+        return "Xero API rate limit reached. Please try again shortly."
+    if "connection is not active" in lowered:
+        return "Xero connection is inactive. Please reconnect."
+    if "not found" in lowered:
+        return "Xero connection not found."
+    # Fallback: cap length and strip tracebacks
+    if len(raw) > 120:
+        return raw[:117] + "..."
+    return raw
+
+
 async def _get_async_session() -> AsyncSession:
     """Create an async database session for tasks.
 
@@ -1701,6 +1720,10 @@ async def _sync_entity_async(
                 "error": str(e),
             },
         )
+        # Map raw errors to user-friendly messages
+        raw_error = str(e)
+        user_message = _friendly_sync_error(raw_error)
+
         # Rollback failed transaction before attempting status update
         await session.rollback()
         # Update entity progress record with failure
@@ -1714,7 +1737,7 @@ async def _sync_entity_async(
                 await progress_repo.update_status(
                     entity_progress.id,
                     XeroSyncEntityProgressStatus.FAILED,
-                    error_message=str(e),
+                    error_message=user_message,
                     completed_at=end_time,
                     duration_ms=duration_ms,
                 )
@@ -1736,7 +1759,7 @@ async def _sync_entity_async(
             "records_created": 0,
             "records_updated": 0,
             "records_failed": 0,
-            "error_message": str(e),
+            "error_message": user_message,
         }
 
     finally:
