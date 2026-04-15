@@ -482,7 +482,10 @@ class DashboardRepository:
                     bas_status = BASStatus.NEEDS_REVIEW
 
             # Apply status filter if specified
-            if status and bas_status.value != status:
+            if status == "needs_attention":
+                if bas_status.value not in ("needs_review", "missing_data"):
+                    continue
+            elif status and bas_status.value != status:
                 continue
 
             net_gst = (row.gst_collected or Decimal("0")) - (row.gst_paid or Decimal("0"))
