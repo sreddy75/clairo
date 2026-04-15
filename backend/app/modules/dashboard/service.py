@@ -219,6 +219,7 @@ class DashboardService:
                     assigned_user_name=c.get("assigned_user_name"),
                     accounting_software=c.get("accounting_software", "xero"),
                     has_xero_connection=c.get("has_xero_connection", True),
+                    xero_connection_id=c.get("xero_connection_id"),
                     notes_preview=c.get("notes_preview"),
                     unreconciled_count=c.get("unreconciled_count", 0),
                     manual_status=c.get("manual_status"),

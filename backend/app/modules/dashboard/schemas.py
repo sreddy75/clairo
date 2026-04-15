@@ -101,6 +101,7 @@ class ClientPortfolioItem(BaseModel):
     assigned_user_name: str | None = None
     accounting_software: str = "xero"
     has_xero_connection: bool = True
+    xero_connection_id: str | None = None
     notes_preview: str | None = None
     unreconciled_count: int = 0
     manual_status: str | None = None
