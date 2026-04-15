@@ -8,9 +8,19 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.clients.repository import ClientsRepository
+from app.core.exceptions import ConflictError, NotFoundError
+from app.modules.clients.repository import (
+    ClientExclusionRepository,
+    ClientNoteHistoryRepository,
+    ClientsRepository,
+    PracticeClientRepository,
+)
 from app.modules.clients.schemas import (
+    BulkAssignResponse,
     ClientDetailResponse,
+    ClientExclusionCreate,
+    ClientExclusionResponse,
+    ClientExclusionReversedResponse,
     ContactItem,
     ContactListResponse,
     EmployeeItem,
@@ -19,9 +29,13 @@ from app.modules.clients.schemas import (
     FinancialSummaryResponse,
     InvoiceItem,
     InvoiceListResponse,
+    NoteHistoryEntry,
+    NoteHistoryResponse,
     PayRunItem,
     PayRunListResponse,
     PayRunStatus,
+    PracticeClientCreate,
+    PracticeClientResponse,
     TransactionItem,
     TransactionListResponse,
 )
@@ -510,3 +524,242 @@ class ClientsService:
             page=page,
             limit=limit,
         )
+
+
+# =============================================================================
+# Practice Client Service (Spec 058)
+# =============================================================================
+
+
+class PracticeClientService:
+    """Service for practice client management.
+
+    Handles team assignment, exclusion, notes, and manual client creation.
+    """
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+        self.client_repo = PracticeClientRepository(db)
+        self.exclusion_repo = ClientExclusionRepository(db)
+        self.note_history_repo = ClientNoteHistoryRepository(db)
+
+    # ─── Helper ────────────────────────────────────────────────────────────
+
+    def _to_response(self, client: "PracticeClient") -> PracticeClientResponse:
+
+        notes_editor_name = None
+        if client.notes_updated_by and hasattr(client, "notes_editor") and client.notes_editor:
+            notes_editor_name = getattr(client.notes_editor, "display_name", None) or client.notes_editor.email
+
+        return PracticeClientResponse(
+            id=client.id,
+            tenant_id=client.tenant_id,
+            name=client.name,
+            abn=client.abn,
+            accounting_software=client.accounting_software,
+            xero_connection_id=client.xero_connection_id,
+            has_xero_connection=client.xero_connection_id is not None,
+            assigned_user_id=client.assigned_user_id,
+            assigned_user_name=client.assigned_user_name,
+            notes=client.notes,
+            notes_preview=client.notes_preview,
+            notes_updated_at=client.notes_updated_at,
+            notes_updated_by_name=notes_editor_name,
+            manual_status=client.manual_status,
+            created_at=client.created_at,
+        )
+
+    # ─── Assignment (US1) ──────────────────────────────────────────────────
+
+    async def assign_client(
+        self,
+        client_id: UUID,
+        assigned_user_id: UUID | None,
+        tenant_id: UUID,
+    ) -> PracticeClientResponse:
+        client = await self.client_repo.update_assignment(
+            client_id=client_id,
+            tenant_id=tenant_id,
+            assigned_user_id=assigned_user_id,
+        )
+        if client is None:
+            raise NotFoundError(resource_type="PracticeClient", message="Client not found")
+        return self._to_response(client)
+
+    async def bulk_assign_clients(
+        self,
+        client_ids: list[UUID],
+        assigned_user_id: UUID | None,
+        tenant_id: UUID,
+    ) -> BulkAssignResponse:
+        updated_count = await self.client_repo.bulk_update_assignment(
+            client_ids=client_ids,
+            assigned_user_id=assigned_user_id,
+            tenant_id=tenant_id,
+        )
+        # Fetch updated clients for response
+        clients = []
+        for cid in client_ids:
+            c = await self.client_repo.get_by_id(cid, tenant_id)
+            if c:
+                clients.append(self._to_response(c))
+        return BulkAssignResponse(updated_count=updated_count, clients=clients)
+
+    # ─── Exclusion (US2) ───────────────────────────────────────────────────
+
+    async def exclude_client(
+        self,
+        client_id: UUID,
+        data: ClientExclusionCreate,
+        tenant_id: UUID,
+        excluded_by: UUID,
+    ) -> ClientExclusionResponse:
+        # Check client exists
+        client = await self.client_repo.get_by_id(client_id, tenant_id)
+        if client is None:
+            raise NotFoundError(resource_type="PracticeClient", message="Client not found")
+
+        # Check not already excluded
+        existing = await self.exclusion_repo.get_active_exclusion(
+            client_id=client_id, quarter=data.quarter, fy_year=data.fy_year
+        )
+        if existing:
+            raise ConflictError(
+                message="Client is already excluded for this quarter",
+                resource_type="ClientQuarterExclusion",
+                conflict_field="client_id",
+            )
+
+        exclusion = await self.exclusion_repo.create_exclusion(
+            tenant_id=tenant_id,
+            client_id=client_id,
+            quarter=data.quarter,
+            fy_year=data.fy_year,
+            excluded_by=excluded_by,
+            reason=data.reason,
+            reason_detail=data.reason_detail,
+        )
+
+        user_name = None
+        if exclusion.excluded_by_user:
+            user_name = getattr(exclusion.excluded_by_user, "display_name", None) or exclusion.excluded_by_user.email
+
+        return ClientExclusionResponse(
+            id=exclusion.id,
+            client_id=exclusion.client_id,
+            quarter=exclusion.quarter,
+            fy_year=exclusion.fy_year,
+            reason=exclusion.reason,
+            reason_detail=exclusion.reason_detail,
+            excluded_by_name=user_name,
+            excluded_at=exclusion.excluded_at,
+        )
+
+    async def reverse_exclusion(
+        self,
+        client_id: UUID,
+        exclusion_id: UUID,
+        tenant_id: UUID,
+        reversed_by: UUID,
+    ) -> ClientExclusionReversedResponse:
+        exclusion = await self.exclusion_repo.reverse_exclusion(
+            exclusion_id=exclusion_id,
+            tenant_id=tenant_id,
+            reversed_by=reversed_by,
+        )
+        if exclusion is None:
+            raise NotFoundError(
+                resource_type="ClientQuarterExclusion", message="Exclusion not found"
+            )
+
+        user_name = None
+        if exclusion.reversed_by_user:
+            user_name = getattr(exclusion.reversed_by_user, "display_name", None) or exclusion.reversed_by_user.email
+
+        return ClientExclusionReversedResponse(
+            id=exclusion.id,
+            reversed_at=exclusion.reversed_at,  # type: ignore[arg-type]
+            reversed_by_name=user_name,
+        )
+
+    # ─── Notes (US3) ──────────────────────────────────────────────────────
+
+    async def update_notes(
+        self,
+        client_id: UUID,
+        notes: str,
+        tenant_id: UUID,
+        updated_by: UUID,
+    ) -> PracticeClientResponse:
+        client = await self.client_repo.get_by_id(client_id, tenant_id)
+        if client is None:
+            raise NotFoundError(resource_type="PracticeClient", message="Client not found")
+
+        # Save history entry before updating
+        if client.notes:
+            await self.note_history_repo.create_entry(
+                tenant_id=tenant_id,
+                client_id=client_id,
+                note_text=client.notes,
+                edited_by=updated_by,
+            )
+
+        client = await self.client_repo.update_notes(
+            client_id=client_id,
+            tenant_id=tenant_id,
+            notes=notes,
+            updated_by=updated_by,
+        )
+        return self._to_response(client)  # type: ignore[arg-type]
+
+    async def get_note_history(
+        self,
+        client_id: UUID,
+        tenant_id: UUID,
+    ) -> NoteHistoryResponse:
+        entries = await self.note_history_repo.get_history(client_id, tenant_id)
+        history = []
+        for entry in entries:
+            editor_name = None
+            if entry.editor:
+                editor_name = getattr(entry.editor, "display_name", None) or entry.editor.email
+            history.append(
+                NoteHistoryEntry(
+                    note_text=entry.note_text,
+                    edited_by_name=editor_name,
+                    edited_at=entry.edited_at,
+                )
+            )
+        return NoteHistoryResponse(history=history)
+
+    # ─── Manual Client (US4) ──────────────────────────────────────────────
+
+    async def create_manual_client(
+        self,
+        data: PracticeClientCreate,
+        tenant_id: UUID,
+    ) -> PracticeClientResponse:
+        client = await self.client_repo.create(
+            tenant_id=tenant_id,
+            name=data.name,
+            abn=data.abn,
+            accounting_software=data.accounting_software,
+            assigned_user_id=data.assigned_user_id,
+            notes=data.notes,
+        )
+        return self._to_response(client)
+
+    async def update_manual_status(
+        self,
+        client_id: UUID,
+        status: str,
+        tenant_id: UUID,
+    ) -> PracticeClientResponse:
+        client = await self.client_repo.update_manual_status(
+            client_id=client_id,
+            tenant_id=tenant_id,
+            status=status,
+        )
+        if client is None:
+            raise NotFoundError(resource_type="PracticeClient", message="Client not found")
+        return self._to_response(client)
