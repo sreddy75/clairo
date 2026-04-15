@@ -792,11 +792,23 @@ export default function DashboardPage() {
                             >
                               {client.organization_name}
                             </Link>
-                            {!client.has_xero_connection && (
-                              <span className="rounded bg-muted px-1 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
-                                {client.accounting_software === 'quickbooks' ? 'QB' : client.accounting_software === 'myob' ? 'MYOB' : client.accounting_software}
-                              </span>
-                            )}
+                            {(() => {
+                              const sw = client.accounting_software;
+                              const softwareConfig: Record<string, { label: string; className: string }> = {
+                                xero: { label: 'Xero', className: 'bg-[#13B5EA]/10 text-[#13B5EA] border border-[#13B5EA]/20' },
+                                quickbooks: { label: 'QB', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+                                myob: { label: 'MYOB', className: 'bg-purple-50 text-purple-700 border border-purple-200' },
+                                email: { label: 'Email', className: 'bg-amber-50 text-amber-700 border border-amber-200' },
+                                other: { label: 'Other', className: 'bg-stone-100 text-stone-600 border border-stone-200' },
+                                unknown: { label: '?', className: 'bg-stone-100 text-stone-500 border border-stone-200' },
+                              };
+                              const cfg = softwareConfig[sw] ?? softwareConfig['unknown']!;
+                              return (
+                                <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold', cfg.className)}>
+                                  {cfg.label}
+                                </span>
+                              );
+                            })()}
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
