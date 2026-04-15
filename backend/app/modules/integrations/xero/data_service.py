@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -11,8 +12,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.modules.integrations.xero.client import XeroClient
+from app.modules.integrations.xero.connection_service import XeroConnectionService
 from app.modules.integrations.xero.encryption import TokenEncryption
-from app.modules.integrations.xero.models import XeroConnection, XeroConnectionStatus
+from app.modules.integrations.xero.exceptions import (
+    XeroConnectionInactiveError,
+    XeroConnectionNotFoundError as XeroConnectionNotFoundExc,
+    XeroRateLimitExceededError,
+)
+from app.modules.integrations.xero.models import XeroConnection, XeroConnectionStatus, XeroSyncType
 from app.modules.integrations.xero.rate_limiter import RateLimitState, XeroRateLimiter
 from app.modules.integrations.xero.repository import (
     XeroAccountRepository,
