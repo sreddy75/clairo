@@ -23,6 +23,7 @@ from app.modules.integrations.xero.repository import (
 )
 from app.modules.integrations.xero.schemas import (
     XeroConnectionResponse,
+    XeroConnectionUpdate,
     XeroOrganization,
     XpmClientConnectionProgress,
     XpmClientListResponse,

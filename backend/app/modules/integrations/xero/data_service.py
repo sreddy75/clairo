@@ -245,7 +245,7 @@ class XeroDataService:
 
                         # Check if this would create a new client
                         existing = await self.client_repo.get_by_xero_contact_id(
-                            connection.tenant_id, contact.get("ContactID")
+                            connection_id, contact.get("ContactID")
                         )
 
                         if existing:

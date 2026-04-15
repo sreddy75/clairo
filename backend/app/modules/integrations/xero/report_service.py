@@ -16,6 +16,7 @@ from app.modules.integrations.xero.encryption import TokenEncryption
 from app.modules.integrations.xero.exceptions import XeroConnectionInactiveError
 from app.modules.integrations.xero.models import XeroConnection, XeroConnectionStatus
 from app.modules.integrations.xero.repository import XeroConnectionRepository
+from app.modules.integrations.xero.schemas import XeroConnectionUpdate
 from app.modules.integrations.xero.transformers import (
     AgedPayablesTransformer,
     AgedReceivablesTransformer,
