@@ -54,6 +54,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import type { TenantUser } from '@/lib/api/users';
+import { listTenantUsers } from '@/lib/api/users';
 import { apiClient } from '@/lib/api-client';
 import { getStatusConfig } from '@/lib/constants/status';
 import { formatCurrency, formatRelativeTime } from '@/lib/formatters';
@@ -183,6 +185,8 @@ export default function DashboardPage() {
   const [total, setTotal] = useState(0);
   const limit = 25;
   const [selectedAssignee, setSelectedAssignee] = useState<string>('');
+  const [teamMembers, setTeamMembers] = useState<TenantUser[]>([]);
+  const [assigningClient, setAssigningClient] = useState<string | null>(null);
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -254,7 +258,11 @@ export default function DashboardPage() {
           setCurrentQuarter(data.current);
           const quarter = { quarter: data.current.quarter, fy_year: data.current.fy_year };
           setSelectedQuarter(quarter);
-          await Promise.all([fetchSummary(token, quarter), fetchClients(token, quarter)]);
+          await Promise.all([
+            fetchSummary(token, quarter),
+            fetchClients(token, quarter),
+            listTenantUsers(token).then((r) => setTeamMembers(r.users.filter((u) => u.is_active))).catch(() => {}),
+          ]);
         }
       } catch {
         // Silently fail
@@ -301,6 +309,25 @@ export default function DashboardPage() {
     e.preventDefault();
     setSearch(searchInput);
     setPage(1);
+  };
+
+  const handleAssign = async (clientId: string, userId: string | null) => {
+    setAssigningClient(clientId);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const response = await apiClient.patch(`/api/v1/clients/${clientId}/assign`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assigned_user_id: userId || null }),
+      });
+      if (response.ok && selectedQuarter) {
+        await fetchClients(token, selectedQuarter);
+      }
+    } catch {
+      // Could add toast
+    } finally {
+      setAssigningClient(null);
+    }
   };
 
   const handleSort = (column: string) => {
@@ -681,10 +708,20 @@ export default function DashboardPage() {
                             {client.organization_name}
                           </Link>
                         </TableCell>
-                        <TableCell className="hidden text-xs text-muted-foreground md:table-cell">
-                          {client.assigned_user_name || (
-                            <span className="text-muted-foreground/50">Unassigned</span>
-                          )}
+                        <TableCell className="hidden md:table-cell">
+                          <select
+                            value={client.assigned_user_id || ''}
+                            onChange={(e) => handleAssign(client.id, e.target.value || null)}
+                            disabled={assigningClient === client.id}
+                            className="h-7 w-[120px] rounded border border-input bg-background px-1.5 text-xs text-foreground disabled:opacity-50"
+                          >
+                            <option value="">Unassigned</option>
+                            {teamMembers.map((tm) => (
+                              <option key={tm.id} value={tm.id}>
+                                {tm.display_name || tm.email}
+                              </option>
+                            ))}
+                          </select>
                         </TableCell>
                         <TableCell className={cn(
                           'text-right tabular-nums font-medium',

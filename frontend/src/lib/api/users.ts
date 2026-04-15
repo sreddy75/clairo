@@ -12,6 +12,7 @@ export interface TenantUser {
   tenant_id: string;
   clerk_id: string;
   email: string;
+  display_name: string | null;
   role: 'admin' | 'accountant' | 'staff';
   is_active: boolean;
   mfa_enabled: boolean;
