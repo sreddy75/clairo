@@ -82,8 +82,10 @@ class PracticeClientCreate(BaseModel):
     def validate_abn(cls, v: str | None) -> str | None:
         if v is not None:
             v = v.strip().replace(" ", "")
-            if not v.isdigit() or len(v) != 11:
-                raise ValueError("ABN must be exactly 11 digits")
+            if not v:
+                return None
+            if not v.isdigit():
+                raise ValueError("ABN must contain only digits")
         return v
 
     @field_validator("accounting_software")
