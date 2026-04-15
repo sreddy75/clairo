@@ -517,9 +517,9 @@ export default function ClientDetailPage() {
     try {
       setCreditNotesLoading(true);
       const token = await getToken();
-      if (!token || !id) return;
+      if (!token || !client?.id) return;
 
-      const data = await getCreditNotes(token, id as string, {
+      const data = await getCreditNotes(token, client.id, {
         page: creditNotesPage,
         limit: 20,
         credit_note_type: creditNoteTypeFilter || undefined,
@@ -531,16 +531,16 @@ export default function ClientDetailPage() {
     } finally {
       setCreditNotesLoading(false);
     }
-  }, [getToken, id, creditNotesPage, creditNoteTypeFilter]);
+  }, [getToken, client?.id, creditNotesPage, creditNoteTypeFilter]);
 
   // Spec 024: Payments fetch
   const fetchPayments = useCallback(async () => {
     try {
       setPaymentsLoading(true);
       const token = await getToken();
-      if (!token || !id) return;
+      if (!token || !client?.id) return;
 
-      const data = await getPayments(token, id as string, {
+      const data = await getPayments(token, client.id, {
         page: paymentsPage,
         limit: 20,
       });
@@ -551,16 +551,16 @@ export default function ClientDetailPage() {
     } finally {
       setPaymentsLoading(false);
     }
-  }, [getToken, id, paymentsPage]);
+  }, [getToken, client?.id, paymentsPage]);
 
   // Spec 024: Journals fetch
   const fetchJournals = useCallback(async () => {
     try {
       setJournalsLoading(true);
       const token = await getToken();
-      if (!token || !id) return;
+      if (!token || !client?.id) return;
 
-      const data = await getJournals(token, id as string, {
+      const data = await getJournals(token, client.id, {
         page: journalsPage,
         limit: 20,
       });
@@ -571,16 +571,16 @@ export default function ClientDetailPage() {
     } finally {
       setJournalsLoading(false);
     }
-  }, [getToken, id, journalsPage]);
+  }, [getToken, client?.id, journalsPage]);
 
   // Spec 024: Manual Journals fetch
   const fetchManualJournals = useCallback(async () => {
     try {
       setManualJournalsLoading(true);
       const token = await getToken();
-      if (!token || !id) return;
+      if (!token || !client?.id) return;
 
-      const data = await getManualJournals(token, id as string, {
+      const data = await getManualJournals(token, client.id, {
         page: journalsPage,
         limit: 20,
       });
@@ -591,15 +591,15 @@ export default function ClientDetailPage() {
     } finally {
       setManualJournalsLoading(false);
     }
-  }, [getToken, id, journalsPage]);
+  }, [getToken, client?.id, journalsPage]);
 
   const fetchQuality = useCallback(async () => {
     try {
       setQualityLoading(true);
       const token = await getToken();
-      if (!token || !id) return;
+      if (!token || !client?.id) return;
 
-      const connectionId = id as string;
+      const connectionId = client.id;
 
       // Fetch quality score and issues in parallel for the selected quarter
       const [scoreData, issuesData] = await Promise.all([
@@ -617,15 +617,15 @@ export default function ClientDetailPage() {
     } finally {
       setQualityLoading(false);
     }
-  }, [getToken, id, selectedQuarter, selectedFyYear]);
+  }, [getToken, client?.id, selectedQuarter, selectedFyYear]);
 
   const handleRecalculateQuality = useCallback(async () => {
     try {
       setIsRecalculating(true);
       const token = await getToken();
-      if (!token || !id) return;
+      if (!token || !client?.id) return;
 
-      await recalculateQuality(token, id as string, selectedQuarter ?? undefined, selectedFyYear ?? undefined);
+      await recalculateQuality(token, client.id, selectedQuarter ?? undefined, selectedFyYear ?? undefined);
       // Refetch quality data after recalculation
       await fetchQuality();
     } catch (err) {
@@ -633,30 +633,30 @@ export default function ClientDetailPage() {
     } finally {
       setIsRecalculating(false);
     }
-  }, [getToken, id, fetchQuality, selectedQuarter, selectedFyYear]);
+  }, [getToken, client?.id, fetchQuality, selectedQuarter, selectedFyYear]);
 
   const handleDismissIssue = useCallback(async (issueId: string, reason: string) => {
     try {
       const token = await getToken();
-      if (!token || !id) return;
+      if (!token || !client?.id) return;
 
-      await dismissQualityIssue(token, id as string, issueId, reason);
+      await dismissQualityIssue(token, client.id, issueId, reason);
       // Refetch issues after dismissal
-      const issuesData = await getQualityIssues(token, id as string);
+      const issuesData = await getQualityIssues(token, client.id);
       setQualityIssues(issuesData.issues || []);
     } catch (err) {
       console.error('Failed to dismiss issue:', err);
     }
-  }, [getToken, id]);
+  }, [getToken, client?.id]);
 
   const fetchInsights = useCallback(async () => {
     try {
       setInsightsLoading(true);
       const token = await getToken();
-      if (!token || !id) return;
+      if (!token || !client?.id) return;
 
       const response = await getInsights(token, {
-        client_id: id as string,
+        client_id: client.id,
         limit: 50,
       });
       setInsights(response.insights || []);
@@ -666,7 +666,7 @@ export default function ClientDetailPage() {
     } finally {
       setInsightsLoading(false);
     }
-  }, [getToken, id]);
+  }, [getToken, client?.id]);
 
   // Initial load
   useEffect(() => {
@@ -678,8 +678,8 @@ export default function ClientDetailPage() {
     const checkActiveSync = async () => {
       try {
         const token = await getToken();
-        if (!token || !id) return;
-        const history = await getSyncHistory(token, id as string, 1, 0);
+        if (!token || !client?.id) return;
+        const history = await getSyncHistory(token, client.id, 1, 0);
         const activeJob = history.jobs.find(
           (j) => j.status === 'in_progress' || j.status === 'pending'
         );
@@ -695,7 +695,7 @@ export default function ClientDetailPage() {
       if (!document.hidden) checkActiveSync();
     }, 30000);
     return () => clearInterval(interval);
-  }, [id, getToken]);
+  }, [client?.id, getToken]);
 
   // Load tab data when tab changes
   useEffect(() => {
@@ -749,12 +749,12 @@ export default function ClientDetailPage() {
     try {
       setIsGeneratingInsights(true);
       const token = await getToken();
-      if (!token || !id) {
+      if (!token || !client?.id) {
         toast.dismiss(toastId);
         return;
       }
 
-      const result = await generateInsights(token, id as string);
+      const result = await generateInsights(token, client.id);
 
       toast.success(
         result.generated_count > 0
@@ -950,7 +950,7 @@ export default function ClientDetailPage() {
         <>
           <SyncPhaseIndicator requiredPhase={2} activeSyncPhase={activeSyncPhase} dataLabel="financial" />
           <BASTab
-            connectionId={id as string}
+            connectionId={client.id}
             getToken={getToken}
             selectedQuarter={selectedQuarter || client.quarter}
             selectedFyYear={selectedFyYear || client.fy_year}
@@ -2091,7 +2091,7 @@ export default function ClientDetailPage() {
       <InviteToPortalModal
         open={inviteModalOpen}
         onOpenChange={setInviteModalOpen}
-        connectionId={id as string}
+        connectionId={client?.id || ''}
         clientName={client?.organization_name || 'Client'}
         defaultEmail={client?.contact_email || ''}
       />

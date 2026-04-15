@@ -158,6 +158,11 @@ class TaxPlan(BaseModel, TenantMixin):
         order_by="TaxPlanMessage.created_at",
         lazy="noload",
     )
+    analyses: Mapped[list["TaxPlanAnalysis"]] = relationship(
+        back_populates="tax_plan",
+        cascade="all, delete-orphan",
+        lazy="noload",
+    )
 
 
 class TaxScenario(BaseModel, TenantMixin):
@@ -361,7 +366,7 @@ class TaxPlanAnalysis(BaseModel, TenantMixin):
     # Relationships
     tax_plan: Mapped["TaxPlan"] = relationship(
         foreign_keys=[tax_plan_id],
-        backref="analyses",
+        back_populates="analyses",
     )
     items: Mapped[list["ImplementationItem"]] = relationship(
         back_populates="analysis",

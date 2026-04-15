@@ -111,6 +111,7 @@ class ClientsService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repository = ClientsRepository(db)
+        self.practice_client_repo = PracticeClientRepository(db)
         self.payroll_repo = XeroPayrollRepository(db)
         self.quality_repo = QualityRepository(db)
 
@@ -130,6 +131,19 @@ class ClientsService:
             quarter_start=quarter_start,
             quarter_end=quarter_end,
         )
+
+        if not data:
+            # The clients list now uses PracticeClient.id as the URL param.
+            # Resolve it to the actual XeroConnection.id and retry.
+            practice_client = await self.practice_client_repo.get_by_id(connection_id, tenant_id)
+            if practice_client and practice_client.xero_connection_id:
+                connection_id = practice_client.xero_connection_id
+                data = await self.repository.get_connection_with_financials(
+                    tenant_id=tenant_id,
+                    connection_id=connection_id,
+                    quarter_start=quarter_start,
+                    quarter_end=quarter_end,
+                )
 
         if not data:
             return None
