@@ -48,9 +48,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { apiClient } from '@/lib/api-client';
-import { listTenantUsers } from '@/lib/api/users';
 import type { TenantUser } from '@/lib/api/users';
+import { listTenantUsers } from '@/lib/api/users';
+import { apiClient } from '@/lib/api-client';
 import { formatRelativeTime } from '@/lib/formatters';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -88,13 +88,6 @@ export default function TeamPage() {
   const userRole = user?.publicMetadata?.role as string | undefined;
   const isAdmin = userRole === 'admin' || userRole === 'super_admin';
 
-  if (user && !isAdmin) {
-    return (
-      <div className="flex items-center justify-center py-24 text-muted-foreground">
-        <p>You don&apos;t have permission to view this page.</p>
-      </div>
-    );
-  }
   const [users, setUsers] = useState<TenantUser[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -248,6 +241,14 @@ export default function TeamPage() {
   const pendingCount = invitations.filter((i) => i.status === 'pending').length;
 
   // ─── Render ─────────────────────────────────────────────────────────────
+
+  if (user && !isAdmin) {
+    return (
+      <div className="flex items-center justify-center py-24 text-muted-foreground">
+        <p>You don&apos;t have permission to view this page.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

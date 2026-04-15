@@ -12,9 +12,9 @@ import { Loader2, ShieldCheck, UserPlus, XCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/api-client';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
