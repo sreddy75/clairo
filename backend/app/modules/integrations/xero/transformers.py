@@ -1243,6 +1243,9 @@ class BankSummaryTransformer(XeroReportTransformer):
     ) -> list[dict[str, Any]]:
         """Extract per-bank-account balances from Bank Summary rows.
 
+        Recurses into Section rows because Xero Bank Summary nests
+        data rows inside a Section container.
+
         Args:
             rows: Rows array from Xero Bank Summary report response.
 
@@ -1251,6 +1254,11 @@ class BankSummaryTransformer(XeroReportTransformer):
         """
         accounts = []
         for row in rows:
+            # Recurse into sections — Xero wraps bank account rows
+            # inside a Section RowType
+            if row.get("RowType") == "Section" and "Rows" in row:
+                accounts.extend(cls.extract_per_account_summary(row["Rows"]))
+                continue
             if row.get("RowType") != "Row":
                 continue
             cells = row.get("Cells", [])
