@@ -558,7 +558,7 @@ class PracticeClientRepository:
         client.assigned_user_id = assigned_user_id
         await self.db.flush()
         # Re-fetch with eager joins to ensure relationships are loaded
-        await self.db.expire(client)
+        self.db.expire(client)
         result = await self.db.execute(
             select(PracticeClient).where(PracticeClient.id == client_id)
         )
@@ -601,7 +601,7 @@ class PracticeClientRepository:
         client.notes_updated_at = datetime.now(UTC)
         client.notes_updated_by = updated_by
         await self.db.flush()
-        await self.db.expire(client)
+        self.db.expire(client)
         result = await self.db.execute(
             select(PracticeClient).where(PracticeClient.id == client_id)
         )
@@ -619,7 +619,7 @@ class PracticeClientRepository:
             raise ValueError("Cannot set manual status on Xero-connected client")
         client.manual_status = status
         await self.db.flush()
-        await self.db.expire(client)
+        self.db.expire(client)
         result = await self.db.execute(
             select(PracticeClient).where(PracticeClient.id == client_id)
         )
