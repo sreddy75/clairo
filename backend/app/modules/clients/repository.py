@@ -550,14 +550,19 @@ class PracticeClientRepository:
     async def update_assignment(
         self, client_id: UUID, tenant_id: UUID, assigned_user_id: UUID | None
     ) -> "PracticeClient | None":
+        from app.modules.clients.models import PracticeClient
 
         client = await self.get_by_id(client_id, tenant_id)
         if client is None:
             return None
         client.assigned_user_id = assigned_user_id
         await self.db.flush()
-        await self.db.refresh(client)
-        return client
+        # Re-fetch with eager joins to ensure relationships are loaded
+        await self.db.expire(client)
+        result = await self.db.execute(
+            select(PracticeClient).where(PracticeClient.id == client_id)
+        )
+        return result.scalar_one_or_none()
 
     async def bulk_update_assignment(
         self,
@@ -587,6 +592,7 @@ class PracticeClientRepository:
         notes: str,
         updated_by: UUID,
     ) -> "PracticeClient | None":
+        from app.modules.clients.models import PracticeClient
 
         client = await self.get_by_id(client_id, tenant_id)
         if client is None:
@@ -595,12 +601,16 @@ class PracticeClientRepository:
         client.notes_updated_at = datetime.now(UTC)
         client.notes_updated_by = updated_by
         await self.db.flush()
-        await self.db.refresh(client)
-        return client
+        await self.db.expire(client)
+        result = await self.db.execute(
+            select(PracticeClient).where(PracticeClient.id == client_id)
+        )
+        return result.scalar_one_or_none()
 
     async def update_manual_status(
         self, client_id: UUID, tenant_id: UUID, status: str
     ) -> "PracticeClient | None":
+        from app.modules.clients.models import PracticeClient
 
         client = await self.get_by_id(client_id, tenant_id)
         if client is None:
@@ -609,8 +619,11 @@ class PracticeClientRepository:
             raise ValueError("Cannot set manual status on Xero-connected client")
         client.manual_status = status
         await self.db.flush()
-        await self.db.refresh(client)
-        return client
+        await self.db.expire(client)
+        result = await self.db.execute(
+            select(PracticeClient).where(PracticeClient.id == client_id)
+        )
+        return result.scalar_one_or_none()
 
     async def list_by_tenant(
         self, tenant_id: UUID
