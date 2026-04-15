@@ -73,6 +73,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 — existing `financials_data` JSONB field on TaxPlan model (046-tax-planning-intelligence)
 - TypeScript 5.x / Next.js 14 (App Router) + React 18, Tailwind CSS, shadcn/ui (Sheet, Dialog, Table), lucide-react (icons), Radix UI (primitives) (055-mobile-responsive-ui)
 - N/A (frontend-only) (055-mobile-responsive-ui)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Alembic, React 18 + shadcn/ui, Clerk (058-bas-workflow-tracker)
+- PostgreSQL 16 (3 new tables: `practice_clients`, `client_quarter_exclusions`, `client_note_history`; 1 modified: `practice_users`) (058-bas-workflow-tracker)
 
 ## Recent Changes
 - 049-xero-taxcode-sync: Xero write-back, multi-round client send-back, portal IDK validation, agent notes

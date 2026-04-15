@@ -62,6 +62,7 @@ interface NavItem {
   requiredFeature?: keyof TierFeatures | 'full_ai';
   tourTarget?: string;
   badgeKey?: 'notifications' | 'actionItems';
+  adminOnly?: boolean;
 }
 
 // ─── Navigation Config ───────────────────────────────────────────────────────
@@ -74,7 +75,7 @@ const navigation: NavItem[] = [
   { name: 'Action Items', href: '/action-items', icon: ListChecks, requiredFeature: 'custom_triggers', badgeKey: 'actionItems' },
   { name: 'Notifications', href: '/notifications', icon: Bell, requiredFeature: 'custom_triggers', badgeKey: 'notifications' },
   { name: 'Feedback', href: '/feedback', icon: Mic },
-  { name: 'Team', href: '/team', icon: Users, requiredFeature: 'client_portal' },
+  { name: 'Team', href: '/team', icon: Users, adminOnly: true },
 ];
 
 const adminNavigation: NavItem[] = [
@@ -176,8 +177,10 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Check if user is super admin
-  const isSuperAdmin = user?.publicMetadata?.role === 'super_admin';
+  // Check roles
+  const userRole = user?.publicMetadata?.role as string | undefined;
+  const isSuperAdmin = userRole === 'super_admin';
+  const isPracticeAdmin = userRole === 'admin' || isSuperAdmin;
 
   // Helper to check if a feature is available
   const hasFeature = (feature: keyof TierFeatures | 'full_ai'): boolean => {
@@ -339,6 +342,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
           const isActive = pathname.startsWith(item.href);
           const isLocked = item.requiredFeature && !hasFeature(item.requiredFeature);
           if (isLocked) return null;
+          if (item.adminOnly && !isPracticeAdmin) return null;
 
           return (
             <div key={item.name} onClick={onNavigate}>
