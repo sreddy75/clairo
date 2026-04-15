@@ -151,7 +151,7 @@ interface AvailableQuartersResponse {
 
 const STATUS_TABS = [
   { value: '', label: 'All' },
-  { value: 'needs_review', label: 'Needs Review' },
+  { value: 'needs_attention', label: 'Needs Review' },
   { value: 'ready', label: 'Ready' },
   { value: 'no_activity', label: 'No Activity' },
 ] as const;
@@ -458,7 +458,7 @@ export default function DashboardPage() {
           {/* Needs Attention */}
           <Card
             className="cursor-pointer shadow-sm transition-shadow hover:shadow-md"
-            onClick={() => { setSelectedStatus('needs_review'); setPage(1); }}
+            onClick={() => { setSelectedStatus('needs_attention'); setPage(1); }}
           >
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
@@ -527,7 +527,7 @@ export default function DashboardPage() {
               {STATUS_TABS.map((tab) => {
                 const count = tab.value === ''
                   ? total
-                  : tab.value === 'needs_review'
+                  : tab.value === 'needs_attention'
                     ? (summary?.status_counts.needs_review ?? 0) + (summary?.status_counts.missing_data ?? 0)
                     : summary?.status_counts[tab.value as keyof StatusCounts] ?? 0;
                 return (
