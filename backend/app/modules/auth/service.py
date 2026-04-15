@@ -1183,8 +1183,10 @@ class InvitationService:
             tenant = await tenant_repo.get_by_id(tenant_id)
             tenant_name = tenant.name if tenant else "Unknown Practice"
 
-            # Build invitation URL
-            invitation_url = f"https://app.clairo.com.au/invitation?token={token}"
+            # Build invitation URL from config
+            from app.config import get_settings
+            frontend_url = get_settings().frontend_url.rstrip("/")
+            invitation_url = f"{frontend_url}/invitation?token={token}"
 
             email_service = _get_email_service()
             await email_service.send_team_invitation(

@@ -786,6 +786,21 @@ async def list_users(
         active_only=not include_inactive,
     )
 
+    # Fix placeholder emails from Clerk dev environment
+    from app.config import get_settings
+    from app.modules.auth.clerk import ClerkClient
+    clerk_client = ClerkClient(settings=get_settings().clerk)
+    for u in users:
+        if "@placeholder." in u.email:
+            try:
+                clerk_user = await clerk_client.get_user(u.clerk_id)
+                real_email = clerk_user.primary_email
+                if real_email and "@placeholder." not in real_email:
+                    u.user.email = real_email
+                    await session.flush()
+            except Exception:
+                pass
+
     user_responses = [_practice_user_to_response(u) for u in users]
 
     return UserListResponse(
