@@ -425,10 +425,10 @@ export default function DashboardPage() {
                 </span>
               </div>
               <p className="mt-2 text-2xl font-bold tracking-tight tabular-nums text-status-success">
-                {summary.quality.good_count}
+                {summary.status_counts.ready}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Quality ≥80% · Data current
+                All items ready
               </p>
             </CardContent>
           </Card>
