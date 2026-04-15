@@ -205,6 +205,7 @@ export default function DashboardPage() {
   const [addClientAbn, setAddClientAbn] = useState('');
   const [addClientSoftware, setAddClientSoftware] = useState('quickbooks');
   const [addingClient, setAddingClient] = useState(false);
+  const [insightsExpanded, setInsightsExpanded] = useState(false);
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -624,8 +625,17 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* ── Insights — Attention Items ───────────────────────────────── */}
-      <InsightsWidget />
+      {/* ── Insights — Attention Items (collapsible) ────────────────── */}
+      <div>
+        <button
+          onClick={() => setInsightsExpanded(!insightsExpanded)}
+          className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors mb-2"
+        >
+          <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', insightsExpanded && 'rotate-90')} />
+          Attention Needed
+        </button>
+        {insightsExpanded && <InsightsWidget />}
+      </div>
 
       {/* ── Client Table ─────────────────────────────────────────────── */}
       <Card className="shadow-sm">
