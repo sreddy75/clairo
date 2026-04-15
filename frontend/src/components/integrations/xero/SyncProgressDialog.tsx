@@ -511,6 +511,38 @@ export function SyncProgressDialog({
   }, [open]);
 
   // ---------------------------------------------------------------------------
+  // Catch missed sync_complete: if all entities are done but job is still
+  // in_progress, do a one-time poll to fetch the real final status.
+  // ---------------------------------------------------------------------------
+
+  const allEntitiesDoneRef = useRef(false);
+
+  useEffect(() => {
+    const currentJob = syncStatus?.job;
+    const currentEntities = syncStatus?.entities ?? [];
+
+    if (!currentJob || currentJob.status !== 'in_progress' || currentEntities.length === 0) return;
+    if (allEntitiesDoneRef.current) return; // Already triggered
+
+    const terminalEntityStatuses = ['completed', 'failed', 'skipped'];
+    const allDone = currentEntities.every((e) =>
+      terminalEntityStatuses.includes(e.status)
+    );
+
+    if (!allDone) return;
+
+    allEntitiesDoneRef.current = true;
+    // Give finalization task a moment to complete, then poll
+    const timer = setTimeout(() => fetchStatus(), 3000);
+    return () => clearTimeout(timer);
+  }, [syncStatus, fetchStatus]);
+
+  // Reset when jobId changes
+  useEffect(() => {
+    allEntitiesDoneRef.current = false;
+  }, [jobId]);
+
+  // ---------------------------------------------------------------------------
   // Derived values
   // ---------------------------------------------------------------------------
 
