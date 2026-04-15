@@ -480,6 +480,21 @@ class BulkImportService:
 
             created_connections[xero_tenant_id] = connection
 
+            # Create PracticeClient for this connection (Spec 058)
+            try:
+                from app.modules.clients.repository import PracticeClientRepository
+                pc_repo = PracticeClientRepository(self.session)
+                assigned_user_id = org_selection.get("assigned_user_id")
+                await pc_repo.create(
+                    tenant_id=tenant_id,
+                    name=org_selection.get("organization_name", f"Org {xero_tenant_id[:8]}"),
+                    accounting_software="xero",
+                    xero_connection_id=connection.id,
+                    assigned_user_id=UUID(assigned_user_id) if assigned_user_id else None,
+                )
+            except Exception:
+                pass  # Non-fatal — PracticeClient can be backfilled
+
             # Audit per-connection creation
             await self.audit_service.log_event(
                 event_type="integration.xero.connection.created",

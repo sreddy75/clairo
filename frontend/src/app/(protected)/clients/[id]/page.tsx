@@ -42,6 +42,7 @@ import {
   TrafficLightDashboard,
   type Tab,
 } from '@/components/client-detail';
+import { ClientNotesBar } from '@/components/clients/ClientNotesBar';
 import { InsightsDashboard } from '@/components/insights';
 import { SyncPhaseIndicator } from '@/components/integrations/xero';
 import { InviteToPortalModal } from '@/components/portal';
@@ -925,6 +926,9 @@ export default function ClientDetailPage() {
         }}
         clientId={id as string}
       />
+
+      {/* Persistent Client Notes (Spec 058 - US3) */}
+      <ClientNotesBar clientId={id as string} getToken={getToken} />
 
       {/* Main Content - Full width with padding */}
       <div className="px-4 sm:px-6 lg:px-8 py-6">

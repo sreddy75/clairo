@@ -344,4 +344,19 @@ class XeroOAuthService:
                 xero_org_name=org.display_name,
             )
 
+        # Auto-create PracticeClient for new connection (Spec 058)
+        try:
+            from app.modules.clients.repository import PracticeClientRepository
+            pc_repo = PracticeClientRepository(self.session)
+            existing = await pc_repo.get_by_xero_connection_id(connection.id)
+            if not existing:
+                await pc_repo.create(
+                    tenant_id=tenant_id,
+                    name=org.display_name,
+                    accounting_software="xero",
+                    xero_connection_id=connection.id,
+                )
+        except Exception:
+            pass  # Non-fatal
+
         return connection
