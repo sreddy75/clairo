@@ -253,4 +253,12 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=3, minute=0, day_of_week=1),
         "options": {"queue": celery_settings.task_default_queue},
     },
+    # Token keepalive — proactively refresh Xero tokens every 12 hours
+    # Prevents refresh tokens from silently expiring after 60 days of non-use.
+    # Runs at 1am and 1pm UTC (11am/1am AEST) to stay out of the sync window.
+    "keepalive-xero-tokens": {
+        "task": "app.tasks.scheduler.keepalive_xero_tokens",
+        "schedule": crontab(hour="1,13", minute=30),
+        "options": {"queue": celery_settings.task_default_queue},
+    },
 }

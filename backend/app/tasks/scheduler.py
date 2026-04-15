@@ -358,3 +358,113 @@ def cleanup_stuck_sync_jobs(self) -> dict:
             await session.close()
 
     return asyncio.run(_cleanup())
+
+
+# =============================================================================
+# Token Keepalive — proactively refresh Xero tokens before they expire
+# =============================================================================
+
+# Refresh tokens that will expire within this window (hours).
+# Xero access tokens last 30 min; refresh tokens expire after 60 days of
+# non-use.  Running every 12 hours with a 24-hour lookahead means we'll
+# touch every active connection at least once a day, keeping refresh
+# tokens alive indefinitely.
+TOKEN_REFRESH_LOOKAHEAD_HOURS = 24
+
+
+@celery_app.task(
+    name="app.tasks.scheduler.keepalive_xero_tokens",
+    bind=True,
+    max_retries=1,
+    default_retry_delay=300,
+)
+def keepalive_xero_tokens(self) -> dict:
+    """Proactively refresh Xero tokens for all active connections.
+
+    Prevents refresh tokens from expiring due to inactivity (Xero's
+    60-day TTL).  For each active connection whose access token expires
+    within TOKEN_REFRESH_LOOKAHEAD_HOURS, performs a token refresh using
+    the distributed lock to avoid conflicts with concurrent syncs.
+
+    Runs every 12 hours via Celery beat.
+
+    Returns:
+        Dict with keepalive statistics.
+    """
+    import asyncio
+
+    async def _keepalive():
+        from app.config import get_settings as _get_settings
+        from app.modules.integrations.xero.connection_service import (
+            XeroConnectionService,
+        )
+
+        session = await _get_async_session()
+        settings = _get_settings()
+
+        try:
+            # Find all active connections
+            query = select(XeroConnection).where(
+                XeroConnection.status == "active",
+            )
+            result = await session.execute(query)
+            connections = result.scalars().all()
+
+            refreshed = 0
+            skipped = 0
+            failed = 0
+            errors: list[str] = []
+
+            logger.info(
+                "Token keepalive: checking %d active connections", len(connections)
+            )
+
+            for conn in connections:
+                try:
+                    # Check if token expires within the lookahead window
+                    if conn.token_expires_at:
+                        threshold = datetime.now(UTC) + timedelta(
+                            hours=TOKEN_REFRESH_LOOKAHEAD_HOURS
+                        )
+                        if conn.token_expires_at > threshold:
+                            # Token is fresh enough, skip
+                            skipped += 1
+                            continue
+
+                    # Refresh using the distributed lock
+                    conn_service = XeroConnectionService(session, settings)
+                    await conn_service.ensure_valid_token(conn.id)
+                    await session.commit()
+                    refreshed += 1
+
+                    logger.info(
+                        "Token keepalive: refreshed %s (%s)",
+                        conn.id,
+                        conn.organization_name,
+                    )
+
+                except Exception as e:
+                    failed += 1
+                    errors.append(f"{conn.organization_name}: {e}")
+                    logger.warning(
+                        "Token keepalive: failed for %s (%s): %s",
+                        conn.id,
+                        conn.organization_name,
+                        e,
+                    )
+                    # Rollback the failed transaction so the next
+                    # connection can proceed
+                    await session.rollback()
+
+            return {
+                "total_connections": len(connections),
+                "refreshed": refreshed,
+                "skipped": skipped,
+                "failed": failed,
+                "errors": errors[:10],  # Cap to avoid huge payloads
+                "checked_at": datetime.now(UTC).isoformat(),
+            }
+        finally:
+            await session.close()
+
+    return asyncio.run(_keepalive())
