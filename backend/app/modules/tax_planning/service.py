@@ -246,7 +246,9 @@ class TaxPlanningService:
         # Fetch bank context (FR-015, FR-016, FR-017, FR-018)
         # recon_date was already fetched above for the P&L date cap
         try:
-            bank_balances = await report_service.get_bank_balances(plan.xero_connection_id)
+            bank_balances = await report_service.get_bank_balances(
+                plan.xero_connection_id, force_refresh=force_refresh
+            )
             unreconciled = await self._get_unreconciled_summary(
                 plan.xero_connection_id, plan.financial_year
             )
