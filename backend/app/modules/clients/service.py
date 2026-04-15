@@ -537,11 +537,33 @@ class PracticeClientService:
     Handles team assignment, exclusion, notes, and manual client creation.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, actor_id: UUID | None = None, tenant_id: UUID | None = None):
         self.db = db
+        self.actor_id = actor_id
+        self.tenant_id = tenant_id
         self.client_repo = PracticeClientRepository(db)
         self.exclusion_repo = ClientExclusionRepository(db)
         self.note_history_repo = ClientNoteHistoryRepository(db)
+
+    async def _audit(self, event_type: str, resource_id: UUID, old_values: dict | None = None, new_values: dict | None = None) -> None:
+        """Emit an audit event. Non-fatal if audit service is unavailable."""
+        try:
+            from app.core.audit import AuditService
+            audit = AuditService(self.db)
+            await audit.log_event(
+                event_type=event_type,
+                event_category="data_modification",
+                resource_type="practice_client",
+                resource_id=resource_id,
+                action="update",
+                outcome="success",
+                tenant_id=self.tenant_id,
+                actor_id=self.actor_id,
+                old_values=old_values,
+                new_values=new_values,
+            )
+        except Exception:
+            pass  # Audit is non-blocking
 
     # ─── Helper ────────────────────────────────────────────────────────────
 
@@ -577,6 +599,8 @@ class PracticeClientService:
         assigned_user_id: UUID | None,
         tenant_id: UUID,
     ) -> PracticeClientResponse:
+        old_client = await self.client_repo.get_by_id(client_id, tenant_id)
+        old_assignee = str(old_client.assigned_user_id) if old_client and old_client.assigned_user_id else None
         client = await self.client_repo.update_assignment(
             client_id=client_id,
             tenant_id=tenant_id,
@@ -584,6 +608,7 @@ class PracticeClientService:
         )
         if client is None:
             raise NotFoundError(resource_type="PracticeClient", message="Client not found")
+        await self._audit("client.assigned", client_id, {"assigned_user_id": old_assignee}, {"assigned_user_id": str(assigned_user_id) if assigned_user_id else None})
         return self._to_response(client)
 
     async def bulk_assign_clients(
@@ -644,6 +669,8 @@ class PracticeClientService:
         if exclusion.excluded_by_user:
             user_name = getattr(exclusion.excluded_by_user, "display_name", None) or exclusion.excluded_by_user.email
 
+        await self._audit("client.exclusion.created", client_id, new_values={"quarter": data.quarter, "fy_year": data.fy_year, "reason": data.reason})
+
         return ClientExclusionResponse(
             id=exclusion.id,
             client_id=exclusion.client_id,
@@ -675,6 +702,8 @@ class PracticeClientService:
         user_name = None
         if exclusion.reversed_by_user:
             user_name = getattr(exclusion.reversed_by_user, "display_name", None) or exclusion.reversed_by_user.email
+
+        await self._audit("client.exclusion.reversed", client_id, new_values={"exclusion_id": str(exclusion_id)})
 
         return ClientExclusionReversedResponse(
             id=exclusion.id,
@@ -710,6 +739,7 @@ class PracticeClientService:
             notes=notes,
             updated_by=updated_by,
         )
+        await self._audit("client.notes.updated", client_id, new_values={"notes_length": len(notes)})
         return self._to_response(client)  # type: ignore[arg-type]
 
     async def get_note_history(
@@ -747,6 +777,7 @@ class PracticeClientService:
             assigned_user_id=data.assigned_user_id,
             notes=data.notes,
         )
+        await self._audit("client.created_manual", client.id, new_values={"name": data.name, "software": data.accounting_software})
         return self._to_response(client)
 
     async def update_manual_status(

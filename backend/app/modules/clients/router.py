@@ -66,7 +66,7 @@ async def create_manual_client(
     db: AsyncSession = Depends(get_db),
 ) -> PracticeClientResponse:
     """Create a manually-added client (QuickBooks, MYOB, email-based, etc.)."""
-    service = PracticeClientService(db)
+    service = PracticeClientService(db, actor_id=current_user.id, tenant_id=current_user.tenant_id)
     return await service.create_manual_client(
         data=request,
         tenant_id=current_user.tenant_id,
@@ -85,7 +85,7 @@ async def assign_client(
     db: AsyncSession = Depends(get_db),
 ) -> PracticeClientResponse:
     """Assign or reassign a team member to a client."""
-    service = PracticeClientService(db)
+    service = PracticeClientService(db, actor_id=current_user.id, tenant_id=current_user.tenant_id)
     try:
         return await service.assign_client(
             client_id=client_id,
@@ -107,7 +107,7 @@ async def bulk_assign_clients(
     db: AsyncSession = Depends(get_db),
 ) -> BulkAssignResponse:
     """Assign a team member to multiple clients at once."""
-    service = PracticeClientService(db)
+    service = PracticeClientService(db, actor_id=current_user.id, tenant_id=current_user.tenant_id)
     return await service.bulk_assign_clients(
         client_ids=request.client_ids,
         assigned_user_id=request.assigned_user_id,
@@ -127,7 +127,7 @@ async def update_client_notes(
     db: AsyncSession = Depends(get_db),
 ) -> PracticeClientResponse:
     """Update persistent notes for a client."""
-    service = PracticeClientService(db)
+    service = PracticeClientService(db, actor_id=current_user.id, tenant_id=current_user.tenant_id)
     try:
         return await service.update_notes(
             client_id=client_id,
@@ -150,7 +150,7 @@ async def get_note_history(
     db: AsyncSession = Depends(get_db),
 ) -> NoteHistoryResponse:
     """Get change history for a client's persistent notes."""
-    service = PracticeClientService(db)
+    service = PracticeClientService(db, actor_id=current_user.id, tenant_id=current_user.tenant_id)
     return await service.get_note_history(
         client_id=client_id,
         tenant_id=current_user.tenant_id,
@@ -170,7 +170,7 @@ async def exclude_client(
     db: AsyncSession = Depends(get_db),
 ) -> ClientExclusionResponse:
     """Exclude a client from BAS obligations for a specific quarter."""
-    service = PracticeClientService(db)
+    service = PracticeClientService(db, actor_id=current_user.id, tenant_id=current_user.tenant_id)
     try:
         return await service.exclude_client(
             client_id=client_id,
@@ -196,7 +196,7 @@ async def reverse_exclusion(
     db: AsyncSession = Depends(get_db),
 ) -> ClientExclusionReversedResponse:
     """Reverse a client's quarter exclusion."""
-    service = PracticeClientService(db)
+    service = PracticeClientService(db, actor_id=current_user.id, tenant_id=current_user.tenant_id)
     try:
         return await service.reverse_exclusion(
             client_id=client_id,
@@ -220,7 +220,7 @@ async def update_manual_status(
     db: AsyncSession = Depends(get_db),
 ) -> PracticeClientResponse:
     """Update BAS status for a non-Xero client (manual progression)."""
-    service = PracticeClientService(db)
+    service = PracticeClientService(db, actor_id=current_user.id, tenant_id=current_user.tenant_id)
     try:
         return await service.update_manual_status(
             client_id=client_id,
