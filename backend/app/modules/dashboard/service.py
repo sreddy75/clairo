@@ -132,6 +132,7 @@ class DashboardService:
         page: int = 1,
         limit: int = 25,
         assigned_user_id: UUID | None = None,
+        show_unassigned: bool = False,
         show_excluded: bool = False,
         software: str | None = None,
     ) -> ClientPortfolioResponse:
@@ -180,6 +181,7 @@ class DashboardService:
             limit=limit,
             offset=offset,
             assigned_user_id=assigned_user_id,
+            show_unassigned=show_unassigned,
             show_excluded=show_excluded,
             software=software,
             quarter=quarter,

@@ -62,7 +62,7 @@ router = APIRouter(prefix="/clients", tags=["Clients"])
 )
 async def create_manual_client(
     request: PracticeClientCreate,
-    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_WRITE)),
+    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_MANAGE)),
     db: AsyncSession = Depends(get_db),
 ) -> PracticeClientResponse:
     """Create a manually-added client (QuickBooks, MYOB, email-based, etc.)."""
@@ -81,7 +81,7 @@ async def create_manual_client(
 async def assign_client(
     client_id: UUID,
     request: PracticeClientAssignRequest,
-    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_WRITE)),
+    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_MANAGE)),
     db: AsyncSession = Depends(get_db),
 ) -> PracticeClientResponse:
     """Assign or reassign a team member to a client."""
@@ -103,7 +103,7 @@ async def assign_client(
 )
 async def bulk_assign_clients(
     request: PracticeClientBulkAssignRequest,
-    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_WRITE)),
+    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_MANAGE)),
     db: AsyncSession = Depends(get_db),
 ) -> BulkAssignResponse:
     """Assign a team member to multiple clients at once."""
@@ -123,7 +123,7 @@ async def bulk_assign_clients(
 async def update_client_notes(
     client_id: UUID,
     request: PracticeClientNotesUpdate,
-    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_WRITE)),
+    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_MANAGE)),
     db: AsyncSession = Depends(get_db),
 ) -> PracticeClientResponse:
     """Update persistent notes for a client."""
@@ -166,7 +166,7 @@ async def get_note_history(
 async def exclude_client(
     client_id: UUID,
     request: ClientExclusionCreate,
-    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_WRITE)),
+    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_MANAGE)),
     db: AsyncSession = Depends(get_db),
 ) -> ClientExclusionResponse:
     """Exclude a client from BAS obligations for a specific quarter."""
@@ -192,7 +192,7 @@ async def exclude_client(
 async def reverse_exclusion(
     client_id: UUID,
     exclusion_id: UUID,
-    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_WRITE)),
+    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_MANAGE)),
     db: AsyncSession = Depends(get_db),
 ) -> ClientExclusionReversedResponse:
     """Reverse a client's quarter exclusion."""
@@ -216,7 +216,7 @@ async def reverse_exclusion(
 async def update_manual_status(
     client_id: UUID,
     request: ManualStatusUpdate,
-    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_WRITE)),
+    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_MANAGE)),
     db: AsyncSession = Depends(get_db),
 ) -> PracticeClientResponse:
     """Update BAS status for a non-Xero client (manual progression)."""
@@ -250,6 +250,7 @@ async def list_clients(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(25, ge=1, le=100, description="Items per page"),
     assigned_user_id: UUID | None = Query(None, description="Filter by assigned team member"),
+    show_unassigned: bool = Query(False, description="Show only unassigned clients"),
     show_excluded: bool = Query(False, description="Show excluded clients instead of active"),
     software: str | None = Query(None, description="Filter by accounting software type"),
     current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_READ)),
@@ -273,6 +274,7 @@ async def list_clients(
         page=page,
         limit=limit,
         assigned_user_id=assigned_user_id,
+        show_unassigned=show_unassigned,
         show_excluded=show_excluded,
         software=software,
     )

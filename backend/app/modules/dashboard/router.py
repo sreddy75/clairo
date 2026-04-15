@@ -97,6 +97,7 @@ async def get_client_portfolio(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(25, ge=1, le=100, description="Items per page"),
     assigned_user_id: UUID | None = Query(None, description="Filter by assigned team member"),
+    show_unassigned: bool = Query(False, description="Show only unassigned clients"),
     show_excluded: bool = Query(False, description="Show excluded clients instead of active"),
     software: str | None = Query(None, description="Filter by accounting software type"),
     current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_READ)),
@@ -121,6 +122,7 @@ async def get_client_portfolio(
         page=page,
         limit=limit,
         assigned_user_id=assigned_user_id,
+        show_unassigned=show_unassigned,
         show_excluded=show_excluded,
         software=software,
     )

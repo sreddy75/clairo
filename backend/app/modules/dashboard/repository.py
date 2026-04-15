@@ -193,6 +193,7 @@ class DashboardRepository:
         limit: int = 25,
         offset: int = 0,
         assigned_user_id: UUID | None = None,
+        show_unassigned: bool = False,
         show_excluded: bool = False,
         software: str | None = None,
         quarter: int | None = None,
@@ -395,7 +396,9 @@ class DashboardRepository:
             filters.append(exclusion_subq.c.exclusion_id.is_(None))
 
         # Assigned user filter
-        if assigned_user_id is not None:
+        if show_unassigned:
+            filters.append(PracticeClient.assigned_user_id.is_(None))
+        elif assigned_user_id is not None:
             filters.append(PracticeClient.assigned_user_id == assigned_user_id)
 
         # Software filter
