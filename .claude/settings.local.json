@@ -283,7 +283,9 @@
       "Bash(magick logos/clairo-logo-new.png -resize 512x512 icon-512.png)",
       "Bash(PORT=3001 npm run dev)",
       "Skill(browse)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(gh api:*)",
+      "Bash(npm ci:*)"
     ],
     "deny": [],
     "ask": []
