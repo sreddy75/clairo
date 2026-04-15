@@ -216,7 +216,12 @@ export default function DashboardPage() {
       params.set('fy_year', quarter.fy_year.toString());
       if (selectedStatus) params.set('status', selectedStatus);
       if (search) params.set('search', search);
-      if (selectedAssignee) params.set('assigned_user_id', selectedAssignee);
+      if (selectedAssignee && selectedAssignee !== 'unassigned') {
+        params.set('assigned_user_id', selectedAssignee);
+      }
+      if (selectedAssignee === 'unassigned') {
+        params.set('show_unassigned', 'true');
+      }
 
       const response = await apiClient.get(`/api/v1/dashboard/clients?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
