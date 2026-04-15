@@ -505,6 +505,7 @@ class DashboardRepository:
                 "assigned_user_name": assigned_name,
                 "accounting_software": row.accounting_software,
                 "has_xero_connection": has_xero,
+                "xero_connection_id": str(row.xero_connection_id) if row.xero_connection_id else None,
                 "notes_preview": notes_preview if notes_preview else None,
                 "unreconciled_count": unreconciled_count,
                 "manual_status": row.manual_status,

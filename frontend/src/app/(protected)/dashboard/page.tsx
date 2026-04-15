@@ -122,6 +122,7 @@ interface ClientPortfolioItem {
   assigned_user_name: string | null;
   accounting_software: string;
   has_xero_connection: boolean;
+  xero_connection_id: string | null;
   notes_preview: string | null;
   unreconciled_count: number;
   manual_status: string | null;
@@ -916,7 +917,7 @@ export default function DashboardPage() {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-1.5">
                             <Link
-                              href={`/clients/${client.id}`}
+                              href={`/clients/${client.xero_connection_id || client.id}`}
                               className="hover:text-primary transition-colors"
                             >
                               {client.organization_name}
