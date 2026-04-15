@@ -21,6 +21,8 @@ import {
   ChevronRight,
   Download,
   Loader2,
+  MoreHorizontal,
+  Plus,
   RefreshCw,
   Search,
 } from 'lucide-react';
@@ -38,7 +40,16 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -114,6 +125,7 @@ interface ClientPortfolioItem {
   notes_preview: string | null;
   unreconciled_count: number;
   manual_status: string | null;
+  exclusion: { id: string; reason: string | null; excluded_by_name: string | null; excluded_at: string } | null;
   total_sales: string;
   total_purchases: string;
   gst_collected: string;
@@ -156,6 +168,7 @@ const STATUS_TABS = [
   { value: 'needs_attention', label: 'Needs Review' },
   { value: 'ready', label: 'Ready' },
   { value: 'no_activity', label: 'No Activity' },
+  { value: 'excluded', label: 'Excluded' },
 ] as const;
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -187,6 +200,11 @@ export default function DashboardPage() {
   const [selectedAssignee, setSelectedAssignee] = useState<string>('');
   const [teamMembers, setTeamMembers] = useState<TenantUser[]>([]);
   const [assigningClient, setAssigningClient] = useState<string | null>(null);
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [addClientName, setAddClientName] = useState('');
+  const [addClientAbn, setAddClientAbn] = useState('');
+  const [addClientSoftware, setAddClientSoftware] = useState('quickbooks');
+  const [addingClient, setAddingClient] = useState(false);
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -218,7 +236,11 @@ export default function DashboardPage() {
       });
       params.set('quarter', quarter.quarter.toString());
       params.set('fy_year', quarter.fy_year.toString());
-      if (selectedStatus) params.set('status', selectedStatus);
+      if (selectedStatus === 'excluded') {
+        params.set('show_excluded', 'true');
+      } else if (selectedStatus) {
+        params.set('status', selectedStatus);
+      }
       if (search) params.set('search', search);
       if (selectedAssignee && selectedAssignee !== 'unassigned') {
         params.set('assigned_user_id', selectedAssignee);
@@ -330,6 +352,59 @@ export default function DashboardPage() {
     }
   };
 
+  const handleAddClient = async () => {
+    if (!addClientName.trim()) return;
+    setAddingClient(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const response = await apiClient.post('/api/v1/clients/manual', {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: addClientName.trim(),
+          abn: addClientAbn.trim() || undefined,
+          accounting_software: addClientSoftware,
+        }),
+      });
+      if (response.ok && selectedQuarter) {
+        setShowAddClient(false);
+        setAddClientName('');
+        setAddClientAbn('');
+        setAddClientSoftware('quickbooks');
+        await fetchClients(token, selectedQuarter);
+      }
+    } catch {
+      // Could add toast
+    } finally {
+      setAddingClient(false);
+    }
+  };
+
+  const handleExclude = async (clientId: string) => {
+    if (!selectedQuarter) return;
+    const token = await getToken();
+    if (!token) return;
+    const fyYearStr = `${selectedQuarter.fy_year - 1}-${String(selectedQuarter.fy_year).slice(-2)}`;
+    await apiClient.post(`/api/v1/clients/${clientId}/exclusions`, {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quarter: selectedQuarter.quarter,
+        fy_year: fyYearStr,
+        reason: 'other',
+      }),
+    });
+    await Promise.all([fetchSummary(token, selectedQuarter), fetchClients(token, selectedQuarter)]);
+  };
+
+  const handleInclude = async (clientId: string, exclusionId: string) => {
+    const token = await getToken();
+    if (!token || !selectedQuarter) return;
+    await apiClient.delete(`/api/v1/clients/${clientId}/exclusions/${exclusionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await Promise.all([fetchSummary(token, selectedQuarter), fetchClients(token, selectedQuarter)]);
+  };
+
   const handleSort = (column: string) => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -434,6 +509,11 @@ export default function DashboardPage() {
           <Button variant="outline" size="sm" onClick={handleExport} disabled={clients.length === 0}>
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline ml-1.5">Export</span>
+          </Button>
+
+          <Button size="sm" onClick={() => setShowAddClient(true)}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline ml-1.5">Add Client</span>
           </Button>
         </div>
       </div>
@@ -556,7 +636,9 @@ export default function DashboardPage() {
                   ? total
                   : tab.value === 'needs_attention'
                     ? (summary?.status_counts.needs_review ?? 0) + (summary?.status_counts.missing_data ?? 0)
-                    : summary?.status_counts[tab.value as keyof StatusCounts] ?? 0;
+                    : tab.value === 'excluded'
+                      ? (summary?.excluded_count ?? 0)
+                      : summary?.status_counts[tab.value as keyof StatusCounts] ?? 0;
                 return (
                   <button
                     key={tab.value}
@@ -653,8 +735,10 @@ export default function DashboardPage() {
                   <SortableHead column="quality_score" label="Quality" sortBy={sortBy} onSort={handleSort} className="text-center">
                     <SortIcon column="quality_score" />
                   </SortableHead>
+                  <TableHead className="hidden text-center lg:table-cell">Unrec.</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="hidden text-right md:table-cell">Synced</TableHead>
+                  <TableHead className="w-[40px]"></TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -701,12 +785,19 @@ export default function DashboardPage() {
                     return (
                       <TableRow key={client.id} className={cn(isInactive && 'opacity-50')}>
                         <TableCell className="font-medium">
-                          <Link
-                            href={`/clients/${client.id}`}
-                            className="hover:text-primary transition-colors"
-                          >
-                            {client.organization_name}
-                          </Link>
+                          <div className="flex items-center gap-1.5">
+                            <Link
+                              href={`/clients/${client.id}`}
+                              className="hover:text-primary transition-colors"
+                            >
+                              {client.organization_name}
+                            </Link>
+                            {!client.has_xero_connection && (
+                              <span className="rounded bg-muted px-1 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                                {client.accounting_software === 'quickbooks' ? 'QB' : client.accounting_software === 'myob' ? 'MYOB' : client.accounting_software}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <select
@@ -741,6 +832,12 @@ export default function DashboardPage() {
                             size="sm"
                           />
                         </TableCell>
+                        <TableCell className={cn(
+                          'hidden text-center tabular-nums text-xs lg:table-cell',
+                          client.unreconciled_count > 5 ? 'text-amber-600 font-medium' : 'text-muted-foreground'
+                        )}>
+                          {client.has_xero_connection ? client.unreconciled_count : '—'}
+                        </TableCell>
                         <TableCell className="text-center">
                           <span className="inline-flex items-center gap-1.5 text-xs">
                             <span className={cn('h-1.5 w-1.5 rounded-full', status.dotColor)} />
@@ -749,6 +846,24 @@ export default function DashboardPage() {
                         </TableCell>
                         <TableCell className="hidden text-right text-xs text-muted-foreground md:table-cell">
                           {formatRelativeTime(client.last_synced_at)}
+                        </TableCell>
+                        <TableCell>
+                          {selectedStatus === 'excluded' && client.exclusion ? (
+                            <button
+                              onClick={() => handleInclude(client.id, client.exclusion!.id)}
+                              className="text-xs text-primary hover:underline"
+                            >
+                              Include
+                            </button>
+                          ) : selectedStatus !== 'excluded' ? (
+                            <button
+                              onClick={() => handleExclude(client.id)}
+                              className="text-xs text-muted-foreground hover:text-foreground"
+                              title="Exclude from this quarter"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </button>
+                          ) : null}
                         </TableCell>
                       </TableRow>
                     );
@@ -791,6 +906,63 @@ export default function DashboardPage() {
           </CardFooter>
         )}
       </Card>
+
+      {/* Add Client Dialog */}
+      <Dialog open={showAddClient} onOpenChange={setShowAddClient}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Client</DialogTitle>
+            <DialogDescription>Add a non-Xero client to your practice.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="client-name">Business name</Label>
+              <Input
+                id="client-name"
+                placeholder="Smith & Co Pty Ltd"
+                value={addClientName}
+                onChange={(e) => setAddClientName(e.target.value)}
+                disabled={addingClient}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client-abn">ABN (optional)</Label>
+              <Input
+                id="client-abn"
+                placeholder="12345678901"
+                value={addClientAbn}
+                onChange={(e) => setAddClientAbn(e.target.value)}
+                disabled={addingClient}
+                maxLength={11}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client-software">Accounting software</Label>
+              <select
+                id="client-software"
+                value={addClientSoftware}
+                onChange={(e) => setAddClientSoftware(e.target.value)}
+                disabled={addingClient}
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="quickbooks">QuickBooks</option>
+                <option value="myob">MYOB</option>
+                <option value="email">Email-based</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddClient(false)} disabled={addingClient}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddClient} disabled={addingClient || !addClientName.trim()}>
+              {addingClient ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+              Add Client
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

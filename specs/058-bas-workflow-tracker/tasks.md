@@ -67,7 +67,7 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T007 Create Pydantic schemas for PracticeClient in `backend/app/modules/clients/schemas.py`
+- [x] T007 Create Pydantic schemas for PracticeClient in `backend/app/modules/clients/schemas.py`
   - `PracticeClientCreate` (name, abn, accounting_software, assigned_user_id, notes)
   - `PracticeClientUpdate` (name, abn, assigned_user_id — all optional)
   - `PracticeClientResponse` (full response with assigned_user_name, notes_updated_by_name, etc.)
@@ -76,12 +76,12 @@
   - `PracticeClientNotesUpdate` (notes: str, max 5000 chars)
   - `ManualStatusUpdate` (manual_status: ManualBASStatus)
 
-- [ ] T008 [P] Create Pydantic schemas for exclusions in `backend/app/modules/clients/schemas.py`
+- [x] T008 [P] Create Pydantic schemas for exclusions in `backend/app/modules/clients/schemas.py`
   - `ClientExclusionCreate` (quarter: int 1-4, fy_year: str, reason: ExclusionReason | None, reason_detail: str | None)
   - `ClientExclusionResponse` (full response with excluded_by_name)
   - `ClientExclusionReversedResponse` (reversed_at, reversed_by_name)
 
-- [ ] T009 Create `PracticeClientRepository` in `backend/app/modules/clients/repository.py`
+- [x] T009 Create `PracticeClientRepository` in `backend/app/modules/clients/repository.py`
   - `create(data: PracticeClientCreate) -> PracticeClient` — insert new client
   - `get_by_id(client_id: UUID, tenant_id: UUID) -> PracticeClient | None`
   - `get_by_xero_connection_id(connection_id: UUID) -> PracticeClient | None`
@@ -93,18 +93,18 @@
   - All methods must include `tenant_id` in WHERE clauses
   - Use `flush()` not `commit()` per constitution
 
-- [ ] T010 [P] Create `ClientExclusionRepository` in `backend/app/modules/clients/repository.py`
+- [x] T010 [P] Create `ClientExclusionRepository` in `backend/app/modules/clients/repository.py`
   - `create_exclusion(data: dict) -> ClientQuarterExclusion`
   - `get_active_exclusion(client_id: UUID, quarter: int, fy_year: str) -> ClientQuarterExclusion | None`
   - `reverse_exclusion(exclusion_id: UUID, reversed_by: UUID) -> ClientQuarterExclusion`
   - `list_exclusions_for_quarter(tenant_id: UUID, quarter: int, fy_year: str) -> list[ClientQuarterExclusion]`
   - `get_excluded_client_ids(tenant_id: UUID, quarter: int, fy_year: str) -> set[UUID]`
 
-- [ ] T011 [P] Create `ClientNoteHistoryRepository` in `backend/app/modules/clients/repository.py`
+- [x] T011 [P] Create `ClientNoteHistoryRepository` in `backend/app/modules/clients/repository.py`
   - `create_history_entry(client_id: UUID, tenant_id: UUID, note_text: str, edited_by: UUID)`
   - `get_history(client_id: UUID, tenant_id: UUID) -> list[ClientNoteHistory]` — ordered by edited_at DESC
 
-- [ ] T012 Refactor `DashboardRepository.list_connections_with_financials` in `backend/app/modules/dashboard/repository.py`
+- [x] T012 Refactor `DashboardRepository.list_connections_with_financials` in `backend/app/modules/dashboard/repository.py`
   - Change driving table from `xero_connections` to `practice_clients`
   - LEFT JOIN `xero_connections` ON `practice_clients.xero_connection_id = xero_connections.id`
   - Invoice/transaction subqueries join on `xero_connections.id` (only when connection exists)
@@ -118,25 +118,25 @@
   - Update BAS status derivation: add check — if `unreconciled_count > 5` AND would be READY, set to NEEDS_REVIEW
   - For non-Xero clients (xero_connection_id IS NULL): use `manual_status` as display status instead of auto-derived
 
-- [ ] T013 Refactor `DashboardRepository.get_status_counts` in `backend/app/modules/dashboard/repository.py`
+- [x] T013 Refactor `DashboardRepository.get_status_counts` in `backend/app/modules/dashboard/repository.py`
   - Rewrite to use SQL COUNT/GROUP BY instead of fetching 1000 rows
   - Query from `practice_clients` LEFT JOIN xero_connections, LEFT JOIN exclusions
   - Exclude excluded clients from counts
   - Include `assigned_user_id` filter param
   - Return `excluded_count` as additional field
 
-- [ ] T014 Refactor `DashboardRepository.get_aggregated_summary` in `backend/app/modules/dashboard/repository.py`
+- [x] T014 Refactor `DashboardRepository.get_aggregated_summary` in `backend/app/modules/dashboard/repository.py`
   - Query from `practice_clients` instead of `xero_connections`
   - Exclude excluded clients from aggregates
   - Add `excluded_count` to response
   - Add `team_members` breakdown: list of {id, name, client_count} grouped by assigned_user_id
   - Include `assigned_user_id` filter param
 
-- [ ] T015 Update `DashboardSummaryResponse` schema in `backend/app/modules/dashboard/schemas.py`
+- [x] T015 Update `DashboardSummaryResponse` schema in `backend/app/modules/dashboard/schemas.py`
   - Add `excluded_count: int`
   - Add `team_members: list[TeamMemberSummary]` where TeamMemberSummary = {id: UUID | None, name: str, client_count: int}
 
-- [ ] T016 Update `ClientPortfolioItem` schema in `backend/app/modules/dashboard/schemas.py`
+- [x] T016 Update `ClientPortfolioItem` schema in `backend/app/modules/dashboard/schemas.py`
   - Add `assigned_user_id: UUID | None`
   - Add `assigned_user_name: str | None`
   - Add `accounting_software: str`
@@ -146,19 +146,19 @@
   - Add `exclusion: ClientExclusionBrief | None`
   - Add `manual_status: str | None`
 
-- [ ] T017 Update `DashboardService.get_client_portfolio` in `backend/app/modules/dashboard/service.py`
+- [x] T017 Update `DashboardService.get_client_portfolio` in `backend/app/modules/dashboard/service.py`
   - Pass through new filter params: `assigned_user_id`, `show_excluded`, `software`
   - Map new fields from repository results to updated `ClientPortfolioItem` schema
 
-- [ ] T018 Update `DashboardService.get_summary` in `backend/app/modules/dashboard/service.py`
+- [x] T018 Update `DashboardService.get_summary` in `backend/app/modules/dashboard/service.py`
   - Pass through `assigned_user_id` filter
   - Map new fields (excluded_count, team_members) to updated `DashboardSummaryResponse`
 
-- [ ] T019 Update dashboard router query params in `backend/app/modules/dashboard/router.py`
+- [x] T019 Update dashboard router query params in `backend/app/modules/dashboard/router.py`
   - `GET /dashboard/summary`: add `assigned_user_id: UUID | None = None` query param
   - `GET /dashboard/clients`: add `assigned_user_id: UUID | None = None`, `show_excluded: bool = False`, `software: str | None = None` query params
 
-- [ ] T020 Run backend validation
+- [x] T020 Run backend validation
   - Run: `cd backend && uv run ruff check . && uv run pytest -x`
   - Ensure all existing tests pass with refactored dashboard queries
   - Fix any type errors or missing fields
@@ -175,12 +175,12 @@
 
 ### Implementation
 
-- [ ] T021 [US1] Create `PracticeClientService` with assignment methods in `backend/app/modules/clients/service.py`
+- [x] T021 [US1] Create `PracticeClientService` with assignment methods in `backend/app/modules/clients/service.py`
   - `assign_client(client_id, assigned_user_id, current_user) -> PracticeClientResponse` — validate user exists in tenant, call repository, emit `client.assigned` audit event
   - `bulk_assign_clients(client_ids, assigned_user_id, current_user) -> BulkAssignResponse` — validate all clients belong to tenant, call repository, emit audit events per client
   - Import `PracticeClientRepository` — never import models directly from other modules
 
-- [ ] T022 [US1] Add assignment endpoints to `backend/app/modules/clients/router.py`
+- [x] T022 [US1] Add assignment endpoints to `backend/app/modules/clients/router.py`
   - `PATCH /clients/{client_id}/assign` — single client assignment
   - `POST /clients/bulk-assign` — bulk assignment (1-100 client_ids)
   - Both require Permission.INTEGRATION_WRITE
@@ -191,14 +191,14 @@
   - In `_run_bulk_import_async` Celery task: verify PracticeClient exists after sync completion
   - For any new XeroConnection created outside bulk import: add a hook/signal to create a corresponding PracticeClient
 
-- [ ] T024 [US1] Add team member filter to dashboard in `frontend/src/app/(protected)/dashboard/page.tsx`
+- [x] T024 [US1] Add team member filter to dashboard in `frontend/src/app/(protected)/dashboard/page.tsx`
   - Add state: `selectedAssignee: string | null` (UUID or 'me' or null for all)
   - Fetch team members via `listTenantUsers()` on mount
   - Render a dropdown/select above the status filter tabs: "All Clients", "My Clients", team member names
   - Default to "My Clients" for non-admin roles (check user role from Clerk)
   - Pass `assigned_user_id` param to `fetchClients` and `fetchSummary` API calls
 
-- [ ] T025 [US1] Add "Assigned To" column to dashboard client table in `frontend/src/app/(protected)/dashboard/page.tsx`
+- [x] T025 [US1] Add "Assigned To" column to dashboard client table in `frontend/src/app/(protected)/dashboard/page.tsx`
   - Add column between "Client" and "Net GST" columns
   - Display `assigned_user_name` or "Unassigned" badge
   - Make it an inline dropdown (shadcn Select) that triggers PATCH /clients/{id}/assign on change
@@ -210,7 +210,7 @@
   - On confirm: call POST /clients/bulk-assign, then refresh client list
   - Clear selection after successful assignment
 
-- [ ] T027 [US1] Add "Unassigned" filter option to status tabs in `frontend/src/app/(protected)/dashboard/page.tsx`
+- [x] T027 [US1] Add "Unassigned" filter option to status tabs in `frontend/src/app/(protected)/dashboard/page.tsx`
   - Extend team member dropdown with an "Unassigned" option that filters to clients where `assigned_user_id` is null
 
 **Checkpoint**: Team assignment is fully functional — clients can be assigned, dashboard shows assignees, "My Clients" filter works, bulk assignment works.
@@ -225,11 +225,11 @@
 
 ### Implementation
 
-- [ ] T028 [US2] Create exclusion service methods in `backend/app/modules/clients/service.py`
+- [x] T028 [US2] Create exclusion service methods in `backend/app/modules/clients/service.py`
   - `exclude_client(client_id, quarter, fy_year, reason, reason_detail, current_user) -> ClientExclusionResponse` — check not already excluded, create exclusion, emit `client.exclusion.created` audit event
   - `reverse_exclusion(exclusion_id, current_user) -> ClientExclusionReversedResponse` — set reversed_at/reversed_by, emit `client.exclusion.reversed` audit event
 
-- [ ] T029 [US2] Add exclusion endpoints to `backend/app/modules/clients/router.py`
+- [x] T029 [US2] Add exclusion endpoints to `backend/app/modules/clients/router.py`
   - `POST /clients/{client_id}/exclusions` — exclude for quarter
   - `DELETE /clients/{client_id}/exclusions/{exclusion_id}` — reverse exclusion
   - Require Permission.INTEGRATION_WRITE
@@ -263,11 +263,11 @@
 
 ### Implementation
 
-- [ ] T033 [US3] Create notes service methods in `backend/app/modules/clients/service.py`
+- [x] T033 [US3] Create notes service methods in `backend/app/modules/clients/service.py`
   - `update_notes(client_id, notes, current_user) -> PracticeClientResponse` — save to client record, create history entry, emit `client.notes.updated` audit event
   - `get_note_history(client_id, current_user) -> list[NoteHistoryEntry]` — ordered by edited_at DESC
 
-- [ ] T034 [US3] Add notes endpoints to `backend/app/modules/clients/router.py`
+- [x] T034 [US3] Add notes endpoints to `backend/app/modules/clients/router.py`
   - `PATCH /clients/{client_id}/notes` — update persistent notes
   - `GET /clients/{client_id}/notes/history` — get note change history
 
@@ -297,13 +297,13 @@
 
 ### Implementation
 
-- [ ] T037 [US4] Create manual client service method in `backend/app/modules/clients/service.py`
+- [x] T037 [US4] Create manual client service method in `backend/app/modules/clients/service.py`
   - `create_manual_client(data: PracticeClientCreate, current_user) -> PracticeClientResponse` — validate accounting_software is not 'xero' (Xero clients are created via import), create PracticeClient, emit `client.created_manual` audit event
 
-- [ ] T038 [US4] Create manual status update method in `backend/app/modules/clients/service.py`
+- [x] T038 [US4] Create manual status update method in `backend/app/modules/clients/service.py`
   - `update_manual_status(client_id, status, current_user) -> PracticeClientResponse` — reject if client has xero_connection_id (auto-derived status), update manual_status field
 
-- [ ] T039 [US4] Add manual client endpoints to `backend/app/modules/clients/router.py`
+- [x] T039 [US4] Add manual client endpoints to `backend/app/modules/clients/router.py`
   - `POST /clients/manual` — create non-Xero client
   - `PATCH /clients/{client_id}/manual-status` — update BAS status for non-Xero clients
 
@@ -337,7 +337,7 @@
 
 ### Implementation
 
-- [ ] T043 [US5] Verify unreconciled count is included in dashboard query (already done in T012)
+- [x] T043 [US5] Verify unreconciled count is included in dashboard query (already done in T012)
   - Confirm `unreconciled_count` is returned in `ClientPortfolioItem` response
   - Confirm BAS status derivation checks: if `unreconciled_count > 5` AND status would be READY → set to NEEDS_REVIEW
   - Write a unit test: given a client with invoices + transactions + fresh sync + 10 unreconciled → status is NEEDS_REVIEW
