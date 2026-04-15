@@ -385,7 +385,7 @@ export default function DashboardPage() {
     const token = await getToken();
     if (!token) return;
     const fyYearStr = `${selectedQuarter.fy_year - 1}-${String(selectedQuarter.fy_year).slice(-2)}`;
-    await apiClient.post(`/api/v1/clients/${clientId}/exclusions`, {
+    const resp = await apiClient.post(`/api/v1/clients/${clientId}/exclusions`, {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         quarter: selectedQuarter.quarter,
@@ -393,7 +393,10 @@ export default function DashboardPage() {
         reason: 'other',
       }),
     });
-    await Promise.all([fetchSummary(token, selectedQuarter), fetchClients(token, selectedQuarter)]);
+    if (resp.ok || resp.status === 409) {
+      // 409 = already excluded, just refresh
+      await Promise.all([fetchSummary(token, selectedQuarter), fetchClients(token, selectedQuarter)]);
+    }
   };
 
   const handleInclude = async (clientId: string, exclusionId: string) => {
