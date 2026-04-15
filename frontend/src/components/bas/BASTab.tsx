@@ -7,6 +7,7 @@
  * Features tabbed layout, workflow progress, and hero summary panel.
  */
 
+import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
   ArrowRight,
@@ -43,10 +44,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ThresholdTooltip } from '@/components/insights/ThresholdTooltip';
 import {
+  basQueryKeys,
+  useBASCalculation,
+  useBASVariance,
+  useBASAdjustments,
+  useBASTaxCodeSummary,
+  useBASCrossCheck,
+} from '@/hooks/useBASData';
+import {
   type BASSession,
-  type BASCalculation,
-  type BASAdjustment,
-  type VarianceAnalysisResponse,
   type BASFieldTransactionsResponse,
   type ExportFormat,
   type LodgementRecordRequest,
@@ -55,20 +61,15 @@ import {
   listBASSessions,
   createBASSession,
   triggerBASCalculation,
-  getBASCalculation,
-  getBASVarianceAnalysis,
   markBASSessionReviewed,
   exportBASWorkingPapers,
   exportBASWithLodgementSummary,
   exportBASAsCSV,
   addBASAdjustment,
-  listBASAdjustments,
   deleteBASAdjustment,
   getBASFieldTransactions,
   recordLodgement,
   updateLodgementDetails,
-  listWritebackJobs,
-  getWritebackJob,
   getSessionStatusLabel,
   formatBASCurrency,
   formatPercentage,
@@ -82,9 +83,6 @@ import {
   approveBASSession,
   requestChanges,
   reopenBASSession,
-  type TaxCodeSuggestionSummary,
-  type XeroBASCrossCheckResponse,
-  getTaxCodeSuggestionSummary,
   getXeroBASCrossCheck,
 } from '@/lib/bas';
 import { cn } from '@/lib/utils';
@@ -150,10 +148,33 @@ export function BASTab({
 
   // Selected session for detail view
   const [selectedSession, setSelectedSession] = useState<BASSession | null>(null);
-  const [calculation, setCalculation] = useState<BASCalculation | null>(null);
-  const [variance, setVariance] = useState<VarianceAnalysisResponse | null>(null);
-  const [adjustments, setAdjustments] = useState<BASAdjustment[]>([]);
-  const [detailLoading, setDetailLoading] = useState(false);
+
+  // React Query client for cache invalidation in mutation handlers
+  const queryClient = useQueryClient();
+  const sessionId = selectedSession?.id;
+  const hasCalculation = selectedSession?.has_calculation ?? false;
+
+  // Session detail — cached per session, instant on return navigation
+  const { data: calculation, isFetching: calcFetching } = useBASCalculation(
+    connectionId, sessionId, getToken, hasCalculation,
+  );
+  const { data: variance, isFetching: varianceFetching } = useBASVariance(
+    connectionId, sessionId, getToken,
+  );
+  const { data: adjustmentsData, isFetching: adjustmentsFetching } = useBASAdjustments(
+    connectionId, sessionId, getToken,
+  );
+  const adjustments = adjustmentsData ?? [];
+  const { data: taxCodeSummary } = useBASTaxCodeSummary(
+    connectionId, sessionId, getToken, hasCalculation,
+  );
+  const { data: xeroCrossCheck, isFetching: crossCheckFetching } = useBASCrossCheck(
+    connectionId, sessionId, getToken,
+  );
+  // Core data loading — gates the main spinner.
+  // Cross-check and tax code summary are excluded: they load independently
+  // so the BAS figures appear in ~2s rather than waiting for the slow Xero API call.
+  const detailLoading = varianceFetching || adjustmentsFetching || (hasCalculation && calcFetching);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<DetailTab>('gst');
@@ -188,11 +209,7 @@ export function BASTab({
   const [changeRequestFeedback, setChangeRequestFeedback] = useState('');
 
   // Tax code suggestion state (Spec 046)
-  const [taxCodeSummary, setTaxCodeSummary] = useState<TaxCodeSuggestionSummary | null>(null);
   const [showResolutionPanel, setShowResolutionPanel] = useState(false);
-
-  // Xero BAS cross-check state (Spec 056)
-  const [xeroCrossCheck, setXeroCrossCheck] = useState<XeroBASCrossCheckResponse | null>(null);
 
   // Xero write-back state (Spec 049)
   const [activeWritebackJobId, setActiveWritebackJobId] = useState<string | null>(null);
@@ -223,82 +240,6 @@ export function BASTab({
     }
   }, [getToken, connectionId]);
 
-  const fetchSessionDetail = useCallback(async (session: BASSession) => {
-    try {
-      setDetailLoading(true);
-      const token = await getToken();
-      if (!token) return;
-
-      const [calcResult, varianceResult, adjustmentsResult] = await Promise.allSettled([
-        session.has_calculation
-          ? getBASCalculation(token, connectionId, session.id)
-          : Promise.resolve(null),
-        getBASVarianceAnalysis(token, connectionId, session.id),
-        listBASAdjustments(token, connectionId, session.id),
-      ]);
-
-      if (calcResult.status === 'fulfilled') {
-        setCalculation(calcResult.value);
-      }
-      if (varianceResult.status === 'fulfilled') {
-        setVariance(varianceResult.value);
-      }
-      if (adjustmentsResult.status === 'fulfilled') {
-        setAdjustments(adjustmentsResult.value.adjustments);
-      }
-
-      // Fetch tax code suggestions, writeback jobs, and Xero cross-check in PARALLEL
-      const [suggestionsResult, writebackResult, crossCheckResult] = await Promise.allSettled([
-        // Tax code suggestion summary (Spec 046) — fetch only, no auto-generation on page load
-        session.has_calculation
-          ? getTaxCodeSuggestionSummary(token, connectionId, session.id)
-          : Promise.resolve(null),
-        // Latest writeback job (Spec 049)
-        listWritebackJobs(token, connectionId, session.id),
-        // Xero BAS cross-check (Spec 056)
-        getXeroBASCrossCheck(token, connectionId, session.id),
-      ]);
-
-      // Handle suggestions result
-      if (suggestionsResult.status === 'fulfilled' && suggestionsResult.value) {
-        setTaxCodeSummary(suggestionsResult.value);
-      } else {
-        setTaxCodeSummary(null);
-      }
-
-      // Handle Xero cross-check result
-      if (crossCheckResult.status === 'fulfilled') {
-        setXeroCrossCheck(crossCheckResult.value);
-      } else {
-        setXeroCrossCheck(null);
-      }
-
-      // Handle writeback result
-      if (writebackResult.status === 'fulfilled') {
-        try {
-          const jobs = writebackResult.value;
-          const latest = jobs[0];
-          if (latest && (latest.status === 'in_progress' || latest.status === 'pending')) {
-            setActiveWritebackJobId(latest.id);
-            setCompletedWritebackJob(null);
-          } else if (latest) {
-            const detail = await getWritebackJob(token, connectionId, session.id, latest.id);
-            setCompletedWritebackJob(detail);
-            setActiveWritebackJobId(null);
-          } else {
-            setActiveWritebackJobId(null);
-          }
-        } catch {
-          // non-fatal — writeback history is optional
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch session detail:', err);
-    } finally {
-      setDetailLoading(false);
-    }
-  }, [getToken, connectionId]);
-
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
@@ -320,22 +261,26 @@ export function BASTab({
     }
   }, [sessions, selectedQuarter, selectedFyYear]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Clear non-query state when session is deselected
   useEffect(() => {
-    if (selectedSession) {
-      fetchSessionDetail(selectedSession);
-    } else {
-      setCalculation(null);
-      setVariance(null);
-      setAdjustments([]);
+    if (!selectedSession) {
       setShowAdjustmentForm(false);
       setActiveWritebackJobId(null);
       setCompletedWritebackJob(null);
     }
-  }, [selectedSession, fetchSessionDetail]);
+  }, [selectedSession]);
 
   // ==========================================================================
   // Handlers
   // ==========================================================================
+
+  const handleRefreshCrossCheck = async () => {
+    if (!selectedSession) return;
+    const token = await getToken();
+    if (!token) return;
+    const fresh = await getXeroBASCrossCheck(token, connectionId, selectedSession.id, true);
+    queryClient.setQueryData(basQueryKeys.crossCheck(connectionId, selectedSession.id), fresh);
+  };
 
   const handleCreateSession = async () => {
     try {
@@ -367,30 +312,10 @@ export function BASTab({
       const token = await getToken();
       if (!token) throw new Error('Not authenticated');
 
-      const result = await triggerBASCalculation(token, connectionId, selectedSession.id);
+      await triggerBASCalculation(token, connectionId, selectedSession.id);
 
-      setCalculation({
-        id: '',
-        session_id: selectedSession.id,
-        g1_total_sales: result.gst.g1_total_sales,
-        g2_export_sales: result.gst.g2_export_sales,
-        g3_gst_free_sales: result.gst.g3_gst_free_sales,
-        g10_capital_purchases: result.gst.g10_capital_purchases,
-        g11_non_capital_purchases: result.gst.g11_non_capital_purchases,
-        field_1a_gst_on_sales: result.gst.field_1a_gst_on_sales,
-        field_1b_gst_on_purchases: result.gst.field_1b_gst_on_purchases,
-        w1_total_wages: result.payg.w1_total_wages,
-        w2_amount_withheld: result.payg.w2_amount_withheld,
-        gst_payable: result.gst.gst_payable,
-        total_payable: result.total_payable,
-        is_refund: result.is_refund,
-        calculated_at: result.calculated_at,
-        calculation_duration_ms: result.calculation_duration_ms,
-        transaction_count: result.gst.transaction_count,
-        invoice_count: result.gst.invoice_count,
-        pay_run_count: result.payg.pay_run_count,
-      });
-
+      // Mark has_calculation on the local session so that the calculation/summary
+      // hooks become enabled before the invalidation triggers a refetch
       setSessions((prev) =>
         prev.map((s) =>
           s.id === selectedSession.id ? { ...s, has_calculation: true } : s
@@ -398,8 +323,11 @@ export function BASTab({
       );
       setSelectedSession((prev) => prev ? { ...prev, has_calculation: true } : null);
 
-      const varianceResult = await getBASVarianceAnalysis(token, connectionId, selectedSession.id);
-      setVariance(varianceResult);
+      // Invalidate all session detail queries — React Query will refetch in parallel
+      await queryClient.invalidateQueries({
+        queryKey: ['bas', connectionId, selectedSession.id],
+        exact: false,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to calculate BAS');
     } finally {
@@ -461,7 +389,7 @@ export function BASTab({
         return;
       }
 
-      const newAdjustment = await addBASAdjustment(
+      await addBASAdjustment(
         token,
         connectionId,
         selectedSession.id,
@@ -471,7 +399,9 @@ export function BASTab({
         adjustmentReference || undefined
       );
 
-      setAdjustments((prev) => [...prev, newAdjustment]);
+      await queryClient.invalidateQueries({
+        queryKey: basQueryKeys.adjustments(connectionId, selectedSession.id),
+      });
 
       setAdjustmentAmount('');
       setAdjustmentReason('');
@@ -493,7 +423,9 @@ export function BASTab({
       if (!token) throw new Error('Not authenticated');
 
       await deleteBASAdjustment(token, connectionId, selectedSession.id, adjustmentId);
-      setAdjustments((prev) => prev.filter((a) => a.id !== adjustmentId));
+      await queryClient.invalidateQueries({
+        queryKey: basQueryKeys.adjustments(connectionId, selectedSession.id),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete adjustment');
     } finally {
@@ -1056,10 +988,20 @@ export function BASTab({
                       connectionId={connectionId}
                       sessionId={selectedSession.id}
                       getToken={getToken}
-                      onSummaryChange={(summary) => setTaxCodeSummary(summary)}
+                      onSummaryChange={(summary) => {
+                        if (selectedSession) {
+                          queryClient.setQueryData(
+                            basQueryKeys.taxCodeSummary(connectionId, selectedSession.id),
+                            summary,
+                          );
+                        }
+                      }}
                       onRecalculated={() => {
                         if (selectedSession) {
-                          fetchSessionDetail(selectedSession);
+                          queryClient.invalidateQueries({
+                            queryKey: ['bas', connectionId, selectedSession.id],
+                            exact: false,
+                          });
                         }
                       }}
                       onSessionUpdated={fetchSessions}
@@ -1229,8 +1171,16 @@ export function BASTab({
                         </div>
                       ) : (
                         <>
-                          {/* Xero BAS Cross-Check (Spec 056) */}
-                          {xeroCrossCheck && <XeroBASCrossCheck data={xeroCrossCheck} />}
+                          {/* Xero BAS Cross-Check (Spec 056) — loads independently of main content */}
+                          {crossCheckFetching && !xeroCrossCheck && (
+                            <div className="mb-4 h-9 rounded-lg bg-muted animate-pulse" />
+                          )}
+                          {xeroCrossCheck && (
+                            <XeroBASCrossCheck
+                              data={xeroCrossCheck}
+                              onRefresh={handleRefreshCrossCheck}
+                            />
+                          )}
 
                           {/* GST Tab */}
                           {activeTab === 'gst' && (

@@ -417,6 +417,57 @@ class BASRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_variance_sessions(
+        self,
+        connection_id: UUID,
+        quarter: int,
+        fy_year: int,
+    ) -> dict[str, "BASSession | None"]:
+        """Fetch current, prior-quarter, and same-quarter-prior-year sessions in one query.
+
+        Returns a dict with keys: "current", "prior_quarter", "prior_year".
+        Replaces three sequential get_*_session calls with a single JOIN query.
+        """
+        # Build the three (fy_year, quarter) target pairs
+        if quarter == 1:
+            prior_q, prior_fy = 4, fy_year - 1
+        else:
+            prior_q, prior_fy = quarter - 1, fy_year
+
+        targets = [
+            (fy_year, quarter),
+            (prior_fy, prior_q),
+            (fy_year - 1, quarter),
+        ]
+
+        rows = await self.session.execute(
+            select(BASSession)
+            .join(BASPeriod)
+            .options(
+                selectinload(BASSession.period),
+                selectinload(BASSession.calculation),
+            )
+            .where(
+                BASPeriod.connection_id == connection_id,
+                # Match any of the three target periods
+                func.row(BASPeriod.fy_year, BASPeriod.quarter).in_(targets),
+            )
+        )
+        sessions = rows.scalars().all()
+
+        # Index by (fy_year, quarter) for lookup
+        index: dict[tuple[int, int], BASSession] = {
+            (s.period.fy_year, s.period.quarter): s
+            for s in sessions
+            if s.period
+        }
+
+        return {
+            "current": index.get((fy_year, quarter)),
+            "prior_quarter": index.get((prior_fy, prior_q)),
+            "prior_year": index.get((fy_year - 1, quarter)),
+        }
+
     # =========================================================================
     # Audit Log Operations
     # =========================================================================

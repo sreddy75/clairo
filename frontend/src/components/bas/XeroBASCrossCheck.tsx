@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Info, RefreshCw, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,22 @@ import { cn } from '@/lib/utils';
 
 interface XeroBASCrossCheckProps {
   data: XeroBASCrossCheckResponse;
+  onRefresh?: () => Promise<void>;
 }
 
-export function XeroBASCrossCheck({ data }: XeroBASCrossCheckProps) {
+export function XeroBASCrossCheck({ data, onRefresh }: XeroBASCrossCheckProps) {
   const [dismissed, setDismissed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function handleRefresh() {
+    if (!onRefresh || refreshing) return;
+    setRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   if (dismissed) return null;
 
@@ -73,9 +85,23 @@ export function XeroBASCrossCheck({ data }: XeroBASCrossCheckProps) {
           <span>Xero BAS data found for {data.period_label}</span>
           {hasDiffs && <span className="text-amber-600 font-normal">— figures differ</span>}
         </div>
-        <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => setDismissed(true)}>
-          <X className="w-3 h-3" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {onRefresh && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Refresh from Xero"
+            >
+              <RefreshCw className={cn('w-3 h-3', refreshing && 'animate-spin')} />
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => setDismissed(true)}>
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="py-0 px-4 pb-3">
         <table className="w-full text-xs">

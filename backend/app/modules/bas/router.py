@@ -1353,11 +1353,17 @@ async def xero_bas_crosscheck(
     session_id: UUID,
     session: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+    force_refresh: bool = Query(default=False, description="Bypass cache and fetch fresh data from Xero"),
 ) -> XeroBASCrossCheckResponse:
-    """Fetch BAS report from Xero and compare key figures with Clairo's calculation."""
+    """Fetch BAS report from Xero and compare key figures with Clairo's calculation.
+
+    Results are cached for 1 hour. Use force_refresh=true to fetch a fresh copy.
+    """
     await verify_connection_access(connection_id, session, user)
     service = TaxCodeService(session)
-    result = await service.get_xero_bas_crosscheck(session_id, connection_id, user.tenant_id)
+    result = await service.get_xero_bas_crosscheck(
+        session_id, connection_id, user.tenant_id, force_refresh=force_refresh
+    )
     return XeroBASCrossCheckResponse(**result)
 
 

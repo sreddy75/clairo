@@ -877,9 +877,23 @@ class TaxCodeService:
         session_id: UUID,
         connection_id: UUID,
         tenant_id: UUID,
+        force_refresh: bool = False,
     ) -> dict[str, Any]:
-        """Fetch BAS report from Xero and compare with Clairo's calculation."""
+        """Fetch BAS report from Xero and compare with Clairo's calculation.
+
+        Results are cached in Redis for 1 hour. Pass force_refresh=True to
+        bypass the cache and fetch a fresh report from Xero.
+        """
         from decimal import Decimal as D
+
+        from app.core.cache import cache_get, cache_set
+
+        cache_key = f"xero_bas_crosscheck:{connection_id}:{session_id}"
+
+        if not force_refresh:
+            cached = await cache_get(cache_key)
+            if cached is not None:
+                return cached
 
         # Get the BAS session and its calculation
         bas_session = await self.repo.get_session(session_id, tenant_id)
@@ -980,7 +994,7 @@ class TaxCodeService:
                         }
                 differences = diffs if diffs else None
 
-            return {
+            result = {
                 "xero_report_found": has_data,
                 "xero_figures": xero_figures if has_data else None,
                 "clairo_figures": clairo_figures,
@@ -988,6 +1002,8 @@ class TaxCodeService:
                 "period_label": period_label,
                 "fetched_at": now,
             }
+            await cache_set(cache_key, result, ttl=3600)
+            return result
 
         except Exception as e:
             from app.modules.integrations.xero.client import XeroClientError
@@ -995,7 +1011,7 @@ class TaxCodeService:
             error_msg = str(e)
             if "404" in error_msg or (isinstance(e, XeroClientError) and "404" in str(e)):
                 # No BAS report exists in Xero for this org — not an error
-                return {
+                result = {
                     "xero_report_found": False,
                     "xero_figures": None,
                     "clairo_figures": clairo_figures,
@@ -1003,6 +1019,8 @@ class TaxCodeService:
                     "period_label": period_label,
                     "fetched_at": now,
                 }
+                await cache_set(cache_key, result, ttl=3600)
+                return result
 
             logger.warning("Xero BAS cross-check failed: %s", e)
             return {

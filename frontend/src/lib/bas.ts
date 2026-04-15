@@ -1370,13 +1370,14 @@ export async function getXeroBASCrossCheck(
   token: string,
   connectionId: string,
   sessionId: string,
+  forceRefresh = false,
 ): Promise<XeroBASCrossCheckResponse> {
-  const response = await apiClient.get(
-    `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/xero-crosscheck`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
+  const url = forceRefresh
+    ? `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/xero-crosscheck?force_refresh=true`
+    : `/api/v1/clients/${connectionId}/bas/sessions/${sessionId}/xero-crosscheck`;
+  const response = await apiClient.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return apiClient.handleResponse<XeroBASCrossCheckResponse>(response);
 }
 

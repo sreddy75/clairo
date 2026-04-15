@@ -626,6 +626,13 @@ class BASService:
 
         await self.session.commit()
 
+        # Invalidate the cross-check cache so the next load fetches fresh Xero data
+        try:
+            from app.core.cache import cache_delete
+            await cache_delete(f"xero_bas_crosscheck:{period.connection_id}:{session_id}")
+        except Exception:
+            pass  # Non-fatal — cache will expire naturally
+
         # Spec 024: Audit event for GST calculation with credit note adjustments
         if gst_result.credit_note_count > 0:
             audit_service = AuditService(self.session)
@@ -870,20 +877,17 @@ class BASService:
             raise ValueError(f"Session {session_id} not found")
 
         period = session.period
-        calculation = await self.repo.get_calculation(session_id)
+        # calculation is already eagerly loaded on the session via selectinload
+        calculation = session.calculation
 
-        # Get comparison sessions
-        prior_quarter_session = await self.repo.get_prior_quarter_session(
-            connection_id=period.connection_id,
-            current_quarter=period.quarter,
-            current_fy_year=period.fy_year,
-        )
-
-        same_quarter_prior_year_session = await self.repo.get_same_quarter_prior_year_session(
+        # Fetch current + prior quarter + same quarter prior year in a single query
+        variance_sessions = await self.repo.get_variance_sessions(
             connection_id=period.connection_id,
             quarter=period.quarter,
             fy_year=period.fy_year,
         )
+        prior_quarter_session = variance_sessions["prior_quarter"]
+        same_quarter_prior_year_session = variance_sessions["prior_year"]
 
         # Build variance comparisons
         prior_quarter_variances = self._build_variance_comparison(
