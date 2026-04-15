@@ -76,9 +76,16 @@ interface QualitySummary {
   total_critical_issues: number;
 }
 
+interface TeamMemberSummary {
+  id: string | null;
+  name: string;
+  client_count: number;
+}
+
 interface DashboardSummary {
   total_clients: number;
   active_clients: number;
+  excluded_count: number;
   total_sales: string;
   total_purchases: string;
   gst_collected: string;
@@ -86,6 +93,7 @@ interface DashboardSummary {
   net_gst: string;
   status_counts: StatusCounts;
   quality: QualitySummary;
+  team_members: TeamMemberSummary[];
   quarter_label: string;
   quarter: number;
   fy_year: number;
@@ -97,6 +105,13 @@ interface DashboardSummary {
 interface ClientPortfolioItem {
   id: string;
   organization_name: string;
+  assigned_user_id: string | null;
+  assigned_user_name: string | null;
+  accounting_software: string;
+  has_xero_connection: boolean;
+  notes_preview: string | null;
+  unreconciled_count: number;
+  manual_status: string | null;
   total_sales: string;
   total_purchases: string;
   gst_collected: string;
@@ -167,6 +182,7 @@ export default function DashboardPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 25;
+  const [selectedAssignee, setSelectedAssignee] = useState<string>('');
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -200,6 +216,7 @@ export default function DashboardPage() {
       params.set('fy_year', quarter.fy_year.toString());
       if (selectedStatus) params.set('status', selectedStatus);
       if (search) params.set('search', search);
+      if (selectedAssignee) params.set('assigned_user_id', selectedAssignee);
 
       const response = await apiClient.get(`/api/v1/dashboard/clients?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -214,7 +231,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, sortBy, sortOrder, selectedStatus, search]);
+  }, [page, sortBy, sortOrder, selectedStatus, search, selectedAssignee]);
 
   // Initial load
   useEffect(() => {
@@ -533,6 +550,21 @@ export default function DashboardPage() {
               })}
             </div>
 
+            {/* Team Filter */}
+            <select
+              value={selectedAssignee}
+              onChange={(e) => { setSelectedAssignee(e.target.value); setPage(1); }}
+              className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+            >
+              <option value="">All Members</option>
+              {summary?.team_members?.filter((tm: { id: string | null }) => tm.id).map((tm: { id: string | null; name: string; client_count: number }) => (
+                <option key={tm.id} value={tm.id!}>
+                  {tm.name} ({tm.client_count})
+                </option>
+              ))}
+              <option value="unassigned">Unassigned</option>
+            </select>
+
             {/* Search */}
             <form onSubmit={handleSearchSubmit} className="relative w-full sm:max-w-xs">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -576,6 +608,7 @@ export default function DashboardPage() {
                   <SortableHead column="organization_name" label="Client" sortBy={sortBy} onSort={handleSort}>
                     <SortIcon column="organization_name" />
                   </SortableHead>
+                  <TableHead className="hidden md:table-cell">Assigned</TableHead>
                   <SortableHead column="net_gst" label="Net GST" sortBy={sortBy} onSort={handleSort} className="text-right">
                     <SortIcon column="net_gst" />
                   </SortableHead>
@@ -642,6 +675,11 @@ export default function DashboardPage() {
                           >
                             {client.organization_name}
                           </Link>
+                        </TableCell>
+                        <TableCell className="hidden text-xs text-muted-foreground md:table-cell">
+                          {client.assigned_user_name || (
+                            <span className="text-muted-foreground/50">Unassigned</span>
+                          )}
                         </TableCell>
                         <TableCell className={cn(
                           'text-right tabular-nums font-medium',
