@@ -161,8 +161,9 @@ class XeroConnectionService:
         Raises:
             XeroConnectionNotFoundError: If connection not found.
         """
-        from ..bas.models import BASPeriod
-        from ..quality.models import QualityScore
+        from app.modules.bas.models import BASPeriod
+        from app.modules.quality.models import QualityScore
+
         from .models import (
             XeroAccount,
             XeroBankTransaction,
