@@ -483,3 +483,280 @@ class ClientsRepository:
             )
 
         return transactions, total
+
+
+# =============================================================================
+# Practice Client Repository (Spec 058)
+# =============================================================================
+
+
+class PracticeClientRepository:
+    """Repository for practice client management."""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create(
+        self,
+        tenant_id: UUID,
+        name: str,
+        accounting_software: str,
+        xero_connection_id: UUID | None = None,
+        assigned_user_id: UUID | None = None,
+        notes: str | None = None,
+        abn: str | None = None,
+    ) -> "PracticeClient":
+        from app.modules.clients.models import PracticeClient
+
+        client = PracticeClient(
+            tenant_id=tenant_id,
+            name=name,
+            abn=abn,
+            accounting_software=accounting_software,
+            xero_connection_id=xero_connection_id,
+            assigned_user_id=assigned_user_id,
+            notes=notes,
+        )
+        self.db.add(client)
+        await self.db.flush()
+        await self.db.refresh(client)
+        return client
+
+    async def get_by_id(
+        self, client_id: UUID, tenant_id: UUID
+    ) -> "PracticeClient | None":
+        from app.modules.clients.models import PracticeClient
+
+        result = await self.db.execute(
+            select(PracticeClient).where(
+                PracticeClient.id == client_id,
+                PracticeClient.tenant_id == tenant_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_xero_connection_id(
+        self, connection_id: UUID
+    ) -> "PracticeClient | None":
+        from app.modules.clients.models import PracticeClient
+
+        result = await self.db.execute(
+            select(PracticeClient).where(
+                PracticeClient.xero_connection_id == connection_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def update_assignment(
+        self, client_id: UUID, tenant_id: UUID, assigned_user_id: UUID | None
+    ) -> "PracticeClient | None":
+
+        client = await self.get_by_id(client_id, tenant_id)
+        if client is None:
+            return None
+        client.assigned_user_id = assigned_user_id
+        await self.db.flush()
+        await self.db.refresh(client)
+        return client
+
+    async def bulk_update_assignment(
+        self,
+        client_ids: list[UUID],
+        assigned_user_id: UUID | None,
+        tenant_id: UUID,
+    ) -> int:
+        from sqlalchemy import update
+
+        from app.modules.clients.models import PracticeClient
+
+        result = await self.db.execute(
+            update(PracticeClient)
+            .where(
+                PracticeClient.id.in_(client_ids),
+                PracticeClient.tenant_id == tenant_id,
+            )
+            .values(assigned_user_id=assigned_user_id)
+        )
+        await self.db.flush()
+        return result.rowcount  # type: ignore[return-value]
+
+    async def update_notes(
+        self,
+        client_id: UUID,
+        tenant_id: UUID,
+        notes: str,
+        updated_by: UUID,
+    ) -> "PracticeClient | None":
+
+        client = await self.get_by_id(client_id, tenant_id)
+        if client is None:
+            return None
+        client.notes = notes if notes else None
+        client.notes_updated_at = datetime.now(UTC)
+        client.notes_updated_by = updated_by
+        await self.db.flush()
+        await self.db.refresh(client)
+        return client
+
+    async def update_manual_status(
+        self, client_id: UUID, tenant_id: UUID, status: str
+    ) -> "PracticeClient | None":
+
+        client = await self.get_by_id(client_id, tenant_id)
+        if client is None:
+            return None
+        if client.xero_connection_id is not None:
+            raise ValueError("Cannot set manual status on Xero-connected client")
+        client.manual_status = status
+        await self.db.flush()
+        await self.db.refresh(client)
+        return client
+
+    async def list_by_tenant(
+        self, tenant_id: UUID
+    ) -> list["PracticeClient"]:
+        from app.modules.clients.models import PracticeClient
+
+        result = await self.db.execute(
+            select(PracticeClient)
+            .where(PracticeClient.tenant_id == tenant_id)
+            .order_by(PracticeClient.name)
+        )
+        return list(result.scalars().all())
+
+
+# =============================================================================
+# Client Exclusion Repository (Spec 058)
+# =============================================================================
+
+
+class ClientExclusionRepository:
+    """Repository for client quarter exclusions."""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create_exclusion(
+        self,
+        tenant_id: UUID,
+        client_id: UUID,
+        quarter: int,
+        fy_year: str,
+        excluded_by: UUID,
+        reason: str | None = None,
+        reason_detail: str | None = None,
+    ) -> "ClientQuarterExclusion":
+        from app.modules.clients.models import ClientQuarterExclusion
+
+        exclusion = ClientQuarterExclusion(
+            tenant_id=tenant_id,
+            client_id=client_id,
+            quarter=quarter,
+            fy_year=fy_year,
+            reason=reason,
+            reason_detail=reason_detail,
+            excluded_by=excluded_by,
+            excluded_at=datetime.now(UTC),
+        )
+        self.db.add(exclusion)
+        await self.db.flush()
+        await self.db.refresh(exclusion)
+        return exclusion
+
+    async def get_active_exclusion(
+        self, client_id: UUID, quarter: int, fy_year: str
+    ) -> "ClientQuarterExclusion | None":
+        from app.modules.clients.models import ClientQuarterExclusion
+
+        result = await self.db.execute(
+            select(ClientQuarterExclusion).where(
+                ClientQuarterExclusion.client_id == client_id,
+                ClientQuarterExclusion.quarter == quarter,
+                ClientQuarterExclusion.fy_year == fy_year,
+                ClientQuarterExclusion.reversed_at.is_(None),
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def reverse_exclusion(
+        self, exclusion_id: UUID, tenant_id: UUID, reversed_by: UUID
+    ) -> "ClientQuarterExclusion | None":
+        from app.modules.clients.models import ClientQuarterExclusion
+
+        result = await self.db.execute(
+            select(ClientQuarterExclusion).where(
+                ClientQuarterExclusion.id == exclusion_id,
+                ClientQuarterExclusion.tenant_id == tenant_id,
+                ClientQuarterExclusion.reversed_at.is_(None),
+            )
+        )
+        exclusion = result.scalar_one_or_none()
+        if exclusion is None:
+            return None
+        exclusion.reversed_at = datetime.now(UTC)
+        exclusion.reversed_by = reversed_by
+        await self.db.flush()
+        await self.db.refresh(exclusion)
+        return exclusion
+
+    async def get_excluded_client_ids(
+        self, tenant_id: UUID, quarter: int, fy_year: str
+    ) -> set[UUID]:
+        from app.modules.clients.models import ClientQuarterExclusion
+
+        result = await self.db.execute(
+            select(ClientQuarterExclusion.client_id).where(
+                ClientQuarterExclusion.tenant_id == tenant_id,
+                ClientQuarterExclusion.quarter == quarter,
+                ClientQuarterExclusion.fy_year == fy_year,
+                ClientQuarterExclusion.reversed_at.is_(None),
+            )
+        )
+        return set(result.scalars().all())
+
+
+# =============================================================================
+# Client Note History Repository (Spec 058)
+# =============================================================================
+
+
+class ClientNoteHistoryRepository:
+    """Repository for client note audit trail."""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create_entry(
+        self,
+        tenant_id: UUID,
+        client_id: UUID,
+        note_text: str,
+        edited_by: UUID,
+    ) -> "ClientNoteHistory":
+        from app.modules.clients.models import ClientNoteHistory
+
+        entry = ClientNoteHistory(
+            tenant_id=tenant_id,
+            client_id=client_id,
+            note_text=note_text,
+            edited_by=edited_by,
+            edited_at=datetime.now(UTC),
+        )
+        self.db.add(entry)
+        await self.db.flush()
+        return entry
+
+    async def get_history(
+        self, client_id: UUID, tenant_id: UUID
+    ) -> list["ClientNoteHistory"]:
+        from app.modules.clients.models import ClientNoteHistory
+
+        result = await self.db.execute(
+            select(ClientNoteHistory)
+            .where(
+                ClientNoteHistory.client_id == client_id,
+                ClientNoteHistory.tenant_id == tenant_id,
+            )
+            .order_by(ClientNoteHistory.edited_at.desc())
+        )
+        return list(result.scalars().all())

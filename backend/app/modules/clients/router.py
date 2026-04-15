@@ -45,7 +45,7 @@ async def list_clients(
         None,
         description="Filter by BAS status: ready, needs_review, no_activity, missing_data",
     ),
-    search: str | None = Query(None, description="Search by organization name"),
+    search: str | None = Query(None, description="Search by client name"),
     sort_by: str = Query(
         "organization_name",
         description="Sort by: organization_name, total_sales, total_purchases, net_gst, activity_count",
@@ -53,12 +53,16 @@ async def list_clients(
     sort_order: str = Query("asc", description="Sort order: asc or desc"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(25, ge=1, le=100, description="Items per page"),
+    assigned_user_id: UUID | None = Query(None, description="Filter by assigned team member"),
+    show_excluded: bool = Query(False, description="Show excluded clients instead of active"),
+    software: str | None = Query(None, description="Filter by accounting software type"),
     current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_READ)),
     db: AsyncSession = Depends(get_db),
 ) -> ClientPortfolioResponse:
-    """List all client businesses (XeroConnections) for the tenant.
+    """List all practice clients for the tenant.
 
-    Each client business represents one Xero organization = one BAS to lodge.
+    Each client represents one business the practice manages.
+    Includes Xero-connected and manually-added clients.
     Reuses the dashboard service for consistent data.
     """
     service = DashboardService(db)
@@ -72,6 +76,9 @@ async def list_clients(
         sort_order=sort_order,
         page=page,
         limit=limit,
+        assigned_user_id=assigned_user_id,
+        show_excluded=show_excluded,
+        software=software,
     )
 
 

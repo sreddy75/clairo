@@ -12,6 +12,10 @@ from uuid import UUID
 from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.clients.models import (
+    ClientQuarterExclusion,
+    PracticeClient,
+)
 from app.modules.dashboard.schemas import BASStatus
 from app.modules.integrations.xero.models import (
     XeroBankTransaction,
@@ -188,15 +192,24 @@ class DashboardRepository:
         sort_order: str = "asc",
         limit: int = 25,
         offset: int = 0,
+        assigned_user_id: UUID | None = None,
+        show_excluded: bool = False,
+        software: str | None = None,
+        quarter: int | None = None,
+        fy_year: str | None = None,
     ) -> tuple[list[dict[str, Any]], int]:
-        """List client businesses (connections) with their financial summaries.
+        """List practice clients with their financial summaries.
 
-        Each row = one XeroConnection = one business = one BAS to lodge.
+        Drives from practice_clients, LEFT JOINs xero_connections for
+        financial data. Non-Xero clients appear with zero financials.
 
-        Returns tuple of (connections_list, total_count).
+        Returns tuple of (clients_list, total_count).
         """
+        from app.modules.auth.models import PracticeUser
+
         valid_statuses = [XeroInvoiceStatus.AUTHORISED, XeroInvoiceStatus.PAID]
         freshness_threshold = datetime.now(UTC) - timedelta(hours=24)
+        unreconciled_threshold = 5
 
         # Invoice aggregates per connection
         invoice_subq = (
@@ -267,11 +280,59 @@ class DashboardRepository:
             .subquery()
         )
 
-        # Build base query - one row per connection
+        # Unreconciled transaction counts per connection
+        unrec_subq = (
+            select(
+                XeroBankTransaction.connection_id,
+                func.count(XeroBankTransaction.id).label("unrec_count"),
+            )
+            .where(
+                and_(
+                    XeroBankTransaction.transaction_date >= quarter_start,
+                    XeroBankTransaction.transaction_date <= quarter_end,
+                    XeroBankTransaction.is_reconciled.is_(False),
+                )
+            )
+            .group_by(XeroBankTransaction.connection_id)
+            .subquery()
+        )
+
+        # Exclusion subquery for the selected quarter
+        exclusion_subq = (
+            select(
+                ClientQuarterExclusion.client_id,
+                ClientQuarterExclusion.id.label("exclusion_id"),
+                ClientQuarterExclusion.reason.label("exclusion_reason"),
+                ClientQuarterExclusion.excluded_at,
+                ClientQuarterExclusion.excluded_by,
+            )
+            .where(
+                and_(
+                    ClientQuarterExclusion.reversed_at.is_(None),
+                    *([ClientQuarterExclusion.quarter == quarter] if quarter else []),
+                    *([ClientQuarterExclusion.fy_year == fy_year] if fy_year else []),
+                )
+            )
+            .subquery()
+        )
+
+        # Assignee alias for join
+        assignee = select(
+            PracticeUser.id.label("pu_id"),
+            PracticeUser.display_name.label("pu_display_name"),
+            PracticeUser.user_id.label("pu_user_id"),
+        ).subquery()
+
+        # Build base query — one row per PracticeClient
         base_query = (
             select(
-                XeroConnection.id,
-                XeroConnection.organization_name,
+                PracticeClient.id,
+                PracticeClient.name.label("organization_name"),
+                PracticeClient.assigned_user_id,
+                PracticeClient.accounting_software,
+                PracticeClient.xero_connection_id,
+                PracticeClient.notes,
+                PracticeClient.manual_status,
                 XeroConnection.last_full_sync_at,
                 func.coalesce(invoice_subq.c.sales, Decimal("0")).label("total_sales"),
                 func.coalesce(invoice_subq.c.purchases, Decimal("0")).label("total_purchases"),
@@ -279,27 +340,71 @@ class DashboardRepository:
                 func.coalesce(invoice_subq.c.gst_paid, Decimal("0")).label("gst_paid"),
                 func.coalesce(invoice_subq.c.invoice_count, 0).label("invoice_count"),
                 func.coalesce(txn_subq.c.txn_count, 0).label("transaction_count"),
+                func.coalesce(unrec_subq.c.unrec_count, 0).label("unreconciled_count"),
+                assignee.c.pu_display_name.label("assigned_user_display_name"),
+                exclusion_subq.c.exclusion_id,
+                exclusion_subq.c.exclusion_reason,
+                exclusion_subq.c.excluded_at,
             )
-            .select_from(XeroConnection)
-            .outerjoin(invoice_subq, XeroConnection.id == invoice_subq.c.connection_id)
-            .outerjoin(txn_subq, XeroConnection.id == txn_subq.c.connection_id)
+            .select_from(PracticeClient)
+            .outerjoin(
+                XeroConnection,
+                PracticeClient.xero_connection_id == XeroConnection.id,
+            )
+            .outerjoin(
+                invoice_subq,
+                XeroConnection.id == invoice_subq.c.connection_id,
+            )
+            .outerjoin(
+                txn_subq,
+                XeroConnection.id == txn_subq.c.connection_id,
+            )
+            .outerjoin(
+                unrec_subq,
+                XeroConnection.id == unrec_subq.c.connection_id,
+            )
+            .outerjoin(
+                assignee,
+                PracticeClient.assigned_user_id == assignee.c.pu_id,
+            )
+            .outerjoin(
+                exclusion_subq,
+                PracticeClient.id == exclusion_subq.c.client_id,
+            )
         )
 
-        # Build filter conditions — include NEEDS_REAUTH so clients remain visible
-        # with a reauth prompt, rather than silently disappearing from the list
-        filters = [
-            XeroConnection.tenant_id == tenant_id,
-            XeroConnection.status.in_(
-                [
+        # Build filter conditions
+        filters: list = [PracticeClient.tenant_id == tenant_id]
+
+        # For Xero clients, only show active/needs_reauth connections
+        # For non-Xero clients (xero_connection_id IS NULL), always show
+        filters.append(
+            or_(
+                PracticeClient.xero_connection_id.is_(None),
+                XeroConnection.status.in_([
                     XeroConnectionStatus.ACTIVE,
                     XeroConnectionStatus.NEEDS_REAUTH,
-                ]
-            ),
-        ]
+                ]),
+            )
+        )
+
+        # Exclusion filter
+        if show_excluded:
+            filters.append(exclusion_subq.c.exclusion_id.isnot(None))
+        else:
+            filters.append(exclusion_subq.c.exclusion_id.is_(None))
+
+        # Assigned user filter
+        if assigned_user_id is not None:
+            filters.append(PracticeClient.assigned_user_id == assigned_user_id)
+
+        # Software filter
+        if software:
+            filters.append(PracticeClient.accounting_software == software)
 
         if search:
             search_pattern = f"%{search}%"
-            filters.append(XeroConnection.organization_name.ilike(search_pattern))
+            filters.append(PracticeClient.name.ilike(search_pattern))
 
         base_query = base_query.where(and_(*filters))
 
@@ -310,7 +415,7 @@ class DashboardRepository:
 
         # Add sorting
         sort_columns = {
-            "organization_name": XeroConnection.organization_name,
+            "organization_name": PracticeClient.name,
             "total_sales": invoice_subq.c.sales,
             "total_purchases": invoice_subq.c.purchases,
             "net_gst": (
@@ -323,7 +428,7 @@ class DashboardRepository:
             ),
         }
 
-        sort_col = sort_columns.get(sort_by, XeroConnection.organization_name)
+        sort_col = sort_columns.get(sort_by, PracticeClient.name)
         if sort_order == "desc":
             sort_col = sort_col.desc()
 
@@ -333,26 +438,45 @@ class DashboardRepository:
         result = await self.db.execute(query)
         rows = result.all()
 
-        # Process results and calculate BAS status per connection
+        # Process results and calculate BAS status per client
         connections = []
         for row in rows:
+            has_xero = row.xero_connection_id is not None
             invoice_count = row.invoice_count or 0
             transaction_count = row.transaction_count or 0
-            has_invoices = invoice_count > 0
-            has_transactions = transaction_count > 0
-            is_fresh = (
-                row.last_full_sync_at is not None and row.last_full_sync_at > freshness_threshold
-            )
+            unreconciled_count = row.unreconciled_count or 0
 
-            # Calculate BAS status for this business
-            if not has_invoices and not has_transactions:
-                bas_status = BASStatus.NO_ACTIVITY
-            elif has_invoices != has_transactions:  # XOR - one but not both
-                bas_status = BASStatus.MISSING_DATA
-            elif is_fresh:
-                bas_status = BASStatus.READY
+            # BAS status derivation
+            if not has_xero:
+                # Non-Xero clients use manual status
+                manual = row.manual_status or "not_started"
+                manual_to_bas = {
+                    "not_started": BASStatus.NO_ACTIVITY,
+                    "in_progress": BASStatus.NEEDS_REVIEW,
+                    "completed": BASStatus.READY,
+                    "lodged": BASStatus.READY,
+                }
+                bas_status = manual_to_bas.get(manual, BASStatus.NO_ACTIVITY)
             else:
-                bas_status = BASStatus.NEEDS_REVIEW
+                has_invoices = invoice_count > 0
+                has_transactions = transaction_count > 0
+                is_fresh = (
+                    row.last_full_sync_at is not None
+                    and row.last_full_sync_at > freshness_threshold
+                )
+
+                if not has_invoices and not has_transactions:
+                    bas_status = BASStatus.NO_ACTIVITY
+                elif has_invoices != has_transactions:
+                    bas_status = BASStatus.MISSING_DATA
+                elif is_fresh:
+                    # Check unreconciled threshold (Spec 058 - US5)
+                    if unreconciled_count > unreconciled_threshold:
+                        bas_status = BASStatus.NEEDS_REVIEW
+                    else:
+                        bas_status = BASStatus.READY
+                else:
+                    bas_status = BASStatus.NEEDS_REVIEW
 
             # Apply status filter if specified
             if status and bas_status.value != status:
@@ -360,22 +484,47 @@ class DashboardRepository:
 
             net_gst = (row.gst_collected or Decimal("0")) - (row.gst_paid or Decimal("0"))
 
-            connections.append(
-                {
-                    "id": row.id,
-                    "organization_name": row.organization_name,
-                    "total_sales": row.total_sales or Decimal("0"),
-                    "total_purchases": row.total_purchases or Decimal("0"),
-                    "gst_collected": row.gst_collected or Decimal("0"),
-                    "gst_paid": row.gst_paid or Decimal("0"),
-                    "net_gst": net_gst,
-                    "invoice_count": invoice_count,
-                    "transaction_count": transaction_count,
-                    "activity_count": invoice_count + transaction_count,
-                    "bas_status": bas_status,
-                    "last_synced_at": row.last_full_sync_at,
+            # Get assignee name
+            assigned_name = row.assigned_user_display_name
+            # Fallback: email will be resolved by the service layer if needed
+
+            # Notes preview
+            notes_text = row.notes or ""
+            notes_preview = (notes_text[:100] + "...") if len(notes_text) > 100 else (notes_text or None)
+
+            client_dict: dict[str, Any] = {
+                "id": row.id,
+                "organization_name": row.organization_name,
+                "assigned_user_id": row.assigned_user_id,
+                "assigned_user_name": assigned_name,
+                "accounting_software": row.accounting_software,
+                "has_xero_connection": has_xero,
+                "notes_preview": notes_preview if notes_preview else None,
+                "unreconciled_count": unreconciled_count,
+                "manual_status": row.manual_status,
+                "total_sales": row.total_sales or Decimal("0"),
+                "total_purchases": row.total_purchases or Decimal("0"),
+                "gst_collected": row.gst_collected or Decimal("0"),
+                "gst_paid": row.gst_paid or Decimal("0"),
+                "net_gst": net_gst,
+                "invoice_count": invoice_count,
+                "transaction_count": transaction_count,
+                "activity_count": invoice_count + transaction_count,
+                "bas_status": bas_status,
+                "last_synced_at": row.last_full_sync_at if has_xero else None,
+                "exclusion": None,
+            }
+
+            # Add exclusion data if showing excluded
+            if show_excluded and row.exclusion_id:
+                client_dict["exclusion"] = {
+                    "id": row.exclusion_id,
+                    "reason": row.exclusion_reason,
+                    "excluded_by_name": None,  # Resolved in service layer
+                    "excluded_at": row.excluded_at,
                 }
-            )
+
+            connections.append(client_dict)
 
         return connections, total_count
 
@@ -384,16 +533,23 @@ class DashboardRepository:
         tenant_id: UUID,
         quarter_start: date,
         quarter_end: date,
+        assigned_user_id: UUID | None = None,
+        quarter: int | None = None,
+        fy_year: str | None = None,
     ) -> dict[str, int]:
-        """Get count of client businesses by BAS status.
+        """Get count of clients by BAS status.
 
-        Returns count of connections (businesses) in each status category.
+        Returns count of practice clients in each status category,
+        excluding excluded clients.
         """
         connections, _ = await self.list_connections_with_financials(
             tenant_id=tenant_id,
             quarter_start=quarter_start,
             quarter_end=quarter_end,
-            limit=1000,  # High limit to get all connections
+            assigned_user_id=assigned_user_id,
+            quarter=quarter,
+            fy_year=fy_year,
+            limit=1000,
             offset=0,
         )
 
@@ -409,3 +565,26 @@ class DashboardRepository:
             counts[status_key] = counts.get(status_key, 0) + 1
 
         return counts
+
+    async def get_excluded_count(
+        self,
+        tenant_id: UUID,
+        quarter: int | None = None,
+        fy_year: str | None = None,
+    ) -> int:
+        """Get count of excluded clients for a quarter."""
+        filters = [
+            ClientQuarterExclusion.tenant_id == tenant_id,
+            ClientQuarterExclusion.reversed_at.is_(None),
+        ]
+        if quarter:
+            filters.append(ClientQuarterExclusion.quarter == quarter)
+        if fy_year:
+            filters.append(ClientQuarterExclusion.fy_year == fy_year)
+
+        result = await self.db.execute(
+            select(func.count()).select_from(
+                select(ClientQuarterExclusion.id).where(and_(*filters)).subquery()
+            )
+        )
+        return result.scalar() or 0

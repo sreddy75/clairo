@@ -4,6 +4,8 @@ CRITICAL: In Clairo, "client" = XeroConnection = one business = one BAS to lodge
 Each row in /clients represents one Xero organization, NOT a contact within an org.
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,6 +57,7 @@ async def get_dashboard_ui(
 async def get_dashboard_summary(
     quarter: int | None = Query(None, ge=1, le=4, description="BAS quarter (1-4)"),
     fy_year: int | None = Query(None, ge=2020, le=2100, description="Financial year"),
+    assigned_user_id: UUID | None = Query(None, description="Filter by assigned team member"),
     current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_READ)),
     db: AsyncSession = Depends(get_db),
 ) -> DashboardSummaryResponse:
@@ -73,6 +76,7 @@ async def get_dashboard_summary(
         tenant_id=current_user.tenant_id,
         quarter=quarter,
         fy_year=fy_year,
+        assigned_user_id=assigned_user_id,
     )
 
 
@@ -84,7 +88,7 @@ async def get_client_portfolio(
         None,
         description="Filter by BAS status: ready, needs_review, no_activity, missing_data",
     ),
-    search: str | None = Query(None, description="Search by organization name"),
+    search: str | None = Query(None, description="Search by client name"),
     sort_by: str = Query(
         "organization_name",
         description="Sort by: organization_name, total_sales, total_purchases, net_gst, activity_count",
@@ -92,17 +96,18 @@ async def get_client_portfolio(
     sort_order: str = Query("asc", description="Sort order: asc or desc"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(25, ge=1, le=100, description="Items per page"),
+    assigned_user_id: UUID | None = Query(None, description="Filter by assigned team member"),
+    show_excluded: bool = Query(False, description="Show excluded clients instead of active"),
+    software: str | None = Query(None, description="Filter by accounting software type"),
     current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_READ)),
     db: AsyncSession = Depends(get_db),
 ) -> ClientPortfolioResponse:
-    """Get paginated list of client businesses with financial data.
+    """Get paginated list of practice clients with financial data.
 
-    Each row represents one XeroConnection (client business) = one BAS to lodge.
+    Each row represents one PracticeClient = one business the practice manages.
+    Includes both Xero-connected and manually-added clients.
 
-    Returns businesses with their financial summaries for the specified quarter,
-    including total sales, purchases, GST amounts, and BAS readiness status.
-
-    Supports filtering by status, searching by organization name, sorting, and pagination.
+    Supports filtering by status, team member, exclusion, software type, search, and pagination.
     """
     service = DashboardService(db)
     return await service.get_client_portfolio(
@@ -115,4 +120,7 @@ async def get_client_portfolio(
         sort_order=sort_order,
         page=page,
         limit=limit,
+        assigned_user_id=assigned_user_id,
+        show_excluded=show_excluded,
+        software=software,
     )

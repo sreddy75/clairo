@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.dashboard.repository import DashboardRepository
 from app.modules.dashboard.schemas import (
+    ClientExclusionBrief,
     ClientPortfolioItem,
     ClientPortfolioResponse,
     DashboardSummaryResponse,
@@ -40,6 +41,7 @@ class DashboardService:
         tenant_id: UUID,
         quarter: int | None = None,
         fy_year: int | None = None,
+        assigned_user_id: UUID | None = None,
     ) -> DashboardSummaryResponse:
         """Get aggregated dashboard summary for the specified quarter.
 
@@ -69,11 +71,24 @@ class DashboardService:
             quarter_end=quarter_end,
         )
 
+        # Format fy_year for exclusion queries (e.g., 2025 -> "2025-26")
+        fy_year_str = f"{fy_year}-{str(fy_year + 1)[-2:]}"
+
         # Get status counts
         status_counts = await self.repo.get_status_counts(
             tenant_id=tenant_id,
             quarter_start=quarter_start,
             quarter_end=quarter_end,
+            assigned_user_id=assigned_user_id,
+            quarter=quarter,
+            fy_year=fy_year_str,
+        )
+
+        # Get excluded count
+        excluded_count = await self.repo.get_excluded_count(
+            tenant_id=tenant_id,
+            quarter=quarter,
+            fy_year=fy_year_str,
         )
 
         # Get quality summary across all connections
@@ -89,6 +104,7 @@ class DashboardService:
         return DashboardSummaryResponse(
             total_clients=summary_data["total_clients"],
             active_clients=summary_data["active_clients"],
+            excluded_count=excluded_count,
             total_sales=summary_data["total_sales"],
             total_purchases=summary_data["total_purchases"],
             gst_collected=summary_data["gst_collected"],
@@ -115,24 +131,30 @@ class DashboardService:
         sort_order: str = "asc",
         page: int = 1,
         limit: int = 25,
+        assigned_user_id: UUID | None = None,
+        show_excluded: bool = False,
+        software: str | None = None,
     ) -> ClientPortfolioResponse:
-        """Get paginated list of client businesses with financial data.
+        """Get paginated list of practice clients with financial data.
 
-        Each row = one XeroConnection = one business = one BAS to lodge.
+        Each row = one PracticeClient = one business the practice manages.
 
         Args:
             tenant_id: Tenant UUID for RLS filtering
             quarter: BAS quarter (1-4), defaults to current
             fy_year: Financial year, defaults to current
             status: Optional filter by BAS status
-            search: Optional search term for organization name
-            sort_by: Column to sort by (organization_name, total_sales, etc.)
+            search: Optional search term for client name
+            sort_by: Column to sort by
             sort_order: 'asc' or 'desc'
             page: Page number (1-indexed)
             limit: Items per page
+            assigned_user_id: Filter by team member
+            show_excluded: Show excluded clients instead of active
+            software: Filter by accounting software type
 
         Returns:
-            ClientPortfolioResponse with paginated client businesses
+            ClientPortfolioResponse with paginated practice clients
         """
         # Get quarter info
         if quarter is None or fy_year is None:
@@ -141,11 +163,12 @@ class DashboardService:
             fy_year = fy_year or current_fy
 
         quarter_start, quarter_end = get_quarter_dates(quarter, fy_year)
+        fy_year_str = f"{fy_year}-{str(fy_year + 1)[-2:]}"
 
         # Calculate offset
         offset = (page - 1) * limit
 
-        # Get connections from repository
+        # Get clients from repository
         connections_data, total = await self.repo.list_connections_with_financials(
             tenant_id=tenant_id,
             quarter_start=quarter_start,
@@ -156,36 +179,62 @@ class DashboardService:
             sort_order=sort_order,
             limit=limit,
             offset=offset,
+            assigned_user_id=assigned_user_id,
+            show_excluded=show_excluded,
+            software=software,
+            quarter=quarter,
+            fy_year=fy_year_str,
         )
 
-        # Get quality data for all connections in the list
-        connection_ids = [c["id"] for c in connections_data]
-        quality_data = await self.quality_repo.get_quality_scores_for_connections(
-            connection_ids=connection_ids,
-            quarter=quarter,
-            fy_year=fy_year,
-        )
+        # Get quality data for Xero-connected clients only
+        connection_ids = [c["id"] for c in connections_data if c.get("has_xero_connection")]
+        quality_data = {}
+        if connection_ids:
+            quality_data = await self.quality_repo.get_quality_scores_for_connections(
+                connection_ids=connection_ids,
+                quarter=quarter,
+                fy_year=fy_year,
+            )
 
         # Convert to schema objects
-        clients = [
-            ClientPortfolioItem(
-                id=c["id"],
-                organization_name=c["organization_name"],
-                total_sales=c["total_sales"],
-                total_purchases=c["total_purchases"],
-                gst_collected=c["gst_collected"],
-                gst_paid=c["gst_paid"],
-                net_gst=c["net_gst"],
-                invoice_count=c["invoice_count"],
-                transaction_count=c["transaction_count"],
-                activity_count=c["activity_count"],
-                bas_status=c["bas_status"],
-                quality_score=quality_data.get(c["id"], {}).get("overall_score"),
-                critical_issues=quality_data.get(c["id"], {}).get("critical_issues", 0),
-                last_synced_at=c["last_synced_at"],
+        clients = []
+        for c in connections_data:
+            exclusion_brief = None
+            if c.get("exclusion"):
+                exc = c["exclusion"]
+                exclusion_brief = ClientExclusionBrief(
+                    id=exc["id"],
+                    reason=exc.get("reason"),
+                    excluded_by_name=exc.get("excluded_by_name"),
+                    excluded_at=exc["excluded_at"],
+                )
+
+            clients.append(
+                ClientPortfolioItem(
+                    id=c["id"],
+                    organization_name=c["organization_name"],
+                    assigned_user_id=c.get("assigned_user_id"),
+                    assigned_user_name=c.get("assigned_user_name"),
+                    accounting_software=c.get("accounting_software", "xero"),
+                    has_xero_connection=c.get("has_xero_connection", True),
+                    notes_preview=c.get("notes_preview"),
+                    unreconciled_count=c.get("unreconciled_count", 0),
+                    manual_status=c.get("manual_status"),
+                    exclusion=exclusion_brief,
+                    total_sales=c["total_sales"],
+                    total_purchases=c["total_purchases"],
+                    gst_collected=c["gst_collected"],
+                    gst_paid=c["gst_paid"],
+                    net_gst=c["net_gst"],
+                    invoice_count=c["invoice_count"],
+                    transaction_count=c["transaction_count"],
+                    activity_count=c["activity_count"],
+                    bas_status=c["bas_status"],
+                    quality_score=quality_data.get(c["id"], {}).get("overall_score"),
+                    critical_issues=quality_data.get(c["id"], {}).get("critical_issues", 0),
+                    last_synced_at=c["last_synced_at"],
+                )
             )
-            for c in connections_data
-        ]
 
         return ClientPortfolioResponse(
             clients=clients,
