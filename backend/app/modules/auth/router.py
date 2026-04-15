@@ -732,6 +732,7 @@ def _practice_user_to_response(practice_user: PracticeUser) -> PracticeUserRespo
         tenant_id=practice_user.tenant_id,
         clerk_id=practice_user.clerk_id,
         email=practice_user.email,
+        display_name=practice_user.display_name,
         role=practice_user.role,
         is_active=practice_user.user.is_active,
         mfa_enabled=practice_user.mfa_enabled,

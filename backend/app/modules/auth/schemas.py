@@ -200,6 +200,7 @@ class PracticeUserResponse(BaseModel):
     tenant_id: UUID = Field(..., description="Tenant ID")
     clerk_id: str = Field(..., description="Clerk user ID")
     email: str = Field(..., description="Email from base user")
+    display_name: str | None = Field(None, description="Cached display name from Clerk")
     role: UserRole = Field(..., description="Role within tenant")
     is_active: bool = Field(..., description="Whether user is active (from base User)")
     mfa_enabled: bool = Field(..., description="Whether MFA is configured")
