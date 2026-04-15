@@ -211,6 +211,8 @@ export default function DashboardPage() {
   const [excludeClientId, setExcludeClientId] = useState<string | null>(null);
   const [excludeReason, setExcludeReason] = useState('dormant');
   const [excluding, setExcluding] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [bulkAssigning, setBulkAssigning] = useState(false);
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -425,6 +427,58 @@ export default function DashboardPage() {
       headers: { Authorization: `Bearer ${token}` },
     });
     await Promise.all([fetchSummary(token, selectedQuarter), fetchClients(token, selectedQuarter)]);
+  };
+
+  const handleBulkAssign = async (assigneeId: string | null) => {
+    if (selectedRows.size === 0) return;
+    setBulkAssigning(true);
+    try {
+      const token = await getToken();
+      if (!token || !selectedQuarter) return;
+      await apiClient.post('/api/v1/clients/bulk-assign', {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_ids: Array.from(selectedRows),
+          assigned_user_id: assigneeId || null,
+        }),
+      });
+      setSelectedRows(new Set());
+      await fetchClients(token, selectedQuarter);
+    } catch {
+      // silent
+    } finally {
+      setBulkAssigning(false);
+    }
+  };
+
+  const toggleRow = (id: string) => {
+    setSelectedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllRows = () => {
+    if (selectedRows.size === clients.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(clients.map((c) => c.id)));
+    }
+  };
+
+  const handleManualStatus = async (clientId: string, newStatus: string) => {
+    try {
+      const token = await getToken();
+      if (!token || !selectedQuarter) return;
+      await apiClient.patch(`/api/v1/clients/${clientId}/manual-status`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ manual_status: newStatus }),
+      });
+      await fetchClients(token, selectedQuarter);
+    } catch {
+      // silent
+    }
   };
 
   const handleSort = (column: string) => {
@@ -655,6 +709,34 @@ export default function DashboardPage() {
         {insightsExpanded && <InsightsWidget />}
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedRows.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
+          <span className="text-sm font-medium">{selectedRows.size} selected</span>
+          <span className="text-muted-foreground">|</span>
+          <span className="text-xs text-muted-foreground">Assign to:</span>
+          <select
+            onChange={(e) => { handleBulkAssign(e.target.value || null); e.target.value = ''; }}
+            disabled={bulkAssigning}
+            className="h-7 rounded border border-input bg-background px-2 text-xs"
+            defaultValue=""
+          >
+            <option value="" disabled>Select member...</option>
+            <option value="">Unassign all</option>
+            {teamMembers.map((tm) => (
+              <option key={tm.id} value={tm.id}>{tm.display_name || tm.email}</option>
+            ))}
+          </select>
+          {bulkAssigning && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          <button
+            onClick={() => setSelectedRows(new Set())}
+            className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       {/* ── Client Table ─────────────────────────────────────────────── */}
       <Card className="shadow-sm">
         {/* Filter Bar */}
@@ -750,6 +832,14 @@ export default function DashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[32px]">
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.size > 0 && selectedRows.size === clients.length}
+                      onChange={toggleAllRows}
+                      className="accent-primary"
+                    />
+                  </TableHead>
                   <SortableHead column="organization_name" label="Client" sortBy={sortBy} onSort={handleSort}>
                     <SortIcon column="organization_name" />
                   </SortableHead>
@@ -814,7 +904,15 @@ export default function DashboardPage() {
                     const isInactive = client.bas_status === 'no_activity';
 
                     return (
-                      <TableRow key={client.id} className={cn(isInactive && 'opacity-50')}>
+                      <TableRow key={client.id} className={cn(isInactive && 'opacity-50', selectedRows.has(client.id) && 'bg-primary/5')}>
+                        <TableCell className="w-[32px]">
+                          <input
+                            type="checkbox"
+                            checked={selectedRows.has(client.id)}
+                            onChange={() => toggleRow(client.id)}
+                            className="accent-primary"
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-1.5">
                             <Link
@@ -882,10 +980,23 @@ export default function DashboardPage() {
                           {client.has_xero_connection ? client.unreconciled_count : '—'}
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center gap-1.5 text-xs">
-                            <span className={cn('h-1.5 w-1.5 rounded-full', status.dotColor)} />
-                            <span className="text-muted-foreground">{status.label}</span>
-                          </span>
+                          {!client.has_xero_connection ? (
+                            <select
+                              value={client.manual_status || 'not_started'}
+                              onChange={(e) => handleManualStatus(client.id, e.target.value)}
+                              className="h-6 rounded border border-input bg-background px-1 text-[11px] text-foreground"
+                            >
+                              <option value="not_started">Not Started</option>
+                              <option value="in_progress">In Progress</option>
+                              <option value="completed">Completed</option>
+                              <option value="lodged">Lodged</option>
+                            </select>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 text-xs">
+                              <span className={cn('h-1.5 w-1.5 rounded-full', status.dotColor)} />
+                              <span className="text-muted-foreground">{status.label}</span>
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="hidden text-right text-xs text-muted-foreground md:table-cell">
                           {formatRelativeTime(client.last_synced_at)}
