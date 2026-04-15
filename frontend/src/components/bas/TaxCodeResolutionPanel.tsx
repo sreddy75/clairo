@@ -643,10 +643,18 @@ export function TaxCodeResolutionPanel({
       </div>
 
       {/* All resolved message */}
-      {pending.length === 0 && !hasApprovedNotApplied && (
+      {pending.length === 0 && !hasApprovedNotApplied && unreconciledTxns.length === 0 && (
         <div className="flex items-center gap-2 p-3 bg-status-success/10 text-status-success text-sm rounded-lg border border-status-success/20">
           <CheckCircle2 className="w-4 h-4" />
           All excluded transactions resolved. BAS is ready for approval.
+        </div>
+      )}
+
+      {/* Unreconciled transactions warning */}
+      {pending.length === 0 && !hasApprovedNotApplied && unreconciledTxns.length > 0 && (
+        <div className="flex items-center gap-2 p-3 bg-status-warning/10 text-status-warning text-sm rounded-lg border border-status-warning/20">
+          <CheckCircle2 className="w-4 h-4" />
+          All suggestions resolved, but {unreconciledTxns.length} bank transaction{unreconciledTxns.length !== 1 ? 's are' : ' is'} still unreconciled in Xero. Reconcile before approving BAS.
         </div>
       )}
     </div>

@@ -281,7 +281,7 @@ class DashboardRepository:
             .subquery()
         )
 
-        # Unreconciled transaction counts per connection
+        # Unreconciled transaction counts per connection (quarter-scoped)
         unrec_subq = (
             select(
                 XeroBankTransaction.connection_id,

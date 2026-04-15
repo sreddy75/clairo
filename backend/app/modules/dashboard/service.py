@@ -189,7 +189,12 @@ class DashboardService:
         )
 
         # Get quality data for Xero-connected clients only
-        connection_ids = [c["id"] for c in connections_data if c.get("has_xero_connection")]
+        # Must use xero_connection_id (XeroConnection.id), not c["id"] (PracticeClient.id)
+        connection_ids = [
+            UUID(c["xero_connection_id"])
+            for c in connections_data
+            if c.get("has_xero_connection") and c.get("xero_connection_id")
+        ]
         quality_data = {}
         if connection_ids:
             quality_data = await self.quality_repo.get_quality_scores_for_connections(
@@ -233,8 +238,8 @@ class DashboardService:
                     transaction_count=c["transaction_count"],
                     activity_count=c["activity_count"],
                     bas_status=c["bas_status"],
-                    quality_score=quality_data.get(c["id"], {}).get("overall_score"),
-                    critical_issues=quality_data.get(c["id"], {}).get("critical_issues", 0),
+                    quality_score=quality_data.get(UUID(c["xero_connection_id"]) if c.get("xero_connection_id") else None, {}).get("overall_score"),
+                    critical_issues=quality_data.get(UUID(c["xero_connection_id"]) if c.get("xero_connection_id") else None, {}).get("critical_issues", 0),
                     last_synced_at=c["last_synced_at"],
                 )
             )

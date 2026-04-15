@@ -1243,16 +1243,28 @@ class BankSummaryTransformer(XeroReportTransformer):
     ) -> list[dict[str, Any]]:
         """Extract per-bank-account balances from Bank Summary rows.
 
+        Xero wraps data rows inside a Section:
+          rows[0] = Header
+          rows[1] = { RowType: "Section", Rows: [ Row, Row, ..., SummaryRow ] }
+
         Args:
             rows: Rows array from Xero Bank Summary report response.
 
         Returns:
             List of dicts with per-account opening/closing balances.
         """
-        accounts = []
+        # Collect all candidate rows, flattening Section wrappers.
+        candidates: list[dict[str, Any]] = []
         for row in rows:
-            if row.get("RowType") != "Row":
-                continue
+            if row.get("RowType") == "Row":
+                candidates.append(row)
+            elif row.get("RowType") == "Section":
+                for sub in row.get("Rows", []):
+                    if sub.get("RowType") == "Row":
+                        candidates.append(sub)
+
+        accounts = []
+        for row in candidates:
             cells = row.get("Cells", [])
             if len(cells) < 5:
                 continue
@@ -1261,7 +1273,7 @@ class BankSummaryTransformer(XeroReportTransformer):
             account_name = account_cell.get("Value", "Unknown")
             account_id = None
             for attr in account_cell.get("Attributes", []):
-                if attr.get("Id") == "account" or attr.get("Name") == "account":
+                if attr.get("Id") in ("account", "accountID") or attr.get("Name") == "account":
                     account_id = attr.get("Value")
                     break
 

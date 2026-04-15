@@ -65,6 +65,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { TenantUser } from '@/lib/api/users';
 import { listTenantUsers } from '@/lib/api/users';
 import { apiClient } from '@/lib/api-client';
@@ -171,6 +177,32 @@ const STATUS_TABS = [
   { value: 'no_activity', label: 'No Activity' },
   { value: 'excluded', label: 'Excluded' },
 ] as const;
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function getStatusReason(client: ClientPortfolioItem): string {
+  switch (client.bas_status) {
+    case 'ready':
+      return 'Data is up to date — ready to lodge BAS';
+    case 'needs_review':
+      if (client.unreconciled_count > 0) {
+        return `${client.unreconciled_count} bank transaction${client.unreconciled_count !== 1 ? 's' : ''} unreconciled in Xero this quarter`;
+      }
+      return 'Xero data may be stale — try refreshing to get the latest';
+    case 'missing_data':
+      if (client.invoice_count > 0 && client.transaction_count === 0) {
+        return 'Invoices exist but no bank transactions this quarter — check Xero sync';
+      }
+      if (client.invoice_count === 0 && client.transaction_count > 0) {
+        return 'Bank transactions exist but no invoices this quarter';
+      }
+      return 'Some data is missing — check the Xero connection';
+    case 'no_activity':
+      return 'No transactions recorded for this quarter';
+    default:
+      return 'Open client to review';
+  }
+}
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -978,7 +1010,7 @@ export default function DashboardPage() {
                           'hidden text-center tabular-nums text-xs lg:table-cell',
                           client.unreconciled_count > 5 ? 'text-amber-600 font-medium' : 'text-muted-foreground'
                         )}>
-                          {client.has_xero_connection ? client.unreconciled_count : '—'}
+                          {client.has_xero_connection && client.unreconciled_count > 0 ? client.unreconciled_count : '—'}
                         </TableCell>
                         <TableCell className="text-center">
                           {!client.has_xero_connection ? (
@@ -993,10 +1025,22 @@ export default function DashboardPage() {
                               <option value="lodged">Lodged</option>
                             </select>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 text-xs">
-                              <span className={cn('h-1.5 w-1.5 rounded-full', status.dotColor)} />
-                              <span className="text-muted-foreground">{status.label}</span>
-                            </span>
+                            <TooltipProvider>
+                              <Tooltip delayDuration={200}>
+                                <TooltipTrigger asChild>
+                                  <Link
+                                    href={`/clients/${client.xero_connection_id || client.id}?tab=bas`}
+                                    className="inline-flex items-center gap-1.5 text-xs hover:underline"
+                                  >
+                                    <span className={cn('h-1.5 w-1.5 rounded-full', status.dotColor)} />
+                                    <span className={status.textColor}>{status.label}</span>
+                                  </Link>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="max-w-[220px] text-xs">
+                                  {getStatusReason(client)}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </TableCell>
                         <TableCell className="hidden text-right text-xs text-muted-foreground md:table-cell">
