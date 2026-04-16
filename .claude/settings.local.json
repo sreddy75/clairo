@@ -285,7 +285,8 @@
       "Skill(browse)",
       "Bash(rm:*)",
       "Bash(gh api:*)",
-      "Bash(npm ci:*)"
+      "Bash(npm ci:*)",
+      "Bash(.venv/bin/ruff check:*)"
     ],
     "deny": [],
     "ask": []

@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.modules.integrations.xero.client import XeroClient
+from app.modules.integrations.xero.connection_service import XeroConnectionService
 from app.modules.integrations.xero.encryption import TokenEncryption
 from app.modules.integrations.xero.models import (
     XeroConnection,
@@ -66,6 +67,10 @@ class XeroPayrollService:
         if not connection:
             raise XeroPayrollSyncError(f"Connection {connection_id} not found")
 
+        if connection.status == XeroConnectionStatus.NEEDS_REAUTH:
+            from app.modules.integrations.xero.exceptions import XeroAuthRequiredError
+            raise XeroAuthRequiredError(connection_id, org_name=connection.organization_name or "")
+
         if connection.status != XeroConnectionStatus.ACTIVE:
             raise XeroPayrollSyncError(f"Connection {connection_id} is not active")
 
@@ -78,8 +83,9 @@ class XeroPayrollService:
                 "pay_runs_synced": 0,
             }
 
-        # Get access token
-        access_token = self.encryption.decrypt(connection.access_token)
+        # Get access token via ensure_valid_token (handles expiry + grant-scoped lock)
+        conn_service = XeroConnectionService(self.session, self.settings)
+        access_token = await conn_service.ensure_valid_token(connection_id)
 
         # Sync employees
         employees_synced = await self._sync_employees(connection, access_token)

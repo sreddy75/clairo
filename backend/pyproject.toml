@@ -219,6 +219,7 @@ ignore = [
     "ARG",    # unused arguments allowed in tests
     "S105",   # hardcoded passwords allowed in tests
     "S106",   # hardcoded passwords allowed in tests
+    "S107",   # hardcoded passwords in function defaults allowed in tests
 ]
 "alembic/**/*.py" = [
     "ARG001", # unused argument in migration context
@@ -369,4 +370,6 @@ warn_required_dynamic_aliases = true
 [dependency-groups]
 dev = [
     "factory-boy>=3.3.3",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
 ]

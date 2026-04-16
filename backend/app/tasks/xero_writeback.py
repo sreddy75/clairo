@@ -51,7 +51,6 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
         WRITEBACK_ITEM_SUCCESS,
     )
     from app.modules.integrations.xero.client import XeroClient
-    from app.modules.integrations.xero.encryption import TokenEncryption
     from app.modules.integrations.xero.exceptions import (
         WritebackError,
         XeroConflictError,
@@ -118,10 +117,29 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
         skipped = 0
         failed = 0
 
-        # Decrypt tokens
-        encryption = TokenEncryption(settings.token_encryption.key.get_secret_value())
-        access_token = encryption.decrypt(connection.access_token)
         xero_tenant_id = connection.xero_tenant_id
+
+        # Acquire initial access token via ensure_valid_token (grant-scoped lock,
+        # handles rotation races with sibling connections).
+        from app.modules.integrations.xero.connection_service import XeroConnectionService
+        from app.modules.integrations.xero.exceptions import XeroAuthRequiredError
+        conn_service = XeroConnectionService(db, settings)
+        try:
+            access_token = await conn_service.ensure_valid_token(connection.id)
+        except XeroAuthRequiredError:
+            logger.error(
+                "Writeback job %s aborted: Xero re-authorization required for connection %s",
+                job_id,
+                connection.id,
+            )
+            await repo.update_job_status(
+                job_id,
+                XeroWritebackJobStatus.FAILED,
+                error_detail="xero_reauth_required: please reconnect Xero",
+                completed_at=datetime.now(UTC),
+            )
+            await db.commit()
+            return
 
         rate_limiter = XeroRateLimiter()
 
@@ -137,38 +155,31 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
                 valid_tax_types = None  # Skip validation if TaxRates endpoint fails
 
             for item in pending_items:
-                # Check OAuth token expiry — refresh if within 5 minutes
-                if connection.token_expires_at:
-                    remaining = (connection.token_expires_at - datetime.now(UTC)).total_seconds()
-                    if remaining < 300:
-                        try:
-                            refresh_token = encryption.decrypt(connection.refresh_token)
-                            tokens, expires_at = await xero_client.refresh_token(refresh_token)
-                            connection.access_token = encryption.encrypt(tokens.access_token)
-                            connection.refresh_token = encryption.encrypt(tokens.refresh_token)
-                            connection.token_expires_at = expires_at
-                            await db.flush()
-                            access_token = tokens.access_token
-                        except Exception as e:
-                            logger.error("Token refresh failed for job %s: %s", job_id, e)
-                            # Mark all remaining items failed
-                            for remaining_item in pending_items:
-                                if remaining_item.status == XeroWritebackItemStatus.PENDING.value:
-                                    await repo.update_item_status(
-                                        remaining_item.id,
-                                        XeroWritebackItemStatus.FAILED,
-                                        processed_at=datetime.now(UTC),
-                                        error_detail="auth_error: token refresh failed",
-                                    )
-                                    failed += 1
-                            await repo.update_job_status(
-                                job_id,
-                                XeroWritebackJobStatus.FAILED,
-                                error_detail="OAuth token refresh failed",
-                                completed_at=datetime.now(UTC),
+                # Refresh token mid-loop if needed (long-running writeback jobs can
+                # outlast the 30-minute access token). Uses grant-scoped lock.
+                try:
+                    access_token = await conn_service.ensure_valid_token(connection.id)
+                except XeroAuthRequiredError as e:
+                    logger.error(
+                        "Token refresh failed mid-writeback for job %s: %s", job_id, e
+                    )
+                    for remaining_item in pending_items:
+                        if remaining_item.status == XeroWritebackItemStatus.PENDING.value:
+                            await repo.update_item_status(
+                                remaining_item.id,
+                                XeroWritebackItemStatus.FAILED,
+                                processed_at=datetime.now(UTC),
+                                error_detail="xero_reauth_required: please reconnect Xero",
                             )
-                            await db.commit()
-                            return
+                            failed += 1
+                    await repo.update_job_status(
+                        job_id,
+                        XeroWritebackJobStatus.FAILED,
+                        error_detail="xero_reauth_required: please reconnect Xero",
+                        completed_at=datetime.now(UTC),
+                    )
+                    await db.commit()
+                    return
 
                 # Mark item as in_progress
                 await repo.update_item_status(item.id, XeroWritebackItemStatus.IN_PROGRESS)
