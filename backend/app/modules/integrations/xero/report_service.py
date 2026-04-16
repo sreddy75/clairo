@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.modules.integrations.xero.client import XeroClient
+from app.modules.integrations.xero.connection_service import XeroConnectionService
 from app.modules.integrations.xero.encryption import TokenEncryption
 from app.modules.integrations.xero.exceptions import XeroConnectionInactiveError
 from app.modules.integrations.xero.models import XeroConnection, XeroConnectionStatus
@@ -81,20 +82,18 @@ class XeroReportService:
         if connection is None:
             raise XeroConnectionNotFoundExc(connection_id)
 
+        if connection.status == XeroConnectionStatus.NEEDS_REAUTH:
+            from app.modules.integrations.xero.exceptions import XeroAuthRequiredError
+            raise XeroAuthRequiredError(connection_id, org_name=connection.organization_name or "")
+
         if connection.status != XeroConnectionStatus.ACTIVE:
             raise XeroConnectionInactiveError(str(connection_id))
 
-        # Refresh if needed
-        if connection.needs_refresh:
-            self.logger.info(
-                f"Token needs refresh for connection {connection_id}, "
-                f"expires_at={connection.token_expires_at}"
-            )
-            conn_service = XeroConnectionService(self.session, self.settings)
-            connection = await conn_service.refresh_tokens(connection_id)
-            self.logger.info(f"Token refreshed successfully for connection {connection_id}")
-
-        access_token = self.encryption.decrypt(connection.access_token)
+        # Always use ensure_valid_token — handles expiry and grant-scoped lock.
+        conn_service = XeroConnectionService(self.session, self.settings)
+        access_token = await conn_service.ensure_valid_token(connection_id)
+        # Re-read connection from session (tokens may have been refreshed)
+        connection = await self.connection_repo.get_by_id(connection_id)
         return connection, access_token
 
     async def get_report(

@@ -333,6 +333,7 @@ class XeroOAuthService:
                 connected_by=user_id,
                 has_payroll_access=has_payroll,
                 connection_type=connection_type.value if connection_type else "practice",
+                auth_event_id=org.auth_event_id,
             )
         )
 

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.modules.integrations.xero.client import XeroClient
+from app.modules.integrations.xero.connection_service import XeroConnectionService
 from app.modules.integrations.xero.encryption import TokenEncryption
 from app.modules.integrations.xero.exceptions import XpmClientNotFoundError
 from app.modules.integrations.xero.models import (
@@ -85,13 +86,18 @@ class XpmClientService:
         if not connection:
             raise XeroConnectionNotFoundExc(connection_id)
 
+        if connection.status == XeroConnectionStatus.NEEDS_REAUTH:
+            from app.modules.integrations.xero.exceptions import XeroAuthRequiredError
+            raise XeroAuthRequiredError(connection_id, org_name=connection.organization_name or "")
+
         if connection.status != XeroConnectionStatus.ACTIVE:
             raise XeroConnectionInactiveError(
                 f"Connection {connection_id} is not active (status: {connection.status})"
             )
 
-        # Decrypt access token
-        access_token = self.encryption.decrypt(connection.access_token)
+        # Get access token via ensure_valid_token (handles expiry + grant-scoped lock)
+        conn_service = XeroConnectionService(self.session, self.settings)
+        access_token = await conn_service.ensure_valid_token(connection_id)
 
         # Fetch connections from Xero API
         async with XeroClient(self.settings.xero) as client:

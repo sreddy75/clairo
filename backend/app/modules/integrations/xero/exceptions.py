@@ -104,6 +104,23 @@ class XeroTokenExpiredError(XeroSyncError):
         )
 
 
+class XeroAuthRequiredError(XeroSyncError):
+    """Raised when Xero re-authorization is required (refresh token expired/revoked).
+
+    Distinct from XeroTokenExpiredError: this means the refresh token itself
+    is no longer valid and the user must go through the OAuth flow again.
+    """
+
+    def __init__(self, connection_id: UUID, org_name: str = ""):
+        self.connection_id = connection_id
+        self.org_name = org_name
+        detail = f" ({org_name})" if org_name else ""
+        super().__init__(
+            f"Xero re-authorization required for connection {connection_id}{detail}. "
+            "Please reconnect to Xero."
+        )
+
+
 class XeroConnectionNotFoundError(XeroSyncError):
     """Raised when a Xero connection cannot be found."""
 

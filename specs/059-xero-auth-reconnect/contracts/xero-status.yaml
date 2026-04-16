@@ -1,0 +1,109 @@
+openapi: "3.1.0"
+info:
+  title: Xero Integration Status API
+  description: Lightweight endpoint for checking Xero connection re-auth status. Used by the frontend global notification system.
+  version: "1.0.0"
+
+paths:
+  /api/v1/integrations/xero/status:
+    get:
+      operationId: getXeroAuthStatus
+      summary: Get Xero connection re-auth status
+      description: |
+        Returns a summary of Xero connection health for the authenticated practice.
+        Designed for lightweight polling by the frontend on page load and navigation.
+        Only returns connections in `needs_reauth` state — active connections are counted
+        but not enumerated.
+      tags:
+        - Xero Integration
+      security:
+        - ClerkJWT: []
+      responses:
+        "200":
+          description: Connection status summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XeroAuthStatusResponse"
+              example:
+                needs_reauth:
+                  - connection_id: "550e8400-e29b-41d4-a716-446655440000"
+                    org_name: "Smith & Co Pty Ltd"
+                  - connection_id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+                    org_name: "Jones Family Trust"
+                total_connections: 5
+                active_connections: 3
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Not a practice user (business owner portal users do not manage Xero connections)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    XeroAuthStatusResponse:
+      type: object
+      required:
+        - needs_reauth
+        - total_connections
+        - active_connections
+      properties:
+        needs_reauth:
+          type: array
+          description: Connections that require user re-authorization. Empty array if all connections are healthy.
+          items:
+            $ref: "#/components/schemas/XeroConnectionSummary"
+        total_connections:
+          type: integer
+          description: Total number of Xero connections for this tenant (including disconnected)
+          example: 5
+        active_connections:
+          type: integer
+          description: Number of connections in `active` status
+          example: 3
+
+    XeroConnectionSummary:
+      type: object
+      required:
+        - connection_id
+        - org_name
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+          description: The Xero connection identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        org_name:
+          type: string
+          description: The Xero organization name, for display in the reconnect notification
+          example: "Smith & Co Pty Ltd"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          example: "Not authenticated"
+        code:
+          type: string
+          example: "UNAUTHORIZED"
+        details:
+          type: object
+          additionalProperties: true
+
+  securitySchemes:
+    ClerkJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Clerk-issued JWT for practice user authentication

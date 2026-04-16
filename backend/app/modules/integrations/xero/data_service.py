@@ -123,15 +123,19 @@ class XeroDataService:
         if connection is None:
             raise XeroConnectionNotFoundExc(connection_id)
 
+        if connection.status == XeroConnectionStatus.NEEDS_REAUTH:
+            from app.modules.integrations.xero.exceptions import XeroAuthRequiredError
+            raise XeroAuthRequiredError(connection_id, org_name=connection.organization_name or "")
+
         if connection.status != XeroConnectionStatus.ACTIVE:
             raise XeroConnectionInactiveError(connection_id)
 
-        # Refresh if needed
-        if connection.needs_refresh:
-            conn_service = XeroConnectionService(self.session, self.settings)
-            connection = await conn_service.refresh_tokens(connection_id)
-
-        access_token = self.encryption.decrypt(connection.access_token)
+        # Always use ensure_valid_token — it handles expiry check and grant-scoped
+        # lock to prevent sibling rotation races.
+        conn_service = XeroConnectionService(self.session, self.settings)
+        access_token = await conn_service.ensure_valid_token(connection_id)
+        # Re-read connection from session (tokens may have been refreshed)
+        connection = await self.connection_repo.get_by_id(connection_id)
         return connection, access_token
 
     async def _ensure_valid_token(self, connection_id: UUID) -> str:

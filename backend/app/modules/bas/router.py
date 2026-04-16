@@ -1924,7 +1924,6 @@ async def get_org_tax_rates(
     """
     from app.config import get_settings
     from app.modules.integrations.xero.client import XeroClient
-    from app.modules.integrations.xero.encryption import TokenEncryption
     from app.modules.integrations.xero.repository import XeroConnectionRepository
 
     await verify_connection_access(connection_id, session, user)
@@ -1933,8 +1932,27 @@ async def get_org_tax_rates(
     connection = await repo.get_by_id(connection_id)
 
     settings = get_settings()
-    encryption = TokenEncryption(settings.token_encryption.key.get_secret_value())
-    access_token = encryption.decrypt(connection.access_token)
+
+    from app.modules.integrations.xero.connection_service import XeroConnectionService
+    from app.modules.integrations.xero.exceptions import (
+        XeroAuthRequiredError,
+        XeroConnectionNotFoundError,
+    )
+
+    conn_service = XeroConnectionService(session, settings)
+    try:
+        access_token = await conn_service.ensure_valid_token(connection_id)
+    except XeroAuthRequiredError:
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "error": "Xero re-authorization required",
+                "code": "XERO_REAUTH_REQUIRED",
+                "org_name": connection.organization_name if connection else "",
+            },
+        )
+    except XeroConnectionNotFoundError:
+        raise HTTPException(status_code=404, detail="Xero connection not found")
 
     async with XeroClient(settings.xero) as xero_client:
         try:
