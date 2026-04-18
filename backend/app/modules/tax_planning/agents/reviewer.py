@@ -9,14 +9,19 @@ Verifies the pipeline output:
 
 import json
 import logging
+from decimal import Decimal
 from typing import Any
 
 import anthropic
 
 from app.modules.tax_planning.agents.prompts import REVIEWER_SYSTEM_PROMPT
-from app.modules.tax_planning.tax_calculator import calculate_tax_position
+from app.modules.tax_planning.tax_calculator import compute_ground_truth
 
 logger = logging.getLogger(__name__)
+
+# $1 tolerance matches SC-001 / SC-006 and mirrors the `_within_one` helper in
+# the existing calculator tests. Holds for every numeric comparison below.
+TOLERANCE_DOLLARS = Decimal("1")
 
 MAX_TOKENS = 4000
 
@@ -45,8 +50,10 @@ class ReviewerAgent:
         Returns:
             Tuple of (review_result_dict, review_passed_bool).
         """
-        # Step 1: Spot-check calculator numbers for recommended scenarios
-        number_issues = self._verify_calculator_numbers(
+        # Step 1: Independent ground-truth re-derivation and per-scenario
+        # comparison (Spec 059 US5 FR-011..FR-014). Returns a legacy human
+        # string list plus the structured disagreements the UI consumes.
+        number_issues, disagreements = self._verify_calculator_numbers(
             recommended_scenarios,
             financials_data,
             entity_type,
@@ -100,17 +107,23 @@ Review everything and output your findings as a JSON object."""
                 "summary": "Automated number check completed; AI review parsing failed.",
             }
 
-        # Merge our calculator verification with Claude's review
+        # Merge our calculator verification with Claude's review. The
+        # structured disagreements list is always populated (empty when clean)
+        # so the frontend can render either the OK state or the banner.
+        review_result["disagreements"] = disagreements
         if number_issues:
             review_result["numbers_issues"] = number_issues
             review_result["numbers_verified"] = False
+        else:
+            review_result.setdefault("numbers_verified", True)
 
-        passed = review_result.get("overall_passed", True) and len(number_issues) == 0
+        passed = review_result.get("overall_passed", True) and not disagreements
 
         logger.info(
-            "Reviewer: passed=%s, number_issues=%d",
+            "Reviewer: passed=%s, number_issues=%d, disagreements=%d",
             passed,
             len(number_issues),
+            len(disagreements),
         )
 
         return review_result, passed
@@ -121,32 +134,65 @@ Review everything and output your findings as a JSON object."""
         financials_data: dict[str, Any],
         entity_type: str,
         rate_configs: dict[str, dict],
-    ) -> list[str]:
-        """Spot-check that scenario numbers match the real calculator."""
-        issues = []
+    ) -> tuple[list[str], list[dict[str, Any]]]:
+        """Compare every recommended scenario's `before.*` numbers against an
+        independent ground-truth re-derivation with a $1 tolerance.
 
-        # Verify base position
+        Returns `(issue_strings, disagreements)`. The issue strings are kept
+        for backward compatibility with the existing reviewer LLM prompt;
+        `disagreements` is the structured list consumed by the UI banner and
+        per-scenario badge (Spec 059 FR-013).
+        """
+        issues: list[str] = []
+        disagreements: list[dict[str, Any]] = []
+
         try:
-            base = calculate_tax_position(
-                entity_type=entity_type,
+            truth = compute_ground_truth(
                 financials_data=financials_data,
                 rate_configs=rate_configs,
+                entity_type=entity_type,
             )
         except Exception as e:
-            issues.append(f"Could not calculate base position: {e}")
-            return issues
+            issues.append(f"Could not compute ground truth: {e}")
+            return issues, disagreements
+
+        expected_fields: list[tuple[str, Decimal]] = [
+            ("impact.before.tax_payable", truth.total_tax_payable),
+            ("impact.before.taxable_income", truth.taxable_income),
+        ]
 
         for scenario in scenarios:
-            impact = scenario.get("impact", {})
+            scenario_id = scenario.get("id") or scenario.get("scenario_title", "?")
+            title = scenario.get("scenario_title", "?")
+            # Modeller output uses `impact_data` (DB column) in some paths and
+            # `impact` in others — accept either.
+            impact = scenario.get("impact") or scenario.get("impact_data") or {}
             before = impact.get("before", {})
 
-            # Check that "before" tax matches our base calculation
-            reported_before_tax = before.get("tax_payable", 0)
-            if abs(reported_before_tax - base["total_tax_payable"]) > 1:
-                issues.append(
-                    f"Scenario '{scenario.get('scenario_title', '?')}': "
-                    f"before tax ${reported_before_tax:,.2f} != "
-                    f"calculator ${base['total_tax_payable']:,.2f}"
-                )
+            for field_path, expected in expected_fields:
+                leaf = field_path.rsplit(".", 1)[-1]
+                got_raw = before.get(leaf)
+                if got_raw is None:
+                    continue
+                try:
+                    got = Decimal(str(got_raw))
+                except (TypeError, ValueError, ArithmeticError):
+                    continue
+                delta = abs(got - expected)
+                if delta > TOLERANCE_DOLLARS:
+                    disagreements.append(
+                        {
+                            "scenario_id": str(scenario_id),
+                            "field_path": field_path,
+                            "expected": float(expected),
+                            "got": float(got),
+                            "delta": float(delta),
+                        }
+                    )
+                    issues.append(
+                        f"Scenario '{title}' {field_path}: "
+                        f"expected ${expected:,.2f}, got ${got:,.2f} "
+                        f"(delta ${delta:,.2f})"
+                    )
 
-        return issues
+        return issues, disagreements

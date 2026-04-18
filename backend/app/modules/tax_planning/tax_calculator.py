@@ -14,6 +14,23 @@ TWO_PLACES = Decimal("0.01")
 ZERO = Decimal("0")
 
 
+@dataclass(frozen=True)
+class GroundTruth:
+    """Reviewer ground-truth snapshot — a pure re-derivation of the tax
+    position from raw financials_data, used to compare against modeller
+    output with $1 tolerance (Spec 059 FR-011..FR-014).
+
+    The dataclass is frozen so reviewer code cannot mutate it into agreement.
+    """
+
+    taxable_income: Decimal
+    gross_tax: Decimal
+    total_tax_payable: Decimal
+    credits_total: Decimal
+    net_position: Decimal
+    source: str = "independent_re_derivation"
+
+
 @dataclass
 class TaxCalculationResult:
     """Result of a tax calculation for a single entity."""
@@ -410,3 +427,32 @@ def calculate_tax_position(
         "calculation_method": result.calculation_method,
         "rate_config_year": rate_configs.get("_financial_year", "2025-26"),
     }
+
+
+def compute_ground_truth(
+    financials_data: dict,
+    rate_configs: dict[str, dict],
+    entity_type: str,
+    has_help_debt: bool = False,
+) -> GroundTruth:
+    """Independent ground-truth re-derivation for the reviewer (FR-011).
+
+    Accepts only raw inputs — there is no `base_financials` parameter, so a
+    modeller's cached intermediate state cannot propagate into the
+    verification step. Called by `ReviewerAgent._verify_calculator_numbers`
+    once per plan; the reviewer then compares each scenario's `before.*`
+    figures against this truth with a $1 tolerance.
+    """
+    result = calculate_tax_position(
+        entity_type=entity_type,
+        financials_data=financials_data,
+        rate_configs=rate_configs,
+        has_help_debt=has_help_debt,
+    )
+    return GroundTruth(
+        taxable_income=Decimal(str(result["taxable_income"])),
+        gross_tax=Decimal(str(result["gross_tax"])),
+        total_tax_payable=Decimal(str(result["total_tax_payable"])),
+        credits_total=Decimal(str(result["credits_applied"]["total"])),
+        net_position=Decimal(str(result["net_position"])),
+    )

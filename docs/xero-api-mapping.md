@@ -561,5 +561,30 @@ Time {
 
 ---
 
+## Tax Planning — On-Demand Payroll Sync (Spec 059)
+
+Tax plan creation triggers an on-demand payroll sync so `credits.payg_withholding`
+and `payroll_summary.total_super_ytd` reflect the most recent Xero pay runs.
+Implementation notes:
+
+- `TaxPlanningService.pull_xero_financials` wraps
+  `XeroPayrollService.sync_payroll(connection_id)` in
+  `asyncio.wait_for(..., timeout=15.0)`.
+- On successful sync: `payroll_status="ready"`, summary is populated from
+  DB-persisted `XeroPayRun` / `XeroEmployee`, and `credits.payg_withholding`
+  is wired from `payroll_summary.total_tax_withheld_ytd` (FR-007).
+- On timeout: plan is returned with `payroll_sync_status="pending"`; the
+  Celery task `app.tasks.xero.sync_xero_payroll` is enqueued and, on
+  completion, calls `recompute_tax_position` for any tax plan created
+  against the same connection in the last 2 hours.
+- When `XeroConnection.has_payroll_access` is False: `payroll_sync_status=
+  "unavailable"` — the UI renders an actionable "reconnect with payroll
+  scope" banner rather than silently falling back to $0.
+
+See `specs/059-tax-planning-calculation-correctness/spec.md` §US3 for the
+rationale and user-facing behaviour.
+
+---
+
 *Document created: December 2024*
-*Last updated: January 2026 (Spec 025 - Fixed Assets & Enhanced Analysis)*
+*Last updated: April 2026 (Spec 059 — tax planning calculation correctness)*

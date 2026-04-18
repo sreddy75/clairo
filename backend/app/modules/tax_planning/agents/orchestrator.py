@@ -159,6 +159,39 @@ class AnalysisPipelineOrchestrator:
                 rate_configs=rate_configs,
             )
 
+            # Spec 059 FR-014 — emit one audit event per reviewer disagreement
+            # so Suren can spot trends in modeller drift over time. Failures
+            # are logged but do not block pipeline completion.
+            disagreements = review_result.get("disagreements") or []
+            if disagreements:
+                try:
+                    from app.core.audit import AuditService
+
+                    audit_for_review = AuditService(self.session)
+                    for d in disagreements:
+                        await audit_for_review.log_event(
+                            event_type="tax_planning.review.verification_failed",
+                            event_category="compliance",
+                            tenant_id=tenant_id,
+                            resource_type="tax_plan",
+                            resource_id=plan_id,
+                            action="review",
+                            outcome="failure",
+                            metadata={
+                                "plan_id": str(plan_id),
+                                "scenario_id": d.get("scenario_id"),
+                                "field_path": d.get("field_path"),
+                                "expected": d.get("expected"),
+                                "got": d.get("got"),
+                                "delta": d.get("delta"),
+                            },
+                        )
+                except Exception:
+                    logger.debug(
+                        "audit for review.verification_failed failed",
+                        exc_info=True,
+                    )
+
             # Generate implementation items from recommended scenarios
             items = self._build_implementation_items(
                 scenarios,

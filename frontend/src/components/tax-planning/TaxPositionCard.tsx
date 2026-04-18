@@ -5,11 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency, formatPercentage } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
-import type { EntityType, TaxPosition } from '@/types/tax-planning';
+import type { EntityType, ProjectionMetadata, TaxPosition } from '@/types/tax-planning';
 
 interface TaxPositionCardProps {
   taxPosition: TaxPosition;
   entityType: EntityType;
+  // Spec 059 FR-001 — when figures are projected (< 12 months of data), show a
+  // chip so the accountant can see the basis at a glance.
+  projectionMetadata?: ProjectionMetadata;
 }
 
 const METHOD_LABELS: Record<string, string> = {
@@ -20,18 +23,30 @@ const METHOD_LABELS: Record<string, string> = {
   partnership_single_partner: 'Partnership — Individual Rates',
 };
 
-export function TaxPositionCard({ taxPosition, entityType }: TaxPositionCardProps) {
+export function TaxPositionCard({ taxPosition, entityType, projectionMetadata }: TaxPositionCardProps) {
   const isRefundable = taxPosition.net_position < 0;
   const methodLabel = METHOD_LABELS[taxPosition.calculation_method] || taxPosition.calculation_method;
+  const isProjected = projectionMetadata?.applied === true;
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base font-semibold">Tax Position</CardTitle>
-          <Badge variant="outline" className="text-xs">
-            {methodLabel}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {isProjected ? (
+              <Badge
+                variant="outline"
+                className="text-xs border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+                title={`Figures projected to full FY from ${projectionMetadata?.months_elapsed} months of YTD data (linear averaging).`}
+              >
+                Projected from {projectionMetadata?.months_elapsed} mo
+              </Badge>
+            ) : null}
+            <Badge variant="outline" className="text-xs">
+              {methodLabel}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

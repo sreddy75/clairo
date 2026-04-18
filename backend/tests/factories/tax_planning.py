@@ -31,7 +31,7 @@ class TaxPlanFactory(factory.Factory):
     tax_position = LazyFunction(
         lambda: {
             "estimated_tax": 26092,
-            "tax_rate": 0.325,
+            "tax_rate": 0.30,
         }
     )
 

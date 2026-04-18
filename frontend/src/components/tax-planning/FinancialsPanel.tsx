@@ -15,6 +15,9 @@ interface FinancialsPanelProps {
   xeroFetchedAt: string | null;
   onRefreshXero?: () => Promise<void>;
   onEdit?: () => void;
+  // Spec 059 FR-006: render payroll state even when no summary exists yet, so
+  // pending / unavailable states are visible instead of silently hidden.
+  payrollStatus?: 'ready' | 'pending' | 'unavailable' | 'not_required' | null;
 }
 
 export function FinancialsPanel({
@@ -23,6 +26,7 @@ export function FinancialsPanel({
   xeroFetchedAt,
   onRefreshXero,
   onEdit,
+  payrollStatus,
 }: FinancialsPanelProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -272,17 +276,43 @@ export function FinancialsPanel({
           </div>
         )}
 
-        {/* Payroll Summary (Spec 056 - US6) */}
-        {financials.payroll_summary && (
+        {/* Payroll Summary (Spec 056 US6 + Spec 059 US3 FR-006).
+            Always render the section when a Xero connection exists — state
+            (ready/pending/unavailable) is surfaced to accountants rather than
+            silently hidden. */}
+        {(financials.payroll_summary ||
+          payrollStatus === 'pending' ||
+          payrollStatus === 'unavailable') && (
           <div className="border-t pt-3 space-y-1.5">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Payroll
             </p>
-            <SummaryRow label={`Employees (${financials.payroll_summary.employee_count})`} value={financials.payroll_summary.total_wages_ytd} />
-            <SummaryRow label="Superannuation YTD" value={financials.payroll_summary.total_super_ytd} />
-            <SummaryRow label="PAYG Withheld YTD" value={financials.payroll_summary.total_tax_withheld_ytd} />
-            {financials.payroll_summary.has_owners && (
-              <p className="text-xs text-amber-600">Includes owner/director employees</p>
+            {financials.payroll_summary ? (
+              <>
+                <SummaryRow
+                  label={`Employees (${financials.payroll_summary.employee_count})`}
+                  value={financials.payroll_summary.total_wages_ytd}
+                />
+                <SummaryRow
+                  label="Superannuation YTD"
+                  value={financials.payroll_summary.total_super_ytd}
+                />
+                <SummaryRow
+                  label="PAYG Withheld YTD"
+                  value={financials.payroll_summary.total_tax_withheld_ytd}
+                />
+                {financials.payroll_summary.has_owners && (
+                  <p className="text-xs text-amber-600">Includes owner/director employees</p>
+                )}
+              </>
+            ) : payrollStatus === 'pending' ? (
+              <p className="text-xs text-amber-700">
+                Super and PAYGW figures are still syncing from Xero.
+              </p>
+            ) : (
+              <p className="text-xs text-red-700">
+                Payroll data unavailable — reconnect Xero with payroll scope to load these figures.
+              </p>
             )}
           </div>
         )}

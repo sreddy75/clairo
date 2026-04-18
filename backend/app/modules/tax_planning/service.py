@@ -24,6 +24,59 @@ from app.modules.tax_planning.exceptions import (
     XeroPullError,
 )
 from app.modules.tax_planning.models import TaxPlan
+from app.modules.tax_planning.projection import annualise_linear, annualise_manual
+from app.modules.tax_planning.strategy_category import (
+    StrategyCategory,
+    requires_group_model as _requires_group_model,
+)
+
+
+def _infer_matched_by(citation: dict, retrieved_chunks: list[dict]) -> str:
+    """Best-effort attribution of which chunk field matched a verified citation.
+
+    The knowledge verifier returns the matching chunk but not the field that
+    clinched the match; we re-derive it here for auditing/telemetry. Values:
+    `ruling_number`, `section_ref`, `title`, `body_text`, `numbered_index`,
+    or `unverified`.
+    """
+    if not citation.get("verified"):
+        return "unverified"
+
+    ref = (citation.get("section_ref") or "").lower().strip()
+    if not ref:
+        # Numbered citation — matched by position within retrieved_chunks.
+        return "numbered_index"
+
+    for chunk in retrieved_chunks:
+        if (chunk.get("ruling_number") or "").lower().strip() in ref and chunk.get(
+            "ruling_number"
+        ):
+            return "ruling_number"
+    for chunk in retrieved_chunks:
+        if (chunk.get("section_ref") or "").lower().strip() in ref and chunk.get(
+            "section_ref"
+        ):
+            return "section_ref"
+    for chunk in retrieved_chunks:
+        if ref and (chunk.get("title") or "").lower().strip() in ref:
+            return "title"
+    return "body_text"
+
+
+def _coerce_strategy_category(value: Any) -> StrategyCategory:
+    """Parse an LLM-emitted strategy_category into the closed enum.
+
+    Invalid / missing values fall back to OTHER rather than failing
+    persistence — a misclassified scenario is recoverable, a dropped scenario
+    is not.
+    """
+    if not value:
+        return StrategyCategory.OTHER
+    try:
+        return StrategyCategory(value)
+    except ValueError:
+        logger.warning("Invalid strategy_category %r; falling back to OTHER", value)
+        return StrategyCategory.OTHER
 from app.modules.tax_planning.repository import (
     TaxPlanMessageRepository,
     TaxPlanRepository,
@@ -214,7 +267,10 @@ class TaxPlanningService:
         financials_data = self._transform_xero_to_financials(summary, rows)
         now = datetime.now(UTC)
 
-        # Calculate actual months of data and projection (Spec 056 - US2)
+        # Spec 059 FR-001 — linear annualisation applied in place at ingest.
+        # Income and expenses are scaled to projected full FY; projection_metadata
+        # preserves the YTD snapshot for traceability. The LLM sees exactly one
+        # set of numbers downstream (FR-003).
         fy_start_year = int(plan.financial_year[:4])
         fy_start_date = date(fy_start_year, 7, 1)
         effective_date = recon_date or date.today()
@@ -223,25 +279,54 @@ class TaxPlanningService:
         )
         months_elapsed = max(1, min(months_elapsed, 12))
 
-        financials_data["months_data_available"] = months_elapsed
-        financials_data["is_annualised"] = months_elapsed < 12
+        ytd_income_snapshot = {**financials_data["income"]}
+        ytd_expenses_snapshot = {**financials_data["expenses"]}
+        projected_income, income_meta = annualise_linear(
+            financials_data["income"], months_elapsed
+        )
+        projected_expenses, _ = annualise_linear(
+            financials_data["expenses"], months_elapsed
+        )
+        financials_data["income"] = projected_income
+        financials_data["expenses"] = projected_expenses
+        projection_metadata = income_meta.to_dict()
+        # Snapshot captures both sub-dicts (taken BEFORE the in-place scale).
+        projection_metadata["ytd_snapshot"] = {
+            "income": ytd_income_snapshot,
+            "expenses": ytd_expenses_snapshot,
+        }
+        financials_data["projection_metadata"] = projection_metadata
 
-        if months_elapsed >= 3 and months_elapsed < 12:
-            total_income = financials_data["income"]["total_income"]
-            total_expenses = financials_data["expenses"]["total_expenses"]
-            monthly_avg_rev = total_income / months_elapsed
-            monthly_avg_exp = total_expenses / months_elapsed
-            financials_data["projection"] = {
-                "projected_revenue": round(monthly_avg_rev * 12, 2),
-                "projected_expenses": round(monthly_avg_exp * 12, 2),
-                "projected_net_profit": round((monthly_avg_rev - monthly_avg_exp) * 12, 2),
-                "monthly_avg_revenue": round(monthly_avg_rev, 2),
-                "monthly_avg_expenses": round(monthly_avg_exp, 2),
-                "months_used": months_elapsed,
-                "projection_method": "linear_average",
-            }
-        else:
-            financials_data["projection"] = None
+        # Backward-compat flags retained for existing consumers; projection_metadata
+        # is the authoritative source going forward.
+        financials_data["months_data_available"] = months_elapsed
+        financials_data["is_annualised"] = income_meta.applied
+
+        # Audit: record the annualisation event (Spec 059 §Audit event shapes)
+        try:
+            from app.core.audit import AuditService
+
+            audit = AuditService(self.session)
+            await audit.log_event(
+                event_type="tax_planning.financials.annualised",
+                event_category="data",
+                tenant_id=tenant_id,
+                resource_type="tax_plan",
+                resource_id=plan.id,
+                action="update",
+                outcome="success",
+                metadata={
+                    "months_elapsed": months_elapsed,
+                    "months_projected": income_meta.months_projected,
+                    "rule": income_meta.rule,
+                    "applied": income_meta.applied,
+                    "ytd_total_income": ytd_income_snapshot.get("total_income"),
+                    "projected_total_income": projected_income.get("total_income"),
+                },
+            )
+        except Exception:
+            # Audit failures must never break the tax-plan flow.
+            logger.debug("audit log for financials.annualised failed", exc_info=True)
 
         # Fetch bank context (FR-015, FR-016, FR-017, FR-018)
         # recon_date was already fetched above for the P&L date cap
@@ -383,13 +468,93 @@ class TaxPlanningService:
             "existing_asset_spend": round(existing_asset_spend, 2),
         }
 
-        # Payroll intelligence (Spec 056 - US6)
+        # Payroll intelligence (Spec 056 US6 + Spec 059 US3 FR-006..008).
+        # On-demand sync is bounded by a 15s synchronous window; anything
+        # slower transitions the plan to `pending` and a background Celery
+        # task completes the sync + recomputes the tax position.
+        payroll_status: str = "not_required"
         try:
+            import time as _time
+
             from app.modules.integrations.xero.models import XeroEmployee, XeroPayRun
+            from app.modules.integrations.xero.payroll_service import XeroPayrollService
+            from app.modules.tax_planning.payroll import (
+                resolve_payroll_status,
+                schedule_background_payroll_sync,
+                sync_payroll_with_timeout,
+                wire_paygw_credit,
+            )
 
             connection = await self.session.get(XeroConnection, plan.xero_connection_id)
-            if connection and getattr(connection, "has_payroll_access", False):
-                # Query pay runs for current FY
+            has_connection = connection is not None
+            has_payroll_access = bool(getattr(connection, "has_payroll_access", False))
+            terminal_status = resolve_payroll_status(
+                has_connection=has_connection,
+                has_payroll_access=has_payroll_access,
+            )
+
+            if terminal_status == "unavailable":
+                payroll_status = "unavailable"
+                financials_data["payroll_summary"] = None
+                try:
+                    from app.core.audit import AuditService
+
+                    audit = AuditService(self.session)
+                    await audit.log_event(
+                        event_type="tax_planning.payroll.unavailable",
+                        event_category="integration",
+                        tenant_id=tenant_id,
+                        resource_type="tax_plan",
+                        resource_id=plan.id,
+                        action="read",
+                        outcome="failure",
+                        metadata={
+                            "reason_code": "no_payroll_access",
+                            "connection_id": str(connection.id) if connection else None,
+                        },
+                    )
+                except Exception:
+                    logger.debug("audit for payroll.unavailable failed", exc_info=True)
+            elif terminal_status == "not_required":
+                payroll_status = "not_required"
+                financials_data["payroll_summary"] = None
+            else:
+                payroll_service = XeroPayrollService(self.session, self.settings)
+                started_at = _time.monotonic()
+                sync_outcome, sync_result = await sync_payroll_with_timeout(
+                    payroll_service, connection.id
+                )
+                duration_ms = int((_time.monotonic() - started_at) * 1000)
+                timeout_hit = sync_outcome == "pending"
+                if timeout_hit:
+                    schedule_background_payroll_sync(connection.id, tenant_id)
+                    payroll_status = "pending"
+                else:
+                    payroll_status = "ready"
+
+                try:
+                    from app.core.audit import AuditService
+
+                    audit = AuditService(self.session)
+                    await audit.log_event(
+                        event_type="tax_planning.payroll.sync_triggered",
+                        event_category="integration",
+                        tenant_id=tenant_id,
+                        resource_type="tax_plan",
+                        resource_id=plan.id,
+                        action="sync",
+                        outcome="success" if not timeout_hit else "timeout",
+                        metadata={
+                            "connection_id": str(connection.id),
+                            "sync_outcome": sync_outcome,
+                            "pay_run_count": (sync_result or {}).get("pay_runs_synced"),
+                            "duration_ms": duration_ms,
+                            "timeout_hit": timeout_hit,
+                        },
+                    )
+                except Exception:
+                    logger.debug("audit for payroll.sync_triggered failed", exc_info=True)
+
                 pay_run_result = await self.session.execute(
                     select(XeroPayRun).where(
                         XeroPayRun.connection_id == connection.id,
@@ -398,7 +563,6 @@ class TaxPlanningService:
                 )
                 pay_runs = list(pay_run_result.scalars().all())
 
-                # Query active employees
                 emp_result = await self.session.execute(
                     select(XeroEmployee).where(
                         XeroEmployee.connection_id == connection.id,
@@ -413,7 +577,7 @@ class TaxPlanningService:
                     for e in employees
                 )
 
-                financials_data["payroll_summary"] = {
+                payroll_summary = {
                     "employee_count": len(employees),
                     "total_wages_ytd": sum(float(pr.total_wages or 0) for pr in pay_runs),
                     "total_super_ytd": sum(float(pr.total_super or 0) for pr in pay_runs),
@@ -430,11 +594,16 @@ class TaxPlanningService:
                         for e in employees[:20]  # Cap at 20 for JSONB size
                     ],
                 }
-            else:
-                financials_data["payroll_summary"] = None
+                financials_data["payroll_summary"] = payroll_summary
+                # FR-007: wire PAYGW credit from the freshly-computed summary so
+                # the LLM and calculator both see the same figure.
+                wire_paygw_credit(financials_data, payroll_summary)
         except Exception:
             logger.debug("Payroll data fetch failed or unavailable", exc_info=True)
             financials_data["payroll_summary"] = None
+            payroll_status = "unavailable"
+
+        financials_data["payroll_status"] = payroll_status
 
         await self.plan_repo.update(
             plan,
@@ -665,19 +834,31 @@ class TaxPlanningService:
             + Decimal(str(expenses.get("operating_expenses", 0)))
         )
 
-        financials_data: dict[str, Any] = {
-            "income": {
-                "revenue": float(income.get("revenue", 0)),
-                "other_income": float(income.get("other_income", 0)),
-                "total_income": total_income,
-                "breakdown": income.get("breakdown", []),
-            },
-            "expenses": {
-                "cost_of_sales": float(expenses.get("cost_of_sales", 0)),
-                "operating_expenses": float(expenses.get("operating_expenses", 0)),
-                "total_expenses": total_expenses,
-                "breakdown": expenses.get("breakdown", []),
-            },
+        manual_income = {
+            "revenue": float(income.get("revenue", 0)),
+            "other_income": float(income.get("other_income", 0)),
+            "total_income": total_income,
+            "breakdown": income.get("breakdown", []),
+        }
+        manual_expenses = {
+            "cost_of_sales": float(expenses.get("cost_of_sales", 0)),
+            "operating_expenses": float(expenses.get("operating_expenses", 0)),
+            "total_expenses": total_expenses,
+            "breakdown": expenses.get("breakdown", []),
+        }
+        # Spec 059 FR-005 — manual entries are treated as confirmed full-year.
+        # No annualisation is applied; projection_metadata records the reason.
+        _, income_meta = annualise_manual(manual_income)
+        _, expenses_meta = annualise_manual(manual_expenses)
+        projection_metadata = income_meta.to_dict()
+        projection_metadata["ytd_snapshot"] = {
+            "income": income_meta.ytd_snapshot,
+            "expenses": expenses_meta.ytd_snapshot,
+        }
+
+        new_financials: dict[str, Any] = {
+            "income": manual_income,
+            "expenses": manual_expenses,
             "credits": {
                 "payg_instalments": float(credits.get("payg_instalments", 0)),
                 "payg_withholding": float(credits.get("payg_withholding", 0)),
@@ -685,9 +866,23 @@ class TaxPlanningService:
             },
             "adjustments": [adj.model_dump() for adj in data.adjustments],
             "turnover": float(data.turnover),
+            "projection_metadata": projection_metadata,
+            # Retained for backward compat; projection_metadata is authoritative.
             "months_data_available": 12,
             "is_annualised": False,
         }
+
+        # FR-010: preserve Xero-derived context (payroll, bank, strategy, prior
+        # years) across a manual edit. Pre-059 this method overwrote the whole
+        # financials_data dict, which silently wiped out the LLM's situational
+        # awareness on any edit.
+        from app.modules.tax_planning.payroll import (
+            PRESERVED_CONTEXT_KEYS,
+            merge_preserving_context,
+        )
+
+        existing_financials = plan.financials_data or {}
+        financials_data = merge_preserving_context(existing_financials, new_financials)
 
         new_source = "manual"
         if plan.data_source == "xero":
@@ -697,6 +892,30 @@ class TaxPlanningService:
             plan,
             {"financials_data": financials_data, "data_source": new_source},
         )
+
+        try:
+            from app.core.audit import AuditService
+
+            audit = AuditService(self.session)
+            preserved_context_keys_present = sorted(
+                k for k in PRESERVED_CONTEXT_KEYS if k in financials_data
+            )
+            await audit.log_event(
+                event_type="tax_planning.manual_financials.saved",
+                event_category="data",
+                tenant_id=tenant_id,
+                resource_type="tax_plan",
+                resource_id=plan.id,
+                action="update",
+                outcome="success",
+                metadata={
+                    "plan_id": str(plan.id),
+                    "fields_changed": sorted(new_financials.keys()),
+                    "preserved_context_keys": preserved_context_keys_present,
+                },
+            )
+        except Exception:
+            logger.debug("audit for manual_financials.saved failed", exc_info=True)
 
         tax_position = await self._calculate_and_save_position(
             plan, has_help_debt=data.has_help_debt
@@ -710,6 +929,37 @@ class TaxPlanningService:
     # ------------------------------------------------------------------
     # Tax calculation
     # ------------------------------------------------------------------
+
+    async def recompute_tax_position(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+    ) -> dict[str, Any] | None:
+        """Re-run the tax position calculation against current financials_data.
+
+        Called by the background Celery payroll sync after it lands fresh pay
+        runs (Spec 059 FR-006) — the payroll figures flowing through
+        `wire_paygw_credit` change the PAYGW credit, which changes
+        `net_position`. Without this the UI would keep showing pre-sync numbers
+        even after the banner flips to ready.
+
+        Returns None if the plan has no financials yet (nothing to recompute).
+        """
+        plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
+        if not plan or not plan.financials_data:
+            return None
+
+        # Re-wire PAYGW credit against the latest payroll summary, then
+        # recompute the tax position against the refreshed financials_data.
+        from app.modules.tax_planning.payroll import wire_paygw_credit
+
+        payroll_summary = plan.financials_data.get("payroll_summary")
+        wire_paygw_credit(plan.financials_data, payroll_summary)
+        plan.financials_data = dict(plan.financials_data)
+        plan.financials_data["payroll_status"] = "ready"
+        await self.plan_repo.update(plan, {"financials_data": plan.financials_data})
+
+        return await self._calculate_and_save_position(plan)
 
     async def _calculate_and_save_position(
         self,
@@ -765,6 +1015,92 @@ class TaxPlanningService:
         if not scenario or scenario.tax_plan_id != plan_id:
             raise TaxScenarioNotFoundError(scenario_id)
         await self.scenario_repo.delete(scenario)
+
+    async def confirm_scenario_field(
+        self,
+        plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        scenario_id: uuid.UUID,
+        field_path: str,
+        new_value: Any,
+    ) -> dict[str, Any]:
+        """Spec 059 FR-015 — flip a scenario field's provenance from
+        `estimated` → `confirmed`, optionally updating the value at the same
+        path.
+
+        Returns the (scenario_id, field_path, old/new value, old/new provenance)
+        envelope the PATCH endpoint hands back to the frontend. Raises
+        `TaxScenarioNotFoundError` / `ValidationError` for bad paths.
+        """
+        from app.core.exceptions import ValidationError
+        from app.modules.tax_planning.json_pointer import resolve, set_at
+
+        await self.get_plan(plan_id, tenant_id)
+        scenario = await self.scenario_repo.get_by_id(scenario_id, tenant_id)
+        if not scenario or scenario.tax_plan_id != plan_id:
+            raise TaxScenarioNotFoundError(scenario_id)
+
+        source_tags = dict(scenario.source_tags or {})
+        old_provenance = source_tags.get(field_path, "estimated")
+
+        # Resolve current value against a root that carries the same prefix
+        # as the source_tags keys so "impact_data.after.tax_payable" resolves
+        # correctly. `impact_data` and `assumptions` are the only supported
+        # root prefixes.
+        root = {
+            "impact_data": scenario.impact_data or {},
+            "assumptions": scenario.assumptions or {},
+        }
+        try:
+            old_value = resolve(root, field_path)
+        except KeyError as e:
+            raise ValidationError(str(e), field="field_path") from e
+
+        try:
+            new_root = set_at(root, field_path, new_value)
+        except KeyError as e:
+            raise ValidationError(str(e), field="field_path") from e
+
+        scenario.impact_data = new_root.get("impact_data", scenario.impact_data)
+        scenario.assumptions = new_root.get("assumptions", scenario.assumptions)
+        source_tags[field_path] = "confirmed"
+        scenario.source_tags = source_tags
+        await self.session.flush()
+
+        try:
+            from app.core.audit import AuditService
+
+            audit = AuditService(self.session)
+            await audit.log_event(
+                event_type="tax_planning.scenario.provenance_confirmed",
+                event_category="data",
+                tenant_id=tenant_id,
+                resource_type="tax_scenario",
+                resource_id=scenario.id,
+                action="update",
+                outcome="success",
+                metadata={
+                    "scenario_id": str(scenario.id),
+                    "field_path": field_path,
+                    "old_value": old_value,
+                    "new_value": new_value,
+                    "old_provenance": old_provenance,
+                    "new_provenance": "confirmed",
+                },
+            )
+        except Exception:
+            logger.debug(
+                "audit for scenario.provenance_confirmed failed", exc_info=True
+            )
+
+        return {
+            "scenario_id": str(scenario.id),
+            "field_path": field_path,
+            "old_value": old_value,
+            "new_value": new_value,
+            "old_provenance": old_provenance,
+            "new_provenance": "confirmed",
+        }
 
     # ------------------------------------------------------------------
     # Messages
@@ -892,9 +1228,18 @@ class TaxPlanningService:
     ) -> dict:
         """Verify citations in the response against retrieved chunks.
 
-        Returns a citation verification result dict.
+        Spec 059 US6 T083 — thin wrapper over the knowledge module's
+        `CitationVerifier`, which already implements body-text fallback and
+        extracts section/ruling references alongside `[Source: …]` patterns.
+        This replaces the brittle substring-on-identifier matcher that
+        produced false "unverified" readings for legitimate citations like
+        `[Source: s25-10 ITAA 1997]` when the chunk carried `section_ref=
+        "Div 43"` and only the body text matched.
+
+        Output shape is preserved for the existing frontend while adding
+        `matched_by` per-citation breakdown (FR-023).
         """
-        import re
+        from app.modules.knowledge.retrieval.citation_verifier import CitationVerifier
 
         if not response_content or not retrieved_chunks:
             return {
@@ -903,44 +1248,25 @@ class TaxPlanningService:
                 "unverified_count": 0,
                 "verification_rate": 0.0,
                 "status": "no_citations",
+                "citations": [],
             }
 
-        # Extract citations: [Source: ...] patterns
-        citation_pattern = r"\[Source:\s*([^\]]+)\]"
-        citations = re.findall(citation_pattern, response_content)
+        verifier = CitationVerifier()
+        result = verifier.verify_citations(response_content, retrieved_chunks)
 
-        if not citations:
+        total = len(result.citations)
+        if total == 0:
             return {
                 "total_citations": 0,
                 "verified_count": 0,
                 "unverified_count": 0,
                 "verification_rate": 0.0,
                 "status": "no_citations",
+                "citations": [],
             }
 
-        # Build a set of identifiers from retrieved chunks
-        chunk_identifiers = set()
-        for chunk in retrieved_chunks:
-            if chunk.get("ruling_number"):
-                chunk_identifiers.add(chunk["ruling_number"].lower().strip())
-            if chunk.get("section_ref"):
-                chunk_identifiers.add(chunk["section_ref"].lower().strip())
-            if chunk.get("title"):
-                chunk_identifiers.add(chunk["title"].lower().strip())
-
-        # Verify each citation
-        verified_count = 0
-        for citation in citations:
-            citation_lower = citation.lower().strip()
-            if any(
-                identifier in citation_lower or citation_lower in identifier
-                for identifier in chunk_identifiers
-            ):
-                verified_count += 1
-
-        total = len(citations)
-        unverified = total - verified_count
-        rate = verified_count / total if total > 0 else 0.0
+        verified_count = total - result.ungrounded_count
+        rate = result.verification_rate
 
         if rate >= 0.9:
             status = "verified"
@@ -949,12 +1275,27 @@ class TaxPlanningService:
         else:
             status = "unverified"
 
+        # Per-citation matched_by breakdown — how did we end up verifying it?
+        # Useful for contract tests (FR-023) and for post-hoc debugging of
+        # citation behaviour in aggregate.
+        citations_out: list[dict] = []
+        for citation in result.citations:
+            matched_by = _infer_matched_by(citation, retrieved_chunks)
+            citations_out.append(
+                {
+                    "identifier": citation.get("section_ref") or str(citation.get("number")),
+                    "verified": citation.get("verified", False),
+                    "matched_by": matched_by,
+                }
+            )
+
         return {
             "total_citations": total,
             "verified_count": verified_count,
-            "unverified_count": unverified,
+            "unverified_count": result.ungrounded_count,
             "verification_rate": rate,
             "status": status,
+            "citations": citations_out,
         }
 
     # ------------------------------------------------------------------
@@ -1054,7 +1395,14 @@ class TaxPlanningService:
         ] or None
 
         # Confidence-based decline (matches knowledge chatbot pattern)
-        scores = [c.get("score", 0.0) for c in retrieved_chunks if c.get("score")]
+        # Spec 059 US6 hotfix T082 — chunks expose `relevance_score`, not
+        # `score`. The previous key-miss meant confidence_score was always
+        # dominated by `verification_rate` and legitimate answers got declined.
+        scores = [
+            c.get("relevance_score", 0.0)
+            for c in retrieved_chunks
+            if c.get("relevance_score")
+        ]
         top_score = scores[0] if scores else 0.0
         mean_top5 = sum(scores[:5]) / min(len(scores), 5) if scores else 0.0
         verification_rate = citation_verification.get("verification_rate", 0.0)
@@ -1074,16 +1422,55 @@ class TaxPlanningService:
         else:
             citation_verification["confidence_score"] = confidence_score
 
+        # Spec 059 FR-023 / T089 — audit the verification outcome.
+        try:
+            from app.core.audit import AuditService
+
+            audit_verify = AuditService(self.session)
+            matched_breakdown: dict[str, int] = {}
+            for c in citation_verification.get("citations", []):
+                key = c.get("matched_by", "unknown")
+                matched_breakdown[key] = matched_breakdown.get(key, 0) + 1
+            await audit_verify.log_event(
+                event_type="tax_planning.citation.verification_outcome",
+                event_category="data",
+                tenant_id=tenant_id,
+                resource_type="tax_plan",
+                resource_id=plan_id,
+                action="create",
+                outcome="success",
+                metadata={
+                    "total_citations": citation_verification.get("total_citations"),
+                    "verified_count": citation_verification.get("verified_count"),
+                    "confidence_score": confidence_score,
+                    "status": citation_verification.get("status"),
+                    "matched_by_breakdown": matched_breakdown,
+                },
+            )
+        except Exception:
+            logger.debug(
+                "audit for citation.verification_outcome failed",
+                exc_info=True,
+            )
+
         # Create scenario records
         created_scenarios = []
         scenario_ids = []
         for scenario_data in response.scenarios:
             sort_order = await self.scenario_repo.get_next_sort_order(plan_id)
-            scenario = await self.scenario_repo.create(
-                {
-                    "tenant_id": tenant_id,
-                    "tax_plan_id": plan_id,
-                    "title": scenario_data["scenario_title"],
+            # Spec 059 FR-017..FR-020 — strategy_category is the closed-enum
+            # policy lever; requires_group_model is derived in code, never from
+            # the LLM, so the flag cannot be subverted by a hallucinated boolean.
+            category = _coerce_strategy_category(scenario_data.get("strategy_category"))
+            needs_group = _requires_group_model(category)
+            # Spec 059 FR-024..FR-025 — upsert by normalised title so refining
+            # a scenario (same intent, slightly different title) updates the
+            # existing row rather than piling up duplicates.
+            scenario = await self.scenario_repo.upsert_by_normalized_title(
+                tax_plan_id=plan_id,
+                tenant_id=tenant_id,
+                title=scenario_data["scenario_title"],
+                payload={
                     "description": scenario_data.get("description", ""),
                     "assumptions": scenario_data.get("assumptions", {}),
                     "impact_data": scenario_data.get("impact_data", {}),
@@ -1091,8 +1478,38 @@ class TaxPlanningService:
                     "compliance_notes": scenario_data.get("compliance_notes"),
                     "cash_flow_impact": scenario_data.get("cash_flow_impact"),
                     "sort_order": sort_order,
-                }
+                    "strategy_category": category,
+                    "requires_group_model": needs_group,
+                    # Spec 059 FR-011 — provenance tags travel with every
+                    # scenario. An upsert on the same normalised title
+                    # overwrites old tags so a confirmed field doesn't silently
+                    # revert to "estimated" on a harmless refinement.
+                    "source_tags": scenario_data.get("source_tags", {}),
+                },
             )
+            if needs_group:
+                try:
+                    from app.core.audit import AuditService
+
+                    audit = AuditService(self.session)
+                    await audit.log_event(
+                        event_type="tax_planning.scenario.requires_group_model_flag",
+                        event_category="data",
+                        tenant_id=tenant_id,
+                        resource_type="tax_scenario",
+                        resource_id=scenario.id,
+                        action="create",
+                        outcome="success",
+                        metadata={
+                            "scenario_id": str(scenario.id),
+                            "strategy_category": category.value,
+                            "title": scenario.title,
+                        },
+                    )
+                except Exception:
+                    logger.debug(
+                        "audit for requires_group_model_flag failed", exc_info=True
+                    )
             created_scenarios.append(scenario)
             scenario_ids.append(scenario.id)
 
@@ -1223,11 +1640,18 @@ class TaxPlanningService:
             elif event["type"] == "scenario":
                 scenario_data = event["scenario"]
                 sort_order = await self.scenario_repo.get_next_sort_order(plan_id)
-                scenario = await self.scenario_repo.create(
-                    {
-                        "tenant_id": tenant_id,
-                        "tax_plan_id": plan_id,
-                        "title": scenario_data["scenario_title"],
+                category = _coerce_strategy_category(
+                    scenario_data.get("strategy_category")
+                )
+                needs_group = _requires_group_model(category)
+                # Spec 059 FR-024 — same upsert path as the non-streaming chat
+                # flow. Streaming never got scenario dedup previously, so a
+                # retry produced duplicate rows under the old create call.
+                scenario = await self.scenario_repo.upsert_by_normalized_title(
+                    tax_plan_id=plan_id,
+                    tenant_id=tenant_id,
+                    title=scenario_data["scenario_title"],
+                    payload={
                         "description": scenario_data.get("description", ""),
                         "assumptions": scenario_data.get("assumptions", {}),
                         "impact_data": scenario_data.get("impact_data", {}),
@@ -1235,42 +1659,97 @@ class TaxPlanningService:
                         "compliance_notes": scenario_data.get("compliance_notes"),
                         "cash_flow_impact": scenario_data.get("cash_flow_impact"),
                         "sort_order": sort_order,
-                    }
+                        "strategy_category": category,
+                        "requires_group_model": needs_group,
+                    },
                 )
                 created_scenario_ids.append(scenario.id)
                 event["scenario"]["id"] = str(scenario.id)
 
+            # Spec 059 US6 FR-022 — the `verification` event MUST arrive before
+            # the `done` event. Pre-059 we yielded `done` from the agent, then
+            # built verification and yielded it afterwards; frontends that
+            # closed the stream on `done` silently dropped the badge. We now
+            # intercept `done`, emit verification first, then emit `done`.
+            if event["type"] == "done":
+                citation_verification = self._build_citation_verification(
+                    full_content,
+                    retrieved_chunks,
+                )
+                # Mirror the non-streaming confidence gate — streaming path
+                # was previously missing this, meaning the decline behaviour
+                # that protects against low-confidence responses only fired
+                # on the non-streaming endpoint.
+                scores = [
+                    c.get("relevance_score", 0.0)
+                    for c in retrieved_chunks
+                    if c.get("relevance_score")
+                ]
+                top_score = scores[0] if scores else 0.0
+                mean_top5 = sum(scores[:5]) / min(len(scores), 5) if scores else 0.0
+                verification_rate = citation_verification.get("verification_rate", 0.0)
+                confidence_score = (
+                    0.4 * top_score + 0.3 * mean_top5 + 0.3 * verification_rate
+                )
+                citation_verification["confidence_score"] = confidence_score
+                if confidence_score < 0.5 and retrieved_chunks:
+                    citation_verification["status"] = "low_confidence"
+
+                source_chunks_used = [
+                    {k: v for k, v in chunk.items() if k != "text" and k != "is_superseded"}
+                    for chunk in retrieved_chunks
+                ] or None
+                await self.message_repo.create(
+                    {
+                        "tenant_id": tenant_id,
+                        "tax_plan_id": plan_id,
+                        "role": "assistant",
+                        "content": full_content,
+                        "scenario_ids": created_scenario_ids,
+                        "token_count": len(full_content) // 4,
+                        "source_chunks_used": source_chunks_used,
+                        "citation_verification": citation_verification,
+                    }
+                )
+
+                # Spec 059 FR-023 / T089 — audit the verification outcome with
+                # enough breakdown to spot aggregate trends (matched_by shows
+                # whether body-text fallback is pulling load).
+                try:
+                    from app.core.audit import AuditService
+
+                    audit = AuditService(self.session)
+                    matched_breakdown: dict[str, int] = {}
+                    for c in citation_verification.get("citations", []):
+                        key = c.get("matched_by", "unknown")
+                        matched_breakdown[key] = matched_breakdown.get(key, 0) + 1
+                    await audit.log_event(
+                        event_type="tax_planning.citation.verification_outcome",
+                        event_category="data",
+                        tenant_id=tenant_id,
+                        resource_type="tax_plan",
+                        resource_id=plan_id,
+                        action="create",
+                        outcome="success",
+                        metadata={
+                            "total_citations": citation_verification.get("total_citations"),
+                            "verified_count": citation_verification.get("verified_count"),
+                            "confidence_score": confidence_score,
+                            "status": citation_verification.get("status"),
+                            "matched_by_breakdown": matched_breakdown,
+                        },
+                    )
+                except Exception:
+                    logger.debug(
+                        "audit for citation.verification_outcome failed",
+                        exc_info=True,
+                    )
+
+                yield {"type": "verification", "data": citation_verification}
+                yield event
+                return
+
             yield event
-
-        # Citation verification and save assistant message
-        if full_content:
-            citation_verification = self._build_citation_verification(
-                full_content,
-                retrieved_chunks,
-            )
-            source_chunks_used = [
-                {k: v for k, v in chunk.items() if k != "text" and k != "is_superseded"}
-                for chunk in retrieved_chunks
-            ] or None
-
-            await self.message_repo.create(
-                {
-                    "tenant_id": tenant_id,
-                    "tax_plan_id": plan_id,
-                    "role": "assistant",
-                    "content": full_content,
-                    "scenario_ids": created_scenario_ids,
-                    "token_count": len(full_content) // 4,
-                    "source_chunks_used": source_chunks_used,
-                    "citation_verification": citation_verification,
-                }
-            )
-
-            # Yield verification event for frontend
-            yield {
-                "type": "verification",
-                "data": citation_verification,
-            }
 
     # ------------------------------------------------------------------
     # Helpers
@@ -1393,6 +1872,13 @@ class TaxPlanningService:
 
         from app.core.constants import AI_DISCLAIMER_TEXT
 
+        # Spec 059 FR-016 — flag pack if any scenario carries an unconfirmed
+        # AI-estimated figure, so the accountant is warned before sending to
+        # the client.
+        has_estimated_figures = any(
+            "estimated" in (s.source_tags or {}).values() for s in scenarios
+        )
+
         html = template.render(
             practice_name=practice_name,
             client_name=client_name,
@@ -1405,6 +1891,7 @@ class TaxPlanningService:
             include_conversation=include_conversation,
             generated_date=datetime.now(UTC).strftime("%d %B %Y"),
             ai_disclaimer=AI_DISCLAIMER_TEXT,
+            has_estimated_figures=has_estimated_figures,
         )
 
         pdf_bytes = weasyprint.HTML(string=html).write_pdf()

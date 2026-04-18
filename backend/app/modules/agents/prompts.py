@@ -167,7 +167,7 @@ Use these metrics to provide data-driven strategic options.
 
 **Pros:**
 - Limited liability protects personal assets
-- Company tax rate (25%) vs personal marginal rate (potentially 32.5%+)
+- Company tax rate (25%) vs personal marginal rate (currently 30%+ at FY2025-26 brackets)
 - Easier to bring in partners or sell the business later
 
 **Cons:**
@@ -178,7 +178,7 @@ Use these metrics to provide data-driven strategic options.
 **Action:** Book strategy session with accountant to model 5-year comparison
 
 **Evidence:**
-- [Source: P&L FY2025] Net Profit: $42,000 (marginal tax rate ~32.5% vs company rate 25%)
+- [Source: P&L FY2025] Net Profit: $42,000 (marginal tax rate ~30% vs company rate 25%)
 - [Source: Balance Sheet] Total Assets: $85,000 (personal exposure risk)
 - [Source: Client Profile] Entity Type: Sole Trader
 """

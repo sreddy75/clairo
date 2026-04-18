@@ -328,6 +328,36 @@ async def delete_scenario(
         raise _handle_domain_error(e)
 
 
+@router.patch(
+    "/{plan_id}/scenarios/{scenario_id}/assumptions/{field_path:path}",
+)
+async def confirm_scenario_field(
+    plan_id: uuid.UUID,
+    scenario_id: uuid.UUID,
+    field_path: str,
+    body: dict | None = None,
+    current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
+    service: TaxPlanningService = Depends(_get_service),
+):
+    """Spec 059 FR-015 — confirm (or replace) an AI-estimated figure.
+
+    Accepts a URL-encoded JSON Pointer (dotted or canonical) and a `value` in
+    the request body. Flips the scenario's provenance tag at `field_path`
+    from `estimated` to `confirmed` and updates the stored value.
+    """
+    try:
+        value = (body or {}).get("value") if isinstance(body, dict) else None
+        return await service.confirm_scenario_field(
+            plan_id=plan_id,
+            tenant_id=current_user.tenant_id,
+            scenario_id=scenario_id,
+            field_path=field_path,
+            new_value=value,
+        )
+    except DomainError as e:
+        raise _handle_domain_error(e)
+
+
 # ------------------------------------------------------------------
 # Export
 # ------------------------------------------------------------------
@@ -563,6 +593,18 @@ async def get_analysis(
             if v.id != analysis.id
         ]
 
+        # Spec 059 FR-013 — the analysis response now includes source-of-truth
+        # financials alongside the AI-derived output so the UI can render
+        # accountant-visible figures next to AI narrative without a second
+        # API call.
+        plan_for_financials = await service.get_plan(plan_id, current_user.tenant_id)
+        financials_data_payload = plan_for_financials.financials_data or None
+        projection_metadata = (
+            financials_data_payload.get("projection_metadata")
+            if financials_data_payload
+            else None
+        )
+
         return {
             "id": str(analysis.id),
             "version": analysis.version,
@@ -575,6 +617,8 @@ async def get_analysis(
             "client_summary": analysis.client_summary,
             "review_result": analysis.review_result,
             "review_passed": analysis.review_passed,
+            "financials_data": financials_data_payload,
+            "projection_metadata": projection_metadata,
             "implementation_items": [
                 {
                     "id": str(item.id),
@@ -827,6 +871,14 @@ def _plan_to_response(
 ) -> TaxPlanResponse:
     """Convert TaxPlan model to response schema."""
     scenarios = plan.scenarios or []
+    # Derive payroll_sync_status from financials_data.payroll_status (set at
+    # ingest time by pull_xero_financials). Manual plans with no connection
+    # surface "not_required"; plans without financials yet report None.
+    payroll_sync_status: str | None = None
+    if plan.financials_data:
+        raw = plan.financials_data.get("payroll_status")
+        if raw in {"ready", "pending", "unavailable", "not_required"}:
+            payroll_sync_status = raw
     return TaxPlanResponse(
         id=plan.id,
         tenant_id=plan.tenant_id,
@@ -847,4 +899,5 @@ def _plan_to_response(
         message_count=0,  # Messages loaded separately
         xero_connection_status=connection_status,
         data_stale=data_stale,
+        payroll_sync_status=payroll_sync_status,  # type: ignore[arg-type]
     )

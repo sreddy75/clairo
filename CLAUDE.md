@@ -43,6 +43,9 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - `TaxCodeOverride` has no `session_id` — join via `TaxCodeSuggestion.session_id` using `suggestion_id` FK
 - Xero write-back uses queue `xero_writeback`; Celery task is `process_writeback_job` in `app.tasks.xero_writeback`
 - `ClassificationRequest.session_id` is no longer unique — partial unique index `WHERE parent_request_id IS NULL` (round-1 only)
+- Tax planning annualisation lives at **ingest** (`pull_xero_financials` + `save_manual_financials`) — never re-project downstream. The LLM and calculator both read `financials_data.income`/`expenses` as the single projected set; `financials_data.projection_metadata.ytd_snapshot` preserves the YTD originals. Don't add a second "projected" block.
+- Every scenario numeric field must have a **`source_tags`** entry. Modeller auto-tags `before.*` as `derived` and `after.*`/`change.*`/`cash_flow_impact` as `estimated`; inline-confirm (`PATCH /assumptions/{field_path}`) flips to `confirmed`. Never instantiate a scenario without `source_tags`.
+- Scenario persistence uses **`TaxScenarioRepository.upsert_by_normalized_title`**, never raw `.create()` in chat flows — a refined title on the same plan is an update, not a new row. The partial unique index `ix_tax_scenarios_plan_normalized_title` enforces this at the DB level.
 
 ## Active Technologies
 - Python 3.12+ (backend), TypeScript/Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Celery, Anthropic SDK (Claude Sonnet for LLM tier), React 18 + shadcn/ui (046-ai-tax-code-resolution)
@@ -75,6 +78,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - N/A (frontend-only) (055-mobile-responsive-ui)
 - Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Alembic, React 18 + shadcn/ui, Clerk (058-bas-workflow-tracker)
 - PostgreSQL 16 (3 new tables: `practice_clients`, `client_quarter_exclusions`, `client_note_history`; 1 modified: `practice_users`) (058-bas-workflow-tracker)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Alembic, Anthropic SDK, Voyage 3.5 lite, Pinecone (for citation verifier swap), React 18 + shadcn/ui (059-tax-planning-calculation-correctness)
+- PostgreSQL 16 — 3 new columns on `tax_scenarios`, 1 new partial-unique index on `tax_scenarios`, 1 new key on `tax_plans.financials_data` JSONB (`projection_metadata`). No new tables. (059-tax-planning-calculation-correctness)
 
 ## Recent Changes
 - 049-xero-taxcode-sync: Xero write-back, multi-round client send-back, portal IDK validation, agent notes

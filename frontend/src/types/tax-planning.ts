@@ -20,6 +20,20 @@ export interface AdjustmentItem {
   type: 'add_back' | 'deduction';
 }
 
+export interface ProjectionMetadata {
+  applied: boolean;
+  rule: 'linear';
+  months_elapsed: number;
+  months_projected: number;
+  ytd_snapshot: {
+    income?: { total_income?: number; revenue?: number; [k: string]: unknown };
+    expenses?: { total_expenses?: number; [k: string]: unknown };
+    [k: string]: unknown;
+  };
+  applied_at: string;
+  reason: string | null;
+}
+
 export interface FinancialsData {
   income: {
     revenue: number;
@@ -48,7 +62,11 @@ export interface FinancialsData {
   last_reconciliation_date?: string;
   period_coverage?: string;
   unreconciled_summary?: UnreconciledSummary;
-  // Projection (Spec 056 - US2)
+  // Spec 059 FR-001 — authoritative projection state. The top-level income
+  // and expenses above are ALREADY annualised when projection_metadata.applied
+  // is true; `ytd_snapshot` preserves the original YTD values for display.
+  projection_metadata?: ProjectionMetadata;
+  // Deprecated: retained for backward compatibility with pre-059 payloads.
   projection?: {
     projected_revenue: number;
     projected_expenses: number;
@@ -157,6 +175,24 @@ export interface ImpactData {
 // API response types
 // ---------------------------------------------------------------------------
 
+// Spec 059 FR-011 — provenance tags keyed by JSON Pointer into
+// impact_data / assumptions. Absent keys render as neutral badges, not red.
+export type Provenance = 'confirmed' | 'derived' | 'estimated';
+
+export type SourceTags = Record<string, Provenance>;
+
+// Spec 059 FR-017 — closed taxonomy of tax planning strategy types.
+export type StrategyCategory =
+  | 'prepayment'
+  | 'capex_deduction'
+  | 'super_contribution'
+  | 'director_salary'
+  | 'trust_distribution'
+  | 'dividend_timing'
+  | 'spouse_contribution'
+  | 'multi_entity_restructure'
+  | 'other';
+
 export interface TaxScenario {
   id: string;
   tax_plan_id: string;
@@ -169,6 +205,12 @@ export interface TaxScenario {
   cash_flow_impact: number | null;
   sort_order: number;
   created_at: string;
+  // Spec 059 FR-017..FR-020 — multi-entity honesty flag. requires_group_model
+  // is derived in code from strategy_category, never emitted by the LLM.
+  strategy_category?: StrategyCategory;
+  requires_group_model?: boolean;
+  // Spec 059 FR-011..FR-016 — JSON Pointer → provenance map.
+  source_tags?: SourceTags;
 }
 
 export interface SourceChunkRef {
@@ -180,7 +222,20 @@ export interface SourceChunkRef {
   relevance_score: number;
 }
 
-export type VerificationStatus = 'verified' | 'partially_verified' | 'unverified' | 'no_citations';
+// Spec 059 FR-021 — `low_confidence` = retrieval confidence below threshold,
+// distinct from unverified-citations cases.
+export type VerificationStatus =
+  | 'verified'
+  | 'partially_verified'
+  | 'unverified'
+  | 'no_citations'
+  | 'low_confidence';
+
+export interface CitationVerificationItem {
+  identifier: string;
+  verified: boolean;
+  matched_by?: string;
+}
 
 export interface CitationVerification {
   total_citations: number;
@@ -188,6 +243,8 @@ export interface CitationVerification {
   unverified_count: number;
   verification_rate: number;
   status: VerificationStatus;
+  confidence_score?: number;
+  citations?: CitationVerificationItem[];
 }
 
 export interface ChatAttachment {
@@ -228,6 +285,8 @@ export interface TaxPlan {
   message_count: number;
   xero_connection_status?: string | null;
   data_stale?: boolean;
+  // Spec 059 FR-006 — bounded on-demand payroll sync status
+  payroll_sync_status?: 'ready' | 'pending' | 'unavailable' | 'not_required' | null;
 }
 
 export interface TaxPlanListItem {

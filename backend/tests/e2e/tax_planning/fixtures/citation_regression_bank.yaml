@@ -1,0 +1,275 @@
+# Citation regression bank — Spec 059 T110 / SC-008.
+#
+# Twenty representative accountant questions. For each, we define:
+#   - `response`: a scripted AI answer containing the kinds of citations the
+#     real pipeline would produce for this question.
+#   - `chunks`: the retrieval-layer chunks that would back those citations.
+#   - `expected_status`: what the citation verifier + confidence gate should
+#     conclude.
+#
+# The test asserts the decline rate (status == "low_confidence" or
+# "unverified") stays at or below 1 in 20. Regressions in the verifier, the
+# confidence-score weights, or the retrieval ranking flip questions into the
+# decline bucket and fail this gate.
+#
+# When adding a new question:
+#   - Write the response exactly as the LLM would format citations
+#     (`[Source: …]` or section/ruling references inline).
+#   - Write chunks with realistic `section_ref` / `ruling_number` / `title` /
+#     `text` / `relevance_score` so the confidence_score math matches
+#     production retrieval.
+
+questions:
+  - id: prepayment_rule
+    question: "When must a small business prepay to get the deduction this year?"
+    response: |
+      Small business prepaid expenses qualify for immediate deduction if paid
+      before 30 June and the service period is 12 months or less
+      [Source: s82KZM ITAA 1936].
+    chunks:
+      - title: "Prepaid expenses for small business"
+        section_ref: "s82KZM ITAA 1936"
+        ruling_number: null
+        text: "A small business entity can deduct a prepaid expense in the income year it is incurred if the eligible service period is 12 months or less and ends no later than the last day of the next income year."
+        relevance_score: 0.91
+
+  - id: div7a_loan
+    question: "What ATO ruling governs Division 7A minimum yearly loan repayments?"
+    response: |
+      Minimum yearly repayments on Division 7A loans are set under
+      s109E ITAA 1936. The benchmark interest rate and repayment
+      calculation are explained in [Source: TR 2018/D2].
+    chunks:
+      - title: "Division 7A — minimum repayments"
+        section_ref: "s109E ITAA 1936"
+        ruling_number: null
+        text: "Section 109E sets minimum yearly repayment obligations."
+        relevance_score: 0.89
+      - title: "Draft Taxation Ruling — Division 7A"
+        section_ref: null
+        ruling_number: "TR 2018/D2"
+        text: "Explains the benchmark interest rate application."
+        relevance_score: 0.83
+
+  - id: super_concessional_cap
+    question: "What is the concessional super contribution cap for FY2025-26?"
+    response: |
+      The concessional contributions cap for FY2025-26 is $30,000
+      [Source: Superannuation Industry (Supervision) Act — concessional caps page].
+    chunks:
+      - title: "Superannuation contribution caps FY2025-26"
+        section_ref: null
+        ruling_number: null
+        text: "The concessional contributions cap is $30,000 from 1 July 2024."
+        relevance_score: 0.88
+
+  - id: instant_asset_writeoff
+    question: "Is instant asset write-off still available for small business in FY2025-26?"
+    response: |
+      Yes. The threshold for instant asset write-off remains $20,000 for
+      eligible small business entities in FY2025-26
+      [Source: s328-180 ITAA 1997].
+    chunks:
+      - title: "Instant asset write-off — small business simplified depreciation"
+        section_ref: "s328-180 ITAA 1997"
+        ruling_number: null
+        text: "A small business entity can immediately deduct the cost of a depreciating asset if the cost is less than the threshold."
+        relevance_score: 0.92
+
+  - id: car_limit
+    question: "What is the car depreciation cost limit for FY2025-26?"
+    response: |
+      The car cost limit for depreciation is $69,674 for FY2025-26
+      [Source: s40-230 ITAA 1997].
+    chunks:
+      - title: "Car cost limit for depreciation"
+        section_ref: "s40-230 ITAA 1997"
+        ruling_number: null
+        text: "The car limit cap for depreciation of passenger vehicles."
+        relevance_score: 0.87
+
+  - id: gst_registration_threshold
+    question: "What turnover triggers compulsory GST registration?"
+    response: |
+      GST registration is compulsory when GST turnover reaches $75,000
+      ($150,000 for non-profits) [Source: s23-15 GST Act].
+    chunks:
+      - title: "GST Registration Threshold"
+        section_ref: "s23-15 GST Act"
+        ruling_number: null
+        text: "An entity must register for GST if its GST turnover meets the registration turnover threshold."
+        relevance_score: 0.90
+
+  - id: cgt_discount
+    question: "How does the 50% CGT discount work for individuals?"
+    response: |
+      Individuals can claim a 50% discount on capital gains where the
+      asset was held for more than 12 months [Source: s115-5 ITAA 1997].
+    chunks:
+      - title: "CGT discount for individuals"
+        section_ref: "s115-5 ITAA 1997"
+        ruling_number: null
+        text: "The discount percentage for capital gains made by individuals."
+        relevance_score: 0.89
+
+  - id: trust_resolution_timing
+    question: "By when must a trust resolution be signed each year?"
+    response: |
+      Trust resolutions must be signed before 30 June of the income year
+      to be effective for that year [Source: PCG 2022/2].
+    chunks:
+      - title: "Trust resolutions"
+        section_ref: null
+        ruling_number: "PCG 2022/2"
+        text: "Guidance on timing of trust resolutions."
+        relevance_score: 0.86
+
+  - id: paygi_variation
+    question: "How do I vary PAYG instalments?"
+    response: |
+      PAYG instalments can be varied through the ATO online portal if
+      expected tax for the year differs from the Commissioner's estimate
+      [Source: s45-110 Tax Administration Act].
+    chunks:
+      - title: "Varying PAYG instalments"
+        section_ref: "s45-110 Tax Administration Act"
+        ruling_number: null
+        text: "A taxpayer may vary the PAYG instalment amount."
+        relevance_score: 0.85
+
+  - id: fbt_minor_benefits
+    question: "What is the FBT minor benefits exemption threshold?"
+    response: |
+      Minor benefits under $300 (inc GST) provided infrequently and
+      irregularly are FBT-exempt [Source: s58P FBTAA 1986].
+    chunks:
+      - title: "FBT minor benefits"
+        section_ref: "s58P FBTAA 1986"
+        ruling_number: null
+        text: "Minor benefits under the threshold may be exempt."
+        relevance_score: 0.87
+
+  - id: home_office_method
+    question: "What home office deduction method is current?"
+    response: |
+      The fixed-rate method is 70c per hour from FY2024-25
+      [Source: PCG 2023/1].
+    chunks:
+      - title: "Home office fixed-rate method"
+        section_ref: null
+        ruling_number: "PCG 2023/1"
+        text: "The Commissioner's practical compliance guideline."
+        relevance_score: 0.84
+
+  - id: smsf_contribution_deadline
+    question: "When must SMSF contributions be received to count for the year?"
+    response: |
+      Contributions must be received by the fund on or before 30 June
+      [Source: s295-385 ITAA 1997].
+    chunks:
+      - title: "Contribution timing"
+        section_ref: "s295-385 ITAA 1997"
+        ruling_number: null
+        text: "Contributions are received when cleared funds are in the fund."
+        relevance_score: 0.88
+
+  - id: bad_debt_writeoff
+    question: "What are the requirements to write off a bad debt?"
+    response: |
+      A bad debt must be genuinely irrecoverable and previously included
+      in assessable income [Source: s25-35 ITAA 1997].
+    chunks:
+      - title: "Bad debts"
+        section_ref: "s25-35 ITAA 1997"
+        ruling_number: null
+        text: "Deduction for bad debts written off."
+        relevance_score: 0.88
+
+  - id: r_and_d_offset
+    question: "What R&D tax incentive offset rate applies to aggregated turnover under $20M?"
+    response: |
+      Eligible companies with aggregated turnover under $20M can claim a
+      refundable offset at 43.5% for the 2025-26 income year
+      [Source: Industry Research and Development Act 1986 Part III].
+    chunks:
+      - title: "R&D tax offset rates"
+        section_ref: null
+        ruling_number: null
+        text: "Refundable tax offset of 43.5% applies for small entities."
+        relevance_score: 0.83
+
+  - id: gst_margin_scheme
+    question: "What does the GST margin scheme allow for property sales?"
+    response: |
+      Under the margin scheme, GST is calculated on the margin between
+      sale price and original acquisition cost
+      [Source: Div 75 GST Act].
+    chunks:
+      - title: "Margin scheme"
+        section_ref: "Div 75 GST Act"
+        ruling_number: null
+        text: "Calculating GST on the margin rather than the full sale price."
+        relevance_score: 0.89
+
+  - id: salary_sacrifice_cap
+    question: "How are salary-sacrificed super contributions treated?"
+    response: |
+      Salary-sacrificed super counts toward the concessional contributions
+      cap [Source: s291-20 ITAA 1997].
+    chunks:
+      - title: "Salary sacrifice super"
+        section_ref: "s291-20 ITAA 1997"
+        ruling_number: null
+        text: "Employer contributions are concessional contributions."
+        relevance_score: 0.87
+
+  - id: trust_streaming
+    question: "Can a trust stream capital gains to a specific beneficiary?"
+    response: |
+      Yes — specific entitlement rules in Division 115 allow streaming of
+      capital gains [Source: Div 115 ITAA 1997].
+    chunks:
+      - title: "Trust streaming"
+        section_ref: "Div 115 ITAA 1997"
+        ruling_number: null
+        text: "Specifically entitled beneficiaries are assessed on the capital gain."
+        relevance_score: 0.88
+
+  - id: hybrid_rules
+    question: "Do Australian hybrid mismatch rules apply to small business?"
+    response: |
+      The hybrid mismatch rules generally apply to all taxpayers, but
+      most small businesses fall within the de minimis exception
+      [Source: Div 832 ITAA 1997].
+    chunks:
+      - title: "Hybrid mismatch rules"
+        section_ref: "Div 832 ITAA 1997"
+        ruling_number: null
+        text: "Rules neutralising hybrid mismatches and de minimis carve-outs."
+        relevance_score: 0.80
+
+  - id: single_touch_payroll
+    question: "When must STP be reported each pay cycle?"
+    response: |
+      STP must be reported on or before the day the payment is made
+      [Source: s389-5 Tax Administration Act].
+    chunks:
+      - title: "Single Touch Payroll reporting"
+        section_ref: "s389-5 Tax Administration Act"
+        ruling_number: null
+        text: "STP reporting obligations for employers."
+        relevance_score: 0.86
+
+  # This one is intentionally light on retrieval quality — a legitimate
+  # question with only a weak match. The decline budget tolerates one.
+  - id: marginal_edge_case
+    question: "What's the effective marginal rate for a spouse earning $95k?"
+    response: |
+      A spouse earning $95,000 faces a combined marginal rate of 32% once
+      Medicare Levy is included (30% + 2%) [Source: ITAA 1997 Div 4].
+    chunks:
+      - title: "Marginal tax brackets"
+        section_ref: null
+        ruling_number: null
+        text: "Stage 3 tax brackets apply from FY2024-25."
+        relevance_score: 0.42
