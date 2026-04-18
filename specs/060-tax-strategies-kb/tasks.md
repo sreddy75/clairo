@@ -117,12 +117,12 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 #### Backend — citation verifier
 
 - [X] T030 [US1] Extend `CitationVerifier` in `backend/app/modules/knowledge/retrieval/citation_verifier.py` with `CLR_PATTERN`, `extract_strategy_citations()`, and `verify_strategy_citations(text, retrieved_set)` — returns list with status `verified | partially_verified | unverified` per FR-020; name drift uses normalized Levenshtein ≥ 0.30 on lower-cased whitespace-collapsed strings
-- [ ] T031 [US1] Extend `_build_citation_verification()` in `backend/app/modules/tax_planning/service.py` to include `strategy_citations` array alongside section-ref + ruling-number arrays; overall status collapses per existing logic
+- [X] T031 [US1] Extend `_build_citation_verification()` in `backend/app/modules/tax_planning/service.py` to include `strategy_citations` array alongside section-ref + ruling-number arrays; overall status collapses per existing logic
 
 #### Backend — tax planning retrieval wiring
 
-- [ ] T032 [US1] Modify `TaxPlanningService._retrieve_tax_knowledge()` in `backend/app/modules/tax_planning/service.py` to pass `namespaces=["compliance_knowledge", "tax_strategies"]` and populate `KnowledgeSearchFilters.income_band/turnover_band/age/industry_codes/tenant_id` from the tax plan's client context (research §R8) — no other call sites touched
-- [ ] T033 [US1] Wrap `content_type=="tax_strategy"` results in the `<strategy>` XML envelope in the tax planning LLM context assembly path (architecture §9.5 / contracts knowledge-search-extensions §4); update the tax planning system prompt in `backend/app/modules/tax_planning/prompts.py` with the `[CLR-XXX: Name]` citation instruction
+- [X] T032 [US1] Modify `TaxPlanningService._retrieve_tax_knowledge()` in `backend/app/modules/tax_planning/service.py` to pass `namespaces=["compliance_knowledge", "tax_strategies"]` and populate `KnowledgeSearchFilters.income_band/turnover_band/age/industry_codes/tenant_id` from the tax plan's client context (research §R8) — no other call sites touched
+- [X] T033 [US1] Wrap `content_type=="tax_strategy"` results in the `<strategy>` XML envelope in the tax planning LLM context assembly path (architecture §9.5 / contracts knowledge-search-extensions §4); update the tax planning system prompt in `backend/app/modules/tax_planning/prompts.py` with the `[CLR-XXX: Name]` citation instruction
 
 #### Backend — admin + public API
 

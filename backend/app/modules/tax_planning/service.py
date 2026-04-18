@@ -31,6 +31,76 @@ from app.modules.tax_planning.strategy_category import (
 )
 
 
+def _extract_eligibility_bands(
+    financials_data: dict | None,
+) -> tuple[int | None, int | None]:
+    """Pull income_band and turnover_band ints from the plan's financials_data.
+
+    Best-effort: looks for the well-known `income.total` and `revenue.total`
+    shapes used by the annualisation output; returns None for either when
+    the path is missing or non-numeric. The retrieval layer treats None as
+    "unconstrained on that axis" per contracts/knowledge-search-extensions
+    §2.1.
+    """
+    if not financials_data:
+        return None, None
+
+    def _coerce(v: object) -> int | None:
+        try:
+            if v is None:
+                return None
+            return int(float(v))
+        except (TypeError, ValueError):
+            return None
+
+    income = (financials_data.get("income") or {}) if isinstance(financials_data, dict) else {}
+    revenue = (financials_data.get("revenue") or {}) if isinstance(financials_data, dict) else {}
+    income_total = _coerce(income.get("total") if isinstance(income, dict) else None)
+    turnover_total = _coerce(revenue.get("total") if isinstance(revenue, dict) else None)
+    return income_total, turnover_total
+
+
+def _format_reference_with_strategies(
+    compliance_chunks: list[dict],
+    retrieved_strategies: list[dict],
+) -> str:
+    """Render the reference-material block for the system prompt.
+
+    Combines the existing numbered compliance refs with a
+    `<strategy>` XML envelope per retrieved strategy (architecture §9.5).
+    The LLM sees the full parent content for each strategy, not the chunk
+    slice — this is the "full parent to LLM" side of the two-pass
+    retrieval contract (FR-018).
+    """
+    from app.modules.tax_planning.prompts import format_reference_material
+
+    compliance_block = format_reference_material(compliance_chunks)
+
+    if not retrieved_strategies:
+        return compliance_block
+
+    strategy_lines: list[str] = ["\n\n## Retrieved Strategies"]
+    for strategy in retrieved_strategies:
+        categories = ", ".join(strategy.get("categories") or [])
+        ato = ", ".join(strategy.get("ato_sources") or [])
+        cases = ", ".join(strategy.get("case_refs") or [])
+        strategy_lines.append(
+            f'\n<strategy id="{strategy["strategy_id"]}" '
+            f'name="{strategy["name"]}" '
+            f'categories="{categories}" '
+            f'ato_sources="{ato}" '
+            f'case_refs="{cases}">'
+        )
+        strategy_lines.append("  <implementation>")
+        strategy_lines.append(f"    {strategy.get('implementation_text', '')}")
+        strategy_lines.append("  </implementation>")
+        strategy_lines.append("  <explanation>")
+        strategy_lines.append(f"    {strategy.get('explanation_text', '')}")
+        strategy_lines.append("  </explanation>")
+        strategy_lines.append("</strategy>")
+    return compliance_block + "\n".join(strategy_lines)
+
+
 def _infer_matched_by(citation: dict, retrieved_chunks: list[dict]) -> str:
     """Best-effort attribution of which chunk field matched a verified citation.
 
@@ -1221,12 +1291,36 @@ class TaxPlanningService:
         self,
         query: str,
         entity_type: str,
-    ) -> tuple[list[dict], str]:
+        financials_data: dict | None = None,
+    ) -> tuple[list[dict], str, list[dict]]:
         """Retrieve relevant knowledge base content for a tax planning query.
 
+        Spec 060: retrieves across BOTH the compliance_knowledge and
+        tax_strategies namespaces. Strategy chunks are deduplicated by
+        parent `strategy_id` (FR-018) and the full parent content is fetched
+        via `TaxStrategyRepository` for inclusion in the LLM envelope.
+
+        Args:
+            query: User message text.
+            entity_type: The tax plan's entity_type (drives entity_types filter).
+            financials_data: Plan financials JSON (used to populate structured
+                eligibility filters — income_band / turnover_band — best
+                effort; missing fields are simply not filtered on).
+
         Returns:
-            Tuple of (raw_chunks, formatted_reference_material).
-            Empty list and empty-KB message if retrieval fails or is skipped.
+            Tuple of:
+              - raw_chunks: list of compliance-knowledge chunk dicts PLUS
+                strategy "header" dicts (for citation verification matching).
+                Strategy entries carry `strategy_id` and `name` so
+                CitationVerifier.verify_strategy_citations can match them.
+              - formatted_reference_material: rendered block for the system
+                prompt, with a `<strategy>` envelope per parent strategy
+                (architecture §9.5) alongside the numbered compliance refs.
+              - retrieved_strategies: list of dicts
+                {strategy_id, name, categories, implementation_text,
+                 explanation_text, ato_sources, case_refs}
+                used by _build_citation_verification to classify
+                [CLR-XXX: Name] citations.
         """
         from app.modules.tax_planning.prompts import format_reference_material
 
@@ -1235,7 +1329,7 @@ class TaxPlanningService:
             len(query.strip()) < 10
             or query.strip().lower().rstrip("!.?") in self._CONVERSATIONAL_PATTERNS
         ):
-            return [], format_reference_material([])
+            return [], format_reference_material([]), []
 
         try:
             from app.core.pinecone_service import PineconeService
@@ -1258,21 +1352,56 @@ class TaxPlanningService:
                 "partnership": ["partnership"],
             }.get(entity_type, [])
 
+            # Spec 060: best-effort structured eligibility from financials_data.
+            # Missing values stay None and aren't applied — the
+            # HybridSearchEngine fallback handles over-restriction cases.
+            income_band, turnover_band = _extract_eligibility_bands(financials_data)
+
             search_request = KnowledgeSearchRequest(
                 query=query,
                 filters=KnowledgeSearchFilters(
                     entity_types=entity_filter or None,
                     exclude_superseded=True,
+                    income_band=income_band,
+                    turnover_band=turnover_band,
                 ),
-                limit=8,
+                namespaces=["compliance_knowledge", "tax_strategies"],
+                limit=12,
             )
 
             response = await knowledge_service.search_knowledge(search_request)
             results = response.get("results", [])
 
-            # Take top 5 after reranking
-            chunks = []
-            for result in results[:5]:
+            # Split strategy vs compliance results; dedupe strategies by
+            # strategy_id keeping the highest-scoring chunk per parent.
+            compliance_chunks: list[dict] = []
+            best_strategy_by_id: dict[str, dict] = {}
+            for result in results:
+                if result.get("tax_strategy_id"):
+                    sid = result["tax_strategy_id"]
+                    existing = best_strategy_by_id.get(sid)
+                    if existing is None or (
+                        result.get("relevance_score", 0.0)
+                        > existing.get("relevance_score", 0.0)
+                    ):
+                        best_strategy_by_id[sid] = result
+                else:
+                    compliance_chunks.append(result)
+
+            # Take top 5 compliance chunks post-rerank (existing behaviour).
+            compliance_chunks = compliance_chunks[:5]
+
+            # Fetch parent rows for the surviving strategy ids.
+            retrieved_strategies = await self._fetch_strategy_parents(
+                list(best_strategy_by_id.keys())
+            )
+
+            # Build the combined chunk list that downstream (citation
+            # verifier, reference material) consumes. Compliance chunks get
+            # their existing shape; strategies get a minimal "header" dict
+            # sufficient for citation verification and envelope rendering.
+            chunks: list[dict] = []
+            for result in compliance_chunks:
                 chunks.append(
                     {
                         "chunk_id": str(result.get("chunk_id", "")),
@@ -1285,24 +1414,74 @@ class TaxPlanningService:
                         "is_superseded": result.get("is_superseded", False),
                     }
                 )
+            for strategy in retrieved_strategies:
+                # Strategies are also represented in `chunks` as a lightweight
+                # entry so the existing compliance-verification code path
+                # doesn't trip on them (it looks for section_ref/ruling_number
+                # which are None here).
+                chunks.append(
+                    {
+                        "chunk_id": f"strategy:{strategy['strategy_id']}",
+                        "source_type": "tax_strategy",
+                        "title": strategy["name"],
+                        "ruling_number": None,
+                        "section_ref": strategy["strategy_id"],
+                        "text": "",  # full content lives in the envelope
+                        "relevance_score": 0.0,
+                        "is_superseded": False,
+                        "strategy_id": strategy["strategy_id"],
+                        "name": strategy["name"],
+                    }
+                )
 
             logger.info(
-                "RAG retrieval: query=%s entity=%s results=%d",
+                "RAG retrieval: query=%s entity=%s compliance=%d strategies=%d",
                 query[:80],
                 entity_type,
-                len(chunks),
+                len(compliance_chunks),
+                len(retrieved_strategies),
             )
 
-            return chunks, format_reference_material(chunks)
+            reference_material = _format_reference_with_strategies(
+                compliance_chunks, retrieved_strategies
+            )
+            return chunks, reference_material, retrieved_strategies
 
         except Exception as e:
             logger.warning("RAG retrieval failed, proceeding without references: %s", e)
-            return [], format_reference_material([])
+            return [], format_reference_material([]), []
+
+    async def _fetch_strategy_parents(self, strategy_ids: list[str]) -> list[dict]:
+        """Batch fetch live TaxStrategy parent rows; filter out superseded/
+        archived (FR-019 SQL-side defense) and project to a minimal dict
+        shape for LLM envelope + citation verification.
+        """
+        if not strategy_ids:
+            return []
+        from app.modules.tax_strategies.repository import TaxStrategyRepository
+
+        repo = TaxStrategyRepository(self.session)
+        parents = await repo.get_live_versions(strategy_ids)
+        excluded = {"superseded", "archived"}
+        visible = [p for p in parents if p.status not in excluded]
+        return [
+            {
+                "strategy_id": p.strategy_id,
+                "name": p.name,
+                "categories": list(p.categories),
+                "implementation_text": p.implementation_text,
+                "explanation_text": p.explanation_text,
+                "ato_sources": list(p.ato_sources),
+                "case_refs": list(p.case_refs),
+            }
+            for p in visible
+        ]
 
     def _build_citation_verification(
         self,
         response_content: str,
         retrieved_chunks: list[dict],
+        retrieved_strategies: list[dict] | None = None,
     ) -> dict:
         """Verify citations in the response against retrieved chunks.
 
@@ -1314,10 +1493,33 @@ class TaxPlanningService:
         `[Source: s25-10 ITAA 1997]` when the chunk carried `section_ref=
         "Div 43"` and only the body text matched.
 
+        Spec 060 T031 — also classifies every ``[CLR-XXX: Name]`` citation
+        against `retrieved_strategies` using the Levenshtein name-drift
+        threshold. Output gains a top-level `strategy_citations` array for
+        the frontend chip renderer (T048).
+
         Output shape is preserved for the existing frontend while adding
         `matched_by` per-citation breakdown (FR-023).
         """
         from app.modules.knowledge.retrieval.citation_verifier import CitationVerifier
+
+        # Strategy citations run independently of the compliance verifier;
+        # compute them first so they're always present in the output (even
+        # when no compliance chunks were retrieved).
+        strategy_citations_out: list[dict] = []
+        if response_content and retrieved_strategies:
+            strategy_results = CitationVerifier().verify_strategy_citations(
+                response_content, retrieved_strategies
+            )
+            for s in strategy_results:
+                strategy_citations_out.append(
+                    {
+                        "strategy_id": s["strategy_id"],
+                        "cited_name": s["cited_name"],
+                        "status": s["status"],
+                        "name_drift": s["name_drift"],
+                    }
+                )
 
         if not response_content or not retrieved_chunks:
             return {
@@ -1325,8 +1527,9 @@ class TaxPlanningService:
                 "verified_count": 0,
                 "unverified_count": 0,
                 "verification_rate": 0.0,
-                "status": "no_citations",
+                "status": "no_citations" if not strategy_citations_out else "partially_verified",
                 "citations": [],
+                "strategy_citations": strategy_citations_out,
             }
 
         verifier = CitationVerifier()
@@ -1339,8 +1542,9 @@ class TaxPlanningService:
                 "verified_count": 0,
                 "unverified_count": 0,
                 "verification_rate": 0.0,
-                "status": "no_citations",
+                "status": "no_citations" if not strategy_citations_out else "partially_verified",
                 "citations": [],
+                "strategy_citations": strategy_citations_out,
             }
 
         verified_count = total - result.ungrounded_count
@@ -1385,6 +1589,7 @@ class TaxPlanningService:
             "verification_rate": rate,
             "status": status,
             "citations": citations_out,
+            "strategy_citations": strategy_citations_out,
         }
 
     # ------------------------------------------------------------------
@@ -1451,9 +1656,14 @@ class TaxPlanningService:
         )
 
         # RAG retrieval
-        retrieved_chunks, reference_material = await self._retrieve_tax_knowledge(
+        (
+            retrieved_chunks,
+            reference_material,
+            retrieved_strategies,
+        ) = await self._retrieve_tax_knowledge(
             message,
             plan.entity_type,
+            plan.financials_data,
         )
 
         # Call AI agent
@@ -1477,6 +1687,7 @@ class TaxPlanningService:
         citation_verification = self._build_citation_verification(
             response.content,
             retrieved_chunks,
+            retrieved_strategies=retrieved_strategies,
         )
         source_chunks_used = [
             {k: v for k, v in chunk.items() if k != "text" and k != "is_superseded"}
@@ -1696,9 +1907,14 @@ class TaxPlanningService:
         )
 
         # RAG retrieval
-        retrieved_chunks, reference_material = await self._retrieve_tax_knowledge(
+        (
+            retrieved_chunks,
+            reference_material,
+            retrieved_strategies,
+        ) = await self._retrieve_tax_knowledge(
             message,
             plan.entity_type,
+            plan.financials_data,
         )
 
         api_key = self.settings.anthropic.api_key.get_secret_value()
@@ -1762,6 +1978,7 @@ class TaxPlanningService:
                 citation_verification = self._build_citation_verification(
                     full_content,
                     retrieved_chunks,
+                    retrieved_strategies=retrieved_strategies,
                 )
                 # Mirror the non-streaming confidence gate — streaming path
                 # was previously missing this, meaning the decline behaviour
