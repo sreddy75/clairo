@@ -23,9 +23,9 @@
 
 **Purpose**: Scaffolding shared by every story. Thin because this is a modification of an existing module, not a new one.
 
-- [ ] T001 Create Alembic migration scaffold `backend/alembic/versions/20260418_059_tax_planning_correctness.py` with empty `upgrade()` / `downgrade()` bodies (filled in Phase 2)
-- [ ] T002 [P] Create `backend/app/modules/tax_planning/strategy_category.py` with `StrategyCategory` enum (9 members per data-model.md), `REQUIRES_GROUP_MODEL` frozenset, and `requires_group_model(category) -> bool`
-- [ ] T003 [P] Create `backend/app/modules/tax_planning/projection.py` with `ProjectionMetadata` dataclass and `annualise_linear(ytd_totals: dict, months_elapsed: int) -> tuple[dict, ProjectionMetadata]` pure function
+- [x] T001 Create Alembic migration scaffold `backend/alembic/versions/20260418_059_tax_planning_correctness.py` with empty `upgrade()` / `downgrade()` bodies (filled in Phase 2) — completed together with T004
+- [x] T002 [P] Create `backend/app/modules/tax_planning/strategy_category.py` with `StrategyCategory` enum (9 members per data-model.md), `REQUIRES_GROUP_MODEL` frozenset, and `requires_group_model(category) -> bool`
+- [x] T003 [P] Create `backend/app/modules/tax_planning/projection.py` with `ProjectionMetadata` dataclass and `annualise_linear(ytd_totals: dict, months_elapsed: int) -> tuple[dict, ProjectionMetadata]` pure function
 
 ---
 
@@ -35,13 +35,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Fill in the Alembic migration at `backend/alembic/versions/20260418_059_tax_planning_correctness.py` per data-model.md: create `strategy_category_enum`, add three columns (`strategy_category`, `requires_group_model`, `source_tags`) to `tax_scenarios`, disambiguate duplicate-title rows, create partial unique index `ix_tax_scenarios_plan_normalized_title`, with matching `downgrade()`
-- [ ] T005 Modify `backend/app/modules/tax_planning/models.py` to declare the three new columns on `TaxScenario` and the new `__table_args__` index (schema must match migration exactly)
-- [ ] T006 [P] Create `backend/tests/fixtures/fake_anthropic.py` — a `FakeAnthropicClient` fixture class keyed by input prompt hash → scripted response, with helpers to register tool-use responses deterministically (per research.md R11)
-- [ ] T007 [P] Create `backend/app/modules/tax_planning/audit_events.py` additions — 8 new event type constants per data-model.md §Audit event payload shapes (or extend existing file)
-- [ ] T008 Run `cd backend && uv run alembic upgrade head` on a local dev database; verify the three columns and unique index exist; verify existing alpha rows got default values
-- [ ] T009 [P] Write unit tests for `projection.annualise_linear` in `backend/tests/unit/modules/tax_planning/test_projection.py` — cover 6-month, 1-month, 12-month edge cases, divide-by-zero guard, metadata shape
-- [ ] T010 [P] Write unit tests for `strategy_category` in `backend/tests/unit/modules/tax_planning/test_strategy_category.py` — every enum value resolves, `requires_group_model()` returns True for the 5 multi-entity categories, False for single-entity categories
+- [x] T004 Fill in the Alembic migration at `backend/alembic/versions/20260418_059_tax_planning_correctness.py` per data-model.md: create `strategy_category_enum`, add three columns (`strategy_category`, `requires_group_model`, `source_tags`) to `tax_scenarios`, disambiguate duplicate-title rows, create partial unique index `ix_tax_scenarios_plan_normalized_title`, with matching `downgrade()`
+- [x] T005 Modify `backend/app/modules/tax_planning/models.py` to declare the three new columns on `TaxScenario` and the new `__table_args__` index (schema must match migration exactly)
+- [x] T006 [P] Create `backend/tests/fixtures/fake_anthropic.py` — a `FakeAnthropicClient` fixture class keyed by input prompt hash → scripted response, with helpers to register tool-use responses deterministically (per research.md R11)
+- [x] T007 [P] Create `backend/app/modules/tax_planning/audit_events.py` additions — 8 new event type constants per data-model.md §Audit event payload shapes (or extend existing file)
+- [ ] T008 Run `cd backend && uv run alembic upgrade head` on a local dev database; verify the three columns and unique index exist; verify existing alpha rows got default values — **deferred: requires a running dev DB; migration file validated syntactically**
+- [x] T009 [P] Write unit tests for `projection.annualise_linear` in `backend/tests/unit/modules/tax_planning/test_projection.py` — cover 6-month, 1-month, 12-month edge cases, divide-by-zero guard, metadata shape
+- [x] T010 [P] Write unit tests for `strategy_category` in `backend/tests/unit/modules/tax_planning/test_strategy_category.py` — every enum value resolves, `requires_group_model()` returns True for the 5 multi-entity categories, False for single-entity categories
 
 **Checkpoint**: Migration applied, shared primitives exist with tests, fake Anthropic fixture available. User stories can now begin.
 

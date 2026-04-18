@@ -18,6 +18,7 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
+    Enum as SQLEnum,
     ForeignKey,
     Index,
     Integer,
@@ -26,11 +27,13 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import BaseModel, TenantMixin
+from app.modules.tax_planning.strategy_category import StrategyCategory
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -173,9 +176,19 @@ class TaxScenario(BaseModel, TenantMixin):
     """
 
     __tablename__ = "tax_scenarios"
-    __table_args__ = (Index("ix_tax_scenarios_tax_plan_id", "tax_plan_id"),)
+    __table_args__ = (
+        Index("ix_tax_scenarios_tax_plan_id", "tax_plan_id"),
+        # Spec 059 FR-030: enforce case-insensitive trimmed title uniqueness per plan.
+        # Functional index — not representable via UniqueConstraint on ORM columns.
+        Index(
+            "ix_tax_scenarios_plan_normalized_title",
+            "tax_plan_id",
+            text("LOWER(TRIM(title))"),
+            unique=True,
+        ),
+    )
 
-    # Override updated_at — scenarios are immutable once created
+    # Override updated_at — updated during upsert refinements (spec 059 FR-031)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -199,6 +212,35 @@ class TaxScenario(BaseModel, TenantMixin):
     compliance_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     cash_flow_impact: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Spec 059 FR-017: Strategy category and multi-entity honesty flag.
+    # Enum type is created by migration 059_tax_planning_correctness; SQLAlchemy
+    # must NOT re-create it on model import (create_type=False).
+    strategy_category: Mapped[StrategyCategory] = mapped_column(
+        SQLEnum(
+            StrategyCategory,
+            name="strategy_category_enum",
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+            create_type=False,
+        ),
+        nullable=False,
+        default=StrategyCategory.OTHER,
+        server_default=StrategyCategory.OTHER.value,
+    )
+    requires_group_model: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
+    # Spec 059 FR-011: Provenance tags keyed by JSON Pointer (RFC 6901) into
+    # impact_data and assumptions. Values: "confirmed" | "derived" | "estimated".
+    source_tags: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+        server_default=text("'{}'::jsonb"),
+    )
 
     # Relationships
     tax_plan: Mapped["TaxPlan"] = relationship(back_populates="scenarios")
