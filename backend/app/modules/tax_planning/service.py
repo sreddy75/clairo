@@ -48,19 +48,44 @@ def _infer_matched_by(citation: dict, retrieved_chunks: list[dict]) -> str:
         return "numbered_index"
 
     for chunk in retrieved_chunks:
-        if (chunk.get("ruling_number") or "").lower().strip() in ref and chunk.get(
-            "ruling_number"
-        ):
+        if (chunk.get("ruling_number") or "").lower().strip() in ref and chunk.get("ruling_number"):
             return "ruling_number"
     for chunk in retrieved_chunks:
-        if (chunk.get("section_ref") or "").lower().strip() in ref and chunk.get(
-            "section_ref"
-        ):
+        if (chunk.get("section_ref") or "").lower().strip() in ref and chunk.get("section_ref"):
             return "section_ref"
     for chunk in retrieved_chunks:
         if ref and (chunk.get("title") or "").lower().strip() in ref:
             return "title"
     return "body_text"
+
+
+def _apply_subthreshold_gate(
+    response_content: str,
+    scenarios: list,
+    confidence_score: float,
+    retrieved_chunks: list[dict],
+) -> tuple[str, list, str]:
+    """Apply the Spec 061 Q2=C hybrid rule on sub-threshold confidence.
+
+    The streaming and non-streaming chat paths both call this helper so their
+    treatment of a low-confidence response is identical by construction.
+
+    Returns a tuple ``(response_content, scenarios, status_label)``:
+
+    - If ``confidence_score >= 0.5`` OR ``retrieved_chunks`` is empty:
+      pass-through. Returns ``(response_content, scenarios, "ok")``.
+    - Sub-threshold (confidence below 0.5 AND chunks present):
+      preserve ``response_content`` verbatim (do NOT replace with a canned
+      decline — accountants retain agency over what to read). Return an
+      empty scenarios list (the action-producing artefact is cleared because
+      sub-threshold reasoning should not auto-persist recommendations).
+      Status label ``"low_confidence"`` so the UI can render a warning banner.
+
+    Pure function; safe to call repeatedly.
+    """
+    if confidence_score >= 0.5 or not retrieved_chunks:
+        return response_content, scenarios, "ok"
+    return response_content, [], "low_confidence"
 
 
 def _coerce_strategy_category(value: Any) -> StrategyCategory:
@@ -77,6 +102,8 @@ def _coerce_strategy_category(value: Any) -> StrategyCategory:
     except ValueError:
         logger.warning("Invalid strategy_category %r; falling back to OTHER", value)
         return StrategyCategory.OTHER
+
+
 from app.modules.tax_planning.repository import (
     TaxPlanMessageRepository,
     TaxPlanRepository,
@@ -260,9 +287,7 @@ class TaxPlanningService:
         today = date.today()
         anchor_candidates = [d for d in (plan.as_at_date, recon_date) if d is not None]
         effective_date = min(anchor_candidates[0], today) if anchor_candidates else today
-        is_override_active = (
-            plan.as_at_date is not None and plan.as_at_date <= today
-        )
+        is_override_active = plan.as_at_date is not None and plan.as_at_date <= today
         effective_to = effective_date.isoformat()
 
         try:
@@ -305,12 +330,8 @@ class TaxPlanningService:
 
         ytd_income_snapshot = {**financials_data["income"]}
         ytd_expenses_snapshot = {**financials_data["expenses"]}
-        projected_income, income_meta = annualise_linear(
-            financials_data["income"], months_elapsed
-        )
-        projected_expenses, _ = annualise_linear(
-            financials_data["expenses"], months_elapsed
-        )
+        projected_income, income_meta = annualise_linear(financials_data["income"], months_elapsed)
+        projected_expenses, _ = annualise_linear(financials_data["expenses"], months_elapsed)
         financials_data["income"] = projected_income
         financials_data["expenses"] = projected_expenses
         projection_metadata = income_meta.to_dict()
@@ -1148,9 +1169,7 @@ class TaxPlanningService:
                 },
             )
         except Exception:
-            logger.debug(
-                "audit for scenario.provenance_confirmed failed", exc_info=True
-            )
+            logger.debug("audit for scenario.provenance_confirmed failed", exc_info=True)
 
         return {
             "scenario_id": str(scenario.id),
@@ -1458,28 +1477,25 @@ class TaxPlanningService:
         # `score`. The previous key-miss meant confidence_score was always
         # dominated by `verification_rate` and legitimate answers got declined.
         scores = [
-            c.get("relevance_score", 0.0)
-            for c in retrieved_chunks
-            if c.get("relevance_score")
+            c.get("relevance_score", 0.0) for c in retrieved_chunks if c.get("relevance_score")
         ]
         top_score = scores[0] if scores else 0.0
         mean_top5 = sum(scores[:5]) / min(len(scores), 5) if scores else 0.0
         verification_rate = citation_verification.get("verification_rate", 0.0)
         confidence_score = 0.4 * top_score + 0.3 * mean_top5 + 0.3 * verification_rate
-        if confidence_score < 0.5 and retrieved_chunks:
-            # Low confidence — replace AI response with decline message
-            response.content = (
-                "I don't have enough reliable tax compliance information to "
-                "answer this confidently. The response may rely on general "
-                "knowledge rather than current ATO guidance. Please consult "
-                "the ATO website (ato.gov.au) or your compliance resources "
-                "for authoritative information."
-            )
-            response.scenarios = []
+        # Spec 061 Q2=C — unify streaming / non-streaming low-confidence handling.
+        # The helper preserves content (accountant agency) and clears scenarios
+        # (AI-suggests / human-approves), returning a status label the UI can
+        # render as a warning banner.
+        response.content, response.scenarios, gate_status = _apply_subthreshold_gate(
+            response_content=response.content,
+            scenarios=response.scenarios,
+            confidence_score=confidence_score,
+            retrieved_chunks=retrieved_chunks,
+        )
+        citation_verification["confidence_score"] = confidence_score
+        if gate_status == "low_confidence":
             citation_verification["status"] = "low_confidence"
-            citation_verification["confidence_score"] = confidence_score
-        else:
-            citation_verification["confidence_score"] = confidence_score
 
         # Spec 059 FR-023 / T089 — audit the verification outcome.
         try:
@@ -1566,9 +1582,7 @@ class TaxPlanningService:
                         },
                     )
                 except Exception:
-                    logger.debug(
-                        "audit for requires_group_model_flag failed", exc_info=True
-                    )
+                    logger.debug("audit for requires_group_model_flag failed", exc_info=True)
             created_scenarios.append(scenario)
             scenario_ids.append(scenario.id)
 
@@ -1699,9 +1713,7 @@ class TaxPlanningService:
             elif event["type"] == "scenario":
                 scenario_data = event["scenario"]
                 sort_order = await self.scenario_repo.get_next_sort_order(plan_id)
-                category = _coerce_strategy_category(
-                    scenario_data.get("strategy_category")
-                )
+                category = _coerce_strategy_category(scenario_data.get("strategy_category"))
                 needs_group = _requires_group_model(category)
                 # Spec 059 FR-024 — same upsert path as the non-streaming chat
                 # flow. Streaming never got scenario dedup previously, so a
@@ -1752,11 +1764,17 @@ class TaxPlanningService:
                 top_score = scores[0] if scores else 0.0
                 mean_top5 = sum(scores[:5]) / min(len(scores), 5) if scores else 0.0
                 verification_rate = citation_verification.get("verification_rate", 0.0)
-                confidence_score = (
-                    0.4 * top_score + 0.3 * mean_top5 + 0.3 * verification_rate
+                confidence_score = 0.4 * top_score + 0.3 * mean_top5 + 0.3 * verification_rate
+                # Spec 061 Q2=C — same helper as the non-streaming path so the
+                # two transports produce identical sub-threshold outcomes.
+                full_content, created_scenario_ids, gate_status = _apply_subthreshold_gate(
+                    response_content=full_content,
+                    scenarios=created_scenario_ids,
+                    confidence_score=confidence_score,
+                    retrieved_chunks=retrieved_chunks,
                 )
                 citation_verification["confidence_score"] = confidence_score
-                if confidence_score < 0.5 and retrieved_chunks:
+                if gate_status == "low_confidence":
                     citation_verification["status"] = "low_confidence"
 
                 source_chunks_used = [
