@@ -126,10 +126,10 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 
 #### Backend — admin + public API
 
-- [ ] T034 [US1] Implement admin router in `backend/app/modules/tax_strategies/router.py` per `contracts/admin-tax-strategies.openapi.yaml` — endpoints `GET /tax-strategies`, `GET /tax-strategies/{strategy_id}`, `POST .../research|draft|enrich|submit|approve|reject|supersede`, `GET /tax-strategies/pipeline-stats`. Include Clerk `super_admin` role gate (reuse existing admin dependency)
-- [ ] T035 [US1] Implement public hydration router (same file or separate; mounted at `/api/v1/tax-strategies/.../public`) per `contracts/public-tax-strategies.openapi.yaml` — strips `source_ref` from the response (FR-008); only returns `status=='published'` + non-superseded + tenant-visible rows
-- [ ] T036 [US1] Register the tax_strategies router(s) in `backend/app/main.py` (or `backend/app/api/v1/__init__.py` following existing registration pattern)
-- [ ] T037 [US1] Implement Pydantic request/response schemas in `backend/app/modules/tax_strategies/schemas.py` matching `contracts/admin-tax-strategies.openapi.yaml` and `contracts/public-tax-strategies.openapi.yaml`
+- [X] T034 [US1] Implement admin router in `backend/app/modules/tax_strategies/router.py` per `contracts/admin-tax-strategies.openapi.yaml` — endpoints `GET /tax-strategies`, `GET /tax-strategies/{strategy_id}`, `POST .../research|draft|enrich|submit|approve|reject|supersede`, `GET /tax-strategies/pipeline-stats`. Include Clerk `super_admin` role gate (reuse existing admin dependency)
+- [X] T035 [US1] Implement public hydration router (same file or separate; mounted at `/api/v1/tax-strategies/.../public`) per `contracts/public-tax-strategies.openapi.yaml` — strips `source_ref` from the response (FR-008); only returns `status=='published'` + non-superseded + tenant-visible rows
+- [X] T036 [US1] Register the tax_strategies router(s) in `backend/app/main.py` (or `backend/app/api/v1/__init__.py` following existing registration pattern)
+- [X] T037 [US1] Implement Pydantic request/response schemas in `backend/app/modules/tax_strategies/schemas.py` matching `contracts/admin-tax-strategies.openapi.yaml` and `contracts/public-tax-strategies.openapi.yaml`
 
 #### Frontend — chip + hydration
 
