@@ -76,12 +76,18 @@ Write the following sections only:
 
 Use "## Accountant Brief Body" and "## Client Summary Body" as section headers."""
 
-        response = await self.client.messages.create(
+        # Streaming is required by Anthropic for non-streaming requests whose
+        # budget × model combination could exceed 10 minutes. `MAX_TOKENS=64_000`
+        # crosses that threshold, so we use the streaming API here.
+        # `get_final_message()` waits for the full aggregated Message — same
+        # downstream shape as `messages.create()`.
+        async with self.client.messages.stream(
             model=self.model,
             max_tokens=MAX_TOKENS,
             system=ADVISOR_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_prompt}],
-        )
+        ) as stream:
+            response = await stream.get_final_message()
 
         content = response.content[0].text if response.content else ""
         brief_body, summary_body = self._split_documents(content)

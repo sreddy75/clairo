@@ -160,6 +160,130 @@ CALCULATE_TAX_TOOL = {
 }
 
 
+SUBMIT_MODIFICATIONS_TOOL = {
+    "name": "submit_modifications",
+    "description": (
+        "Return the FULL list of strategy modifications for the accountant in a single tool call. "
+        "For every strategy provided in the user prompt that is worth modelling, include exactly one "
+        "entry in the `modifications` array. Use the strategy_id EXACTLY as given in the input — do not "
+        "invent new strategy_ids or paraphrase them. Do NOT include any combined/package/integrated/"
+        "optimal-strategy entry: the system combines the individual strategies in code. If a strategy "
+        "is not worth modelling (e.g. inapplicable, zero benefit), omit it."
+    ),
+    "input_schema": {
+        "type": "object",
+        "required": ["modifications"],
+        "additionalProperties": False,
+        "properties": {
+            "modifications": {
+                "type": "array",
+                "description": (
+                    "One entry per input strategy worth modelling. Order does not matter. "
+                    "Maximum one entry per strategy_id."
+                ),
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "strategy_id",
+                        "scenario_title",
+                        "description",
+                        "modified_income",
+                        "modified_expenses",
+                    ],
+                    "additionalProperties": False,
+                    "properties": {
+                        "strategy_id": {
+                            "type": "string",
+                            "description": (
+                                "Verbatim copy of the `id` field of one of the input strategies. "
+                                "MUST match exactly — no paraphrasing, no slugification, no meta/"
+                                "combined IDs."
+                            ),
+                        },
+                        "scenario_title": {
+                            "type": "string",
+                            "description": "Human-readable display title for the scenario (e.g. 'Prepay deductible expenses').",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "One-paragraph plain-English explanation of the modification, written for the accountant's client-facing brief.",
+                        },
+                        "assumptions": {
+                            "type": "array",
+                            "description": "Short bullet items listing the assumptions underlying the modification (e.g. amounts, timing, eligibility).",
+                            "items": {"type": "string"},
+                        },
+                        "modified_income": {
+                            "type": "object",
+                            "description": "Overrides to the client's base income. Any key omitted uses the base figure unchanged.",
+                            "additionalProperties": False,
+                            "properties": {
+                                "revenue": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "description": "Revised projected revenue for the full financial year.",
+                                },
+                                "other_income": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "description": "Revised projected other income for the full financial year.",
+                                },
+                            },
+                        },
+                        "modified_expenses": {
+                            "type": "object",
+                            "description": "Overrides to the client's base expenses. Any key omitted uses the base figure unchanged.",
+                            "additionalProperties": False,
+                            "properties": {
+                                "cost_of_sales": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "description": "Revised projected cost of sales for the full financial year.",
+                                },
+                                "operating_expenses": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "description": "Revised projected operating expenses for the full financial year.",
+                                },
+                            },
+                        },
+                        "modified_turnover": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Revised projected annual turnover. Optional — defaults to base turnover.",
+                        },
+                        "strategy_category": {
+                            "type": "string",
+                            "enum": [
+                                "prepayment",
+                                "capex_deduction",
+                                "super_contribution",
+                                "director_salary",
+                                "trust_distribution",
+                                "dividend_timing",
+                                "spouse_contribution",
+                                "multi_entity_restructure",
+                                "other",
+                            ],
+                            "description": "StrategyCategory enum value. Multi-entity categories are flagged requires_group_model=True in code and excluded from combined totals.",
+                        },
+                        "risk_rating": {
+                            "type": "string",
+                            "enum": ["conservative", "moderate", "aggressive"],
+                            "description": "Risk rating for the strategy. Defaults to 'moderate' in code if invalid.",
+                        },
+                        "compliance_notes": {
+                            "type": "string",
+                            "description": "Short compliance notes referencing ATO rulings, eligibility conditions, or caveats. Rendered in the scenario card.",
+                        },
+                    },
+                },
+            }
+        },
+    },
+}
+
+
 def format_reference_material(chunks: list[dict]) -> str:
     """Format retrieved knowledge base chunks as numbered references for the system prompt.
 

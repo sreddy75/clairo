@@ -1,8 +1,13 @@
 """Agent 3: Scenario Modeller.
 
-Models top strategies in detail using Claude tool-use with the real
-tax calculator. Produces exact before/after tax positions and
-identifies the optimal strategy combination.
+Models strategies in detail using the deterministic tax calculator. The
+language model's role is narrowed: it returns a structured list of strategy
+modifications in a single forced tool call, and Python iterates that list
+calling the calculator once per validated modification.
+
+This design replaces the earlier LLM-controlled tool-use loop so that the
+number of scenarios is bounded by code, not inferred from model behaviour.
+See spec 059-2-tax-planning-correctness-followup.
 """
 
 import json
@@ -12,7 +17,7 @@ from typing import Any
 import anthropic
 
 from app.modules.tax_planning.agents.prompts import MODELLER_SYSTEM_PROMPT
-from app.modules.tax_planning.prompts import CALCULATE_TAX_TOOL
+from app.modules.tax_planning.prompts import SUBMIT_MODIFICATIONS_TOOL
 from app.modules.tax_planning.strategy_category import (
     StrategyCategory,
     requires_group_model,
@@ -21,11 +26,168 @@ from app.modules.tax_planning.tax_calculator import calculate_tax_position
 
 logger = logging.getLogger(__name__)
 
-MAX_TOKENS = 32000
+MAX_TOKENS = 12_000
+
+
+def _compute_scenario(
+    modification: dict[str, Any],
+    base_financials: dict[str, Any],
+    entity_type: str,
+    rate_configs: dict[str, dict],
+) -> dict[str, Any]:
+    """Run the tax calculator for one strategy modification and return a
+    scenario dict in the shape persisted under `TaxPlanAnalysis.recommended_scenarios`.
+
+    This is the deterministic core of the modeller — no language-model calls,
+    no loops, no meta-scenarios. Pure function, trivially unit-testable.
+
+    Spec 059 provenance (source_tags), group-model gate (`requires_group_model`),
+    and enum coercion (strategy_category, risk_rating) are preserved here
+    verbatim from the prior implementation.
+    """
+    modified_income = modification.get("modified_income", {}) or {}
+    modified_expenses = modification.get("modified_expenses", {}) or {}
+
+    modified_financials = {
+        "income": {
+            "revenue": modified_income.get(
+                "revenue",
+                base_financials.get("income", {}).get("revenue", 0),
+            ),
+            "other_income": modified_income.get(
+                "other_income",
+                base_financials.get("income", {}).get("other_income", 0),
+            ),
+            "total_income": 0,
+        },
+        "expenses": {
+            "cost_of_sales": modified_expenses.get(
+                "cost_of_sales",
+                base_financials.get("expenses", {}).get("cost_of_sales", 0),
+            ),
+            "operating_expenses": modified_expenses.get(
+                "operating_expenses",
+                base_financials.get("expenses", {}).get("operating_expenses", 0),
+            ),
+            "total_expenses": 0,
+        },
+        "credits": base_financials.get("credits", {}),
+        "adjustments": base_financials.get("adjustments", []),
+        "turnover": modification.get(
+            "modified_turnover",
+            base_financials.get("turnover", 0),
+        ),
+    }
+
+    modified_financials["income"]["total_income"] = (
+        modified_financials["income"]["revenue"] + modified_financials["income"]["other_income"]
+    )
+    modified_financials["expenses"]["total_expenses"] = (
+        modified_financials["expenses"]["cost_of_sales"]
+        + modified_financials["expenses"]["operating_expenses"]
+    )
+
+    # Coerce strategy_category before deciding requires_group_model so the
+    # group-model gate below uses the validated value, not raw LLM output.
+    raw_category = modification.get("strategy_category")
+    try:
+        category = StrategyCategory(raw_category) if raw_category else StrategyCategory.OTHER
+    except ValueError:
+        logger.warning(
+            "Modeller emitted invalid strategy_category %r; falling back to OTHER",
+            raw_category,
+        )
+        category = StrategyCategory.OTHER
+    needs_group_model = requires_group_model(category)
+
+    base_position = calculate_tax_position(
+        entity_type=entity_type,
+        financials_data=base_financials,
+        rate_configs=rate_configs,
+    )
+
+    # F-02: group-model strategies cannot be quantified on a single-entity
+    # basis — force modified_position == base_position in code so the
+    # tax_saving is always exactly $0 regardless of what the LLM passed.
+    if needs_group_model:
+        modified_position = base_position
+    else:
+        modified_position = calculate_tax_position(
+            entity_type=entity_type,
+            financials_data=modified_financials,
+            rate_configs=rate_configs,
+        )
+
+    tax_saving = round(
+        base_position["total_tax_payable"] - modified_position["total_tax_payable"], 2
+    )
+    expense_increase = modified_financials["expenses"]["total_expenses"] - base_financials.get(
+        "expenses", {}
+    ).get("total_expenses", 0)
+    cash_flow_impact = round(tax_saving - max(0, expense_increase), 2)
+
+    # Spec 059 FR-011..FR-016 — provenance tags on every numeric leaf.
+    source_tags: dict[str, str] = {
+        "impact_data.before.taxable_income": "derived",
+        "impact_data.before.tax_payable": "derived",
+        "impact_data.after.taxable_income": "estimated",
+        "impact_data.after.tax_payable": "estimated",
+        "impact_data.change.taxable_income_change": "estimated",
+        "impact_data.change.tax_saving": "estimated",
+        "cash_flow_impact": "estimated",
+    }
+
+    # strategy_id: prefer the validated ID from the modification (new forced-tool-call
+    # flow). Fall back to a slug of the title when absent (keeps the legacy
+    # `ScenarioModellerAgent._execute_tool` direct-invocation tests working —
+    # they don't supply strategy_id because the old flow derived it from the
+    # scenario_title).
+    strategy_id = modification.get("strategy_id") or (
+        modification.get("scenario_title", "").lower().replace(" ", "-")
+    )
+
+    raw_risk = modification.get("risk_rating", "moderate")
+    risk_rating = raw_risk if raw_risk in {"conservative", "moderate", "aggressive"} else "moderate"
+
+    return {
+        "scenario_title": modification.get("scenario_title", "Untitled"),
+        "description": modification.get("description", ""),
+        "assumptions": {"items": modification.get("assumptions", [])},
+        "impact": {
+            "before": {
+                "taxable_income": base_position["taxable_income"],
+                "tax_payable": base_position["total_tax_payable"],
+            },
+            "after": {
+                "taxable_income": modified_position["taxable_income"],
+                "tax_payable": modified_position["total_tax_payable"],
+            },
+            "change": {
+                "taxable_income_change": (
+                    modified_position["taxable_income"] - base_position["taxable_income"]
+                ),
+                "tax_saving": tax_saving,
+            },
+        },
+        "cash_flow_impact": cash_flow_impact,
+        "risk_rating": risk_rating,
+        "compliance_notes": modification.get("compliance_notes", ""),
+        "strategy_id": strategy_id,
+        "strategy_category": category.value,
+        "requires_group_model": needs_group_model,
+        "source_tags": source_tags,
+    }
 
 
 class ScenarioModellerAgent:
-    """Models tax strategies with real calculator numbers via tool-use."""
+    """Models tax strategies via a single forced tool call + deterministic iteration.
+
+    The language model returns one structured list of per-strategy modifications.
+    Python validates that list (membership, dedupe, truncation) and iterates it
+    calling `_compute_scenario` once per validated entry. The number of
+    scenarios returned is bounded by `len(input_strategies)` — it cannot exceed
+    the input count regardless of what the model emits.
+    """
 
     def __init__(self, api_key: str, model: str = "claude-sonnet-4-6") -> None:
         self.client = anthropic.AsyncAnthropic(api_key=api_key)
@@ -38,26 +200,36 @@ class ScenarioModellerAgent:
         entity_type: str,
         rate_configs: dict[str, dict],
     ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-        """Model top strategies with real tax calculator.
+        """Model applicable strategies with the deterministic tax calculator.
 
         Returns:
-            Tuple of (recommended_scenarios, combined_strategy).
+            Tuple of (recommended_scenarios, combined_strategy). Signature is
+            stable across the 059-2 redesign — orchestrator contract unchanged.
         """
-        # Filter to applicable strategies only, take top 8
         applicable = [s for s in strategies if s.get("applicable")]
         top_strategies = applicable[:8]
 
         if not top_strategies:
-            return [], {"recommended_combination": [], "total_tax_saving": 0}
+            return [], _build_combined_strategy([])
+
+        # Scanner emits `strategy_id` (kebab-case, category-prefixed). Accept
+        # `id` as a fallback for any upstream that uses the shorter key.
+        input_ids: set[str] = {
+            s.get("strategy_id") or s.get("id")
+            for s in top_strategies
+            if s.get("strategy_id") or s.get("id")
+        }
 
         strategies_text = json.dumps(top_strategies, indent=2)
         income = financials_data.get("income", {})
         expenses = financials_data.get("expenses", {})
 
-        user_prompt = f"""Model these tax strategies for the client. Use the calculate_tax_position
-tool for EVERY strategy to get exact before/after numbers.
+        user_prompt = f"""Describe how each applicable tax strategy below would modify this client's
+full-year financials. Call `submit_modifications` exactly once with one entry per strategy
+you want to model. Copy each strategy's `strategy_id` value VERBATIM into the `strategy_id`
+field of your modification — no renaming, no paraphrasing.
 
-## Current Financials
+## Current Financials (full financial year)
 - Revenue: ${income.get("revenue", 0):,.2f}
 - Other Income: ${income.get("other_income", 0):,.2f}
 - Cost of Sales: ${expenses.get("cost_of_sales", 0):,.2f}
@@ -67,125 +239,89 @@ tool for EVERY strategy to get exact before/after numbers.
 ## Strategies to Model
 {strategies_text}
 
-Model each strategy individually. Call calculate_tax_position ONCE per strategy.
-Do NOT make an extra call for a combined/package/optimal scenario — the system sums the totals."""
+Return ONLY the `submit_modifications` tool call. The tax calculator runs in code
+over your modifications — you do not compute tax figures yourself."""
 
         messages: list[dict[str, Any]] = [{"role": "user", "content": user_prompt}]
-        scenarios: list[dict[str, Any]] = []
 
-        # Hard cap: one tool call per strategy. Any call beyond this count is
-        # a meta/combined scenario — return an error result so the LLM gets a
-        # valid API response but the scenario is never stored.
-        max_tool_calls = len(top_strategies)
-        tool_call_count = 0
-
-        # Tool-use loop (same pattern as existing TaxPlanningAgent)
         response = await self.client.messages.create(
             model=self.model,
             max_tokens=MAX_TOKENS,
             system=MODELLER_SYSTEM_PROMPT,
             messages=messages,
-            tools=[CALCULATE_TAX_TOOL],
+            tools=[SUBMIT_MODIFICATIONS_TOOL],
+            tool_choice={"type": "tool", "name": "submit_modifications"},
         )
 
-        while response.stop_reason == "tool_use":
-            tool_results = []
-            for block in response.content:
-                if block.type == "tool_use":
-                    if tool_call_count >= max_tool_calls:
-                        # Reject the extra call — don't store, return error so
-                        # the API conversation remains valid.
-                        logger.info(
-                            "Modeller: rejecting tool call #%d (title=%r) — exceeds per-strategy cap of %d",
-                            tool_call_count + 1,
-                            block.input.get("scenario_title", "?"),
-                            max_tool_calls,
-                        )
-                        tool_results.append(
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps(
-                                    {"error": "Call limit reached. Model individual strategies only."}
-                                ),
-                            }
-                        )
-                    else:
-                        tool_result = self._execute_tool(
-                            block.input,
-                            financials_data,
-                            entity_type,
-                            rate_configs,
-                        )
-                        scenarios.append(tool_result)
-                        tool_call_count += 1
-                        tool_results.append(
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps(tool_result),
-                            }
-                        )
+        # Extract the forced tool-use block. Schema validation at the API boundary
+        # guarantees the `input` object shape — we only validate semantic
+        # correctness (strategy_id membership, dedupe) below.
+        modifications_raw: list[dict[str, Any]] = []
+        for block in response.content:
+            if block.type == "tool_use" and block.name == "submit_modifications":
+                modifications_raw = block.input.get("modifications", []) or []
+                break
 
-            messages.append({"role": "assistant", "content": response.content})
-            messages.append({"role": "user", "content": tool_results})
-
-            response = await self.client.messages.create(
-                model=self.model,
-                max_tokens=MAX_TOKENS,
-                system=MODELLER_SYSTEM_PROMPT,
-                messages=messages,
-                tools=[CALCULATE_TAX_TOOL],
+        if not modifications_raw:
+            logger.warning(
+                "Modeller: LLM returned no modifications (stop_reason=%r); "
+                "producing empty scenario list",
+                response.stop_reason,
             )
+            return [], _build_combined_strategy([])
 
-        # Layer 2: name-based filter for any meta-scenarios that still slipped
-        # through (e.g. called within the cap by displacing a real strategy).
-        _META_KEYWORDS = ("combination", "package", "combined", "optimal strategy", "best strategy")
-        real_scenarios = [
-            s for s in scenarios
-            if not any(
-                kw in str(s.get("strategy_id", s.get("scenario_title", ""))).lower()
-                for kw in _META_KEYWORDS
-            )
-        ]
-        if len(real_scenarios) < len(scenarios):
+        # Validate modifications: drop unknown strategy_ids, dedupe by first
+        # occurrence, truncate to input count. These are the three structural
+        # guarantees that make meta-scenarios impossible by construction.
+        validated: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        dropped_unknown = 0
+        dropped_duplicate = 0
+        for mod in modifications_raw:
+            sid = mod.get("strategy_id")
+            if sid not in input_ids:
+                logger.info(
+                    "Modeller: dropping unknown strategy_id=%r (not in input set)",
+                    sid,
+                )
+                dropped_unknown += 1
+                continue
+            if sid in seen:
+                logger.info(
+                    "Modeller: dropping duplicate strategy_id=%r (first occurrence kept)",
+                    sid,
+                )
+                dropped_duplicate += 1
+                continue
+            seen.add(sid)
+            validated.append(mod)
+
+        if len(validated) > len(top_strategies):
             logger.info(
-                "Modeller: name-filter stripped %d meta-scenario(s): %s",
-                len(scenarios) - len(real_scenarios),
-                [s.get("scenario_title") for s in scenarios if s not in real_scenarios],
+                "Modeller: truncating %d modifications to input count %d",
+                len(validated),
+                len(top_strategies),
             )
+            validated = validated[: len(top_strategies)]
 
-        # Layer 3: structural detection — a meta-scenario's saving exceeds the
-        # sum of all other positive-saving scenarios (it represents their
-        # aggregate). Strip any scenario matching this signature.
-        positive = [
-            s for s in real_scenarios
-            if s.get("impact", {}).get("change", {}).get("tax_saving", 0) > 0
+        # Run the deterministic calculator over each validated modification.
+        scenarios = [
+            _compute_scenario(mod, financials_data, entity_type, rate_configs) for mod in validated
         ]
-        if len(positive) > 1:
-            total_positive = sum(
-                s["impact"]["change"]["tax_saving"] for s in positive
-            )
-            structural_meta = {
-                id(s) for s in positive
-                # saving > 110% of the sum of all others = structural meta-scenario
-                if s["impact"]["change"]["tax_saving"] > 1.1 * (total_positive - s["impact"]["change"]["tax_saving"])
-            }
-            if structural_meta:
-                removed = [s.get("scenario_title") for s in real_scenarios if id(s) in structural_meta]
-                logger.info("Modeller: structural-filter stripped %d meta-scenario(s): %s", len(structural_meta), removed)
-                real_scenarios = [s for s in real_scenarios if id(s) not in structural_meta]
 
-        combined = self._build_combined_strategy(real_scenarios)
+        combined = _build_combined_strategy(scenarios)
 
         logger.info(
-            "Modeller: produced %d scenarios (from %d tool calls), combined saving=$%s",
-            len(real_scenarios),
+            "Modeller: produced %d scenarios (from %d validated modifications, "
+            "dropped %d unknown + %d duplicate), combined saving=$%s",
             len(scenarios),
+            len(validated),
+            dropped_unknown,
+            dropped_duplicate,
             f"{combined.get('total_tax_saving', 0):,.0f}",
         )
 
-        return real_scenarios, combined
+        return scenarios, combined
 
     def _execute_tool(
         self,
@@ -194,178 +330,63 @@ Do NOT make an extra call for a combined/package/optimal scenario — the system
         entity_type: str,
         rate_configs: dict[str, dict],
     ) -> dict[str, Any]:
-        """Execute the calculate_tax_position tool.
+        """Thin backwards-compatible alias for `_compute_scenario`.
 
-        Reuses the same logic as TaxPlanningAgent._execute_tool.
+        Retained so legacy direct-invocation tests (test_provenance.py,
+        test_strategy_category_honesty.py) keep working without modification.
+        New code should call `_compute_scenario` directly.
         """
-        modified_income = tool_input.get("modified_income", {})
-        modified_expenses = tool_input.get("modified_expenses", {})
+        return _compute_scenario(tool_input, base_financials, entity_type, rate_configs)
 
-        modified_financials = {
-            "income": {
-                "revenue": modified_income.get(
-                    "revenue",
-                    base_financials.get("income", {}).get("revenue", 0),
-                ),
-                "other_income": modified_income.get(
-                    "other_income",
-                    base_financials.get("income", {}).get("other_income", 0),
-                ),
-                "total_income": 0,
-            },
-            "expenses": {
-                "cost_of_sales": modified_expenses.get(
-                    "cost_of_sales",
-                    base_financials.get("expenses", {}).get("cost_of_sales", 0),
-                ),
-                "operating_expenses": modified_expenses.get(
-                    "operating_expenses",
-                    base_financials.get("expenses", {}).get("operating_expenses", 0),
-                ),
-                "total_expenses": 0,
-            },
-            "credits": base_financials.get("credits", {}),
-            "adjustments": base_financials.get("adjustments", []),
-            "turnover": tool_input.get(
-                "modified_turnover",
-                base_financials.get("turnover", 0),
-            ),
-        }
 
-        modified_financials["income"]["total_income"] = (
-            modified_financials["income"]["revenue"] + modified_financials["income"]["other_income"]
-        )
-        modified_financials["expenses"]["total_expenses"] = (
-            modified_financials["expenses"]["cost_of_sales"]
-            + modified_financials["expenses"]["operating_expenses"]
-        )
+def _build_combined_strategy(
+    scenarios: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build a combined strategy summary from individual scenarios.
 
-        # Coerce strategy_category before deciding requires_group_model so the
-        # group-model gate below uses the validated value, not raw LLM output.
-        raw_category = tool_input.get("strategy_category")
-        try:
-            category = StrategyCategory(raw_category) if raw_category else StrategyCategory.OTHER
-        except ValueError:
-            logger.warning(
-                "Modeller emitted invalid strategy_category %r; falling back to OTHER",
-                raw_category,
-            )
-            category = StrategyCategory.OTHER
-        needs_group_model = requires_group_model(category)
+    Spec 059 FR-019 — scenarios flagged `requires_group_model=True`
+    (director salary, trust distribution, dividend timing, spouse
+    contribution, multi-entity restructure) cannot have their benefit
+    computed honestly on a single entity, so they are excluded from the
+    combined total. `excluded_count` surfaces to the UI subtotal.
 
-        base_position = calculate_tax_position(
-            entity_type=entity_type,
-            financials_data=base_financials,
-            rate_configs=rate_configs,
-        )
+    Note (059-2): the three legacy meta-scenario filter layers (hard cap,
+    keyword name strip, structural 1.1x ratio) have been removed. The
+    redesigned `run()` can no longer produce meta-scenarios — any modification
+    whose strategy_id is not in the input set is dropped at validation, so by
+    the time scenarios reach this function there is nothing to filter.
+    """
+    if not scenarios:
+        return {"recommended_combination": [], "total_tax_saving": 0, "excluded_count": 0}
 
-        # F-02: group-model strategies cannot be quantified on a single-entity
-        # basis — force modified_position == base_position in code so the
-        # tax_saving is always exactly $0 regardless of what the LLM passed.
-        if needs_group_model:
-            modified_position = base_position
-        else:
-            modified_position = calculate_tax_position(
-                entity_type=entity_type,
-                financials_data=modified_financials,
-                rate_configs=rate_configs,
-            )
+    included = [
+        s
+        for s in scenarios
+        if not s.get("requires_group_model")
+        and (s.get("impact") or s.get("impact_data") or {}).get("change", {}).get("tax_saving", 0)
+        > 0
+    ]
+    excluded_count = len(scenarios) - len(included)
 
-        tax_saving = round(base_position["total_tax_payable"] - modified_position["total_tax_payable"], 2)
-        expense_increase = modified_financials["expenses"]["total_expenses"] - base_financials.get(
-            "expenses", {}
-        ).get("total_expenses", 0)
-        cash_flow_impact = round(tax_saving - max(0, expense_increase), 2)
+    total_saving = round(
+        sum(s.get("impact", {}).get("change", {}).get("tax_saving", 0) for s in included),
+        2,
+    )
+    total_cash = round(sum(s.get("cash_flow_impact", 0) for s in included), 2)
 
-        # Spec 059 FR-011..FR-016 — provenance tags on every numeric leaf.
-        # `before.*` is derived from the accountant's confirmed financials via
-        # the pure calculator, so it's `derived`. `after.*` and everything
-        # downstream reflects LLM-chosen modifications — estimates until the
-        # accountant confirms them via the inline PATCH endpoint.
-        source_tags: dict[str, str] = {
-            "impact_data.before.taxable_income": "derived",
-            "impact_data.before.tax_payable": "derived",
-            "impact_data.after.taxable_income": "estimated",
-            "impact_data.after.tax_payable": "estimated",
-            "impact_data.change.taxable_income_change": "estimated",
-            "impact_data.change.tax_saving": "estimated",
-            "cash_flow_impact": "estimated",
-        }
+    return {
+        "recommended_combination": [
+            s.get("strategy_id", s.get("scenario_title", "")) for s in included
+        ],
+        "total_tax_saving": total_saving,
+        "total_cash_outlay": round(-total_cash, 2) if total_cash < 0 else 0,
+        "net_cash_benefit": total_cash,
+        "strategy_count": len(included),
+        "excluded_count": excluded_count,
+    }
 
-        return {
-            "scenario_title": tool_input.get("scenario_title", "Untitled"),
-            "description": tool_input.get("description", ""),
-            "assumptions": {"items": tool_input.get("assumptions", [])},
-            "impact": {
-                "before": {
-                    "taxable_income": base_position["taxable_income"],
-                    "tax_payable": base_position["total_tax_payable"],
-                },
-                "after": {
-                    "taxable_income": modified_position["taxable_income"],
-                    "tax_payable": modified_position["total_tax_payable"],
-                },
-                "change": {
-                    "taxable_income_change": (
-                        modified_position["taxable_income"] - base_position["taxable_income"]
-                    ),
-                    "tax_saving": tax_saving,
-                },
-            },
-            "cash_flow_impact": cash_flow_impact,
-            "risk_rating": tool_input.get("risk_rating", "moderate") if tool_input.get("risk_rating") in {"conservative", "moderate", "aggressive"} else "moderate",
-            "compliance_notes": tool_input.get("compliance_notes", ""),
-            "strategy_id": tool_input.get("scenario_title", "").lower().replace(" ", "-"),
-            "strategy_category": category.value,
-            "requires_group_model": needs_group_model,
-            "source_tags": source_tags,
-        }
 
-    @staticmethod
-    def _build_combined_strategy(
-        scenarios: list[dict[str, Any]],
-    ) -> dict[str, Any]:
-        """Build a combined strategy summary from individual scenarios.
-
-        Spec 059 FR-019 — scenarios flagged `requires_group_model=True`
-        (director salary, trust distribution, dividend timing, spouse
-        contribution, multi-entity restructure) cannot have their benefit
-        computed honestly on a single entity, so they are excluded from the
-        combined total. `excluded_count` surfaces to the UI subtotal.
-        """
-        if not scenarios:
-            return {"recommended_combination": [], "total_tax_saving": 0, "excluded_count": 0}
-
-        # Strip meta-scenarios Claude sometimes creates despite being told not to.
-        # These summarise individual strategies and cause double-counting when
-        # their savings are summed with the strategies they already include.
-        # Match any name containing these keywords (case-insensitive).
-        _META_KEYWORDS = ("combination", "package", "combined", "optimal strategy", "best strategy")
-
-        def _is_meta_scenario(s: dict) -> bool:
-            label = str(s.get("strategy_id", s.get("scenario_title", ""))).lower()
-            return any(kw in label for kw in _META_KEYWORDS)
-
-        real_scenarios = [s for s in scenarios if not _is_meta_scenario(s)]
-        included = [
-            s for s in real_scenarios
-            if not s.get("requires_group_model")
-            and (s.get("impact") or s.get("impact_data") or {}).get("change", {}).get("tax_saving", 0) > 0
-        ]
-        excluded_count = len(real_scenarios) - len(included)
-
-        total_saving = round(sum(
-            s.get("impact", {}).get("change", {}).get("tax_saving", 0) for s in included
-        ), 2)
-        total_cash = round(sum(s.get("cash_flow_impact", 0) for s in included), 2)
-
-        return {
-            "recommended_combination": [
-                s.get("strategy_id", s.get("scenario_title", "")) for s in included
-            ],
-            "total_tax_saving": total_saving,
-            "total_cash_outlay": round(-total_cash, 2) if total_cash < 0 else 0,
-            "net_cash_benefit": total_cash,
-            "strategy_count": len(included),
-            "excluded_count": excluded_count,
-        }
+# Backwards-compatible class-level alias — pre-059-2 tests call
+# `ScenarioModellerAgent._build_combined_strategy(scenarios)` as a staticmethod.
+# Assigned after both definitions exist at module scope.
+ScenarioModellerAgent._build_combined_strategy = staticmethod(_build_combined_strategy)  # type: ignore[attr-defined]

@@ -38,8 +38,8 @@ async def _set_tenant_context(session: AsyncSession, tenant_id: UUID) -> None:
     bind=True,
     max_retries=1,
     default_retry_delay=30,
-    time_limit=300,  # 5 minute hard limit
-    soft_time_limit=240,  # 4 minute soft limit
+    time_limit=600,  # 10 minute hard limit
+    soft_time_limit=540,  # 9 minute soft limit (advisor streams a 64k-token generation + full reviewer pass)
 )
 def run_analysis_pipeline(
     self: Task,
