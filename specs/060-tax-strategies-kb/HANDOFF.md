@@ -1,6 +1,6 @@
 # Spec 060 — Handoff
 
-**Status as of 2026-04-19**: Backend wire-complete for the citation pipeline. Frontend not started. Content authoring not started. `39/77` tasks done (~51%).
+**Status as of 2026-04-19**: Backend wire-complete for the citation pipeline + draft/enrich LLM tasks. Frontend not started. Bulk content authoring not started. `40/77` tasks done (~52%).
 
 ---
 
@@ -59,17 +59,17 @@ Each commit is self-contained and compiles/tests independently.
 - **Celery tasks** (`backend/app/tasks/tax_strategy_authoring.py`):
   - `publish_strategy` — DONE (env-gated, deterministic vector IDs, ContentChunk + BM25IndexEntry written before Pinecone upsert)
   - `research_strategy` — DONE (fixture-driven; CLR-012 + CLR-241 seeded in `data/ato_source_fixtures.py`)
-  - `draft_strategy` — **NotImplementedError** (needs real Anthropic SDK integration)
-  - `enrich_strategy` — **NotImplementedError** (needs real Anthropic SDK integration)
+  - `draft_strategy` — DONE (Claude Sonnet via `app/modules/tax_strategies/llm.py`; two-section output `## Implementation` / `## Explanation`; researching|enriched → drafted)
+  - `enrich_strategy` — DONE (second LLM pass; structured JSON parsed with safe defaults; drafted → enriched)
 - **Admin + public routers** — 11 routes mounted under `/api/v1/admin/tax-strategies` and `/api/v1/tax-strategies`. Registered in `backend/app/main.py`.
 - **State machine**: `TaxStrategyService._transition_status` is the single chokepoint for `TaxStrategy.status` mutations; all stage-trigger methods route through it. 17 allowed edges enumerated in `_ALLOWED_TRANSITIONS`.
 - **Audit**: six event types emitted per spec — `tax_strategy.created|status_changed|approved|published|superseded|seed_executed`
 - **Seed action**: `seed_from_csv` in `service.py` + `POST /api/v1/admin/tax-strategies/seed-from-csv`. Transactional validation, idempotent, category allowlist enforced. CSV currently contains only a header row.
 - **Latency tracer**: `tax_planning.retrieve.ms` log line on every `_retrieve_tax_knowledge` call
 
-### Tests — DONE (235 green)
+### Tests — DONE (252 green)
 
-- 78 new unit tests in `backend/tests/unit/modules/tax_strategies/` across env_gate, service transitions, chunker, citation verifier CLR, markup normaliser, seed validator, ATO source fixtures, router smoke
+- 95 new unit tests in `backend/tests/unit/modules/tax_strategies/` across env_gate, service transitions, chunker, citation verifier CLR, markup normaliser, seed validator, ATO source fixtures, router smoke, **LLM prompts + response parsers (new, 17 tests)**
 - 4 new unit tests in `backend/tests/unit/modules/tax_planning/test_retrieval_latency_tracer.py`
 - **Regression**: 153 existing `tax_planning` tests still green
 
@@ -77,8 +77,8 @@ Each commit is self-contained and compiles/tests independently.
 
 | Area | Tasks | Notes |
 |---|---|---|
-| LLM pipeline | T028 draft + enrich | Needs Anthropic SDK integration + real prompt from arch §10.3 + testable harness |
 | Backend integration tests | T022, T023, T024 | Need Celery worker + Pinecone + DB fixtures wired into test harness |
+| LLM pipeline — end-to-end smoke | (follow-up) | Unit-tested parsers. Manual smoke against a live ANTHROPIC_API_KEY still pending — exercise CLR-012 research → draft → enrich via admin API and eyeball the drafted row |
 | Frontend — chip layer | T038–T041 | StrategyChip, StrategyDetailSheet, useStrategyHydration, markdown tokenizer |
 | Frontend — admin shell | T042–T045 | Add Strategies tab, list, detail Sheet with action bar, TanStack Query hooks |
 | Frontend — US2 | T047, T048, T050 | CitationBadge extension, message-level count, graceful degradation guard |
@@ -205,7 +205,7 @@ Don't stage them when committing 060 work.
 
 ## Quick facts
 
-- **Test count**: 235 unit tests green as of the final commit.
+- **Test count**: 252 unit tests green as of the final commit.
 - **Migration id**: `060_tax_strategies_phase1`, revises `059_1_as_at_date`.
 - **Env flag name**: `TAX_STRATEGIES_VECTOR_WRITE_ENABLED` (default `false`).
 - **Pinecone namespace**: `tax_strategies` (shared — no env suffix).

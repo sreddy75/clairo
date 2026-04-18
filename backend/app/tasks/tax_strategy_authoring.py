@@ -462,8 +462,91 @@ async def _run_research(strategy_id: str, triggered_by: str) -> dict[str, Any]:
     retry_jitter=True,
 )
 def draft_strategy(self: Task, strategy_id: str, triggered_by: str) -> dict[str, Any]:
-    """Anthropic draft per architecture §10.3 (T028)."""
-    raise NotImplementedError("draft_strategy lands in follow-up to T028")
+    """Anthropic draft per architecture §10.3.
+
+    Reads the fixture-loaded ato_sources, calls Claude Sonnet, parses the
+    response into implementation_text + explanation_text, and transitions
+    researching → drafted. Re-drafts from `enriched` (reject path) are
+    allowed; the state machine handles both edges.
+    """
+    return asyncio.run(_run_draft(strategy_id, triggered_by))
+
+
+async def _run_draft(strategy_id: str, triggered_by: str) -> dict[str, Any]:
+    from app.modules.tax_strategies.llm import run_draft_llm
+
+    factory = _make_session_factory()
+    async with factory() as session:
+        svc = TaxStrategyService(session)
+        strategy = await svc.repo.get_live_version(strategy_id)
+        if strategy is None:
+            raise StrategyNotFoundError(strategy_id)
+
+        if strategy.status not in {"researching", "enriched"}:
+            raise InvalidStatusTransitionError(
+                strategy.strategy_id, strategy.status, "drafted"
+            )
+
+        job = await svc.repo.create_job(
+            strategy_id=strategy_id,
+            stage="draft",
+            triggered_by=triggered_by,
+            input_payload={
+                "version": strategy.version,
+                "ato_source_count": len(strategy.ato_sources or []),
+            },
+        )
+        await svc.repo.update_job(
+            job, status="running", started_at=datetime.now(UTC)
+        )
+        await session.commit()
+
+        try:
+            draft = await run_draft_llm(
+                name=strategy.name,
+                categories=list(strategy.categories),
+                ato_sources=list(strategy.ato_sources or []),
+            )
+            strategy.implementation_text = draft.implementation_text
+            strategy.explanation_text = draft.explanation_text
+            await session.flush()
+
+            await svc._transition_status(
+                strategy,
+                new_status="drafted",
+                actor_clerk_user_id=triggered_by,
+                extra_metadata={
+                    "implementation_chars": len(draft.implementation_text),
+                    "explanation_chars": len(draft.explanation_text),
+                },
+            )
+        except Exception as exc:
+            logger.exception("draft_strategy failed for %s", strategy_id)
+            await svc.repo.update_job(
+                job,
+                status="failed",
+                completed_at=datetime.now(UTC),
+                error=f"{type(exc).__name__}: {exc}",
+            )
+            await session.commit()
+            raise
+
+        output = {
+            "implementation_chars": len(draft.implementation_text),
+            "explanation_chars": len(draft.explanation_text),
+        }
+        await svc.repo.update_job(
+            job,
+            status="succeeded",
+            completed_at=datetime.now(UTC),
+            output_payload=output,
+        )
+        await session.commit()
+        return {
+            "status": "succeeded",
+            "strategy_id": strategy_id,
+            **output,
+        }
 
 
 @celery_app.task(  # type: ignore[misc]
@@ -476,5 +559,101 @@ def draft_strategy(self: Task, strategy_id: str, triggered_by: str) -> dict[str,
     retry_jitter=True,
 )
 def enrich_strategy(self: Task, strategy_id: str, triggered_by: str) -> dict[str, Any]:
-    """Structured eligibility extraction (T028)."""
-    raise NotImplementedError("enrich_strategy lands in follow-up to T028")
+    """Structured eligibility extraction (architecture §16 mitigations).
+
+    Second LLM pass reads the drafted implementation + explanation and
+    extracts eligibility metadata (entity types, income bands, keywords,
+    etc.). Defaults to null/empty on any ambiguous field. Transitions
+    drafted → enriched.
+    """
+    return asyncio.run(_run_enrich(strategy_id, triggered_by))
+
+
+async def _run_enrich(strategy_id: str, triggered_by: str) -> dict[str, Any]:
+    from app.modules.tax_strategies.llm import run_enrich_llm
+
+    factory = _make_session_factory()
+    async with factory() as session:
+        svc = TaxStrategyService(session)
+        strategy = await svc.repo.get_live_version(strategy_id)
+        if strategy is None:
+            raise StrategyNotFoundError(strategy_id)
+
+        if strategy.status != "drafted":
+            raise InvalidStatusTransitionError(
+                strategy.strategy_id, strategy.status, "enriched"
+            )
+
+        job = await svc.repo.create_job(
+            strategy_id=strategy_id,
+            stage="enrich",
+            triggered_by=triggered_by,
+            input_payload={"version": strategy.version},
+        )
+        await svc.repo.update_job(
+            job, status="running", started_at=datetime.now(UTC)
+        )
+        await session.commit()
+
+        try:
+            eligibility = await run_enrich_llm(
+                name=strategy.name,
+                categories=list(strategy.categories),
+                implementation_text=strategy.implementation_text,
+                explanation_text=strategy.explanation_text,
+            )
+            _apply_eligibility(strategy, eligibility)
+            await session.flush()
+
+            await svc._transition_status(
+                strategy,
+                new_status="enriched",
+                actor_clerk_user_id=triggered_by,
+                extra_metadata={
+                    "entity_types_count": len(eligibility["entity_types"]),
+                    "keywords_count": len(eligibility["keywords"]),
+                },
+            )
+        except Exception as exc:
+            logger.exception("enrich_strategy failed for %s", strategy_id)
+            await svc.repo.update_job(
+                job,
+                status="failed",
+                completed_at=datetime.now(UTC),
+                error=f"{type(exc).__name__}: {exc}",
+            )
+            await session.commit()
+            raise
+
+        output = {"eligibility": eligibility}
+        await svc.repo.update_job(
+            job,
+            status="succeeded",
+            completed_at=datetime.now(UTC),
+            output_payload=output,
+        )
+        await session.commit()
+        return {
+            "status": "succeeded",
+            "strategy_id": strategy_id,
+            **output,
+        }
+
+
+def _apply_eligibility(strategy: TaxStrategy, eligibility: dict[str, Any]) -> None:
+    """Write eligibility dict fields onto the TaxStrategy row in place.
+
+    Source of truth for which keys map to which columns. Kept as a small
+    dedicated helper so that adding a field later touches exactly one
+    place.
+    """
+    strategy.entity_types = list(eligibility["entity_types"])
+    strategy.industry_triggers = list(eligibility["industry_triggers"])
+    strategy.financial_impact_type = list(eligibility["financial_impact_type"])
+    strategy.keywords = list(eligibility["keywords"])
+    strategy.income_band_min = eligibility["income_band_min"]
+    strategy.income_band_max = eligibility["income_band_max"]
+    strategy.turnover_band_min = eligibility["turnover_band_min"]
+    strategy.turnover_band_max = eligibility["turnover_band_max"]
+    strategy.age_min = eligibility["age_min"]
+    strategy.age_max = eligibility["age_max"]
