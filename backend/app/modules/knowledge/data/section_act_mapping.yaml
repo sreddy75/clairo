@@ -1,0 +1,591 @@
+# Authoritative mapping of Australian tax-law section identifiers to their owning Act.
+#
+# Reviewed by domain experts. Extend via PR.
+#
+# Key format: normalised section identifier (lowercased, whitespace-stripped,
+# no "s"/"section "/"sec." prefix, token up to first whitespace). For example,
+# "s 82KZM ITAA 1936" → key "82kzm".
+#
+# Spec: specs/061-citation-validation/spec.md (FR-007).
+# Schema: specs/061-citation-validation/contracts/section_act_mapping.schema.yaml.
+#
+# ⚠️  REQUIRES DOMAIN-EXPERT REVIEW before shipping to UAT. The initial seed
+#     here is curated from frequently-cited Australian tax-planning sections;
+#     verify act attribution against the ATO Legal Database before relying on
+#     any individual entry. Flag ambiguous / renumbered sections during review.
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ITAA 1936 — Income Tax Assessment Act 1936
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Derivation of income (pre-1997 origin, still in force)
+"6":
+  act: "ITAA 1936"
+  display_name: "s 6 ITAA 1936"
+  notes: "Definitions — resident, Australia, assessable income"
+"25":
+  act: "ITAA 1936"
+  display_name: "s 25 ITAA 1936"
+  notes: "Assessable income (historic; largely superseded by s 6-5 ITAA 1997)"
+"26":
+  act: "ITAA 1936"
+  display_name: "s 26 ITAA 1936"
+  notes: "Exempt income from government bonds"
+"51":
+  act: "ITAA 1936"
+  display_name: "s 51 ITAA 1936"
+  notes: "General deductions (historic; superseded by s 8-1 ITAA 1997)"
+"63":
+  act: "ITAA 1936"
+  display_name: "s 63 ITAA 1936"
+  notes: "Bad debts — written off"
+"82kzl":
+  act: "ITAA 1936"
+  display_name: "s 82KZL ITAA 1936"
+  notes: "Prepayment — definitions"
+"82kzm":
+  act: "ITAA 1936"
+  display_name: "s 82KZM ITAA 1936"
+  notes: "Prepayment provisions for non-business taxpayers"
+"82kzma":
+  act: "ITAA 1936"
+  display_name: "s 82KZMA ITAA 1936"
+  notes: "Prepayment — small business entities"
+"82kzmd":
+  act: "ITAA 1936"
+  display_name: "s 82KZMD ITAA 1936"
+  notes: "Prepayment — 12-month rule"
+"82kzme":
+  act: "ITAA 1936"
+  display_name: "s 82KZME ITAA 1936"
+  notes: "Prepayment — apportionment method"
+"82kzmf":
+  act: "ITAA 1936"
+  display_name: "s 82KZMF ITAA 1936"
+  notes: "Prepayment — later-year deduction"
+
+# Division 6 — Trust income
+"95":
+  act: "ITAA 1936"
+  display_name: "s 95 ITAA 1936"
+  notes: "Trust — net income definition"
+"97":
+  act: "ITAA 1936"
+  display_name: "s 97 ITAA 1936"
+  notes: "Trust — present entitlement of beneficiary"
+"98":
+  act: "ITAA 1936"
+  display_name: "s 98 ITAA 1936"
+  notes: "Trust — liability where beneficiary under legal disability"
+"99":
+  act: "ITAA 1936"
+  display_name: "s 99 ITAA 1936"
+  notes: "Trust — liability where no beneficiary presently entitled"
+"99a":
+  act: "ITAA 1936"
+  display_name: "s 99A ITAA 1936"
+  notes: "Trust — penalty rate on non-distributed trust income"
+"100a":
+  act: "ITAA 1936"
+  display_name: "s 100A ITAA 1936"
+  notes: "Trust reimbursement agreements (ATO focus area)"
+
+# Division 7A — Private company loans / payments
+"109b":
+  act: "ITAA 1936"
+  display_name: "s 109B ITAA 1936"
+  notes: "Division 7A — private company deemed dividends (intro)"
+"109c":
+  act: "ITAA 1936"
+  display_name: "s 109C ITAA 1936"
+  notes: "Division 7A — payments treated as dividends"
+"109d":
+  act: "ITAA 1936"
+  display_name: "s 109D ITAA 1936"
+  notes: "Division 7A — loans treated as dividends"
+"109e":
+  act: "ITAA 1936"
+  display_name: "s 109E ITAA 1936"
+  notes: "Division 7A — minimum yearly repayments on loans"
+"109n":
+  act: "ITAA 1936"
+  display_name: "s 109N ITAA 1936"
+  notes: "Division 7A — complying loan agreement requirements"
+"109r":
+  act: "ITAA 1936"
+  display_name: "s 109R ITAA 1936"
+  notes: "Division 7A — unpaid present entitlements treated as loans (now via s 109XA etc.)"
+"109rb":
+  act: "ITAA 1936"
+  display_name: "s 109RB ITAA 1936"
+  notes: "Division 7A — Commissioner discretion"
+"109t":
+  act: "ITAA 1936"
+  display_name: "s 109T ITAA 1936"
+  notes: "Division 7A — interposed entities anti-avoidance"
+"109xa":
+  act: "ITAA 1936"
+  display_name: "s 109XA ITAA 1936"
+  notes: "Division 7A — unpaid present entitlements as loans"
+"109z":
+  act: "ITAA 1936"
+  display_name: "s 109Z ITAA 1936"
+  notes: "Division 7A — definition of private company"
+
+# Part IVA — General anti-avoidance
+"177a":
+  act: "ITAA 1936"
+  display_name: "s 177A ITAA 1936"
+  notes: "Part IVA — scheme definition"
+"177b":
+  act: "ITAA 1936"
+  display_name: "s 177B ITAA 1936"
+  notes: "Part IVA — operation of Part"
+"177c":
+  act: "ITAA 1936"
+  display_name: "s 177C ITAA 1936"
+  notes: "Part IVA — tax benefit"
+"177d":
+  act: "ITAA 1936"
+  display_name: "s 177D ITAA 1936"
+  notes: "Part IVA — sole or dominant purpose test"
+"177f":
+  act: "ITAA 1936"
+  display_name: "s 177F ITAA 1936"
+  notes: "Part IVA — Commissioner determination"
+"177g":
+  act: "ITAA 1936"
+  display_name: "s 177G ITAA 1936"
+  notes: "Part IVA — amendment of assessment"
+
+# Other commonly-cited ITAA 1936 sections
+"170":
+  act: "ITAA 1936"
+  display_name: "s 170 ITAA 1936"
+  notes: "Amendment of assessments — limitation periods"
+"251s":
+  act: "ITAA 1936"
+  display_name: "s 251S ITAA 1936"
+  notes: "Medicare levy surcharge"
+"262a":
+  act: "ITAA 1936"
+  display_name: "s 262A ITAA 1936"
+  notes: "Record-keeping obligations"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ITAA 1997 — Income Tax Assessment Act 1997
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Division 6 — Assessable income
+"6-1":
+  act: "ITAA 1997"
+  display_name: "s 6-1 ITAA 1997"
+  notes: "Assessable income — what is it"
+"6-5":
+  act: "ITAA 1997"
+  display_name: "s 6-5 ITAA 1997"
+  notes: "Ordinary income — derivation"
+"6-10":
+  act: "ITAA 1997"
+  display_name: "s 6-10 ITAA 1997"
+  notes: "Statutory income"
+
+# Division 8 — General deductions
+"8-1":
+  act: "ITAA 1997"
+  display_name: "s 8-1 ITAA 1997"
+  notes: "General deductions — positive and negative limbs"
+"8-5":
+  act: "ITAA 1997"
+  display_name: "s 8-5 ITAA 1997"
+  notes: "Specific deductions"
+
+# Division 25 — Specific deductions
+"25-5":
+  act: "ITAA 1997"
+  display_name: "s 25-5 ITAA 1997"
+  notes: "Tax-related expenses"
+"25-10":
+  act: "ITAA 1997"
+  display_name: "s 25-10 ITAA 1997"
+  notes: "Repairs"
+"25-35":
+  act: "ITAA 1997"
+  display_name: "s 25-35 ITAA 1997"
+  notes: "Bad debts — business / loan money"
+"25-40":
+  act: "ITAA 1997"
+  display_name: "s 25-40 ITAA 1997"
+  notes: "Loss from profit-making undertaking or plan"
+"25-90":
+  act: "ITAA 1997"
+  display_name: "s 25-90 ITAA 1997"
+  notes: "Deduction for foreign non-portfolio dividend income"
+"25-100":
+  act: "ITAA 1997"
+  display_name: "s 25-100 ITAA 1997"
+  notes: "Travel between workplaces"
+
+# Division 26 — Specific restrictions
+"26-5":
+  act: "ITAA 1997"
+  display_name: "s 26-5 ITAA 1997"
+  notes: "Penalties and fines — not deductible"
+"26-10":
+  act: "ITAA 1997"
+  display_name: "s 26-10 ITAA 1997"
+  notes: "Leave payments — employer"
+"26-25":
+  act: "ITAA 1997"
+  display_name: "s 26-25 ITAA 1997"
+  notes: "Interest and royalty payments — withholding"
+"26-30":
+  act: "ITAA 1997"
+  display_name: "s 26-30 ITAA 1997"
+  notes: "Travel to view investment property — not deductible"
+"26-31":
+  act: "ITAA 1997"
+  display_name: "s 26-31 ITAA 1997"
+  notes: "Travel by tourists / short-term visits"
+"26-50":
+  act: "ITAA 1997"
+  display_name: "s 26-50 ITAA 1997"
+  notes: "Recreational club expenses"
+
+# Division 40 — Depreciating assets
+"40-10":
+  act: "ITAA 1997"
+  display_name: "s 40-10 ITAA 1997"
+  notes: "Depreciation — core provision"
+"40-25":
+  act: "ITAA 1997"
+  display_name: "s 40-25 ITAA 1997"
+  notes: "Depreciation — decline in value"
+"40-30":
+  act: "ITAA 1997"
+  display_name: "s 40-30 ITAA 1997"
+  notes: "Depreciation — meaning of depreciating asset"
+"40-75":
+  act: "ITAA 1997"
+  display_name: "s 40-75 ITAA 1997"
+  notes: "Depreciation — prime cost method"
+"40-82":
+  act: "ITAA 1997"
+  display_name: "s 40-82 ITAA 1997"
+  notes: "Temporary full expensing (historic; ended 30 June 2023)"
+"40-230":
+  act: "ITAA 1997"
+  display_name: "s 40-230 ITAA 1997"
+  notes: "Car depreciation cost limit"
+"40-340":
+  act: "ITAA 1997"
+  display_name: "s 40-340 ITAA 1997"
+  notes: "Balancing adjustments on disposal"
+"40-425":
+  act: "ITAA 1997"
+  display_name: "s 40-425 ITAA 1997"
+  notes: "Low-value pool rules"
+
+# Division 70 — Trading stock
+"70-10":
+  act: "ITAA 1997"
+  display_name: "s 70-10 ITAA 1997"
+  notes: "Trading stock definition"
+"70-20":
+  act: "ITAA 1997"
+  display_name: "s 70-20 ITAA 1997"
+  notes: "Trading stock — valuation methods"
+"70-35":
+  act: "ITAA 1997"
+  display_name: "s 70-35 ITAA 1997"
+  notes: "Trading stock — at end of income year"
+"70-45":
+  act: "ITAA 1997"
+  display_name: "s 70-45 ITAA 1997"
+  notes: "Trading stock — choice of valuation method"
+
+# Division 102/104/108 — CGT core
+"102-5":
+  act: "ITAA 1997"
+  display_name: "s 102-5 ITAA 1997"
+  notes: "CGT — net capital gain"
+"104-5":
+  act: "ITAA 1997"
+  display_name: "s 104-5 ITAA 1997"
+  notes: "CGT events — summary table"
+"104-10":
+  act: "ITAA 1997"
+  display_name: "s 104-10 ITAA 1997"
+  notes: "CGT event A1 — disposal of CGT asset"
+"108-5":
+  act: "ITAA 1997"
+  display_name: "s 108-5 ITAA 1997"
+  notes: "CGT asset — meaning"
+"108-20":
+  act: "ITAA 1997"
+  display_name: "s 108-20 ITAA 1997"
+  notes: "Personal use assets — CGT exemption"
+
+# Division 110 — Cost base
+"110-25":
+  act: "ITAA 1997"
+  display_name: "s 110-25 ITAA 1997"
+  notes: "CGT cost base — general rules"
+
+# Division 115 — Discount capital gain
+"115-25":
+  act: "ITAA 1997"
+  display_name: "s 115-25 ITAA 1997"
+  notes: "CGT discount — 12-month ownership rule"
+"115-100":
+  act: "ITAA 1997"
+  display_name: "s 115-100 ITAA 1997"
+  notes: "CGT discount — 50% for individuals / trusts"
+
+# Division 118 — CGT exemptions
+"118-110":
+  act: "ITAA 1997"
+  display_name: "s 118-110 ITAA 1997"
+  notes: "Main residence CGT exemption — basic case"
+"118-145":
+  act: "ITAA 1997"
+  display_name: "s 118-145 ITAA 1997"
+  notes: "Main residence — absence rule (6 year)"
+"118-192":
+  act: "ITAA 1997"
+  display_name: "s 118-192 ITAA 1997"
+  notes: "Main residence — first used to produce income"
+
+# Division 122/126 — CGT rollovers
+"122-25":
+  act: "ITAA 1997"
+  display_name: "s 122-25 ITAA 1997"
+  notes: "CGT rollover — individual/trust to wholly-owned company"
+"126-50":
+  act: "ITAA 1997"
+  display_name: "s 126-50 ITAA 1997"
+  notes: "CGT marriage/relationship rollover"
+"126-130":
+  act: "ITAA 1997"
+  display_name: "s 126-130 ITAA 1997"
+  notes: "CGT demerger rollover"
+
+# Division 152 — Small business CGT concessions
+"152-10":
+  act: "ITAA 1997"
+  display_name: "s 152-10 ITAA 1997"
+  notes: "Small business CGT — basic conditions"
+"152-40":
+  act: "ITAA 1997"
+  display_name: "s 152-40 ITAA 1997"
+  notes: "Active asset test"
+"152-50":
+  act: "ITAA 1997"
+  display_name: "s 152-50 ITAA 1997"
+  notes: "Significant individual test"
+"152-105":
+  act: "ITAA 1997"
+  display_name: "s 152-105 ITAA 1997"
+  notes: "15-year exemption — individuals"
+"152-205":
+  act: "ITAA 1997"
+  display_name: "s 152-205 ITAA 1997"
+  notes: "50% active asset reduction"
+"152-305":
+  act: "ITAA 1997"
+  display_name: "s 152-305 ITAA 1997"
+  notes: "Retirement exemption"
+"152-410":
+  act: "ITAA 1997"
+  display_name: "s 152-410 ITAA 1997"
+  notes: "Rollover relief"
+
+# Division 290 — Super contributions
+"290-60":
+  act: "ITAA 1997"
+  display_name: "s 290-60 ITAA 1997"
+  notes: "Deduction for personal super contributions"
+"290-150":
+  act: "ITAA 1997"
+  display_name: "s 290-150 ITAA 1997"
+  notes: "Employer super contributions — deductibility"
+"290-165":
+  act: "ITAA 1997"
+  display_name: "s 290-165 ITAA 1997"
+  notes: "Age-related contribution caps"
+"290-170":
+  act: "ITAA 1997"
+  display_name: "s 290-170 ITAA 1997"
+  notes: "Notice of intent to claim deduction"
+
+# Division 295/301 — Super fund taxation
+"295-95":
+  act: "ITAA 1997"
+  display_name: "s 295-95 ITAA 1997"
+  notes: "Super contributions — SG requirements"
+
+# Division 328 — Small business concessions
+"328-10":
+  act: "ITAA 1997"
+  display_name: "s 328-10 ITAA 1997"
+  notes: "Small business entity — core rules"
+"328-110":
+  act: "ITAA 1997"
+  display_name: "s 328-110 ITAA 1997"
+  notes: "Small business entity — aggregated turnover"
+"328-175":
+  act: "ITAA 1997"
+  display_name: "s 328-175 ITAA 1997"
+  notes: "Simplified depreciation — immediate deduction"
+"328-180":
+  act: "ITAA 1997"
+  display_name: "s 328-180 ITAA 1997"
+  notes: "SBE instant asset write-off threshold"
+"328-185":
+  act: "ITAA 1997"
+  display_name: "s 328-185 ITAA 1997"
+  notes: "SBE simplified depreciation — pooling"
+
+# Division 355 — R&D tax incentive
+"355-100":
+  act: "ITAA 1997"
+  display_name: "s 355-100 ITAA 1997"
+  notes: "R&D tax incentive — base entity"
+"355-205":
+  act: "ITAA 1997"
+  display_name: "s 355-205 ITAA 1997"
+  notes: "R&D — eligible activities"
+
+# Division 385 — Primary production averaging
+"385-15":
+  act: "ITAA 1997"
+  display_name: "s 385-15 ITAA 1997"
+  notes: "Primary producer averaging"
+
+# Division 400/815 — Transfer pricing / hybrid rules
+"815-130":
+  act: "ITAA 1997"
+  display_name: "s 815-130 ITAA 1997"
+  notes: "Transfer pricing — arm's length principle"
+"832-10":
+  act: "ITAA 1997"
+  display_name: "s 832-10 ITAA 1997"
+  notes: "Hybrid mismatch rules — scope"
+
+# Division 900 — Substantiation
+"900-35":
+  act: "ITAA 1997"
+  display_name: "s 900-35 ITAA 1997"
+  notes: "Substantiation — written evidence requirements"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TAA 1953 — Taxation Administration Act 1953
+# ═══════════════════════════════════════════════════════════════════════════
+
+"14zz":
+  act: "TAA 1953"
+  display_name: "s 14ZZ TAA 1953"
+  notes: "Taxation objection rights"
+"14zzc":
+  act: "TAA 1953"
+  display_name: "s 14ZZC TAA 1953"
+  notes: "Time to lodge objection"
+"284-75":
+  act: "TAA 1953"
+  display_name: "Schedule 1 s 284-75 TAA 1953"
+  notes: "Administrative penalty — false or misleading statement"
+"284-220":
+  act: "TAA 1953"
+  display_name: "Schedule 1 s 284-220 TAA 1953"
+  notes: "Administrative penalty — scheme shortfall"
+"388-50":
+  act: "TAA 1953"
+  display_name: "Schedule 1 s 388-50 TAA 1953"
+  notes: "Requirements for approved forms (BAS, IAS)"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# GST Act 1999 — A New Tax System (Goods and Services Tax) Act 1999
+# ═══════════════════════════════════════════════════════════════════════════
+
+"9-5":
+  act: "GST Act 1999"
+  display_name: "s 9-5 GST Act 1999"
+  notes: "Taxable supply — core test"
+"9-10":
+  act: "GST Act 1999"
+  display_name: "s 9-10 GST Act 1999"
+  notes: "Supply — meaning"
+"11-5":
+  act: "GST Act 1999"
+  display_name: "s 11-5 GST Act 1999"
+  notes: "Creditable acquisition — core rule"
+"23-5":
+  act: "GST Act 1999"
+  display_name: "s 23-5 GST Act 1999"
+  notes: "GST registration — required"
+"23-15":
+  act: "GST Act 1999"
+  display_name: "s 23-15 GST Act 1999"
+  notes: "GST registration turnover threshold"
+"29-10":
+  act: "GST Act 1999"
+  display_name: "s 29-10 GST Act 1999"
+  notes: "Attribution of input tax credits"
+"38-185":
+  act: "GST Act 1999"
+  display_name: "s 38-185 GST Act 1999"
+  notes: "GST-free supplies — exports"
+"40-35":
+  act: "GST Act 1999"
+  display_name: "s 40-35 GST Act 1999"
+  notes: "GST — residential rent input-taxed"
+"75-5":
+  act: "GST Act 1999"
+  display_name: "s 75-5 GST Act 1999"
+  notes: "GST margin scheme — application"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FBTAA 1986 — Fringe Benefits Tax Assessment Act 1986
+# ═══════════════════════════════════════════════════════════════════════════
+
+"7":
+  act: "FBTAA 1986"
+  display_name: "s 7 FBTAA 1986"
+  notes: "Car fringe benefits — statutory formula"
+"14":
+  act: "FBTAA 1986"
+  display_name: "s 14 FBTAA 1986"
+  notes: "Debt waiver fringe benefits"
+"20":
+  act: "FBTAA 1986"
+  display_name: "s 20 FBTAA 1986"
+  notes: "Loan fringe benefits"
+"31":
+  act: "FBTAA 1986"
+  display_name: "s 31 FBTAA 1986"
+  notes: "Expense payment fringe benefits"
+"55":
+  act: "FBTAA 1986"
+  display_name: "s 55 FBTAA 1986"
+  notes: "Property fringe benefits"
+"58p":
+  act: "FBTAA 1986"
+  display_name: "s 58P FBTAA 1986"
+  notes: "Minor benefits exemption"
+"136":
+  act: "FBTAA 1986"
+  display_name: "s 136 FBTAA 1986"
+  notes: "FBT definitions (including associate, fringe benefit)"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SGAA 1992 — Superannuation Guarantee (Administration) Act 1992
+# ═══════════════════════════════════════════════════════════════════════════
+
+"19":
+  act: "SGAA 1992"
+  display_name: "s 19 SGAA 1992"
+  notes: "SG charge calculation"
+"23":
+  act: "SGAA 1992"
+  display_name: "s 23 SGAA 1992"
+  notes: "SG — quarterly contribution due dates"
