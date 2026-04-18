@@ -1,0 +1,43 @@
+{
+  "inputs": {
+    "financial_year": "2025-26",
+    "entity_type": "company",
+    "has_help_debt": false,
+    "financials_data": {
+      "income": {
+        "revenue": 500000,
+        "other_income": 0,
+        "total_income": 500000
+      },
+      "expenses": {
+        "cost_of_sales": 100000,
+        "operating_expenses": 250000,
+        "total_expenses": 350000
+      },
+      "credits": {
+        "payg_instalments": 25000,
+        "payg_withholding": 12000,
+        "franking_credits": 0
+      },
+      "adjustments": [],
+      "turnover": 500000
+    },
+    "rate_configs": {
+      "_financial_year": "2025-26",
+      "company": {
+        "small_business_rate": 0.25,
+        "standard_rate": 0.30,
+        "small_business_turnover_threshold": 50000000
+      }
+    }
+  },
+  "expected": {
+    "taxable_income": 150000.00,
+    "gross_tax": 37500.00,
+    "total_tax_payable": 37500.00,
+    "credits_total": 37000.00,
+    "net_position": 500.00
+  },
+  "tolerance_dollars": 1.00,
+  "source_notes": "Synthetic baseline — small business company (turnover < $50M) at 25% rate. Placeholder until Unni alpha fixtures land; replacing it is fine once real client data arrives."
+}

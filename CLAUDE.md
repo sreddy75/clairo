@@ -43,6 +43,9 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - `TaxCodeOverride` has no `session_id` — join via `TaxCodeSuggestion.session_id` using `suggestion_id` FK
 - Xero write-back uses queue `xero_writeback`; Celery task is `process_writeback_job` in `app.tasks.xero_writeback`
 - `ClassificationRequest.session_id` is no longer unique — partial unique index `WHERE parent_request_id IS NULL` (round-1 only)
+- Tax planning annualisation lives at **ingest** (`pull_xero_financials` + `save_manual_financials`) — never re-project downstream. The LLM and calculator both read `financials_data.income`/`expenses` as the single projected set; `financials_data.projection_metadata.ytd_snapshot` preserves the YTD originals. Don't add a second "projected" block.
+- Every scenario numeric field must have a **`source_tags`** entry. Modeller auto-tags `before.*` as `derived` and `after.*`/`change.*`/`cash_flow_impact` as `estimated`; inline-confirm (`PATCH /assumptions/{field_path}`) flips to `confirmed`. Never instantiate a scenario without `source_tags`.
+- Scenario persistence uses **`TaxScenarioRepository.upsert_by_normalized_title`**, never raw `.create()` in chat flows — a refined title on the same plan is an update, not a new row. The partial unique index `ix_tax_scenarios_plan_normalized_title` enforces this at the DB level.
 
 ## Active Technologies
 - Python 3.12+ (backend), TypeScript/Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Celery, Anthropic SDK (Claude Sonnet for LLM tier), React 18 + shadcn/ui (046-ai-tax-code-resolution)
