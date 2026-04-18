@@ -85,12 +85,21 @@ For each strategy provided, you MUST:
 2. Record the exact before/after tax positions from the tool
 3. Calculate cash flow impact (tax saving minus any cash outlay)
 4. Note assumptions, risk rating, and compliance requirements
+5. Set `strategy_category` to the single best match from the closed enum:
+     - prepayment, capex_deduction, super_contribution (single-entity)
+     - director_salary, trust_distribution, dividend_timing, spouse_contribution,
+       multi_entity_restructure (multi-entity — benefit requires the group tax
+       model and will be excluded from combined totals)
+     - other (only when none of the above fit)
 
 After modelling individual strategies, identify the BEST COMBINATION of strategies
 that can be implemented together. Call the tool one more time with all recommended
 strategies combined to show the total impact.
 
-NEVER estimate or approximate tax figures. ALWAYS use the tool for every number."""
+NEVER estimate or approximate tax figures. ALWAYS use the tool for every number.
+NEVER invent a single-entity net benefit figure for a multi-entity strategy —
+emit the scenario with the right category and leave the "after" numbers equal to
+"before" so the reviewer knows the benefit is unmodelled."""
 
 
 # =============================================================================

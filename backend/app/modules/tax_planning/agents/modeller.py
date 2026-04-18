@@ -13,6 +13,10 @@ import anthropic
 
 from app.modules.tax_planning.agents.prompts import MODELLER_SYSTEM_PROMPT
 from app.modules.tax_planning.prompts import CALCULATE_TAX_TOOL
+from app.modules.tax_planning.strategy_category import (
+    StrategyCategory,
+    requires_group_model,
+)
 from app.modules.tax_planning.tax_calculator import calculate_tax_position
 
 logger = logging.getLogger(__name__)
@@ -190,6 +194,35 @@ For each, call calculate_tax_position with the modified financials."""
         ).get("total_expenses", 0)
         cash_flow_impact = tax_saving - max(0, expense_increase)
 
+        # Spec 059 FR-017 — coerce strategy_category to the closed enum and
+        # compute requires_group_model in code. Invalid or missing LLM output
+        # falls back to OTHER rather than breaking persistence.
+        raw_category = tool_input.get("strategy_category")
+        try:
+            category = StrategyCategory(raw_category) if raw_category else StrategyCategory.OTHER
+        except ValueError:
+            logger.warning(
+                "Modeller emitted invalid strategy_category %r; falling back to OTHER",
+                raw_category,
+            )
+            category = StrategyCategory.OTHER
+        needs_group_model = requires_group_model(category)
+
+        # Spec 059 FR-011..FR-016 — provenance tags on every numeric leaf.
+        # `before.*` is derived from the accountant's confirmed financials via
+        # the pure calculator, so it's `derived`. `after.*` and everything
+        # downstream reflects LLM-chosen modifications — estimates until the
+        # accountant confirms them via the inline PATCH endpoint.
+        source_tags: dict[str, str] = {
+            "impact_data.before.taxable_income": "derived",
+            "impact_data.before.tax_payable": "derived",
+            "impact_data.after.taxable_income": "estimated",
+            "impact_data.after.tax_payable": "estimated",
+            "impact_data.change.taxable_income_change": "estimated",
+            "impact_data.change.tax_saving": "estimated",
+            "cash_flow_impact": "estimated",
+        }
+
         return {
             "scenario_title": tool_input.get("scenario_title", "Untitled"),
             "description": tool_input.get("description", ""),
@@ -214,27 +247,41 @@ For each, call calculate_tax_position with the modified financials."""
             "risk_rating": tool_input.get("risk_rating", "moderate"),
             "compliance_notes": tool_input.get("compliance_notes", ""),
             "strategy_id": tool_input.get("scenario_title", "").lower().replace(" ", "-"),
+            "strategy_category": category.value,
+            "requires_group_model": needs_group_model,
+            "source_tags": source_tags,
         }
 
     @staticmethod
     def _build_combined_strategy(
         scenarios: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        """Build a combined strategy summary from individual scenarios."""
+        """Build a combined strategy summary from individual scenarios.
+
+        Spec 059 FR-019 — scenarios flagged `requires_group_model=True`
+        (director salary, trust distribution, dividend timing, spouse
+        contribution, multi-entity restructure) cannot have their benefit
+        computed honestly on a single entity, so they are excluded from the
+        combined total. `excluded_count` surfaces to the UI subtotal.
+        """
         if not scenarios:
-            return {"recommended_combination": [], "total_tax_saving": 0}
+            return {"recommended_combination": [], "total_tax_saving": 0, "excluded_count": 0}
+
+        included = [s for s in scenarios if not s.get("requires_group_model")]
+        excluded_count = len(scenarios) - len(included)
 
         total_saving = sum(
-            s.get("impact", {}).get("change", {}).get("tax_saving", 0) for s in scenarios
+            s.get("impact", {}).get("change", {}).get("tax_saving", 0) for s in included
         )
-        total_cash = sum(s.get("cash_flow_impact", 0) for s in scenarios)
+        total_cash = sum(s.get("cash_flow_impact", 0) for s in included)
 
         return {
             "recommended_combination": [
-                s.get("strategy_id", s.get("scenario_title", "")) for s in scenarios
+                s.get("strategy_id", s.get("scenario_title", "")) for s in included
             ],
             "total_tax_saving": total_saving,
             "total_cash_outlay": -total_cash if total_cash < 0 else 0,
             "net_cash_benefit": total_cash,
-            "strategy_count": len(scenarios),
+            "strategy_count": len(included),
+            "excluded_count": excluded_count,
         }

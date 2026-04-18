@@ -169,6 +169,60 @@ class TaxScenarioRepository:
         result = await self.session.execute(query)
         return result.scalar_one() + 1
 
+    async def upsert_by_normalized_title(
+        self,
+        tax_plan_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        title: str,
+        payload: dict[str, Any],
+    ) -> TaxScenario:
+        """Insert a scenario, or update the existing row for the same plan +
+        normalised (lower + trimmed) title (Spec 059 FR-024..FR-025).
+
+        Enforced by the partial unique index
+        `ix_tax_scenarios_plan_normalized_title`. A buggy retry that produces
+        the same scenario twice updates the first row rather than piling up
+        clutter — the UUID stays stable so the frontend's React keys and any
+        downstream references keep working.
+        """
+        normalized = title.strip().lower()
+
+        # Find the existing row within the same plan/tenant with an equivalent
+        # normalised title. We cannot use on_conflict against a functional
+        # index from SQLAlchemy Core cleanly, and the row count here is
+        # bounded to a single plan's scenarios — a lookup + branch is simpler
+        # and keeps the repository portable.
+        existing_stmt = select(TaxScenario).where(
+            TaxScenario.tax_plan_id == tax_plan_id,
+            TaxScenario.tenant_id == tenant_id,
+            func.lower(func.trim(TaxScenario.title)) == normalized,
+        )
+        existing_result = await self.session.execute(existing_stmt)
+        existing = existing_result.scalar_one_or_none()
+
+        data = {**payload, "title": title}
+
+        if existing is None:
+            scenario = TaxScenario(
+                tenant_id=tenant_id,
+                tax_plan_id=tax_plan_id,
+                **data,
+            )
+            self.session.add(scenario)
+            await self.session.flush()
+            await self.session.refresh(scenario)
+            return scenario
+
+        # Update-in-place so the scenario's UUID (and any downstream reference
+        # to it) survives the refinement. Skip keys that would change identity.
+        for key, value in data.items():
+            if key in {"id", "tenant_id", "tax_plan_id", "created_at"}:
+                continue
+            setattr(existing, key, value)
+        await self.session.flush()
+        await self.session.refresh(existing)
+        return existing
+
 
 class TaxPlanMessageRepository:
     def __init__(self, session: AsyncSession) -> None:

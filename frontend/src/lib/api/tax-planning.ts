@@ -84,6 +84,38 @@ export async function updateTaxPlan(
   return apiClient.handleResponse<TaxPlan>(response);
 }
 
+// Spec 059 FR-015 — confirm (or replace) an AI-estimated scenario figure.
+// Path is the dotted JSON Pointer into impact_data / assumptions. Returns
+// the old/new provenance and value envelope.
+export interface ConfirmScenarioFieldResponse {
+  scenario_id: string;
+  field_path: string;
+  old_value: unknown;
+  new_value: unknown;
+  old_provenance: string;
+  new_provenance: string;
+}
+
+export async function confirmScenarioField(
+  token: string,
+  planId: string,
+  scenarioId: string,
+  fieldPath: string,
+  value: unknown,
+): Promise<ConfirmScenarioFieldResponse> {
+  const response = await apiClient.patch(
+    `${BASE}/${planId}/scenarios/${scenarioId}/assumptions/${encodeURIComponent(fieldPath)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ value }),
+    },
+  );
+  return apiClient.handleResponse<ConfirmScenarioFieldResponse>(response);
+}
+
 export async function deleteTaxPlan(
   token: string,
   planId: string,
@@ -312,6 +344,25 @@ export interface AnalysisProgressEvent {
   retryable?: boolean;
 }
 
+// Spec 059 FR-013 — per-field divergence between modeller output and the
+// reviewer's independent ground-truth re-derivation.
+export interface ReviewerDisagreement {
+  scenario_id: string;
+  field_path: string;
+  expected: number;
+  got: number;
+  delta: number;
+}
+
+export interface ReviewResult {
+  numbers_verified?: boolean;
+  disagreements?: ReviewerDisagreement[];
+  overall_passed?: boolean;
+  summary?: string;
+  numbers_issues?: string[];
+  [key: string]: unknown;
+}
+
 export interface AnalysisResponse {
   id: string;
   version: number;
@@ -322,7 +373,7 @@ export interface AnalysisResponse {
   combined_strategy: Record<string, unknown> | null;
   accountant_brief: string | null;
   client_summary: string | null;
-  review_result: Record<string, unknown> | null;
+  review_result: ReviewResult | null;
   review_passed: boolean | null;
   implementation_items: {
     id: string;

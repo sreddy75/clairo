@@ -31,6 +31,11 @@ const STATUS_CONFIG = {
     label: 'General knowledge',
     className: 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300',
   },
+  // Spec 059 FR-021 — amber variant for "retrieval confidence below 0.5".
+  low_confidence: {
+    label: 'AI declined — low source confidence',
+    className: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+  },
 } as const;
 
 export function CitationBadge({ verification }: CitationBadgeProps) {
@@ -41,7 +46,9 @@ export function CitationBadge({ verification }: CitationBadgeProps) {
   const tooltipText =
     verification.status === 'no_citations'
       ? 'Response is based on general tax knowledge without specific source citations'
-      : `${verification.verified_count} of ${verification.total_citations} citations verified against knowledge base`;
+      : verification.status === 'low_confidence'
+        ? 'AI declined to answer because the retrieved source confidence was below threshold. Consult ATO guidance directly.'
+        : `${verification.verified_count} of ${verification.total_citations} citations verified against knowledge base`;
 
   return (
     <TooltipProvider>

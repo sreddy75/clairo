@@ -49,6 +49,7 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
   const [thinkingText, setThinkingText] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const pendingVerificationRef = useRef<CitationVerification | null>(null);
+  const doneMessageIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,6 +126,10 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
     setIsLoading(true);
     setStreamingContent('');
     setThinkingText('');
+    // Reset the late-verification target so a delayed event from the previous
+    // turn does not attach to this one's assistant message.
+    doneMessageIdRef.current = null;
+    pendingVerificationRef.current = null;
 
     // Build optimistic attachment info
     const attachment: ChatAttachment | undefined = fileToSend
@@ -172,15 +177,30 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
             }
             break;
           case 'verification':
+            // Spec 059 FR-022 — verification usually arrives BEFORE done on
+            // the new backend, but belt-and-braces we also handle late
+            // verification (legacy stream ordering): if the done event has
+            // already attached an assistant message, update it in place.
             if (event.data) {
               pendingVerificationRef.current = event.data;
+              const lateTargetId = doneMessageIdRef.current;
+              if (lateTargetId) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === lateTargetId
+                      ? { ...m, citation_verification: event.data }
+                      : m,
+                  ),
+                );
+              }
             }
             break;
           case 'done':
             // Add final assistant message with verification data
             if (fullContent) {
+              const messageId = event.message_id || `msg-${Date.now()}`;
               const assistantMsg: TaxPlanMessage = {
-                id: event.message_id || `msg-${Date.now()}`,
+                id: messageId,
                 role: 'assistant',
                 content: fullContent,
                 scenario_ids: event.scenarios_created || [],
@@ -188,6 +208,7 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
                 citation_verification: pendingVerificationRef.current,
               };
               setMessages((prev) => [...prev, assistantMsg]);
+              doneMessageIdRef.current = messageId;
               pendingVerificationRef.current = null;
             }
             setStreamingContent('');

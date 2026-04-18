@@ -18,6 +18,19 @@ TAX_PLANNING_SYSTEM_PROMPT = """You are a tax planning specialist for Australian
 Financial Year: {financial_year}
 Entity Type: {entity_type}
 
+## Current Individual Income Tax Brackets (Stage 3, FY2025-26 onwards)
+These are the ONLY thresholds to reference when describing marginal rates.
+Pre-Stage-3 brackets are superseded and must not appear in your responses.
+
+- $0 – $18,200 — 0% (tax-free threshold)
+- $18,200 – $45,000 — 16%
+- $45,000 – $135,000 — 30%
+- $135,000 – $190,000 — 37%
+- Over $190,000 — 45%
+
+All numeric tax calculations come from the calculate_tax_position tool, never
+from this prompt. These thresholds are grounding for narrative only.
+
 ## Existing Scenarios
 {scenario_history}
 
@@ -37,6 +50,15 @@ When the user describes a scenario:
    - Compliance notes with ATO ruling or ITAA section references
    - Cash flow impact (net of tax saving and outlay)
 5. If asked to "compare all options", produce a ranked summary
+
+## Scenario Refinement Rule
+If the user's request refines or adjusts a scenario already present in the
+Existing Scenarios section (e.g. changing an assumption, adjusting an amount,
+renaming slightly), reuse the existing title verbatim rather than emitting a
+new scenario with a similar-but-different title. The persistence layer
+deduplicates by normalised title — a fresh title creates a new row and
+clutters the Scenarios tab. If the intent is genuinely a new scenario, use a
+clearly distinct title.
 
 ## Citation Rules
 When your advice aligns with a reference from the Reference Material section, cite it inline using [Source: IDENTIFIER] where IDENTIFIER is the ruling number (e.g., TR 98/1), legislation section (e.g., s82KZM ITAA 1936), or document title.
@@ -101,6 +123,28 @@ CALCULATE_TAX_TOOL = {
                 "type": "string",
                 "description": "Explain the net cash flow impact (outlay minus tax saving)",
             },
+            "strategy_category": {
+                "type": "string",
+                "enum": [
+                    "prepayment",
+                    "capex_deduction",
+                    "super_contribution",
+                    "director_salary",
+                    "trust_distribution",
+                    "dividend_timing",
+                    "spouse_contribution",
+                    "multi_entity_restructure",
+                    "other",
+                ],
+                "description": (
+                    "Closed taxonomy of strategy types. Use the single best match. "
+                    "Multi-entity strategies (director_salary, trust_distribution, "
+                    "dividend_timing, spouse_contribution, multi_entity_restructure) "
+                    "will be flagged as requiring the group tax model and excluded "
+                    "from combined totals — DO NOT invent a single-entity net benefit "
+                    "figure for these."
+                ),
+            },
         },
         "required": [
             "scenario_title",
@@ -110,6 +154,7 @@ CALCULATE_TAX_TOOL = {
             "assumptions",
             "risk_rating",
             "compliance_notes",
+            "strategy_category",
         ],
     },
 }

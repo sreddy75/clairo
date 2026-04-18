@@ -83,6 +83,26 @@ class ChatMessageRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+StrategyCategoryLiteral = Literal[
+    "prepayment",
+    "capex_deduction",
+    "super_contribution",
+    "director_salary",
+    "trust_distribution",
+    "dividend_timing",
+    "spouse_contribution",
+    "multi_entity_restructure",
+    "other",
+]
+
+
+# Spec 059 FR-011 — provenance of a numeric field.
+# `confirmed` — accountant has approved the value; source of truth.
+# `derived`   — computed from confirmed inputs via the pure calculator.
+# `estimated` — AI-chosen modification; needs accountant review before export.
+Provenance = Literal["confirmed", "derived", "estimated"]
+
+
 class TaxScenarioResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -97,6 +117,13 @@ class TaxScenarioResponse(BaseModel):
     cash_flow_impact: Decimal | None
     sort_order: int
     created_at: datetime
+    # Spec 059 FR-017..FR-020 — honesty flag for multi-entity strategies.
+    strategy_category: StrategyCategoryLiteral = "other"
+    requires_group_model: bool = False
+    # Spec 059 FR-011..FR-016 — JSON Pointer → provenance map. Every numeric
+    # leaf in impact_data / assumptions has a corresponding entry. Missing
+    # keys render as neutral badges (absent provenance), not red.
+    source_tags: dict[str, Provenance] = Field(default_factory=dict)
 
 
 class TaxScenarioListResponse(BaseModel):
@@ -104,7 +131,16 @@ class TaxScenarioListResponse(BaseModel):
     total: int
 
 
-VerificationStatus = Literal["verified", "partially_verified", "unverified", "no_citations"]
+# Spec 059 US6 FR-021 — `low_confidence` distinguishes "AI declined because
+# retrieval confidence was below 0.5" from generic unverified-citation cases,
+# so the UI can render an amber amber explainer rather than a red warning.
+VerificationStatus = Literal[
+    "verified",
+    "partially_verified",
+    "unverified",
+    "no_citations",
+    "low_confidence",
+]
 
 
 class SourceChunkRef(BaseModel):
@@ -126,6 +162,31 @@ class CitationVerificationResult(BaseModel):
     unverified_count: int
     verification_rate: float
     status: VerificationStatus
+
+
+class ReviewerDisagreement(BaseModel):
+    """One per-field divergence between a modeller scenario and the reviewer's
+    independent ground-truth re-derivation (Spec 059 FR-013)."""
+
+    scenario_id: str
+    field_path: str
+    expected: float
+    got: float
+    delta: float
+
+
+class ReviewResult(BaseModel):
+    """Reviewer output surfaced on the analysis response.
+
+    Stored as JSONB on `TaxPlanAnalysis.review_result`; this schema documents
+    the contract so the frontend can consume it with TypeScript types.
+    """
+
+    numbers_verified: bool
+    disagreements: list[ReviewerDisagreement] = Field(default_factory=list)
+    overall_passed: bool | None = None
+    summary: str | None = None
+    numbers_issues: list[str] | None = None
 
 
 class ChatAttachmentInfo(BaseModel):
@@ -192,6 +253,9 @@ class TaxPlanResponse(BaseModel):
     message_count: int = 0
     xero_connection_status: str | None = None
     data_stale: bool = False
+    # Spec 059 FR-006 — payroll sync lifecycle reported to the frontend so it
+    # can render the "payroll still syncing" banner and poll for updates.
+    payroll_sync_status: Literal["ready", "pending", "unavailable", "not_required"] | None = None
 
 
 class TaxPlanListItem(BaseModel):

@@ -56,6 +56,30 @@ class StrategyScannerAgent:
         net_profit = total_income - total_expenses
         current_tax = float(tax_position.get("total_tax_payable", 0)) if tax_position else 0
 
+        # Spec 059 FR-008: inline payroll figures into the prompt text so the
+        # LLM actually sees them. Nested JSON under client_profile is not
+        # sufficient — the scanner frequently treats super/PAYGW as missing
+        # and surfaces spurious "set up payroll" strategies otherwise.
+        payroll_summary = financials_data.get("payroll_summary") or {}
+        payroll_lines = ""
+        if payroll_summary:
+            total_super_ytd = float(payroll_summary.get("total_super_ytd", 0) or 0)
+            total_paygw_ytd = float(payroll_summary.get("total_tax_withheld_ytd", 0) or 0)
+            total_wages_ytd = float(payroll_summary.get("total_wages_ytd", 0) or 0)
+            employee_count = payroll_summary.get("employee_count", 0)
+            payroll_lines = (
+                "\n## Payroll (YTD)\n"
+                f"- Employees: {employee_count}\n"
+                f"- Total Wages YTD: ${total_wages_ytd:,.2f}\n"
+                f"- Total Super YTD: ${total_super_ytd:,.2f}\n"
+                f"- Total PAYG Withheld YTD: ${total_paygw_ytd:,.2f}\n"
+            )
+        elif financials_data.get("payroll_status") in {"pending", "unavailable"}:
+            payroll_lines = (
+                f"\n## Payroll\n- Status: {financials_data.get('payroll_status')} "
+                "(figures not yet available; do not fabricate)\n"
+            )
+
         user_prompt = f"""Evaluate tax planning strategies for this client.
 
 ## Client Profile
@@ -66,7 +90,7 @@ class StrategyScannerAgent:
 - Total Expenses: ${total_expenses:,.2f}
 - Net Profit: ${net_profit:,.2f}
 - Current Tax Payable: ${current_tax:,.2f}
-
+{payroll_lines}
 ## Reference Material (ATO Knowledge Base)
 {reference_material if reference_material else 'No specific references available — use your training knowledge and note "verify independently" for compliance_refs.'}
 

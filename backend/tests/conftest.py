@@ -46,6 +46,7 @@ from app.modules.integrations.xero import models as xero_models  # noqa: F401
 from app.modules.knowledge import models as knowledge_models  # noqa: F401
 from app.modules.notifications import models as notifications_models  # noqa: F401
 from app.modules.onboarding import models as onboarding_models  # noqa: F401
+
 # Portal models are loaded via the contextlib.suppress block below. Importing
 # the portal package eagerly triggers portal/__init__.py which imports
 # portal.router. FastAPI's decorator evaluation at module-load fails under

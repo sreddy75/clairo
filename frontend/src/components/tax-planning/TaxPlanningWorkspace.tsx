@@ -50,6 +50,8 @@ import type {
 import { ComparisonTable } from './ComparisonTable';
 import { FinancialsPanel } from './FinancialsPanel';
 import { ManualEntryForm } from './ManualEntryForm';
+import { PayrollSyncBanner } from './PayrollSyncBanner';
+import { ReviewerWarningBanner } from './ReviewerWarningBanner';
 import { ScenarioCard } from './ScenarioCard';
 import { ScenarioChat } from './ScenarioChat';
 import { TaxPositionCard } from './TaxPositionCard';
@@ -701,8 +703,12 @@ export function TaxPlanningWorkspace({
           {/* Step 1: Review current tax position & financials */}
           <TabsContent
             value="position"
-            className="flex-1 overflow-y-auto mt-4"
+            className="flex-1 overflow-y-auto mt-4 space-y-4"
           >
+            <PayrollSyncBanner
+              status={plan.payroll_sync_status}
+              onPoll={loadPlan}
+            />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {plan.tax_position && (
                 <TaxPositionCard
@@ -718,6 +724,7 @@ export function TaxPlanningWorkspace({
                   xeroFetchedAt={plan.xero_report_fetched_at}
                   onRefreshXero={plan.xero_connection_id ? handleRefreshXero : undefined}
                   onEdit={() => setShowManualEntry(true)}
+                  payrollStatus={plan.payroll_sync_status ?? null}
                 />
               </div>
             </div>
@@ -741,9 +748,18 @@ export function TaxPlanningWorkspace({
             value="scenarios"
             className="flex-1 overflow-y-auto space-y-4 mt-4"
           >
+            {analysis?.review_result && (
+              <ReviewerWarningBanner
+                numbersVerified={analysis.review_result.numbers_verified ?? true}
+                disagreements={analysis.review_result.disagreements ?? []}
+              />
+            )}
             {plan.scenarios && plan.scenarios.length >= 2 && (
               <div className="overflow-x-auto">
-                <ComparisonTable scenarios={plan.scenarios} />
+                <ComparisonTable
+                  scenarios={plan.scenarios}
+                  disagreements={analysis?.review_result?.disagreements ?? []}
+                />
               </div>
             )}
             {plan.scenarios && plan.scenarios.length > 0 ? (

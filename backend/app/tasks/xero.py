@@ -1352,6 +1352,46 @@ async def _sync_payroll_async(
             f"{result.get('pay_runs_synced', 0)} pay runs"
         )
 
+        # Spec 059 FR-006 — recompute tax position on any recent plan that was
+        # created while payroll sync was still in flight. The sync itself
+        # arrives after the plan was returned to the UI with status=pending;
+        # the frontend's next poll will pick up the refreshed numbers.
+        try:
+            from datetime import UTC, datetime, timedelta
+
+            from sqlalchemy import select
+
+            from app.modules.tax_planning.models import TaxPlan
+            from app.modules.tax_planning.service import TaxPlanningService
+
+            recent_cutoff = datetime.now(UTC) - timedelta(hours=2)
+            plans_result = await session.execute(
+                select(TaxPlan).where(
+                    TaxPlan.xero_connection_id == connection_id,
+                    TaxPlan.created_at >= recent_cutoff,
+                )
+            )
+            recent_plans = list(plans_result.scalars().all())
+            if recent_plans:
+                tax_planning_service = TaxPlanningService(session, settings)
+                for plan in recent_plans:
+                    try:
+                        await tax_planning_service.recompute_tax_position(
+                            plan.id, plan.tenant_id
+                        )
+                    except Exception:
+                        logger.warning(
+                            "Tax position recompute failed for plan %s after payroll sync",
+                            plan.id,
+                            exc_info=True,
+                        )
+                await session.commit()
+        except Exception:
+            logger.warning(
+                "Post-payroll-sync tax position recompute pass failed",
+                exc_info=True,
+            )
+
         return {
             "connection_id": str(connection_id),
             "status": result.get("status", "complete"),
