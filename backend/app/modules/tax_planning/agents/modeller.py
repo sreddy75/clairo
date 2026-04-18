@@ -188,11 +188,11 @@ For each, call calculate_tax_position with the modified financials."""
             rate_configs=rate_configs,
         )
 
-        tax_saving = base_position["total_tax_payable"] - modified_position["total_tax_payable"]
+        tax_saving = round(base_position["total_tax_payable"] - modified_position["total_tax_payable"], 2)
         expense_increase = modified_financials["expenses"]["total_expenses"] - base_financials.get(
             "expenses", {}
         ).get("total_expenses", 0)
-        cash_flow_impact = tax_saving - max(0, expense_increase)
+        cash_flow_impact = round(tax_saving - max(0, expense_increase), 2)
 
         # Spec 059 FR-017 — coerce strategy_category to the closed enum and
         # compute requires_group_model in code. Invalid or missing LLM output
@@ -267,8 +267,19 @@ For each, call calculate_tax_position with the modified financials."""
         if not scenarios:
             return {"recommended_combination": [], "total_tax_saving": 0, "excluded_count": 0}
 
-        included = [s for s in scenarios if not s.get("requires_group_model")]
-        excluded_count = len(scenarios) - len(included)
+        # Strip meta-scenarios Claude sometimes creates despite being told not to.
+        # These summarise individual strategies and cause double-counting when
+        # their savings are summed with the strategies they already include.
+        # Match any name containing these keywords (case-insensitive).
+        _META_KEYWORDS = ("combination", "package", "combined", "optimal strategy", "best strategy")
+
+        def _is_meta_scenario(s: dict) -> bool:
+            label = str(s.get("strategy_id", s.get("scenario_title", ""))).lower()
+            return any(kw in label for kw in _META_KEYWORDS)
+
+        real_scenarios = [s for s in scenarios if not _is_meta_scenario(s)]
+        included = [s for s in real_scenarios if not s.get("requires_group_model")]
+        excluded_count = len(real_scenarios) - len(included)
 
         total_saving = sum(
             s.get("impact", {}).get("change", {}).get("tax_saving", 0) for s in included

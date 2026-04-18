@@ -16,10 +16,11 @@ import { formatCurrency } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import type { Provenance, TaxScenario } from '@/types/tax-planning';
 
-import { ProvenanceBadge } from './ProvenanceBadge';
+import { InlineConfirmInput } from './InlineConfirmInput';
 import { RequiresGroupModelNotice } from './RequiresGroupModelNotice';
 
 interface ComparisonTableProps {
+  planId: string;
   scenarios: TaxScenario[];
   // Spec 059 FR-013 — per-scenario reviewer disagreements surface as a
   // "Verification flagged" badge next to the scenario title.
@@ -32,7 +33,7 @@ const RISK_STYLES = {
   aggressive: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
 };
 
-export function ComparisonTable({ scenarios, disagreements = [] }: ComparisonTableProps) {
+export function ComparisonTable({ planId, scenarios, disagreements = [] }: ComparisonTableProps) {
   if (scenarios.length < 2) return null;
 
   // Sort by net benefit (highest first). Flagged scenarios sort last so the
@@ -118,41 +119,32 @@ export function ComparisonTable({ scenarios, disagreements = [] }: ComparisonTab
                     })()}
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-sm">
-                    <span className="inline-flex items-center gap-1.5">
-                      {formatCurrency(change?.taxable_income_change ?? 0)}
-                      <ProvenanceBadge
-                        provenance={
-                          scenario.source_tags?.[
-                            'impact_data.change.taxable_income_change'
-                          ] as Provenance | undefined
-                        }
-                      />
-                    </span>
+                    <InlineConfirmInput
+                      planId={planId}
+                      scenarioId={scenario.id}
+                      fieldPath="impact_data.change.taxable_income_change"
+                      value={change?.taxable_income_change ?? 0}
+                      provenance={scenario.source_tags?.['impact_data.change.taxable_income_change'] as Provenance | undefined}
+                    />
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-sm text-emerald-600 dark:text-emerald-400">
-                    <span className="inline-flex items-center gap-1.5">
-                      {formatCurrency(change?.tax_saving ?? 0)}
-                      <ProvenanceBadge
-                        provenance={
-                          scenario.source_tags?.[
-                            'impact_data.change.tax_saving'
-                          ] as Provenance | undefined
-                        }
-                      />
-                    </span>
+                    <InlineConfirmInput
+                      planId={planId}
+                      scenarioId={scenario.id}
+                      fieldPath="impact_data.change.tax_saving"
+                      value={change?.tax_saving ?? 0}
+                      provenance={scenario.source_tags?.['impact_data.change.tax_saving'] as Provenance | undefined}
+                    />
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-sm">
                     {scenario.cash_flow_impact != null ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        {formatCurrency(scenario.cash_flow_impact)}
-                        <ProvenanceBadge
-                          provenance={
-                            scenario.source_tags?.['cash_flow_impact'] as
-                              | Provenance
-                              | undefined
-                          }
-                        />
-                      </span>
+                      <InlineConfirmInput
+                        planId={planId}
+                        scenarioId={scenario.id}
+                        fieldPath="cash_flow_impact"
+                        value={scenario.cash_flow_impact}
+                        provenance={scenario.source_tags?.['cash_flow_impact'] as Provenance | undefined}
+                      />
                     ) : (
                       '-'
                     )}

@@ -7,7 +7,7 @@ Domain exceptions are caught and converted to HTTPException responses.
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -342,7 +342,7 @@ async def confirm_scenario_field(
     plan_id: uuid.UUID,
     scenario_id: uuid.UUID,
     field_path: str,
-    body: dict | None = None,
+    body: dict = Body(...),
     current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
     service: TaxPlanningService = Depends(_get_service),
 ):
@@ -353,7 +353,7 @@ async def confirm_scenario_field(
     from `estimated` to `confirmed` and updates the stored value.
     """
     try:
-        value = (body or {}).get("value") if isinstance(body, dict) else None
+        value = body.get("value")
         return await service.confirm_scenario_field(
             plan_id=plan_id,
             tenant_id=current_user.tenant_id,

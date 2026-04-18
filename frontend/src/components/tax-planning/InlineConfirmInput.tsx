@@ -44,6 +44,7 @@ export function InlineConfirmInput({
 }: InlineConfirmInputProps) {
   const { getToken } = useAuth();
   const [draft, setDraft] = useState<string>(String(value));
+  const [confirmedValue, setConfirmedValue] = useState<number>(value);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [localProvenance, setLocalProvenance] = useState<Provenance | undefined>(
@@ -55,7 +56,7 @@ export function InlineConfirmInput({
   if (!isEditable) {
     return (
       <span className={cn('inline-flex items-center gap-1.5 tabular-nums', className)}>
-        {formatCurrency(value)}
+        {formatCurrency(confirmedValue)}
         <ProvenanceBadge provenance={localProvenance} />
       </span>
     );
@@ -78,6 +79,7 @@ export function InlineConfirmInput({
       const token = await getToken();
       if (!token) throw new Error('not authenticated');
       await confirmScenarioField(token, planId, scenarioId, fieldPath, parsed);
+      setConfirmedValue(parsed);
       setLocalProvenance('confirmed');
       onConfirmed?.({ value: parsed, provenance: 'confirmed' });
     } catch (e) {

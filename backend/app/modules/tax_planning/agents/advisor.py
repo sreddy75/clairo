@@ -41,6 +41,15 @@ class AdvisorAgent:
         """
         applicable_strategies = [s for s in strategies_evaluated if s.get("applicable")]
 
+        calculated_total = combined_strategy.get("total_tax_saving", 0)
+        excluded_count = combined_strategy.get("excluded_count", 0)
+        excluded_note = (
+            f" ({excluded_count} multi-entity strateg{'y' if excluded_count == 1 else 'ies'} "
+            f"excluded — require group tax model)"
+            if excluded_count
+            else ""
+        )
+
         user_prompt = f"""Generate both documents for this tax plan analysis.
 
 ## Client Profile
@@ -57,6 +66,9 @@ class AdvisorAgent:
 
 ## Combined Strategy Impact
 {json.dumps(combined_strategy, indent=2)}
+
+IMPORTANT: The verified total tax saving is **${calculated_total:,.0f}**{excluded_note}. \
+Use this exact figure in both documents — do not recalculate or estimate a different total.
 
 Generate both documents now. Use "## Accountant Brief" and "## Client Summary" as headers
 to separate the two documents."""

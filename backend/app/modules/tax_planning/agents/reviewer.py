@@ -60,17 +60,32 @@ class ReviewerAgent:
             rate_configs,
         )
 
+        # Build scenario summary so the reviewer doesn't re-derive totals by hand
+        non_group_scenarios = [s for s in recommended_scenarios if not s.get("requires_group_model")]
+        scenario_total = sum(
+            (s.get("impact") or s.get("impact_data") or {})
+            .get("change", {})
+            .get("tax_saving", 0)
+            for s in non_group_scenarios
+        )
+        group_model_count = len(recommended_scenarios) - len(non_group_scenarios)
+
         # Step 2: Use Claude to review documents, citations, consistency
         user_prompt = f"""Review this tax plan analysis for quality.
 
 ## Client Profile
 {json.dumps(client_profile, indent=2)}
 
-## Recommended Scenarios
+## Recommended Scenarios ({len(non_group_scenarios)} single-entity + {group_model_count} multi-entity/group-model excluded)
 {json.dumps(recommended_scenarios, indent=2)}
 
 ## Combined Strategy
 {json.dumps(combined_strategy, indent=2)}
+
+## Pre-verified Totals (do not re-derive these — they are calculator-computed)
+- Sum of single-entity scenario tax savings: ${scenario_total:,.2f}
+- combined_strategy.total_tax_saving: ${combined_strategy.get('total_tax_saving', 0):,.2f}
+- These two figures should match. If the documents show a different total, flag it.
 
 ## Accountant Brief (first 2000 chars)
 {accountant_brief[:2000]}

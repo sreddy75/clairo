@@ -775,6 +775,7 @@ export function TaxPlanningWorkspace({
             {plan.scenarios && plan.scenarios.length >= 2 && (
               <div className="overflow-x-auto">
                 <ComparisonTable
+                  planId={plan.id}
                   scenarios={plan.scenarios}
                   disagreements={analysis?.review_result?.disagreements ?? []}
                 />
@@ -881,11 +882,62 @@ export function TaxPlanningWorkspace({
                         {analysis.status === 'shared' && (
                           <Badge className="bg-emerald-100 text-emerald-700">Shared to Portal</Badge>
                         )}
-                        <Button size="sm" variant="ghost" onClick={handleGenerateAnalysis}>
+                        <Button
+                          size="sm"
+                          variant={analysis.review_passed === false ? 'outline' : 'ghost'}
+                          onClick={handleGenerateAnalysis}
+                        >
                           Re-generate
                         </Button>
                       </div>
                     </div>
+
+                    {/* Reviewer issues — shown when review failed */}
+                    {analysis.review_passed === false && analysis.review_result && (
+                      <div
+                        className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {analysis.review_result.summary && (
+                          <p className="text-destructive/90 mb-2">{analysis.review_result.summary}</p>
+                        )}
+                        {(analysis.review_result.numbers_issues ?? []).length > 0 && (
+                          <ul className="space-y-1 text-xs text-muted-foreground list-disc list-inside">
+                            {(analysis.review_result.numbers_issues as string[]).slice(0, 3).map((issue, i) => (
+                              <li key={i}>{issue}</li>
+                            ))}
+                            {(analysis.review_result.numbers_issues as string[]).length > 3 && (
+                              <li className="italic">
+                                +{(analysis.review_result.numbers_issues as string[]).length - 3} more — click to view full analysis
+                              </li>
+                            )}
+                          </ul>
+                        )}
+                        <div className="flex items-center gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            onClick={handleGenerateAnalysis}
+                          >
+                            Re-generate Analysis
+                          </Button>
+                          {analysis.status !== 'shared' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const token = await getToken();
+                                if (!token) return;
+                                await approveAnalysis(token, plan.id);
+                                await loadAnalysis(plan.id);
+                              }}
+                            >
+                              Approve Anyway
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Hero metrics */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">

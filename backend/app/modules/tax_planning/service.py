@@ -1720,10 +1720,15 @@ class TaxPlanningService:
                         "sort_order": sort_order,
                         "strategy_category": category,
                         "requires_group_model": needs_group,
+                        "source_tags": scenario_data.get("source_tags", {}),
                     },
                 )
                 created_scenario_ids.append(scenario.id)
                 event["scenario"]["id"] = str(scenario.id)
+                # Commit immediately so the scenario is visible to any
+                # concurrent GET /plans/{id} triggered by the frontend's
+                # onScenarioCreated handler while the stream is still open.
+                await self.session.commit()
 
             # Spec 059 US6 FR-022 — the `verification` event MUST arrive before
             # the `done` event. Pre-059 we yielded `done` from the agent, then

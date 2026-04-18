@@ -92,9 +92,12 @@ For each strategy provided, you MUST:
        model and will be excluded from combined totals)
      - other (only when none of the above fit)
 
-After modelling individual strategies, identify the BEST COMBINATION of strategies
-that can be implemented together. Call the tool one more time with all recommended
-strategies combined to show the total impact.
+After modelling individual strategies, list which ones you recommend in your text response.
+
+⚠️ DO NOT call the tool again for a "combined", "optimal", "package", or summary scenario.
+The system automatically sums the individual savings. An extra tool call will cause
+double-counting and will fail the quality review. Only call the tool once per individual
+strategy.
 
 NEVER estimate or approximate tax figures. ALWAYS use the tool for every number.
 NEVER invent a single-entity net benefit figure for a multi-entity strategy —
@@ -124,7 +127,7 @@ Use proper ATO provision references (e.g., s328-180 ITAA 1997, TR 98/7).
 ## Document 2: Client Summary
 
 A plain-language summary for the business owner. Include:
-- Estimated total savings in dollars
+- Total savings in dollars — use the verified figure from "Combined Strategy Impact" exactly, never derive your own total
 - Each recommended action as a numbered step with a deadline
 - What the client needs to do (in plain English, no jargon)
 - A note that these are estimates and professional advice should be sought

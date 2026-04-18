@@ -327,18 +327,16 @@ class TaxPlanningAgent:
         )
 
         # Build impact data
-        tax_saving = base_position["total_tax_payable"] - modified_position["total_tax_payable"]
-        taxable_income_change = (
-            modified_position["taxable_income"] - base_position["taxable_income"]
+        tax_saving = round(base_position["total_tax_payable"] - modified_position["total_tax_payable"], 2)
+        taxable_income_change = round(
+            modified_position["taxable_income"] - base_position["taxable_income"], 2
         )
 
         # Estimate cash flow impact
-        # Simple heuristic: net cash impact = tax saving - additional outlay
-        # The outlay is the increase in expenses
         expense_increase = modified_financials["expenses"]["total_expenses"] - base_financials.get(
             "expenses", {}
         ).get("total_expenses", 0)
-        cash_flow_impact = tax_saving - max(0, expense_increase)
+        cash_flow_impact = round(tax_saving - max(0, expense_increase), 2)
 
         return {
             "scenario_title": tool_input.get("scenario_title", "Untitled Scenario"),
@@ -364,4 +362,20 @@ class TaxPlanningAgent:
             "risk_rating": tool_input.get("risk_rating", "moderate"),
             "compliance_notes": tool_input.get("compliance_notes", ""),
             "cash_flow_impact": cash_flow_impact,
+            "strategy_category": tool_input.get("strategy_category", "other"),
+            # Spec 059 FR-011 — before.* fields are derived from confirmed
+            # financials; after.* / change.* / cash_flow_impact are estimated
+            # because the AI specified the financial modifications.
+            "source_tags": {
+                "impact_data.before.taxable_income": "derived",
+                "impact_data.before.tax_payable": "derived",
+                "impact_data.before.net_position": "derived",
+                "impact_data.after.taxable_income": "estimated",
+                "impact_data.after.tax_payable": "estimated",
+                "impact_data.after.net_position": "estimated",
+                "impact_data.change.taxable_income_change": "estimated",
+                "impact_data.change.tax_saving": "estimated",
+                "impact_data.change.net_benefit": "estimated",
+                "cash_flow_impact": "estimated",
+            },
         }

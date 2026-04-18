@@ -9,6 +9,8 @@ import { formatCurrency } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import type { TaxScenario } from '@/types/tax-planning';
 
+import { RequiresGroupModelNotice } from './RequiresGroupModelNotice';
+
 interface ScenarioCardProps {
   scenario: TaxScenario;
   onDelete?: (scenarioId: string) => void;
@@ -24,9 +26,10 @@ export function ScenarioCard({ scenario, onDelete }: ScenarioCardProps) {
   const [expanded, setExpanded] = useState(false);
   const change = scenario.impact_data?.change;
   const taxSaving = change?.tax_saving ?? 0;
+  const isFlagged = Boolean(scenario.requires_group_model);
 
   return (
-    <Card>
+    <Card className={cn(isFlagged && 'opacity-60')}>
       <CardContent className="p-4 space-y-3">
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
@@ -36,11 +39,13 @@ export function ScenarioCard({ scenario, onDelete }: ScenarioCardProps) {
               <Badge className={cn('text-xs', RISK_STYLES[scenario.risk_rating])}>
                 {scenario.risk_rating}
               </Badge>
-              {taxSaving > 0 && (
+              {isFlagged ? (
+                <RequiresGroupModelNotice compact />
+              ) : taxSaving > 0 ? (
                 <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                   Save {formatCurrency(taxSaving)}
                 </span>
-              )}
+              ) : null}
             </div>
           </div>
           <div className="flex items-center gap-1">
