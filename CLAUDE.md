@@ -81,6 +81,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 (3 new tables: `practice_clients`, `client_quarter_exclusions`, `client_note_history`; 1 modified: `practice_users`) (058-bas-workflow-tracker)
 - Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0, Pydantic v2, Alembic, Anthropic SDK, Voyage 3.5 lite, Pinecone (for citation verifier swap), React 18 + shadcn/ui (059-tax-planning-calculation-correctness)
 - PostgreSQL 16 — 3 new columns on `tax_scenarios`, 1 new partial-unique index on `tax_scenarios`, 1 new key on `tax_plans.financials_data` JSONB (`projection_metadata`). No new tables. (059-tax-planning-calculation-correctness)
+- Python 3.12+ (backend only) + `anthropic` SDK (AsyncAnthropic), Pydantic v2 (for optional modification validator), existing `app.modules.tax_planning.tax_calculator.calculate_tax_position`, existing `app.modules.tax_planning.strategy_category` enum (059-2-tax-planning-correctness-followup)
+- N/A — no schema changes. The only persisted outputs (`TaxPlanAnalysis.recommended_scenarios`, `TaxPlanAnalysis.combined_strategy`) retain their existing shape. (059-2-tax-planning-correctness-followup)
 
 ## Recent Changes
 - 049-xero-taxcode-sync: Xero write-back, multi-round client send-back, portal IDK validation, agent notes
