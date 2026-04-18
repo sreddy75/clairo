@@ -174,8 +174,14 @@ async def _execute_publish(
         raise InvalidStatusTransitionError(
             strategy.strategy_id, strategy.status, "published"
         )
-    if not vector_writes_enabled():
-        raise VectorWriteDisabledError(strategy.strategy_id)
+    # NB: the env-gate (`TAX_STRATEGIES_VECTOR_WRITE_ENABLED`) used to fire
+    # here unconditionally. That was wrong once the idempotent-publish path
+    # landed — in prod, after a local bulk-bootstrap, Pinecone already holds
+    # the vectors and we only need to populate the prod Postgres mirror
+    # (ContentChunk + BM25IndexEntry rows). That's a read-only Pinecone op
+    # plus local DB writes — no vector writes happen, so the gate must not
+    # block it. We now apply the gate only when we actually need to embed
+    # + upsert, after the Pinecone fetch below.
 
     # 1. Chunk the parent content.
     primary_category = strategy.categories[0] if strategy.categories else "Uncategorised"
@@ -247,6 +253,11 @@ async def _execute_publish(
         if not meta or meta.get("content_hash") != rec["content_hash"]:
             all_present_and_matching = False
             break
+
+    # 3b. Env-gate is enforced ONLY on the embed path. The reuse path is
+    # Postgres-only (+ Pinecone READ) and safe in every environment.
+    if not all_present_and_matching and not vector_writes_enabled():
+        raise VectorWriteDisabledError(strategy.strategy_id)
 
     # 4. Embed + upsert — but only if the idempotency check failed.
     voyage = VoyageService()
