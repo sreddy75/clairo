@@ -21,7 +21,6 @@ from pathlib import Path
 
 import yaml
 
-
 FIXTURE_PATH = (
     Path(__file__).parent / "fixtures" / "citation_regression_bank.yaml"
 )
