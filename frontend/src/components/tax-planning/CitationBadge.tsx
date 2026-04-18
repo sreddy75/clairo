@@ -31,9 +31,12 @@ const STATUS_CONFIG = {
     label: 'General knowledge',
     className: 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300',
   },
-  // Spec 059 FR-021 — amber variant for "retrieval confidence below 0.5".
+  // Spec 059 FR-021 / Spec 061 FR-010 (Q2=C) — amber variant for sub-threshold
+  // confidence. Under Q2=C the AI's response is preserved; scenarios are
+  // cleared; the accountant decides whether to rely on it. The prior "AI
+  // declined" copy was pre-Q2=C and misdescribed the current behaviour.
   low_confidence: {
-    label: 'AI declined — low source confidence',
+    label: 'Low source confidence — verify before relying',
     className: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
   },
 } as const;
@@ -47,7 +50,7 @@ export function CitationBadge({ verification }: CitationBadgeProps) {
     verification.status === 'no_citations'
       ? 'Response is based on general tax knowledge without specific source citations'
       : verification.status === 'low_confidence'
-        ? 'AI declined to answer because the retrieved source confidence was below threshold. Consult ATO guidance directly.'
+        ? 'The retrieved source confidence was below threshold. The response is shown for context but scenarios have not been persisted — verify against ATO guidance before relying on any figure.'
         : `${verification.verified_count} of ${verification.total_citations} citations verified against knowledge base`;
 
   return (
