@@ -1356,14 +1356,25 @@ class TaxPlanningService:
         # Per-citation matched_by breakdown — how did we end up verifying it?
         # Useful for contract tests (FR-023) and for post-hoc debugging of
         # citation behaviour in aggregate.
+        #
+        # Spec 061 FR-012: carry the verifier's new `match_strength` and
+        # `reason_code` fields through to the persisted shape so audit logs
+        # and UI badges can render them without re-parsing. The verifier
+        # now owns `matched_by` authoritatively — prefer its value and fall
+        # back to `_infer_matched_by` only for legacy (pre-061) shapes that
+        # don't carry it.
         citations_out: list[dict] = []
         for citation in result.citations:
-            matched_by = _infer_matched_by(citation, retrieved_chunks)
+            matched_by = citation.get("matched_by") or _infer_matched_by(
+                citation, retrieved_chunks
+            )
             citations_out.append(
                 {
                     "identifier": citation.get("section_ref") or str(citation.get("number")),
                     "verified": citation.get("verified", False),
                     "matched_by": matched_by,
+                    "match_strength": citation.get("match_strength"),
+                    "reason_code": citation.get("reason_code"),
                 }
             )
 
