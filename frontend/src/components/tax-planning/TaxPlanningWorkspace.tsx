@@ -47,6 +47,7 @@ import type {
   TaxPlan,
 } from '@/types/tax-planning';
 
+import { AsAtDatePicker } from './AsAtDatePicker';
 import { ComparisonTable } from './ComparisonTable';
 import { FinancialsPanel } from './FinancialsPanel';
 import { ManualEntryForm } from './ManualEntryForm';
@@ -705,6 +706,23 @@ export function TaxPlanningWorkspace({
             value="position"
             className="flex-1 overflow-y-auto mt-4 space-y-4"
           >
+            {plan.xero_connection_id && (
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                  Projection basis — BAS quarter ends give a known-clean
+                  checkpoint.
+                </div>
+                <AsAtDatePicker
+                  planId={plan.id}
+                  asAtDate={plan.as_at_date ?? null}
+                  reconDate={
+                    plan.financials_data?.last_reconciliation_date ?? null
+                  }
+                  financialYear={plan.financial_year}
+                  onRefreshed={loadPlan}
+                />
+              </div>
+            )}
             <PayrollSyncBanner
               status={plan.payroll_sync_status}
               onPoll={loadPlan}

@@ -8,7 +8,6 @@ from uuid import UUID
 
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
-
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

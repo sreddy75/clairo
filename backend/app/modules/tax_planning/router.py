@@ -186,10 +186,17 @@ async def pull_xero_financials(
     current_user: PracticeUser = Depends(require_permission(Permission.CLIENT_WRITE)),
     service: TaxPlanningService = Depends(_get_service),
 ):
-    """Pull the latest P&L from Xero and populate the plan's financials."""
+    """Pull the latest P&L from Xero and populate the plan's financials.
+
+    Spec 059.1 — when `as_at_date` is provided, persists it on the plan
+    before the pull so refresh + anchor change happen in one call.
+    """
     try:
         result = await service.pull_xero_financials(
-            plan_id, current_user.tenant_id, data.force_refresh
+            plan_id,
+            current_user.tenant_id,
+            data.force_refresh,
+            as_at_date=data.as_at_date,
         )
         return FinancialsPullResponse(**result)
     except DomainError as e:
@@ -900,4 +907,5 @@ def _plan_to_response(
         xero_connection_status=connection_status,
         data_stale=data_stale,
         payroll_sync_status=payroll_sync_status,  # type: ignore[arg-type]
+        as_at_date=plan.as_at_date,
     )

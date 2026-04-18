@@ -11,7 +11,7 @@ Entities:
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -147,6 +147,13 @@ class TaxPlan(BaseModel, TenantMixin):
     xero_report_fetched_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # Spec 059.1 — user-selectable "as at" anchor for projections. When set,
+    # annualisation + P&L to_date + bank balances + unreconciled summary +
+    # payroll all use this date instead of the Xero reconciliation date.
+    # Null = fall back to `effective_date = recon_date or today` (pre-059.1
+    # behaviour). BAS quarter ends (31 Mar, 30 Jun, 30 Sep, 31 Dec) are the
+    # typical useful values.
+    as_at_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # Relationships
     scenarios: Mapped[list["TaxScenario"]] = relationship(

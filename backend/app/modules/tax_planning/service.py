@@ -215,8 +215,15 @@ class TaxPlanningService:
         plan_id: uuid.UUID,
         tenant_id: uuid.UUID,
         force_refresh: bool = False,
+        as_at_date: date | None = None,
     ) -> dict[str, Any]:
-        """Pull P&L from Xero and calculate tax position."""
+        """Pull P&L from Xero and calculate tax position.
+
+        Spec 059.1 — when `as_at_date` is passed, the plan's persisted
+        anchor is updated before the pull so the refreshed derived context
+        (projection, bank balances, unreconciled, payroll, prior-year YTD)
+        all honour the new anchor in a single round-trip.
+        """
         # Use repo directly to avoid get_plan's auto-refresh (which calls us)
         plan = await self.plan_repo.get_by_id(plan_id, tenant_id)
         if not plan:
@@ -224,6 +231,12 @@ class TaxPlanningService:
 
         if not plan.xero_connection_id:
             raise NoXeroConnectionError()
+
+        # Persist the new anchor before the pull so every downstream read
+        # sees the same as_at_date — prevents a race where the pull uses the
+        # new date but the plan row still carries the old one.
+        if as_at_date is not None and as_at_date != plan.as_at_date:
+            plan = await self.plan_repo.update(plan, {"as_at_date": as_at_date})
 
         report_service = XeroReportService(self.session, self.settings)
 
@@ -239,10 +252,18 @@ class TaxPlanningService:
             logger.warning("Reconciliation date fetch failed, using today", exc_info=True)
             recon_date = None
 
-        # Cap P&L to_date at the earlier of reconciliation date or today
-        effective_to = (
-            min(recon_date, date.today()).isoformat() if recon_date else date.today().isoformat()
+        # Spec 059.1 — user-selectable "as at" anchor overrides the Xero
+        # reconciliation date so BAS quarter ends (or any chosen date) can
+        # serve as the projection basis. Falls back to recon_date, then
+        # today. Capped at today so a future override date is treated as
+        # "right now" rather than projecting from unreachable data.
+        today = date.today()
+        anchor_candidates = [d for d in (plan.as_at_date, recon_date) if d is not None]
+        effective_date = min(anchor_candidates[0], today) if anchor_candidates else today
+        is_override_active = (
+            plan.as_at_date is not None and plan.as_at_date <= today
         )
+        effective_to = effective_date.isoformat()
 
         try:
             report_data = await report_service.get_report(
@@ -273,10 +294,13 @@ class TaxPlanningService:
         # set of numbers downstream (FR-003).
         fy_start_year = int(plan.financial_year[:4])
         fy_start_date = date(fy_start_year, 7, 1)
-        effective_date = recon_date or date.today()
+        # `effective_date` was resolved above — honours `plan.as_at_date`.
         months_elapsed = (effective_date.year - fy_start_date.year) * 12 + (
             effective_date.month - fy_start_date.month
         )
+        # Treat end-of-month anchors (e.g. 31 Mar) as a completed month.
+        if effective_date.day >= 28 and months_elapsed < 12:
+            months_elapsed += 1
         months_elapsed = max(1, min(months_elapsed, 12))
 
         ytd_income_snapshot = {**financials_data["income"]}
@@ -322,20 +346,31 @@ class TaxPlanningService:
                     "applied": income_meta.applied,
                     "ytd_total_income": ytd_income_snapshot.get("total_income"),
                     "projected_total_income": projected_income.get("total_income"),
+                    # Spec 059.1 — record which date drove the projection so
+                    # the audit trail answers "why these numbers?".
+                    "effective_date": effective_date.isoformat(),
+                    "as_at_override": is_override_active,
+                    "recon_date": recon_date.isoformat() if recon_date else None,
                 },
             )
         except Exception:
             # Audit failures must never break the tax-plan flow.
             logger.debug("audit log for financials.annualised failed", exc_info=True)
 
-        # Fetch bank context (FR-015, FR-016, FR-017, FR-018)
-        # recon_date was already fetched above for the P&L date cap
+        # Fetch bank context (FR-015, FR-016, FR-017, FR-018).
+        # Spec 059.1 — bank balances and unreconciled summary honour the
+        # as-at anchor when set, so "as at 31 Mar" shows the bank position
+        # on that date and unreconciled bucket for the matching BAS quarter.
         try:
             bank_balances = await report_service.get_bank_balances(
-                plan.xero_connection_id, force_refresh=force_refresh
+                plan.xero_connection_id,
+                force_refresh=force_refresh,
+                to_date_override=effective_to if is_override_active else None,
             )
             unreconciled = await self._get_unreconciled_summary(
-                plan.xero_connection_id, plan.financial_year
+                plan.xero_connection_id,
+                plan.financial_year,
+                as_of_date=effective_date,
             )
 
             total_bank_balance = (
@@ -343,17 +378,30 @@ class TaxPlanningService:
             )
             recon_date_str = recon_date.isoformat() if recon_date else None
 
-            # Build period coverage string
+            # Build period coverage string. When the accountant has anchored
+            # to a specific as-at date, that's the label they want to see —
+            # otherwise fall back to the reconciliation date.
             fy_start_year = int(plan.financial_year[:4])
             period_start = f"1 Jul {fy_start_year}"
-            if recon_date:
-                period_coverage = f"{period_start} – {recon_date.strftime('%-d %b %Y')} — Reconciled to {recon_date.strftime('%-d %b %Y')}"
+            if is_override_active:
+                period_coverage = (
+                    f"{period_start} – {effective_date.strftime('%-d %b %Y')} — "
+                    f"As at {effective_date.strftime('%-d %b %Y')} (manual)"
+                )
+            elif recon_date:
+                period_coverage = (
+                    f"{period_start} – {recon_date.strftime('%-d %b %Y')} — "
+                    f"Reconciled to {recon_date.strftime('%-d %b %Y')}"
+                )
             else:
                 period_coverage = f"{period_start} – current (no reconciliation data)"
 
             financials_data["bank_balances"] = bank_balances
             financials_data["total_bank_balance"] = total_bank_balance
             financials_data["last_reconciliation_date"] = recon_date_str
+            financials_data["as_at_date"] = (
+                effective_date.isoformat() if is_override_active else None
+            )
             financials_data["period_coverage"] = period_coverage
             financials_data["unreconciled_summary"] = unreconciled
         except Exception:
@@ -555,10 +603,15 @@ class TaxPlanningService:
                 except Exception:
                     logger.debug("audit for payroll.sync_triggered failed", exc_info=True)
 
+                # Spec 059.1 — cap pay runs at the as-at anchor so super and
+                # PAYGW YTD match the rest of the projection basis. Without
+                # this, anchoring to 31 Mar would still show April pay runs
+                # in the YTD totals.
                 pay_run_result = await self.session.execute(
                     select(XeroPayRun).where(
                         XeroPayRun.connection_id == connection.id,
                         XeroPayRun.period_start >= fy_start_date,
+                        XeroPayRun.period_end <= effective_date,
                     )
                 )
                 pay_runs = list(pay_run_result.scalars().all())
@@ -707,12 +760,17 @@ class TaxPlanningService:
         self,
         connection_id: uuid.UUID,
         financial_year: str,
+        as_of_date: date | None = None,
     ) -> dict[str, Any]:
         """Aggregate unreconciled bank transactions for GST estimation (FR-017).
 
         Returns provisional estimates of GST collected/paid and
-        income/expenses from unreconciled transactions in the current
-        BAS quarter.
+        income/expenses from unreconciled transactions in the BAS quarter
+        that contains `as_of_date` (or the current quarter if not provided).
+
+        Spec 059.1 — when the accountant has anchored the plan to a specific
+        date (typically a BAS quarter end), the unreconciled bucket follows:
+        anchoring to 31 Mar shows the Jan-Mar quarter's unreconciled tail.
         """
         from decimal import Decimal
 
@@ -720,11 +778,12 @@ class TaxPlanningService:
 
         from app.modules.integrations.xero.models import XeroBankTransaction
 
-        # Determine current quarter boundaries within the FY
+        # Determine quarter boundaries within the FY, driven by as_of_date
+        # rather than "right now" so an anchored plan surfaces the matching
+        # quarter's unreconciled data.
         fy_start_year = int(financial_year[:4])
-        now = datetime.now(UTC)
-        # Australian BAS quarters: Jul-Sep, Oct-Dec, Jan-Mar, Apr-Jun
-        month = now.month
+        anchor = as_of_date or date.today()
+        month = anchor.month
         if month in (7, 8, 9):
             q_start = datetime(fy_start_year, 7, 1, tzinfo=UTC)
             q_end = datetime(fy_start_year, 9, 30, tzinfo=UTC)
