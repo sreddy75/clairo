@@ -55,6 +55,7 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pymupdf>=1.26.7",
     "anthropic>=0.75.0",
+    "pyyaml>=6.0",
     # Scheduling
     "croniter>=2.0.0",
     # Payment Processing

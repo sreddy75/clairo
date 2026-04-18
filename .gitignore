@@ -172,3 +172,8 @@ temp/
 celerybeat-schedule
 celerybeat.pid
 .gstack/
+
+# =============================================================================
+# Spec 060 — per-strategy extraction audit sidecars (local review only)
+# =============================================================================
+backend/app/modules/tax_strategies/data/strategies/*.audit.yaml
