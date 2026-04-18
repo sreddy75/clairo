@@ -200,14 +200,14 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 
 ### Tests for User Story 4
 
-- [ ] T057 [P] [US4] Unit test in `backend/tests/unit/modules/tax_strategies/test_seed_idempotent.py` — first run creates N rows; second run with same CSV creates 0 rows and skips N; `strategy_id` collision is reported as skipped not errored; malformed category fails the whole run per research §R6
+- [X] T057 [P] [US4] Unit test in `backend/tests/unit/modules/tax_strategies/test_seed_idempotent.py` — first run creates N rows; second run with same CSV creates 0 rows and skips N; `strategy_id` collision is reported as skipped not errored; malformed category fails the whole run per research §R6
 - [ ] T058 [P] [US4] Integration test in `backend/tests/integration/test_seed_from_csv.py` — `POST /seed-from-csv` end-to-end; asserts `tax_strategy.seed_executed` audit row + per-row `tax_strategy.created` audit rows + 415 DB rows after first successful run
 
 ### Implementation for User Story 4
 
 - [ ] T059 [US4] Populate `backend/app/modules/tax_strategies/data/strategy_seed.csv` with 415 rows — derived once from the external reference material at `/Users/suren/KR8IT/projects/Personal/Clairo docs/Tax Fitness Strategy/` (not consumed at seed time per spec clarification). Each row: `CLR-###, Name, Category1|Category2, STP-###`. IDs sequential `CLR-001`..`CLR-415`. _Commit this file with the PR so code review can inspect the full catalogue._
-- [ ] T060 [US4] Implement `seed_from_csv(csv_path, triggered_by) -> SeedSummary` in `backend/app/modules/tax_strategies/service.py` per data-model §5.1 — transactional, idempotent, validates categories against the fixed taxonomy, refuses the whole run on any invalid row
-- [ ] T061 [US4] Add `POST /tax-strategies/seed-from-csv` endpoint to the admin router (T034) — super-admin only; returns `SeedSummary`
+- [X] T060 [US4] Implement `seed_from_csv(csv_path, triggered_by) -> SeedSummary` in `backend/app/modules/tax_strategies/service.py` per data-model §5.1 — transactional, idempotent, validates categories against the fixed taxonomy, refuses the whole run on any invalid row
+- [X] T061 [US4] Add `POST /tax-strategies/seed-from-csv` endpoint to the admin router (T034) — super-admin only; returns `SeedSummary`
 - [ ] T062 [US4] Add "Seed from CSV" action button to `StrategiesTab` top bar (T043/T053) — confirmation dialog before execution; shows result toast with created/skipped counts
 
 **Checkpoint**: 415 stubs seeded; re-run idempotent. Spec SC-002 validated.

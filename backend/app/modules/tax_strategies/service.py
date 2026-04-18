@@ -8,8 +8,12 @@ validity and audit emission (constitution §X).
 
 from __future__ import annotations
 
+import csv
 import logging
+import re
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -23,6 +27,7 @@ from app.modules.tax_strategies.exceptions import (
 )
 from app.modules.tax_strategies.models import TaxStrategy, TaxStrategyAuthoringJob
 from app.modules.tax_strategies.repository import TaxStrategyRepository
+from app.modules.tax_strategies.schemas import ALLOWED_CATEGORIES
 
 logger = logging.getLogger(__name__)
 
@@ -308,6 +313,185 @@ class TaxStrategyService:
                 from_status=current_status,
                 to_status=f"stage:{stage}",
             )
+
+
+@dataclass
+class SeedSummary:
+    """Result of a seed_from_csv run."""
+
+    created: int = 0
+    skipped: int = 0
+    errors: list[str] = field(default_factory=list)
+
+
+# Default CSV location — bundled with the module. FR-012 / research §R6.
+DEFAULT_SEED_CSV_PATH = (
+    Path(__file__).parent / "data" / "strategy_seed.csv"
+)
+
+_STRATEGY_ID_PATTERN = re.compile(r"^CLR-\d{3,5}$")
+
+
+async def seed_from_csv(
+    session: AsyncSession,
+    triggered_by: str,
+    csv_path: Path | None = None,
+    tenant_id: UUID | None = None,
+) -> SeedSummary:
+    """Idempotent bulk seed from the committed CSV fixture (FR-012).
+
+    Behaviour:
+    - Parses the CSV. Columns: strategy_id, name, categories, source_ref.
+      Categories are pipe-delimited multi-tag strings (per data-model §5).
+    - Validates every row BEFORE touching the database. Any invalid row
+      (bad strategy_id format, unknown category, missing required field)
+      aborts the whole run — no partial inserts.
+    - For each valid row: if the strategy_id already has a live row, the
+      row is skipped (idempotent). Otherwise a stub TaxStrategy is
+      created and a tax_strategy.created audit event is emitted.
+    - A single tax_strategy.seed_executed audit event summarises the run
+      (counts).
+
+    Args:
+        session: Async SQLAlchemy session. Caller commits.
+        triggered_by: Clerk user ID of the super-admin running the seed.
+        csv_path: Override CSV path (defaults to the bundled fixture).
+        tenant_id: Tenant context for audit; None defers to TenantContext.
+
+    Returns:
+        SeedSummary with created/skipped counts and any validation errors.
+
+    Raises:
+        FileNotFoundError: if csv_path does not exist.
+        SeedValidationError (exceptions module): if any row is invalid.
+    """
+    from app.modules.tax_strategies.exceptions import SeedValidationError
+
+    path = csv_path or DEFAULT_SEED_CSV_PATH
+    if not path.exists():
+        raise FileNotFoundError(f"Seed CSV not found at {path!s}")
+
+    # Parse and validate all rows first — transactional all-or-nothing.
+    rows_to_create: list[dict[str, Any]] = []
+    validation_errors: list[str] = []
+    with path.open(newline="") as f:
+        reader = csv.DictReader(f)
+        expected = {"strategy_id", "name", "categories", "source_ref"}
+        present = set(reader.fieldnames or [])
+        if not expected.issubset(present):
+            missing = sorted(expected - present)
+            raise SeedValidationError(
+                [
+                    f"CSV header missing required columns {missing}; "
+                    f"expected superset of {sorted(expected)}, got {reader.fieldnames}"
+                ]
+            )
+        seen_ids: set[str] = set()
+        for i, raw in enumerate(reader, start=2):  # start=2 because header is line 1
+            strategy_id = (raw.get("strategy_id") or "").strip()
+            name = (raw.get("name") or "").strip()
+            categories_raw = (raw.get("categories") or "").strip()
+            source_ref = (raw.get("source_ref") or "").strip() or None
+
+            if not _STRATEGY_ID_PATTERN.match(strategy_id):
+                validation_errors.append(
+                    f"line {i}: invalid strategy_id {strategy_id!r}"
+                )
+                continue
+            if strategy_id in seen_ids:
+                validation_errors.append(
+                    f"line {i}: duplicate strategy_id {strategy_id!r} within CSV"
+                )
+                continue
+            seen_ids.add(strategy_id)
+            if not name:
+                validation_errors.append(f"line {i}: name is required")
+                continue
+            categories = [c.strip() for c in categories_raw.split("|") if c.strip()]
+            if not categories:
+                validation_errors.append(
+                    f"line {i} ({strategy_id}): at least one category is required"
+                )
+                continue
+            unknown = [c for c in categories if c not in ALLOWED_CATEGORIES]
+            if unknown:
+                validation_errors.append(
+                    f"line {i} ({strategy_id}): unknown categories {unknown}"
+                )
+                continue
+            rows_to_create.append(
+                {
+                    "strategy_id": strategy_id,
+                    "name": name,
+                    "categories": categories,
+                    "source_ref": source_ref,
+                }
+            )
+
+    if validation_errors:
+        raise SeedValidationError(validation_errors)
+
+    # Idempotency check: skip any strategy_id that already has a live row.
+    repo = TaxStrategyRepository(session)
+    audit = AuditService(session)
+    summary = SeedSummary()
+    created_ids: list[str] = []
+
+    for row in rows_to_create:
+        if await repo.exists_by_strategy_id(row["strategy_id"]):
+            summary.skipped += 1
+            continue
+        strategy = await repo.create(
+            {
+                "strategy_id": row["strategy_id"],
+                "name": row["name"],
+                "categories": row["categories"],
+                "source_ref": row["source_ref"],
+                "tenant_id": "platform",
+                "status": "stub",
+                "version": 1,
+            }
+        )
+        summary.created += 1
+        created_ids.append(row["strategy_id"])
+        await audit.log_event(
+            event_type=events.TAX_STRATEGY_CREATED,
+            event_category="data",
+            actor_type="user",
+            tenant_id=tenant_id,
+            resource_type="tax_strategy",
+            resource_id=strategy.id,
+            action="create",
+            outcome="success",
+            metadata={
+                "strategy_id": row["strategy_id"],
+                "name": row["name"],
+                "categories": row["categories"],
+                "tenant_scope": "platform",
+                "triggered_by": triggered_by,
+                "source": "seed_from_csv",
+            },
+        )
+
+    # One summary audit event for the whole run.
+    await audit.log_event(
+        event_type=events.TAX_STRATEGY_SEED_EXECUTED,
+        event_category="data",
+        actor_type="user",
+        tenant_id=tenant_id,
+        resource_type="tax_strategy",
+        action="create",
+        outcome="success",
+        metadata={
+            "created": summary.created,
+            "skipped": summary.skipped,
+            "errors_count": 0,
+            "triggered_by": triggered_by,
+            "csv_path": str(path),
+        },
+    )
+
+    return summary
 
 
 def _dispatch_stage_task(

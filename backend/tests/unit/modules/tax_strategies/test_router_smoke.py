@@ -28,12 +28,12 @@ class _FakeStrategy:
         self.explanation_text = kwargs.get("explanation_text", "expl body")
         self.ato_sources = kwargs.get("ato_sources", ["ITAA 1997 s 290-25"])
         self.case_refs = kwargs.get("case_refs", [])
-        self.fy_applicable_from = kwargs.get("fy_applicable_from", None)
-        self.fy_applicable_to = kwargs.get("fy_applicable_to", None)
+        self.fy_applicable_from = kwargs.get("fy_applicable_from")
+        self.fy_applicable_to = kwargs.get("fy_applicable_to")
         self.version = kwargs.get("version", 1)
         self.tenant_id = kwargs.get("tenant_id", "platform")
         self.status = kwargs.get("status", "published")
-        self.superseded_by_strategy_id = kwargs.get("superseded_by_strategy_id", None)
+        self.superseded_by_strategy_id = kwargs.get("superseded_by_strategy_id")
         self.source_ref = kwargs.get("source_ref", "STP-012")
 
 

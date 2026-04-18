@@ -11,7 +11,6 @@ from app.modules.knowledge.chunkers.strategy import (
     StrategyChunkerInput,
 )
 
-
 _DEFAULT_KEYWORDS: list[str] = ["concessional", "catch-up super", "carry forward"]
 _SENTINEL: list[str] = []  # placeholder for keyword override default
 

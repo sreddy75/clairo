@@ -23,6 +23,7 @@ from app.database import get_db
 from app.modules.auth.clerk import ClerkTokenPayload
 from app.modules.tax_strategies.exceptions import (
     InvalidStatusTransitionError,
+    SeedValidationError,
     StrategyNotFoundError,
 )
 from app.modules.tax_strategies.models import TaxStrategy
@@ -34,12 +35,13 @@ from app.modules.tax_strategies.schemas import (
     PublicHydrationBatchResponse,
     PublicTaxStrategy,
     RejectPayload,
+    SeedSummaryResponse,
     TaxStrategyDetail,
     TaxStrategyListItem,
     TaxStrategyListResponse,
     TaxStrategyListResponseMeta,
 )
-from app.modules.tax_strategies.service import TaxStrategyService
+from app.modules.tax_strategies.service import TaxStrategyService, seed_from_csv
 
 router = APIRouter(prefix="/api/v1/admin/tax-strategies", tags=["tax-strategies-admin"])
 public_router = APIRouter(prefix="/api/v1/tax-strategies", tags=["tax-strategies"])
@@ -298,6 +300,45 @@ async def approve_and_publish(
         raise _map_status_transition_error(exc) from None
     await session.commit()
     return AuthoringJobResponse.model_validate(job)
+
+
+@router.post("/seed-from-csv", response_model=SeedSummaryResponse)
+async def seed_from_csv_endpoint(
+    user: SuperAdmin,
+    session: DbSession,
+) -> SeedSummaryResponse:
+    """Idempotent bulk seed from the committed CSV fixture (FR-012).
+
+    Creates stub TaxStrategy rows for any CLR-ID not already present.
+    Re-running produces 0 creates and N skips. Invalid rows abort the run
+    with 400 — no partial inserts.
+    """
+    try:
+        summary = await seed_from_csv(
+            session=session,
+            triggered_by=user.sub,
+            tenant_id=user.tenant_id,
+        )
+    except SeedValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "seed_validation_failed",
+                "code": "seed_validation_failed",
+                "details": {"errors": exc.errors},
+            },
+        ) from None
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from None
+    await session.commit()
+    return SeedSummaryResponse(
+        created=summary.created,
+        skipped=summary.skipped,
+        errors=summary.errors,
+    )
 
 
 @router.post("/{strategy_id}/reject", response_model=TaxStrategyDetail)
