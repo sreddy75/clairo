@@ -23,13 +23,13 @@ logger = logging.getLogger(__name__)
 # the existing calculator tests. Holds for every numeric comparison below.
 TOLERANCE_DOLLARS = Decimal("1")
 
-MAX_TOKENS = 4000
+MAX_TOKENS = 8000
 
 
 class ReviewerAgent:
     """Quality-reviews the analysis pipeline output."""
 
-    def __init__(self, api_key: str, model: str = "claude-sonnet-4-20250514") -> None:
+    def __init__(self, api_key: str, model: str = "claude-sonnet-4-6") -> None:
         self.client = anthropic.AsyncAnthropic(api_key=api_key)
         self.model = model
 
@@ -87,11 +87,11 @@ class ReviewerAgent:
 - combined_strategy.total_tax_saving: ${combined_strategy.get('total_tax_saving', 0):,.2f}
 - These two figures should match. If the documents show a different total, flag it.
 
-## Accountant Brief (first 2000 chars)
-{accountant_brief[:2000]}
+## Accountant Brief (first 4000 chars — may be truncated for length; do not flag incompleteness due to truncation)
+{accountant_brief[:4000]}
 
-## Client Summary (first 1000 chars)
-{client_summary[:1000]}
+## Client Summary (first 2000 chars — may be truncated for length; do not flag incompleteness due to truncation)
+{client_summary[:2000]}
 
 ## Pre-check: Calculator Number Verification
 {json.dumps(number_issues) if number_issues else "All numbers verified — no discrepancies found."}
@@ -132,7 +132,7 @@ Review everything and output your findings as a JSON object."""
         else:
             review_result.setdefault("numbers_verified", True)
 
-        passed = review_result.get("overall_passed", True) and not disagreements
+        passed = review_result.get("overall_passed", False) and not disagreements
 
         logger.info(
             "Reviewer: passed=%s, number_issues=%d, disagreements=%d",

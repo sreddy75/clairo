@@ -21,13 +21,13 @@ from app.modules.tax_planning.tax_calculator import calculate_tax_position
 
 logger = logging.getLogger(__name__)
 
-MAX_TOKENS = 8000
+MAX_TOKENS = 32000
 
 
 class ScenarioModellerAgent:
     """Models tax strategies with real calculator numbers via tool-use."""
 
-    def __init__(self, api_key: str, model: str = "claude-sonnet-4-20250514") -> None:
+    def __init__(self, api_key: str, model: str = "claude-sonnet-4-6") -> None:
         self.client = anthropic.AsyncAnthropic(api_key=api_key)
         self.model = model
 
@@ -67,8 +67,8 @@ tool for EVERY strategy to get exact before/after numbers.
 ## Strategies to Model
 {strategies_text}
 
-Model each strategy individually, then model the BEST COMBINATION of compatible strategies.
-For each, call calculate_tax_position with the modified financials."""
+Model each strategy individually. Call calculate_tax_position ONCE per strategy.
+Do NOT make an extra call for a combined/package/optimal scenario — the system sums the totals."""
 
         messages: list[dict[str, Any]] = [{"role": "user", "content": user_prompt}]
         scenarios: list[dict[str, Any]] = []
@@ -112,16 +112,33 @@ For each, call calculate_tax_position with the modified financials."""
                 tools=[CALCULATE_TAX_TOOL],
             )
 
-        # Build combined strategy from scenarios
-        combined = self._build_combined_strategy(scenarios)
+        # Strip meta-scenarios before storing or summing — they double-count
+        # because their savings already include the individual strategies.
+        _META_KEYWORDS = ("combination", "package", "combined", "optimal strategy", "best strategy")
+        real_scenarios = [
+            s for s in scenarios
+            if not any(
+                kw in str(s.get("strategy_id", s.get("scenario_title", ""))).lower()
+                for kw in _META_KEYWORDS
+            )
+        ]
+        if len(real_scenarios) < len(scenarios):
+            logger.info(
+                "Modeller: stripped %d meta-scenario(s): %s",
+                len(scenarios) - len(real_scenarios),
+                [s.get("scenario_title") for s in scenarios if s not in real_scenarios],
+            )
+
+        combined = self._build_combined_strategy(real_scenarios)
 
         logger.info(
-            "Modeller: produced %d scenarios, combined saving=$%s",
+            "Modeller: produced %d scenarios (from %d tool calls), combined saving=$%s",
+            len(real_scenarios),
             len(scenarios),
             f"{combined.get('total_tax_saving', 0):,.0f}",
         )
 
-        return scenarios, combined
+        return real_scenarios, combined
 
     def _execute_tool(
         self,
@@ -176,27 +193,8 @@ For each, call calculate_tax_position with the modified financials."""
             + modified_financials["expenses"]["operating_expenses"]
         )
 
-        base_position = calculate_tax_position(
-            entity_type=entity_type,
-            financials_data=base_financials,
-            rate_configs=rate_configs,
-        )
-
-        modified_position = calculate_tax_position(
-            entity_type=entity_type,
-            financials_data=modified_financials,
-            rate_configs=rate_configs,
-        )
-
-        tax_saving = round(base_position["total_tax_payable"] - modified_position["total_tax_payable"], 2)
-        expense_increase = modified_financials["expenses"]["total_expenses"] - base_financials.get(
-            "expenses", {}
-        ).get("total_expenses", 0)
-        cash_flow_impact = round(tax_saving - max(0, expense_increase), 2)
-
-        # Spec 059 FR-017 — coerce strategy_category to the closed enum and
-        # compute requires_group_model in code. Invalid or missing LLM output
-        # falls back to OTHER rather than breaking persistence.
+        # Coerce strategy_category before deciding requires_group_model so the
+        # group-model gate below uses the validated value, not raw LLM output.
         raw_category = tool_input.get("strategy_category")
         try:
             category = StrategyCategory(raw_category) if raw_category else StrategyCategory.OTHER
@@ -207,6 +205,30 @@ For each, call calculate_tax_position with the modified financials."""
             )
             category = StrategyCategory.OTHER
         needs_group_model = requires_group_model(category)
+
+        base_position = calculate_tax_position(
+            entity_type=entity_type,
+            financials_data=base_financials,
+            rate_configs=rate_configs,
+        )
+
+        # F-02: group-model strategies cannot be quantified on a single-entity
+        # basis — force modified_position == base_position in code so the
+        # tax_saving is always exactly $0 regardless of what the LLM passed.
+        if needs_group_model:
+            modified_position = base_position
+        else:
+            modified_position = calculate_tax_position(
+                entity_type=entity_type,
+                financials_data=modified_financials,
+                rate_configs=rate_configs,
+            )
+
+        tax_saving = round(base_position["total_tax_payable"] - modified_position["total_tax_payable"], 2)
+        expense_increase = modified_financials["expenses"]["total_expenses"] - base_financials.get(
+            "expenses", {}
+        ).get("total_expenses", 0)
+        cash_flow_impact = round(tax_saving - max(0, expense_increase), 2)
 
         # Spec 059 FR-011..FR-016 — provenance tags on every numeric leaf.
         # `before.*` is derived from the accountant's confirmed financials via
@@ -244,7 +266,7 @@ For each, call calculate_tax_position with the modified financials."""
                 },
             },
             "cash_flow_impact": cash_flow_impact,
-            "risk_rating": tool_input.get("risk_rating", "moderate"),
+            "risk_rating": tool_input.get("risk_rating", "moderate") if tool_input.get("risk_rating") in {"conservative", "moderate", "aggressive"} else "moderate",
             "compliance_notes": tool_input.get("compliance_notes", ""),
             "strategy_id": tool_input.get("scenario_title", "").lower().replace(" ", "-"),
             "strategy_category": category.value,
@@ -278,7 +300,11 @@ For each, call calculate_tax_position with the modified financials."""
             return any(kw in label for kw in _META_KEYWORDS)
 
         real_scenarios = [s for s in scenarios if not _is_meta_scenario(s)]
-        included = [s for s in real_scenarios if not s.get("requires_group_model")]
+        included = [
+            s for s in real_scenarios
+            if not s.get("requires_group_model")
+            and (s.get("impact") or s.get("impact_data") or {}).get("change", {}).get("tax_saving", 0) > 0
+        ]
         excluded_count = len(real_scenarios) - len(included)
 
         total_saving = sum(

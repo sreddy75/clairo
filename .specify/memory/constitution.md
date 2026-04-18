@@ -389,6 +389,8 @@ class ErrorResponse(BaseModel):
 - Human-in-the-loop for all suggestions
 - Confidence scoring on AI outputs
 - Never give tax advice - provide information only
+- **Prompts enforce nothing — code enforces everything.** For any rule that must hold deterministically (correct totals, enum values, field stripping, float rounding), implement it in post-processing code. Prompt instructions guide the LLM toward the right output but cannot be relied on as a guarantee — the model will find a way around them. Pattern: LLM generates → code validates/transforms → result stored. Never store raw LLM output for a field that has a known correct value derivable from inputs.
+- **Code-generate the deterministic parts; LLM-generate only the narrative.** Where a document or response has sections with exact calculated values (totals, counts, dates), generate those sections in code and prepend/inject them. Use the LLM only for prose, compliance references, and qualitative analysis where it genuinely adds value. This prevents number inconsistencies between what the calculator computed and what the LLM writes.
 
 ---
 

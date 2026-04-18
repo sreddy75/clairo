@@ -14,13 +14,13 @@ from app.modules.tax_planning.agents.prompts import SCANNER_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
-MAX_TOKENS = 8000
+MAX_TOKENS = 16000
 
 
 class StrategyScannerAgent:
     """Scans and evaluates applicable tax strategies."""
 
-    def __init__(self, api_key: str, model: str = "claude-sonnet-4-20250514") -> None:
+    def __init__(self, api_key: str, model: str = "claude-sonnet-4-6") -> None:
         self.client = anthropic.AsyncAnthropic(api_key=api_key)
         self.model = model
 

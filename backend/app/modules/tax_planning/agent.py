@@ -20,12 +20,13 @@ from app.modules.tax_planning.prompts import (
     format_reference_material,
     format_scenario_history,
 )
+from app.modules.tax_planning.strategy_category import StrategyCategory, requires_group_model
 from app.modules.tax_planning.tax_calculator import calculate_tax_position
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "claude-sonnet-4-20250514"
-MAX_TOKENS = 12000
+DEFAULT_MODEL = "claude-sonnet-4-6"
+MAX_TOKENS = 16000
 
 
 @dataclass
@@ -313,6 +314,18 @@ class TaxPlanningAgent:
             + modified_financials["expenses"]["operating_expenses"]
         )
 
+        # Coerce strategy_category before deciding requires_group_model
+        raw_category = tool_input.get("strategy_category")
+        try:
+            category = StrategyCategory(raw_category) if raw_category else StrategyCategory.OTHER
+        except ValueError:
+            logger.warning(
+                "Chat agent emitted invalid strategy_category %r; falling back to OTHER",
+                raw_category,
+            )
+            category = StrategyCategory.OTHER
+        needs_group_model = requires_group_model(category)
+
         # Calculate base and modified positions
         base_position = calculate_tax_position(
             entity_type=entity_type,
@@ -320,11 +333,16 @@ class TaxPlanningAgent:
             rate_configs=rate_configs,
         )
 
-        modified_position = calculate_tax_position(
-            entity_type=entity_type,
-            financials_data=modified_financials,
-            rate_configs=rate_configs,
-        )
+        # F-02: group-model strategies cannot be quantified on a single-entity
+        # basis — force modified_position == base_position so tax_saving = $0.
+        if needs_group_model:
+            modified_position = base_position
+        else:
+            modified_position = calculate_tax_position(
+                entity_type=entity_type,
+                financials_data=modified_financials,
+                rate_configs=rate_configs,
+            )
 
         # Build impact data
         tax_saving = round(base_position["total_tax_payable"] - modified_position["total_tax_payable"], 2)
@@ -359,10 +377,11 @@ class TaxPlanningAgent:
                     "net_benefit": tax_saving,
                 },
             },
-            "risk_rating": tool_input.get("risk_rating", "moderate"),
+            "risk_rating": tool_input.get("risk_rating", "moderate") if tool_input.get("risk_rating") in {"conservative", "moderate", "aggressive"} else "moderate",
             "compliance_notes": tool_input.get("compliance_notes", ""),
             "cash_flow_impact": cash_flow_impact,
-            "strategy_category": tool_input.get("strategy_category", "other"),
+            "strategy_category": category.value,
+            "requires_group_model": needs_group_model,
             # Spec 059 FR-011 — before.* fields are derived from confirmed
             # financials; after.* / change.* / cash_flow_impact are estimated
             # because the AI specified the financial modifications.
