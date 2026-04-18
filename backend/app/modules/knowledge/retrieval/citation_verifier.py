@@ -497,6 +497,148 @@ class CitationVerifier:
         base["reason_code"] = reason_code.value
         return base
 
+    # -----------------------------------------------------------------
+    # Spec 060 — Tax strategy citations [CLR-XXX: Name]
+    # -----------------------------------------------------------------
+
+    # Single canonical citation form per spec 060 FR-020 clarification.
+    _CLR_PATTERN: re.Pattern[str] = re.compile(
+        r"\[CLR-(?P<num>\d{3,5}):\s*(?P<name>[^\]]+)\]"
+    )
+
+    # Name drift threshold per spec 060 clarification. Normalised Levenshtein
+    # distance (length-adjusted) ≥ this value flips a citation from verified
+    # to partially_verified when the identifier matches.
+    _NAME_DRIFT_THRESHOLD: float = 0.30
+
+    def extract_strategy_citations(self, text: str) -> list[dict]:
+        """Parse every ``[CLR-XXX: Name]`` occurrence in the text.
+
+        Does NOT resolve against retrieved strategies — that's what
+        verify_strategy_citations() does. This returns raw parse hits so
+        callers can also count / inspect them.
+
+        Returns:
+            List of dicts ``{strategy_id, name, span}`` in source order.
+        """
+        results: list[dict] = []
+        for match in self._CLR_PATTERN.finditer(text):
+            results.append(
+                {
+                    "strategy_id": f"CLR-{match.group('num')}",
+                    "name": match.group("name").strip(),
+                    "span": match.span(),
+                }
+            )
+        return results
+
+    def verify_strategy_citations(
+        self,
+        response_text: str,
+        retrieved_strategies: list[dict],
+    ) -> list[dict]:
+        """Classify each ``[CLR-XXX]`` citation against the retrieved set.
+
+        Classification (FR-020):
+        - verified: exact ``strategy_id`` match AND name drift < 0.30
+        - partially_verified: ``strategy_id`` match but name drift ≥ 0.30
+        - unverified: no ``strategy_id`` match
+
+        Args:
+            response_text: The LLM assistant message text.
+            retrieved_strategies: The set of strategies served to the LLM for
+                this response. Each item is a dict with at least
+                ``strategy_id`` and ``name``. Additional fields are preserved
+                in the output for UI hydration.
+
+        Returns:
+            One result dict per citation found in source order, each carrying
+            ``strategy_id``, ``cited_name``, ``status`` ∈
+            {verified, partially_verified, unverified}, ``name_drift`` (float,
+            None when no id match), and a reference to the matched strategy
+            dict (or None) under ``strategy``.
+        """
+        citations = self.extract_strategy_citations(response_text)
+        if not citations:
+            return []
+
+        by_id: dict[str, dict] = {
+            s["strategy_id"]: s for s in retrieved_strategies if s.get("strategy_id")
+        }
+
+        results: list[dict] = []
+        for citation in citations:
+            strategy_id = citation["strategy_id"]
+            cited_name = citation["name"]
+            match = by_id.get(strategy_id)
+
+            if match is None:
+                results.append(
+                    {
+                        "strategy_id": strategy_id,
+                        "cited_name": cited_name,
+                        "status": "unverified",
+                        "name_drift": None,
+                        "strategy": None,
+                        "span": citation["span"],
+                    }
+                )
+                continue
+
+            stored_name = (match.get("name") or "").strip()
+            drift = _normalised_levenshtein(cited_name, stored_name)
+            if drift < self._NAME_DRIFT_THRESHOLD:
+                status = "verified"
+            else:
+                status = "partially_verified"
+
+            results.append(
+                {
+                    "strategy_id": strategy_id,
+                    "cited_name": cited_name,
+                    "status": status,
+                    "name_drift": drift,
+                    "strategy": match,
+                    "span": citation["span"],
+                }
+            )
+
+        return results
+
+
+def _normalised_levenshtein(a: str, b: str) -> float:
+    """Length-normalised Levenshtein distance on lower-cased, whitespace-
+    collapsed strings. Returns a value in [0.0, 1.0].
+
+    0.0 means identical. 1.0 means completely different. Used for the
+    Spec-060 name-drift threshold.
+    """
+    norm_a = re.sub(r"\s+", " ", a.strip().lower())
+    norm_b = re.sub(r"\s+", " ", b.strip().lower())
+    if norm_a == norm_b:
+        return 0.0
+    if not norm_a or not norm_b:
+        return 1.0
+
+    # Classic dynamic-programming Levenshtein. Corpus is short (strategy
+    # names < 200 chars by FR-001), so an O(n*m) loop is fine.
+    len_a, len_b = len(norm_a), len(norm_b)
+    prev = list(range(len_b + 1))
+    curr = [0] * (len_b + 1)
+    for i in range(1, len_a + 1):
+        curr[0] = i
+        for j in range(1, len_b + 1):
+            cost = 0 if norm_a[i - 1] == norm_b[j - 1] else 1
+            curr[j] = min(
+                prev[j] + 1,  # deletion
+                curr[j - 1] + 1,  # insertion
+                prev[j - 1] + cost,  # substitution
+            )
+        prev, curr = curr, prev
+    distance = prev[len_b]
+    max_len = max(len_a, len_b)
+    return distance / max_len if max_len else 0.0
+
 
 @dataclass
 class _MatchResult:

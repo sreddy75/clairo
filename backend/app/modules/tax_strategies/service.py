@@ -17,8 +17,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import AuditService
 from app.modules.tax_strategies import audit_events as events
-from app.modules.tax_strategies.exceptions import InvalidStatusTransitionError
-from app.modules.tax_strategies.models import TaxStrategy
+from app.modules.tax_strategies.exceptions import (
+    InvalidStatusTransitionError,
+    StrategyNotFoundError,
+)
+from app.modules.tax_strategies.models import TaxStrategy, TaxStrategyAuthoringJob
 from app.modules.tax_strategies.repository import TaxStrategyRepository
 
 logger = logging.getLogger(__name__)
@@ -179,3 +182,154 @@ class TaxStrategyService:
             new_status,
         )
         return strategy
+
+    # -----------------------------------------------------------------
+    # Stage triggers (T029)
+    # -----------------------------------------------------------------
+    # research/draft/enrich queue Celery tasks; submit/approve/reject
+    # apply transitions synchronously. approve_and_publish transitions
+    # to 'approved' and then queues the publish task — the publish
+    # task itself performs the approved → published transition on
+    # success.
+
+    async def trigger_stage(
+        self,
+        strategy_id: str,
+        stage: str,
+        actor_clerk_user_id: str,
+    ) -> TaxStrategyAuthoringJob:
+        """Queue a Celery task for the given pipeline stage.
+
+        stage ∈ {'research', 'draft', 'enrich', 'publish'}. The corresponding
+        async status transition is the task's responsibility — this method
+        only creates the job row and dispatches the task.
+        """
+        strategy = await self._load_strategy(strategy_id)
+        self._validate_stage_precondition(strategy.status, stage)
+
+        job = await self.repo.create_job(
+            strategy_id=strategy_id,
+            stage=stage,
+            triggered_by=actor_clerk_user_id,
+            input_payload={"version": strategy.version},
+        )
+        _dispatch_stage_task(stage, strategy_id, actor_clerk_user_id)
+        return job
+
+    async def submit_for_review(
+        self,
+        strategy_id: str,
+        actor_clerk_user_id: str,
+        actor_user_id: UUID | None = None,
+        tenant_id: UUID | None = None,
+    ) -> TaxStrategy:
+        """Transition enriched → in_review."""
+        strategy = await self._load_strategy(strategy_id)
+        return await self._transition_status(
+            strategy,
+            new_status="in_review",
+            actor_clerk_user_id=actor_clerk_user_id,
+            actor_user_id=actor_user_id,
+            tenant_id=tenant_id,
+        )
+
+    async def approve(
+        self,
+        strategy_id: str,
+        actor_clerk_user_id: str,
+        reviewer_display_name: str,
+        actor_user_id: UUID | None = None,
+        tenant_id: UUID | None = None,
+    ) -> tuple[TaxStrategy, TaxStrategyAuthoringJob]:
+        """Transition in_review → approved and queue the publish task.
+
+        Returns the updated strategy and the queued authoring job row.
+        """
+        strategy = await self._load_strategy(strategy_id)
+        strategy = await self._transition_status(
+            strategy,
+            new_status="approved",
+            actor_clerk_user_id=actor_clerk_user_id,
+            actor_user_id=actor_user_id,
+            tenant_id=tenant_id,
+            reviewer_display_name=reviewer_display_name,
+        )
+        job = await self.repo.create_job(
+            strategy_id=strategy_id,
+            stage="publish",
+            triggered_by=actor_clerk_user_id,
+            input_payload={"version": strategy.version},
+        )
+        _dispatch_stage_task("publish", strategy_id, actor_clerk_user_id)
+        return strategy, job
+
+    async def reject(
+        self,
+        strategy_id: str,
+        actor_clerk_user_id: str,
+        reviewer_notes: str,
+        actor_user_id: UUID | None = None,
+        tenant_id: UUID | None = None,
+    ) -> TaxStrategy:
+        """Transition in_review → drafted (with reviewer notes)."""
+        strategy = await self._load_strategy(strategy_id)
+        return await self._transition_status(
+            strategy,
+            new_status="drafted",
+            actor_clerk_user_id=actor_clerk_user_id,
+            actor_user_id=actor_user_id,
+            tenant_id=tenant_id,
+            extra_metadata={"reviewer_notes": reviewer_notes},
+        )
+
+    async def _load_strategy(self, strategy_id: str) -> TaxStrategy:
+        strategy = await self.repo.get_live_version(strategy_id)
+        if strategy is None:
+            raise StrategyNotFoundError(strategy_id)
+        return strategy
+
+    @staticmethod
+    def _validate_stage_precondition(current_status: str, stage: str) -> None:
+        """Reject stage triggers when the current status doesn't allow them."""
+        allowed: dict[str, frozenset[str]] = {
+            "research": frozenset({"stub", "enriched", "drafted"}),
+            "draft": frozenset({"researching", "enriched"}),
+            "enrich": frozenset({"drafted"}),
+            "publish": frozenset({"approved"}),
+        }
+        expected = allowed.get(stage)
+        if expected is None:
+            raise ValueError(f"Unknown stage {stage!r}")
+        if current_status not in expected:
+            # Uses the transition-error type so API layer can 409 consistently
+            # even though this isn't a direct status write.
+            raise InvalidStatusTransitionError(
+                strategy_id="(stage-precondition)",
+                from_status=current_status,
+                to_status=f"stage:{stage}",
+            )
+
+
+def _dispatch_stage_task(
+    stage: str, strategy_id: str, actor_clerk_user_id: str
+) -> None:
+    """Queue the Celery task for the given stage.
+
+    Import locally to avoid a circular dependency (tasks module imports
+    service indirectly via models.py registration).
+    """
+    from app.tasks.tax_strategy_authoring import (
+        draft_strategy,
+        enrich_strategy,
+        publish_strategy,
+        research_strategy,
+    )
+
+    dispatch_map = {
+        "research": research_strategy,
+        "draft": draft_strategy,
+        "enrich": enrich_strategy,
+        "publish": publish_strategy,
+    }
+    task = dispatch_map[stage]
+    task.apply_async(args=[strategy_id, actor_clerk_user_id])
