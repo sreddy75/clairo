@@ -1683,6 +1683,18 @@ class TaxPlanningService:
             content_blocks=attachment.content_blocks if attachment else None,
         )
 
+        # Spec 060 T064b: normalise near-miss CLR citation forms before
+        # verifying. Prevents LLM markup drift (bare CLR-XXX, (CLR-XXX),
+        # [CLR-XXX] no-name) from degrading chip coverage when the
+        # identifier does resolve to a retrieved strategy.
+        from app.modules.tax_strategies.markup import normalise_strategy_citations
+
+        normalised_content = normalise_strategy_citations(
+            response.content, retrieved_strategies
+        )
+        if normalised_content != response.content:
+            response.content = normalised_content
+
         # Citation verification
         citation_verification = self._build_citation_verification(
             response.content,
@@ -1975,6 +1987,16 @@ class TaxPlanningService:
             # closed the stream on `done` silently dropped the badge. We now
             # intercept `done`, emit verification first, then emit `done`.
             if event["type"] == "done":
+                # Spec 060 T064b: normalise near-miss CLR citation forms
+                # before verifying (streaming path — mirrors non-streaming).
+                from app.modules.tax_strategies.markup import (
+                    normalise_strategy_citations,
+                )
+
+                full_content = normalise_strategy_citations(
+                    full_content, retrieved_strategies
+                )
+
                 citation_verification = self._build_citation_verification(
                     full_content,
                     retrieved_chunks,
