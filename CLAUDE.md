@@ -85,6 +85,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - N/A — no schema changes. The only persisted outputs (`TaxPlanAnalysis.recommended_scenarios`, `TaxPlanAnalysis.combined_strategy`) retain their existing shape. (059-2-tax-planning-correctness-followup)
 - Python 3.12+ (backend only) + `PyYAML` (already in the backend stack for config; confirm during implementation), existing `CitationVerifier` module, existing `SECTION_REF_PATTERN` / `RULING_REF_PATTERN` / `NUMBERED_CITATION_PATTERN` regexes in `backend/app/modules/knowledge/chunkers/base.py` (061-citation-validation)
 - N/A — no DB schema changes. New authoritative mapping lives as a source-controlled YAML file under `backend/app/modules/knowledge/data/section_act_mapping.yaml` (directory does not exist today; will be created). (061-citation-validation)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 App Router + React 18 (frontend) + FastAPI, SQLAlchemy 2.0 async, Pydantic v2, Alembic, Celery + Redis, Anthropic SDK (Claude Sonnet for research/draft/enrich tasks), Voyage 3.5 lite via `VoyageService` (embeddings), Pinecone via `PineconeService`, shadcn/ui (Sheet, Dialog, Table, Badge) (060-tax-strategies-kb)
+- PostgreSQL 16 — 2 new tables (`tax_strategies`, `tax_strategy_authoring_jobs`); 2 new nullable columns on existing `content_chunks` (`tax_strategy_id` FK, `chunk_section`, `context_header`); 1 new Pinecone namespace (`tax_strategies`, shared); 1 new in-repo CSV fixture (`backend/app/modules/tax_strategies/data/strategy_seed.csv`, 415 rows) (060-tax-strategies-kb)
 
 ## Recent Changes
 - 049-xero-taxcode-sync: Xero write-back, multi-round client send-back, portal IDK validation, agent notes

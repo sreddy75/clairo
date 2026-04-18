@@ -195,10 +195,26 @@ class KnowledgeService:
             logger.exception("Query expansion failed; using original query only")
             query_variants = [query]
 
-        # Step 3: Merge request-level filters into the router's Pinecone filter
+        # Step 3: Merge request-level filters into the router's Pinecone filter.
+        # Spec 060: also build an "eligibility-stripped" variant of the filter
+        # for the fallback path (FR-017) — if the structured pre-filter would
+        # return zero candidates, we retry without those constraints.
         pinecone_filter = self._merge_request_filters(
             classification.pinecone_filter, request.filters
         )
+        pinecone_filter_without_eligibility = self._merge_request_filters(
+            classification.pinecone_filter,
+            request.filters,
+            include_structured_eligibility=False,
+        )
+        has_eligibility_clauses = (
+            pinecone_filter != pinecone_filter_without_eligibility
+        )
+
+        # Step 3a: Resolve namespaces. Spec 060 opt-in; None preserves the
+        # legacy default (compliance_knowledge only) so existing callers are
+        # unaffected (SC-004).
+        search_namespaces = request.namespaces
 
         # Determine fusion weights from classification
         semantic_weight, _keyword_weight = classification.fusion_weights
@@ -213,10 +229,33 @@ class KnowledgeService:
                     limit=30,
                     semantic_weight=semantic_weight,
                     pinecone_filter=pinecone_filter,
+                    namespaces=search_namespaces,
                 )
                 all_results.extend(variant_results)
             except Exception:
                 logger.exception("Hybrid search failed for variant: %s", variant[:80])
+
+        # Spec 060 FR-017: If the structured eligibility pre-filter excluded
+        # every candidate, retry the first variant with the stripped filter.
+        # Keeps retrieval useful on sparsely-tagged strategies rather than
+        # returning empty when the client's profile is too narrow.
+        if not all_results and has_eligibility_clauses and query_variants:
+            logger.info(
+                "retrieval.fallback.unfiltered: structured eligibility filter "
+                "returned zero candidates; retrying without eligibility clauses"
+            )
+            try:
+                fallback_results = await self._hybrid_search.hybrid_search(
+                    query=query_variants[0],
+                    collection=_DEFAULT_COLLECTION,
+                    limit=30,
+                    semantic_weight=semantic_weight,
+                    pinecone_filter=pinecone_filter_without_eligibility,
+                    namespaces=search_namespaces,
+                )
+                all_results.extend(fallback_results)
+            except Exception:
+                logger.exception("Fallback hybrid search failed")
 
         # Step 5: Merge results from multiple variants using RRF-style dedup
         if len(query_variants) > 1 and all_results:
@@ -551,6 +590,8 @@ class KnowledgeService:
     def _merge_request_filters(
         base_filter: dict[str, Any] | None,
         request_filters: KnowledgeSearchFilters | None,
+        *,
+        include_structured_eligibility: bool = True,
     ) -> dict[str, Any] | None:
         """Merge router-produced Pinecone filter with request-level filters.
 
@@ -562,6 +603,9 @@ class KnowledgeService:
             base_filter: Pinecone metadata filter from the query router,
                 or ``None``.
             request_filters: User-specified search filters, or ``None``.
+            include_structured_eligibility: When False, the Spec-060
+                structured-eligibility clauses (income/turnover/age/industry,
+                tenant union) are omitted. Used by the FR-017 fallback path.
 
         Returns:
             Merged Pinecone metadata filter dict, or ``None`` if no
@@ -589,6 +633,95 @@ class KnowledgeService:
         # Entity type filter
         if request_filters.entity_types:
             additional_conditions.append({"entity_types": {"$in": request_filters.entity_types}})
+
+        # -----------------------------------------------------------------
+        # Spec 060 — structured eligibility pre-filter for tax_strategies
+        # -----------------------------------------------------------------
+        if include_structured_eligibility:
+            # Tenant scoping: strategy applies when tenant_id is in the set
+            # {platform, current_tenant}. Always includes platform baseline.
+            if request_filters.tenant_id:
+                additional_conditions.append(
+                    {
+                        "tenant_id": {
+                            "$in": ["platform", request_filters.tenant_id],
+                        }
+                    }
+                )
+
+            # Income band inclusion: strategy included when
+            #   income_band_min <= v <= income_band_max
+            # Null bounds on the strategy = unbounded on that side.
+            # Pinecone does not have $exists combined with $lte; instead we
+            # rely on absent-field match (Pinecone treats missing metadata as
+            # not matching numeric comparators). To include strategies with
+            # no lower bound, we use $or with a sentinel numeric minimum.
+            if request_filters.income_band is not None:
+                additional_conditions.append(
+                    {
+                        "$or": [
+                            {"income_band_min": {"$lte": request_filters.income_band}},
+                            {"income_band_min": {"$exists": False}},
+                        ]
+                    }
+                )
+                additional_conditions.append(
+                    {
+                        "$or": [
+                            {"income_band_max": {"$gte": request_filters.income_band}},
+                            {"income_band_max": {"$exists": False}},
+                        ]
+                    }
+                )
+
+            if request_filters.turnover_band is not None:
+                additional_conditions.append(
+                    {
+                        "$or": [
+                            {
+                                "turnover_band_min": {
+                                    "$lte": request_filters.turnover_band
+                                }
+                            },
+                            {"turnover_band_min": {"$exists": False}},
+                        ]
+                    }
+                )
+                additional_conditions.append(
+                    {
+                        "$or": [
+                            {
+                                "turnover_band_max": {
+                                    "$gte": request_filters.turnover_band
+                                }
+                            },
+                            {"turnover_band_max": {"$exists": False}},
+                        ]
+                    }
+                )
+
+            if request_filters.age is not None:
+                additional_conditions.append(
+                    {
+                        "$or": [
+                            {"age_min": {"$lte": request_filters.age}},
+                            {"age_min": {"$exists": False}},
+                        ]
+                    }
+                )
+                additional_conditions.append(
+                    {
+                        "$or": [
+                            {"age_max": {"$gte": request_filters.age}},
+                            {"age_max": {"$exists": False}},
+                        ]
+                    }
+                )
+
+            if request_filters.industry_codes:
+                additional_conditions.append(
+                    {"industry_triggers": {"$in": request_filters.industry_codes}}
+                )
 
         if not additional_conditions:
             return base_filter
@@ -649,6 +782,11 @@ class KnowledgeService:
                 is_superseded=payload.get("is_superseded", False),
                 relevance_score=round(chunk.score, 4),
                 content_type=payload.get("content_type"),
+                # Spec 060: populate strategy-chunk fields when present.
+                tax_strategy_id=payload.get("strategy_id"),
+                strategy_name=payload.get("name"),
+                categories=payload.get("categories"),
+                chunk_section=payload.get("chunk_section"),
             )
             results.append(result.model_dump())
 

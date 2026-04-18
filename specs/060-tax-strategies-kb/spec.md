@@ -17,6 +17,18 @@ The governing design constraint: **vectors are seeded once in production and sha
 
 ---
 
+## Clarifications
+
+### Session 2026-04-18
+
+- Q: What inline markup form should the AI emit for strategy citations, so the CitationVerifier, LLM system prompt, and frontend tokenizer all agree? → A: `[CLR-XXX: Name]` — square-bracket enclosed, colon-separated identifier + human-readable name.
+- Q: What threshold flips a citation from verified to partially verified when the identifier matches but the cited name has drifted? → A: Normalized Levenshtein distance ≥ 0.30 between cited name and stored name (both lower-cased, whitespace-collapsed).
+- Q: How does the publish code determine whether the current environment is authorised to write to the shared vector store? → A: Dedicated env flag `TAX_STRATEGIES_VECTOR_WRITE_ENABLED` (default false); set true only in the production deployment; publish refuses vector write and fails the job when unset.
+- Q: In Phase 1, with the admin detail view otherwise read-only, how does a super-admin drive a strategy through submit-for-review, approve, and publish? → A: Interactive action buttons (submit-for-review, approve, publish, reject) are in scope for Phase 1 even though field editing is deferred to Phase 2; the approve action captures reviewer identity for FR-006.
+- Q: What format does the bulk seed action consume for the 415-strategy catalogue? → A: A committed in-repo CSV fixture at `backend/app/modules/tax_strategies/data/strategy_seed.csv` with columns `strategy_id,name,categories,source_ref` (categories pipe-separated for multi-tag; `source_ref` is internal-only per FR-008).
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 — One strategy end-to-end (Priority: P1)
@@ -121,7 +133,7 @@ A super-admin runs a one-time seeding action that imports the 415-strategy catal
 - **FR-009**: The system MUST provide an authoring pipeline with four background stages — research, draft, enrich, publish — each independently invocable by a super-admin on a given strategy.
 - **FR-010**: The system MUST record every pipeline stage execution as a job with status (pending, running, succeeded, failed), timestamps, input payload, output payload, and error detail on failure.
 - **FR-011**: The system MUST mark a strategy as inconsistent (status remains "approved" with a failed publish job) rather than "published" if any step of the publish sequence fails partway through; retries MUST be safe and idempotent.
-- **FR-012**: The system MUST provide a bulk seeding action that creates stub records for the full 415-strategy catalogue from the source blueprint, assigning Clairo identifiers sequentially and populating name, categories, and the internal-only source reference; the action MUST be idempotent and refuse to create duplicates on re-run.
+- **FR-012**: The system MUST provide a bulk seeding action that creates stub records for the full 415-strategy catalogue from a committed in-repo CSV fixture at `backend/app/modules/tax_strategies/data/strategy_seed.csv` (columns: `strategy_id`, `name`, `categories` as pipe-separated list, `source_ref`), assigning Clairo identifiers as provided in the fixture and populating name, categories, and the internal-only source reference; the action MUST be idempotent and refuse to create duplicates on re-run.
 
 #### Retrieval & citation
 
@@ -132,7 +144,7 @@ A super-admin runs a one-time seeding action that imports the 415-strategy catal
 - **FR-017**: The system MUST support structured pre-filtering of candidate strategies by client eligibility axes — entity type, income band, turnover band, age, industry — before semantic ranking. If the filter would return no candidates, retrieval MUST fall back to unfiltered semantic search.
 - **FR-018**: Retrieval MUST deduplicate candidates by parent strategy (a single strategy appearing via both its implementation and explanation chunks counts once) and return reranked results scored against the full parent content.
 - **FR-019**: Retrieval MUST exclude strategies in superseded or archived status.
-- **FR-020**: The system MUST recognise strategy citations in generated responses using an unambiguous inline markup referencing the Clairo identifier and strategy name, and classify each citation as verified (exact identifier match against retrieved set), partially verified (identifier match but name drift beyond a defined threshold), or unverified (no matching retrieved strategy).
+- **FR-020**: The system MUST recognise strategy citations in generated responses using the inline markup `[CLR-XXX: Name]` (square brackets, Clairo identifier, colon, strategy name), and classify each citation as verified (exact identifier match against retrieved set), partially verified (identifier match but normalized Levenshtein distance ≥ 0.30 between cited name and stored name, both lower-cased and whitespace-collapsed), or unverified (no matching retrieved strategy). This is the single canonical form the AI emits, the CitationVerifier parses, and the frontend tokenizer matches.
 - **FR-021**: The message-level citation summary MUST reflect the combined verification state of all strategy citations in the response, alongside existing section-reference and ruling-number verification counts.
 - **FR-022**: The tax planning chat UI MUST render each strategy citation as an inline clickable chip whose colour reflects verification state, and whose activation opens a detail panel showing the full strategy content and source references without requiring the full content to be embedded in the chat message itself.
 
@@ -146,7 +158,7 @@ A super-admin runs a one-time seeding action that imports the 415-strategy catal
 #### Environment & cost constraints
 
 - **FR-027**: The system MUST treat the strategies vector store as a single shared resource across all environments. The publish action MUST NOT re-embed or re-upsert a vector for a strategy whose identifier and version already exist in the shared vector store.
-- **FR-028**: The publish action MUST be gated such that vector-store writes occur only in the designated source-of-truth environment (production), while parent-record and chunk-record writes to the relational store may occur in any environment.
+- **FR-028**: The publish action MUST be gated on a dedicated environment flag `TAX_STRATEGIES_VECTOR_WRITE_ENABLED` (default false). Vector-store writes MUST proceed only when the flag is true; the flag is set true only in the production deployment. Parent-record and chunk-record writes to the relational store may occur in any environment. If a publish job runs in an environment where the flag is false, the job MUST refuse the vector write and mark itself failed with a clear error (leaving the strategy in `approved` status per FR-011), rather than silently skipping.
 - **FR-029**: Non-production environments MUST be able to read from the shared vector store for retrieval without requiring local vector writes.
 - **FR-030**: A local / developer test path MUST exist that exercises the full pipeline against a small fixture set (3–5 strategies) without touching the production catalogue.
 
@@ -212,7 +224,7 @@ A super-admin runs a one-time seeding action that imports the 415-strategy catal
 ## Assumptions
 
 - **Content authoring out of scope**: Actual writing of strategy prose, research of ATO primary sources, and reviewer approval work are Phase 2 deliverables. Phase 1 ships with 415 stubs and at most a handful of fully-authored fixtures used to prove the pipeline.
-- **Edit in admin detail view is read-only in Phase 1**: Full editing ships in Phase 2 when content authoring begins. Phase 1 demonstrates the pipeline using seeded/fixture content; no interactive field editing is required in the admin detail view.
+- **Edit in admin detail view is read-only in Phase 1**: Full *field editing* (markdown editors for implementation/explanation, form controls for eligibility metadata, etc.) ships in Phase 2 when content authoring begins. Phase 1 demonstrates the pipeline using seeded/fixture content. However, *pipeline action controls* — submit-for-review, approve, publish, reject, plus the stage-trigger buttons (research, draft, enrich) — are in scope for Phase 1 so the one-strategy-end-to-end exit criterion can be met and FR-006 reviewer identity can be captured at approval.
 - **Tenant overlays deferred**: Per-tenant private strategy overlays are Phase 3. Phase 1 ships with all strategies scoped to the platform baseline; the tenancy field and filter are in place but only one value is exercised.
 - **Review is manual and serial in Phase 1**: No batch-approve, no automated review-signal integration. Reviewer opens a strategy, decides, acts.
 - **Gold-set construction and retrieval tuning are Phase 2**: Recall / precision thresholds from the architecture validation plan (e.g. recall ≥ 90% @ top-5) are evaluated in Phase 2 against a gold-set built with the reviewer. Phase 1 success is structural, not quantitative-quality.
@@ -228,7 +240,7 @@ A super-admin runs a one-time seeding action that imports the 415-strategy catal
 - **Existing knowledge module**: Phase 1 extends the existing vector store, hybrid retrieval, citation verifier, and admin knowledge UI. All four must remain in their current stable state during the build.
 - **Existing tax planning retrieval hook**: The tax planning module's single integration point for knowledge retrieval is extended to opt into the new namespace. No other tax planning call sites are affected.
 - **Shared vector store access**: Non-production environments require read access to the production vector namespace. Production credentials are scoped accordingly; writes from non-production environments are forbidden by the publish action's environment gate.
-- **Blueprint coverage list**: A stable, versioned form of the 415-strategy index (name + category assignments + internal source reference) is needed to drive the bulk seed action. Stored under `/Users/suren/KR8IT/projects/Personal/Clairo docs/Tax Fitness Strategy/`.
+- **Blueprint coverage list**: A stable, versioned form of the 415-strategy index (identifier + name + category assignments + internal source reference) is needed to drive the bulk seed action. The list is committed in-repo at `backend/app/modules/tax_strategies/data/strategy_seed.csv` — derived once from the external reference material at `/Users/suren/KR8IT/projects/Personal/Clairo docs/Tax Fitness Strategy/` and thereafter owned by the repo. The external reference is not consulted at seed time.
 - **Reviewer arrangement**: Phase 2 depends on the paid reviewer arrangement being in place; Phase 1 does not depend on it. (Phase 1's "approved" action can be exercised by any super-admin for pipeline demonstration purposes.)
 
 ---

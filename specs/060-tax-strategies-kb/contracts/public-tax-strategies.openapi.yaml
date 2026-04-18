@@ -1,0 +1,79 @@
+openapi: 3.1.0
+info:
+  title: Clairo — Public Tax Strategy Hydration API
+  version: 0.1.0
+  description: |
+    Non-admin endpoint used by the tax planning chat UI to hydrate a
+    `[CLR-XXX: Name]` chip's detail panel without embedding the full
+    content in the chat message.
+    Returns ONLY published, non-superseded, tenant-scoped strategies.
+    NEVER returns `source_ref` (FR-008).
+servers:
+  - url: /api/v1
+paths:
+  /tax-strategies/{strategy_id}/public:
+    get:
+      operationId: hydrateTaxStrategy
+      summary: Fetch a single published strategy by Clairo identifier.
+      parameters:
+        - in: path
+          name: strategy_id
+          required: true
+          schema: { type: string, pattern: "^CLR-\\d{3,5}$" }
+      responses:
+        "200":
+          description: Strategy content.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicTaxStrategy"
+        "404":
+          description: Strategy not found, not published, or not visible to this tenant.
+  /tax-strategies/public:
+    get:
+      operationId: hydrateTaxStrategies
+      summary: Batch hydration for chat-message citations.
+      parameters:
+        - in: query
+          name: ids
+          required: true
+          description: Comma-separated list of CLR-XXX identifiers (max 20).
+          schema:
+            type: string
+            pattern: "^CLR-\\d{3,5}(,CLR-\\d{3,5}){0,19}$"
+      responses:
+        "200":
+          description: Zero or more hydrated strategies.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/PublicTaxStrategy" }
+components:
+  schemas:
+    PublicTaxStrategy:
+      type: object
+      properties:
+        strategy_id: { type: string }
+        name: { type: string }
+        categories: { type: array, items: { type: string } }
+        implementation_text: { type: string }
+        explanation_text: { type: string }
+        ato_sources: { type: array, items: { type: string } }
+        case_refs: { type: array, items: { type: string } }
+        fy_applicable_from: { type: string, format: date, nullable: true }
+        fy_applicable_to: { type: string, format: date, nullable: true }
+        version: { type: integer }
+        is_platform: { type: boolean, description: "false → tenant overlay strategy" }
+      required:
+        - strategy_id
+        - name
+        - categories
+        - implementation_text
+        - explanation_text
+        - ato_sources
+        - version
+        - is_platform

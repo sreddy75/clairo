@@ -152,6 +152,16 @@ class ContentChunk(Base):
     natural_key: Mapped[str | None] = mapped_column(String(200))
     # Idempotency key: "legislation:s109D-ITAA1936", "ruling:TR2024-1"
 
+    # === Spec 060: Tax strategies linkage ===
+    # Nullable — existing rows stay NULL; populated only for tax_strategy chunks.
+    tax_strategy_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("tax_strategies.id", ondelete="CASCADE"), index=True
+    )
+    chunk_section: Mapped[str | None] = mapped_column(String(32))
+    # "implementation" | "explanation" | "header" (Phase 1 uses first two only)
+    context_header: Mapped[str | None] = mapped_column(String(300))
+    # Prefix prepended to chunk text; stored for debuggability.
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
