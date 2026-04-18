@@ -1,6 +1,6 @@
 # Spec 060 — Handoff
 
-**Status as of 2026-04-19**: Backend wire-complete for the citation pipeline + draft/enrich LLM tasks. Frontend chip layer shipped. Frontend admin shell shipped (Strategies tab + list + action-bar detail Sheet + TanStack hooks). Bulk content authoring not started. `48/77` tasks done (~62%).
+**Status as of 2026-04-19**: Backend wire-complete for the citation pipeline + draft/enrich LLM tasks. Frontend chip layer shipped. Frontend admin shell shipped (Strategies tab + list + action-bar detail Sheet + TanStack hooks + seed button + pipeline counts). Bulk content authoring (415-row CSV) not started. `50/77` tasks done (~65%).
 
 ---
 

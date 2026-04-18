@@ -10,6 +10,16 @@
 
 import { useState } from 'react';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,10 +32,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
 import type { StrategyStatus } from '@/lib/api/tax-strategies';
 import { cn } from '@/lib/utils';
 
-import { useStrategyList } from '../hooks/use-tax-strategies';
+import {
+  usePipelineStats,
+  useSeedFromCsv,
+  useStrategyList,
+} from '../hooks/use-tax-strategies';
 
 import { StrategyAdminDetailSheet } from './strategy-detail-sheet';
 
@@ -86,11 +101,34 @@ export function StrategiesTab() {
   );
   const [page, setPage] = useState(1);
   const [openStrategyId, setOpenStrategyId] = useState<string | null>(null);
+  const [seedConfirmOpen, setSeedConfirmOpen] = useState(false);
+  const { toast } = useToast();
 
   const query = useStrategyList({
     status: statusFilter === 'all' ? null : statusFilter,
     page,
     page_size: PAGE_SIZE,
+  });
+  const statsQuery = usePipelineStats();
+  const seed = useSeedFromCsv({
+    onSuccess: (summary) => {
+      setSeedConfirmOpen(false);
+      toast({
+        title: 'Seed complete',
+        description:
+          `Created ${summary.created}. Skipped ${summary.skipped}` +
+          (summary.errors.length > 0
+            ? ` · ${summary.errors.length} errors`
+            : '.'),
+      });
+    },
+    onError: (err) => {
+      toast({
+        title: 'Seed failed',
+        description: err.message,
+        variant: 'destructive',
+      });
+    },
   });
 
   const total = query.data?.meta.total ?? 0;
@@ -98,6 +136,24 @@ export function StrategiesTab() {
 
   return (
     <div className="space-y-4">
+      {/* Top bar: status counts + actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <StatusCounts
+          counts={statsQuery.data?.counts}
+          isLoading={statsQuery.isPending}
+        />
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setSeedConfirmOpen(true)}
+            disabled={seed.isPending}
+          >
+            {seed.isPending ? 'Seeding…' : 'Seed from CSV'}
+          </Button>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
         {STATUS_FILTERS.map((f) => {
@@ -236,6 +292,78 @@ export function StrategiesTab() {
           if (!next) setOpenStrategyId(null);
         }}
       />
+
+      <AlertDialog open={seedConfirmOpen} onOpenChange={setSeedConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Seed strategies from CSV?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Creates a stub row for every CLR-id in the bundled CSV that
+              isn&apos;t already in the database. Idempotent — re-running
+              does nothing for existing rows. Invalid rows abort the whole
+              run before any writes. This action is audited.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={seed.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={seed.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                seed.mutate();
+              }}
+            >
+              {seed.isPending ? 'Seeding…' : 'Run seed'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+// Status summary row ("Published 97 / In review 12 / ..."). Orders by the
+// lifecycle sequence rather than by count so the reader's eye can scan
+// for specific stages without re-learning the columns each render.
+const STATUS_COUNT_ORDER: StrategyStatus[] = [
+  'stub',
+  'researching',
+  'drafted',
+  'enriched',
+  'in_review',
+  'approved',
+  'published',
+  'superseded',
+  'archived',
+];
+
+function StatusCounts({
+  counts,
+  isLoading,
+}: {
+  counts: Record<StrategyStatus, number> | undefined;
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex flex-wrap gap-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-6 w-28" />
+        ))}
+      </div>
+    );
+  }
+  if (!counts) return <span className="text-sm text-muted-foreground">—</span>;
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+      {STATUS_COUNT_ORDER.filter((s) => (counts[s] ?? 0) > 0).map((s) => (
+        <span key={s}>
+          <span className="font-medium text-foreground">{counts[s] ?? 0}</span>{' '}
+          {s.replace('_', ' ')}
+        </span>
+      ))}
     </div>
   );
 }
