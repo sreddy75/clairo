@@ -46,7 +46,15 @@ from app.modules.integrations.xero import models as xero_models  # noqa: F401
 from app.modules.knowledge import models as knowledge_models  # noqa: F401
 from app.modules.notifications import models as notifications_models  # noqa: F401
 from app.modules.onboarding import models as onboarding_models  # noqa: F401
-from app.modules.portal import models as portal_models  # noqa: F401
+# Portal models are loaded via the contextlib.suppress block below. Importing
+# the portal package eagerly triggers portal/__init__.py which imports
+# portal.router. FastAPI's decorator evaluation at module-load fails under
+# pytest because inspect.signature(call, eval_str=True) resolves the function's
+# string annotations against a globals dict that (under pytest's collection
+# context) is missing PracticeUser — even though it's imported at the top of
+# router.py. The workaround is to defer portal model registration to the
+# suppressed block; SQLAlchemy still sees the classes via the standalone
+# submodule import, and router.py is never touched during test collection.
 from app.modules.quality import models as quality_models  # noqa: F401
 from app.modules.tax_planning import models as tax_planning_models  # noqa: F401
 from app.modules.triggers import models as triggers_models  # noqa: F401
