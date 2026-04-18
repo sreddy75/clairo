@@ -140,10 +140,10 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 
 #### Frontend — admin shell
 
-- [ ] T042 [US1] Add `"Strategies"` to the `TABS` array in `frontend/src/app/(protected)/admin/knowledge/page.tsx` (icon: `ListChecks` from lucide-react); mount `StrategiesTab` component
-- [ ] T043 [US1] Implement `StrategiesTab` in `frontend/src/app/(protected)/admin/knowledge/components/strategies-tab.tsx` — list table (columns: strategy_id, name, categories, status, last_reviewed, reviewer, version); row click opens detail Sheet; minimal filters (status only in US1 — full filter set in US3)
-- [ ] T044 [US1] Implement `StrategyDetailSheet` admin variant in `frontend/src/app/(protected)/admin/knowledge/components/strategy-detail-sheet.tsx` — read-only field rendering + action bar with six buttons (Research / Draft / Enrich / Submit for review / Approve & publish / Reject). Each button disabled unless current status permits (per research.md R9)
-- [ ] T045 [US1] Implement `useTaxStrategies` hooks in `frontend/src/app/(protected)/admin/knowledge/hooks/use-tax-strategies.ts` — TanStack Query: `useStrategyList`, `useStrategyDetail`, `useTriggerStage` mutations for each action; optimistic updates with rollback on error
+- [X] T042 [US1] Added `"Strategies"` (icon `ListChecks`) to the `TABS` array in `admin/knowledge/page.tsx`; mounts `StrategiesTab`.
+- [X] T043 [US1] `StrategiesTab` implemented — shadcn `Table` with the seven required columns, status filter chips (all 9 states + All), paginated by `PAGE_SIZE=50` via Previous/Next controls, status badges colour-coded to design-system semantics (amber=in_review, emerald=approved/published, stone=in-progress/inactive), row click opens the admin detail Sheet.
+- [X] T044 [US1] Admin `StrategyAdminDetailSheet` implemented — read-only Metadata grid, Implementation / Explanation / ATO sources / Cases sections, six-button action bar (Research / Draft / Enrich / Submit for review / Approve & publish / Reject) with disabled state driven by `STAGE_ALLOWED_STATUSES` that mirrors the backend state machine; Reject opens a `Dialog` requiring reviewer notes ≥ 1 char.
+- [X] T045 [US1] `use-tax-strategies.ts` TanStack Query hooks implemented — `useStrategyList`, `useStrategyDetail`, `usePipelineStats`, `useTriggerStage`, `useSubmitForReview`, `useApproveAndPublish`, `useRejectToDraft`, `useSeedFromCsv`; each mutation invalidates `taxStrategiesKeys.all` on success (no optimistic updates — server row is the source of truth and a refetch is cheap at Phase 1 scale).
 
 **Checkpoint**: CLR-012 can be driven end-to-end per quickstart §2–§3. Green StrategyChip renders in chat. Quickstart §2–§3 passes manually. This is the MVP increment.
 

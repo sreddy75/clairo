@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Database,
   Download,
+  ListChecks,
   Loader2,
   Search,
 } from 'lucide-react';
@@ -14,8 +15,9 @@ import { useEffect, useState } from 'react';
 import { CollectionsTab } from './components/collections-tab';
 import { IngestionTab } from './components/ingestion-tab';
 import { SearchTestTab } from './components/search-test-tab';
+import { StrategiesTab } from './components/strategies-tab';
 
-type TabId = 'ingestion' | 'collections' | 'search';
+type TabId = 'ingestion' | 'collections' | 'search' | 'strategies';
 
 interface Tab {
   id: TabId;
@@ -26,6 +28,7 @@ interface Tab {
 const TABS: Tab[] = [
   { id: 'ingestion', label: 'Ingestion', icon: Download },
   { id: 'collections', label: 'Collections', icon: Database },
+  { id: 'strategies', label: 'Strategies', icon: ListChecks },
   { id: 'search', label: 'Search Test', icon: Search },
 ];
 
@@ -140,6 +143,7 @@ export default function KnowledgeAdminPage() {
       <div className="min-h-[400px]">
         {activeTab === 'ingestion' && <IngestionTab />}
         {activeTab === 'collections' && <CollectionsTab />}
+        {activeTab === 'strategies' && <StrategiesTab />}
         {activeTab === 'search' && <SearchTestTab />}
       </div>
     </div>

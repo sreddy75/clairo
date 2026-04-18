@@ -1,6 +1,6 @@
 # Spec 060 — Handoff
 
-**Status as of 2026-04-19**: Backend wire-complete for the citation pipeline + draft/enrich LLM tasks. Frontend chip layer shipped (StrategyChip + Sheet + hydration hook + chat tokenizer). Admin frontend shell not started. Bulk content authoring not started. `44/77` tasks done (~57%).
+**Status as of 2026-04-19**: Backend wire-complete for the citation pipeline + draft/enrich LLM tasks. Frontend chip layer shipped. Frontend admin shell shipped (Strategies tab + list + action-bar detail Sheet + TanStack hooks). Bulk content authoring not started. `48/77` tasks done (~62%).
 
 ---
 
@@ -79,7 +79,6 @@ Each commit is self-contained and compiles/tests independently.
 |---|---|---|
 | Backend integration tests | T022, T023, T024 | Need Celery worker + Pinecone + DB fixtures wired into test harness |
 | LLM pipeline — end-to-end smoke | (follow-up) | Unit-tested parsers. Manual smoke against a live ANTHROPIC_API_KEY still pending — exercise CLR-012 research → draft → enrich via admin API and eyeball the drafted row |
-| Frontend — admin shell | T042–T045 | Add Strategies tab, list, detail Sheet with action bar, TanStack Query hooks |
 | Frontend — US2 | T047, T048, T050 | CitationBadge extension, message-level count, graceful degradation guard |
 | Frontend — US3 | T051–T056 | Filters, kanban pipeline, version history, authoring jobs log |
 | Frontend — US4 | T062 | Seed button with confirmation dialog |
