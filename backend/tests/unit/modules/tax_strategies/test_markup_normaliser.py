@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from app.modules.tax_strategies.markup import normalise_strategy_citations
 
-
 _RETRIEVED = [
     {
         "strategy_id": "CLR-012",

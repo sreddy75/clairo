@@ -1,6 +1,6 @@
 # Spec 060 — Handoff
 
-**Status as of 2026-04-19**: Backend wire-complete for the citation pipeline + draft/enrich LLM tasks. Frontend chip layer shipped. Frontend admin shell shipped (Strategies tab + list + action-bar detail Sheet + TanStack hooks + seed button + pipeline counts). Bulk content authoring (415-row CSV) not started. `50/77` tasks done (~65%).
+**Status as of 2026-04-19**: Phase 1 code-complete for US1–US4 except where blocked on external inputs (415-row CSV) or harness work (DB integration test fixture). Backend citation pipeline + draft/enrich LLM tasks + admin API + seed API all green. Frontend chip layer, admin shell, US2 polish, US3 filters/kanban/history, seed button, status counts, and unit tests all shipped. `58/77` tasks done (~75%). Remaining work is real-data population (T059), heavy-infra integration tests (T022/T023/T024/T052/T058), end-to-end walkthrough (T066), and PR/merge (TFINAL-3..6).
 
 ---
 
@@ -67,18 +67,28 @@ Each commit is self-contained and compiles/tests independently.
 - **Seed action**: `seed_from_csv` in `service.py` + `POST /api/v1/admin/tax-strategies/seed-from-csv`. Transactional validation, idempotent, category allowlist enforced. CSV currently contains only a header row.
 - **Latency tracer**: `tax_planning.retrieve.ms` log line on every `_retrieve_tax_knowledge` call
 
-### Tests — DONE (252 green)
+### Tests — DONE (258 backend + 18 frontend vitest)
 
-- 95 new unit tests in `backend/tests/unit/modules/tax_strategies/` across env_gate, service transitions, chunker, citation verifier CLR, markup normaliser, seed validator, ATO source fixtures, router smoke, **LLM prompts + response parsers (new, 17 tests)**
+Backend:
+- 101 new unit tests in `backend/tests/unit/modules/tax_strategies/` across env_gate, service transitions, chunker, citation verifier CLR, **citation verifier states (T046, new)**, markup normaliser, seed validator, ATO source fixtures, router smoke, LLM prompts + response parsers
 - 4 new unit tests in `backend/tests/unit/modules/tax_planning/test_retrieval_latency_tracer.py`
 - **Regression**: 153 existing `tax_planning` tests still green
+
+Frontend (vitest):
+- 8 `StrategyChip.test.tsx` — three colour states, muted-icon toggling, click/Enter handlers, title copy
+- 6 `CitationBadge.test.tsx` — rollup logic across verified/partial/unverified/low_confidence
+- 4 `strategies-tab.test.tsx` — list hydration, filter requery shape, row click opens Sheet, view toggle
 
 ### Not done
 
 | Area | Tasks | Notes |
 |---|---|---|
-| Backend integration tests | T022, T023, T024 | Need Celery worker + Pinecone + DB fixtures wired into test harness |
-| LLM pipeline — end-to-end smoke | (follow-up) | Unit-tested parsers. Manual smoke against a live ANTHROPIC_API_KEY still pending — exercise CLR-012 research → draft → enrich via admin API and eyeball the drafted row |
+| Backend integration tests | T022, T023, T024, T052, T058 | **Blocked**: `db_session` fixture in `tests/conftest.py` has an async event-loop conflict (same issue that skipped `test_rls_policies.py`). First-step fix: rewrite `test_engine` + `db_session` to share the async loop. Once unblocked, wire Celery task dispatch mock + Pinecone mock + Voyage mock + Clerk admin JWT for the router tests. |
+| Content — 415-row catalogue | T059 | External reference material at `/Users/suren/KR8IT/projects/Personal/Clairo docs/Tax Fitness Strategy/` — one subfolder per category already exists (8 of 8). CSV expansion is a one-time import job, not a coding task. |
+| Performance check | T064a | Depends on T059 — needs all 415 stubs seeded before measuring `GET /admin/tax-strategies?page_size=415` p95. |
+| End-to-end smoke | T066 | Needs a running backend + Celery + Pinecone + `ANTHROPIC_API_KEY` locally. Walk CLR-012 stub → published through the UI; confirm green chip renders in tax planning chat. |
+| LLM pipeline — live call | (follow-up) | Unit-tested parsers cover the deterministic pieces. Actual Anthropic call is exercised by T066 when that runs. |
+| PR/merge | TFINAL-3..6 | User action: push branch, create PR, review, merge, update ROADMAP with COMPLETE marker. |
 | Frontend — US2 | T047, T048, T050 | CitationBadge extension, message-level count, graceful degradation guard |
 | Frontend — US3 | T051–T056 | Filters, kanban pipeline, version history, authoring jobs log |
 | Frontend — US4 | T062 | Seed button with confirmation dialog |
@@ -203,7 +213,7 @@ Don't stage them when committing 060 work.
 
 ## Quick facts
 
-- **Test count**: 252 unit tests green as of the final commit.
+- **Test count**: 258 backend unit tests green + 18 frontend vitest green as of the final commit.
 - **Migration id**: `060_tax_strategies_phase1`, revises `059_1_as_at_date`.
 - **Env flag name**: `TAX_STRATEGIES_VECTOR_WRITE_ENABLED` (default `false`).
 - **Pinecone namespace**: `tax_strategies` (shared — no env suffix).

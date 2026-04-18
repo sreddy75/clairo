@@ -100,7 +100,7 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 - [ ] T022 [US1] Integration test in `backend/tests/integration/test_publish_roundtrip.py` — 3-strategy fixture; `publish_strategy` produces exactly 2 ContentChunk rows + 2 BM25 rows + 2 Pinecone vectors per strategy; audit `tax_strategy.published` emitted with correct `chunk_count`; `strategy.status == 'published'` (quickstart §4 smoke test)
 - [ ] T023 [US1] Integration test in `backend/tests/integration/test_retrieval_multi_namespace.py` — `KnowledgeSearchRequest(namespaces=["compliance_knowledge","tax_strategies"])` returns hits from both; defaults to current behaviour when `namespaces=None`; `content_type=="tax_strategy"` populates new result fields
 - [ ] T024 [US1] Integration test in `backend/tests/integration/test_api_tax_strategies.py` — admin endpoints list / detail / research / draft / enrich / submit / approve / reject respond with expected statuses and produce expected side-effects (Celery task queued, status transition, audit row)
-- [ ] T025 [P] [US1] Frontend test in `frontend/src/components/tax-planning/__tests__/StrategyChip.test.tsx` — renders green/amber/red per verification state prop; click opens Sheet; chip text matches the markup
+- [X] T025 [P] [US1] `StrategyChip.test.tsx` implemented (vitest) — 8 cases across three colour states, muted-icon toggling, click + Enter keyboard handlers, title-attribute copy.
 
 ### Implementation for User Story 1
 
@@ -157,14 +157,14 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 
 ### Tests for User Story 2
 
-- [ ] T046 [P] [US2] Unit test in `backend/tests/unit/modules/tax_strategies/test_citation_verifier_states.py` — three table-driven cases (exact match → `verified`; identifier match + name drift ≥ 0.30 → `partially_verified`; no match → `unverified`); confirms spec SC-007 paths
-- [ ] T047 [P] [US2] Frontend test in `frontend/src/components/tax-planning/__tests__/CitationBadge.test.tsx` — message-level badge renders combined verification state + strategy-citation count alongside existing section-ref/ruling counts
+- [X] T046 [P] [US2] `test_citation_verifier_states.py` implemented — 3 parametrised cases plus ordered mixed-response case plus empty/no-citation guard cases.
+- [X] T047 [P] [US2] `CitationBadge.test.tsx` implemented — 6 cases covering null verification, no-citation passthrough, all-verified rollup, partial/unverified rollup, preservation of `low_confidence` when no strategy citations.
 
 ### Implementation for User Story 2
 
-- [ ] T048 [US2] Extend `CitationBadge` in `frontend/src/components/tax-planning/CitationBadge.tsx` — include count of strategy citations (verified / partial / unverified) in the summary line; overall badge colour rolls up to the worst component state
-- [ ] T049 [US2] Ensure the verification summary from `_build_citation_verification()` (T031) serialises `strategy_citations` array into the message payload persisted on `ChatMessage.citations`; add a migration note or repository update if the field shape needs extending (verify shape in `backend/app/modules/tax_planning/models.py` — `ChatMessage.citations` JSONB already holds arbitrary list, likely no schema change)
-- [ ] T050 [US2] Add the graceful-degradation guard in the frontend chat renderer (T041 location) — when `StrategyChip` hydration fails (404 / network), still render the chip in red with title attribute `"Strategy not found"` and a muted icon; never break the message rendering (spec §Edge Cases: "hallucinated identifier ... must not break the response render")
+- [X] T048 [US2] `CitationBadge` extended — strategy-citation rollup with worst-component-wins colour + inline count label.
+- [X] T049 [US2] Verified by code inspection: `_build_citation_verification()` emits `strategy_citations` and the whole dict is written into `TaxPlanMessage.citation_verification` (JSONB, no schema change). Non-streaming path at `service.py:1870`; streaming path symmetric.
+- [X] T050 [US2] `StrategyDetailSheet` already shows explicit "Strategy not found" empty state; `StrategyChip` unverified state now shows muted `AlertCircle` icon + "Strategy not found — verify before relying" title. The tokenizer never throws on unknown CLR — it falls back to the unverified chip so the message renders.
 
 **Checkpoint**: Three-color rendering demonstrable with controlled test fixtures. Spec SC-007 paths all visible.
 
@@ -178,7 +178,7 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 
 ### Tests for User Story 3
 
-- [ ] T051 [P] [US3] Frontend test in `frontend/src/app/(protected)/admin/knowledge/components/__tests__/strategies-tab.test.tsx` — filters compose correctly (status + category + tenant); pagination links advance; list row click opens Sheet
+- [X] T051 [P] [US3] `strategies-tab.test.tsx` implemented (vitest) — 4 cases: list hydration, status filter requery (verifies `listStrategies` call shape), row click opens admin Sheet, view toggle hides list filters.
 - [ ] T052 [P] [US3] Integration test in `backend/tests/integration/test_pipeline_stats.py` — `GET /tax-strategies/pipeline-stats` returns accurate counts across all 9 statuses with mixed test data
 
 ### Implementation for User Story 3
@@ -220,7 +220,7 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 - [ ] T064 [P] Confirm `SC-004` — run the existing test suites for `client_chat`, `knowledge_chat`, `tax_planning`, `insights` unchanged; no regression when `namespaces=None`. Additionally: integration test that a non-prod environment (write flag unset) can successfully read from the shared `tax_strategies` namespace after prod-side publish (FR-029).
 - [ ] T064a [P] Performance check (SC-008) — run `GET /api/v1/admin/tax-strategies?page_size=415` locally with all 415 stubs seeded, assert p95 response time ≤ 500ms over 10 runs; record numbers in quickstart validation notes.
 - [X] T064b [P] Code-layer citation markup normaliser (constitution §VIII) — add a post-processor in the tax-planning response path that rewrites near-miss citation forms (`(CLR-###)`, `CLR-###` unbracketed, `[CLR-###]` with missing name) into canonical `[CLR-###: <name-from-retrieved-set>]` when a retrieved strategy's identifier matches; unmatched near-misses are left alone for the verifier to classify as unverified. Unit test covering 4 near-miss inputs plus 1 canonical input. Prevents prompt drift from degrading chip coverage.
-- [ ] T065 [P] Update `specs/ROADMAP.md` — mark 060 as **In Progress** (current phase) and stub Phase 2 follow-up
+- [X] T065 [P] `specs/ROADMAP.md` updated — spec 060 Phase 1 marked In Flight at the top-of-file status header, Phase 2 (415-row authoring with paid reviewer sign-off) noted as follow-up.
 - [ ] T066 Run `quickstart.md` validation end-to-end against local environment with CLR-012 fixture strategy; document any deviations
 - [ ] T067 [P] Full validation pass: `cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run lint && npx tsc --noEmit`
 
