@@ -381,8 +381,75 @@ def _tokenise_for_bm25(text: str) -> list[str]:
     retry_jitter=True,
 )
 def research_strategy(self: Task, strategy_id: str, triggered_by: str) -> dict[str, Any]:
-    """Fixture-driven research for Phase 1 (T028)."""
-    raise NotImplementedError("research_strategy lands in follow-up to T028")
+    """Fixture-driven research for Phase 1 (T028).
+
+    Loads pre-populated ATO primary-source references from
+    tax_strategies/data/ato_source_fixtures.py, writes them to
+    TaxStrategy.ato_sources, transitions stub → researching. Phase 2
+    replaces the fixture lookup with live ATO scraping per architecture
+    §10.2.
+    """
+    return asyncio.run(_run_research(strategy_id, triggered_by))
+
+
+async def _run_research(strategy_id: str, triggered_by: str) -> dict[str, Any]:
+    factory = _make_session_factory()
+    async with factory() as session:
+        svc = TaxStrategyService(session)
+        strategy = await svc.repo.get_live_version(strategy_id)
+        if strategy is None:
+            raise StrategyNotFoundError(strategy_id)
+
+        job = await svc.repo.create_job(
+            strategy_id=strategy_id,
+            stage="research",
+            triggered_by=triggered_by,
+            input_payload={"version": strategy.version},
+        )
+        await svc.repo.update_job(
+            job, status="running", started_at=datetime.now(UTC)
+        )
+        await session.commit()
+
+        try:
+            from app.modules.tax_strategies.data.ato_source_fixtures import (
+                get_fixture_sources,
+            )
+
+            sources = get_fixture_sources(strategy_id)
+            strategy.ato_sources = sources
+            await session.flush()
+
+            await svc._transition_status(
+                strategy,
+                new_status="researching",
+                actor_clerk_user_id=triggered_by,
+                extra_metadata={"source_count": len(sources)},
+            )
+        except Exception as exc:
+            logger.exception("research_strategy failed for %s", strategy_id)
+            await svc.repo.update_job(
+                job,
+                status="failed",
+                completed_at=datetime.now(UTC),
+                error=f"{type(exc).__name__}: {exc}",
+            )
+            await session.commit()
+            raise
+
+        output = {"ato_sources": sources, "source_count": len(sources)}
+        await svc.repo.update_job(
+            job,
+            status="succeeded",
+            completed_at=datetime.now(UTC),
+            output_payload=output,
+        )
+        await session.commit()
+        return {
+            "status": "succeeded",
+            "strategy_id": strategy_id,
+            **output,
+        }
 
 
 @celery_app.task(  # type: ignore[misc]
