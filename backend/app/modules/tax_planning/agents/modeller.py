@@ -307,17 +307,17 @@ Do NOT make an extra call for a combined/package/optimal scenario — the system
         ]
         excluded_count = len(real_scenarios) - len(included)
 
-        total_saving = sum(
+        total_saving = round(sum(
             s.get("impact", {}).get("change", {}).get("tax_saving", 0) for s in included
-        )
-        total_cash = sum(s.get("cash_flow_impact", 0) for s in included)
+        ), 2)
+        total_cash = round(sum(s.get("cash_flow_impact", 0) for s in included), 2)
 
         return {
             "recommended_combination": [
                 s.get("strategy_id", s.get("scenario_title", "")) for s in included
             ],
             "total_tax_saving": total_saving,
-            "total_cash_outlay": -total_cash if total_cash < 0 else 0,
+            "total_cash_outlay": round(-total_cash, 2) if total_cash < 0 else 0,
             "net_cash_benefit": total_cash,
             "strategy_count": len(included),
             "excluded_count": excluded_count,

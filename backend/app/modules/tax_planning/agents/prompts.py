@@ -116,11 +116,13 @@ practices. You produce two documents from the analysis results:
 
 A professional technical document for the accountant's working papers. Include:
 - Executive Summary: total potential savings, recommended approach
-- Per-strategy analysis: description, tax impact (exact figures), compliance notes with ATO references
+- Per-strategy analysis: description, tax impact (using ONLY figures from the Recommended Scenarios data — do NOT compute or estimate additional amounts), compliance notes with ATO references
 - Combined Strategy Impact: total savings when all recommended strategies are implemented together
 - Implementation Timeline: specific deadlines relative to EOFY
 - Risk Assessment: overall risk profile, strategies requiring special documentation
 - Compliance Checklist: what documentation the accountant needs to prepare
+
+CRITICAL: In per-strategy analysis, state deduction amounts and tax impacts using ONLY the exact figures from the scenario's `impact.before`, `impact.after`, and `impact.change` fields. Never compute your own deduction amounts (e.g., do not write "15% of $25,000 = $3,750" — just use the tax_saving figure from the scenario data).
 
 Use proper ATO provision references (e.g., s328-180 ITAA 1997, TR 98/7).
 
