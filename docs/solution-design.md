@@ -2589,6 +2589,54 @@ User: "Prepare BAS for ABC Pty Ltd Q2 2025"
 
 ---
 
+## Appendix: Tax Planning Calculation Contracts (Spec 059)
+
+Tax Planning was hardened in April 2026 to close seven calculation-correctness
+gaps surfaced in alpha sessions. The authoritative contract lives at
+`specs/059-tax-planning-calculation-correctness/data-model.md`; these three
+invariants are the ones most often forgotten when extending the module:
+
+1. **Annualisation at ingest, not downstream.** `pull_xero_financials` and
+   `save_manual_financials` are the only places that may scale YTD figures
+   to full-year. The LLM, the calculator, and the UI all read the same
+   `financials_data.income`/`expenses` — the single projected set. YTD
+   originals are preserved under `financials_data.projection_metadata.ytd_snapshot`
+   for audit but are never shown to the LLM again. Do not introduce a second
+   "projected" block.
+
+2. **Every AI-emitted numeric field carries a `source_tags` entry.** Modeller
+   output maps JSON Pointers into `impact_data` / `assumptions` to one of
+   `"confirmed" | "derived" | "estimated"`. Calculator-derived figures are
+   `derived`; LLM-chosen modifications are `estimated`; accountant
+   confirmations (via `PATCH /scenarios/{id}/assumptions/{field_path}`)
+   flip to `confirmed`. PDF export surfaces a warning banner when any
+   estimated figure remains at send time (FR-016).
+
+3. **Scenario persistence is upsert, not insert.** Use
+   `TaxScenarioRepository.upsert_by_normalized_title()`, never raw
+   `.create()`, from the chat flows. Case- and whitespace-insensitive
+   matching on `(tax_plan_id, lower(trim(title)))` preserves scenario UUIDs
+   across refinements. The partial unique index
+   `ix_tax_scenarios_plan_normalized_title` enforces this at the DB level.
+
+Related contracts (also in spec 059):
+
+- **Payroll sync is on-demand, bounded at 15 s** — longer syncs transition
+  the plan to `payroll_sync_status="pending"` and spawn a Celery background
+  continuation that recomputes the tax position on completion. Manual
+  `save_manual_financials` deep-merges to preserve Xero-derived context
+  (payroll, bank, strategy, prior years) rather than overwriting wholesale.
+- **Reviewer uses `compute_ground_truth()`** — an independent re-derivation
+  from raw `financials_data`. The function takes no `base_financials`
+  parameter so a modeller's cached intermediate state cannot propagate into
+  the verification step.
+- **Strategy honesty flag** — `TaxScenario.requires_group_model` is derived
+  in code from `strategy_category` via
+  `strategy_category.requires_group_model()`, never emitted by the LLM.
+  Flagged scenarios are excluded from combined-strategy totals.
+
+---
+
 **Document Status:** Ready for technical review
 **Next Steps:**
 1. Review with technical stakeholders
