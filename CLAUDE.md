@@ -83,6 +83,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 — 3 new columns on `tax_scenarios`, 1 new partial-unique index on `tax_scenarios`, 1 new key on `tax_plans.financials_data` JSONB (`projection_metadata`). No new tables. (059-tax-planning-calculation-correctness)
 - Python 3.12+ (backend only) + `anthropic` SDK (AsyncAnthropic), Pydantic v2 (for optional modification validator), existing `app.modules.tax_planning.tax_calculator.calculate_tax_position`, existing `app.modules.tax_planning.strategy_category` enum (059-2-tax-planning-correctness-followup)
 - N/A — no schema changes. The only persisted outputs (`TaxPlanAnalysis.recommended_scenarios`, `TaxPlanAnalysis.combined_strategy`) retain their existing shape. (059-2-tax-planning-correctness-followup)
+- Python 3.12+ (backend only) + `PyYAML` (already in the backend stack for config; confirm during implementation), existing `CitationVerifier` module, existing `SECTION_REF_PATTERN` / `RULING_REF_PATTERN` / `NUMBERED_CITATION_PATTERN` regexes in `backend/app/modules/knowledge/chunkers/base.py` (061-citation-validation)
+- N/A — no DB schema changes. New authoritative mapping lives as a source-controlled YAML file under `backend/app/modules/knowledge/data/section_act_mapping.yaml` (directory does not exist today; will be created). (061-citation-validation)
 
 ## Recent Changes
 - 049-xero-taxcode-sync: Xero write-back, multi-round client send-back, portal IDK validation, agent notes

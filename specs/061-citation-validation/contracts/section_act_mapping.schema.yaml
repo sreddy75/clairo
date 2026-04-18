@@ -1,0 +1,61 @@
+# JSONSchema for backend/app/modules/knowledge/data/section_act_mapping.yaml
+#
+# Authoritative mapping of Australian tax-law section identifiers to their owning Act.
+# Loaded once at module import in the knowledge verifier; cached as a frozen dict.
+# See specs/061-citation-validation/data-model.md for the runtime contract.
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "clairo://061-citation-validation/section_act_mapping.schema.yaml"
+title: "Section to Act Mapping"
+description: >
+  Top-level object where each property is a normalised Australian tax-law section
+  identifier (lowercased, whitespace-stripped, leading "s" / "section " / "sec."
+  removed). Each property's value describes the section's owning Act.
+type: object
+additionalProperties:
+  type: object
+  required:
+    - act
+    - display_name
+  additionalProperties: false
+  properties:
+    act:
+      type: string
+      description: >
+        Owning Act name. Expected to be one of the recognised Australian tax Acts
+        (e.g. "ITAA 1997", "ITAA 1936", "TAA 1953", "GST Act 1999", "FBTAA 1986").
+        Unrecognised values are preserved but trigger a startup warning.
+      examples:
+        - "ITAA 1936"
+        - "ITAA 1997"
+        - "TAA 1953"
+        - "GST Act 1999"
+        - "FBTAA 1986"
+    display_name:
+      type: string
+      description: >
+        Human-readable display form of the citation, as it should appear in
+        accountant-facing text. Reviewed alongside the `act` field so the
+        two stay consistent.
+      examples:
+        - "s 82KZM ITAA 1936"
+        - "s 328-180 ITAA 1997"
+    notes:
+      type: string
+      description: >
+        Optional one-line note for reviewers about what the section covers.
+        Not consumed at runtime.
+      examples:
+        - "Prepayment provisions for non-business taxpayers"
+        - "SBE instant asset write-off"
+
+# Example of a valid document:
+#
+# "82kzm":
+#   act: "ITAA 1936"
+#   display_name: "s 82KZM ITAA 1936"
+#   notes: "Prepayment provisions for non-business taxpayers"
+#
+# "328-180":
+#   act: "ITAA 1997"
+#   display_name: "s 328-180 ITAA 1997"

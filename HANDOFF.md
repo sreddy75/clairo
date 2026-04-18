@@ -28,13 +28,13 @@ The "prompts are suggestions, code is law" principle from CLAUDE.md is structura
 
 Each of the three originally-open follow-up stories was re-evaluated against the post-059-2 codebase. Outcome:
 
-### Story 6 — Citation verification: **rescoped**
+### Story 6 — Citation verification: **implemented in 061-citation-validation**
 
-The original bug (semantic-score `dict-key` typo collapsing confidence to near-zero) **was already resolved under Spec 059** — see the fix comment at `backend/app/modules/tax_planning/service.py:1457-1459` and the regression test at `backend/tests/e2e/tax_planning/test_citation_regression_bank.py:97`. Do not re-open.
+The original `semantic=0` bug was already resolved under Spec 059.
 
-The 059-2 UAT did surface two **new, unrelated** citation defects the current verifier cannot catch by design: (1) a hallucinated ruling ID passes if any retrieved chunk contains the identifier string even once, regardless of topical relevance; (2) wrong-act-year citations (e.g., "s 82KZM ITAA 1997" when the section belongs to ITAA 1936) are invisible because the extraction regex discards the act-year suffix. Plus a minor streaming-vs-non-streaming confidence-gate divergence.
+The two new defects surfaced during 059-2 UAT — hallucinated-ruling verification + wrong-act-year misattribution — are resolved under Spec 061 (`specs/061-citation-validation/`). The verifier now requires metadata equality on `chunk.ruling_number` for rulings to earn the "verified" badge (body-text mentions are classified as weak matches), and a hand-curated ≥125-entry section→Act mapping enables wrong-act-year detection. A shared `_apply_subthreshold_gate` helper gives streaming and non-streaming chat paths identical sub-threshold treatment (Q2=C: preserve content, clear scenarios, warning banner).
 
-Captured as a focused brief: `specs/briefs/2026-04-18-citation-substantive-validation.md`. Ready to promote to a full spec.
+Brief that drove the spec: `specs/briefs/2026-04-18-citation-substantive-validation.md` (kept for historical reference; spec is canonical).
 
 ### Story 7 — Pre-Stage-3 rate language: **verified resolved**
 
@@ -56,6 +56,6 @@ An unresolved interaction between the Instant Asset Write-Off and SBE Simplified
 
 Based on the above, the user-visible impact order is:
 
-1. **Citation substantive validation** (`specs/briefs/2026-04-18-citation-substantive-validation.md`) — highest. Directly drives "Needs Review" false-alarms on otherwise-correct plans and creates PI-exposure on wrong-act citations.
+1. ~~**Citation substantive validation**~~ — **resolved** in Spec 061. Requires ≥125-entry YAML mapping to be reviewed by a domain expert before the next UAT session; file header flags this.
 2. **Chat-flow scenario dedup** (`specs/briefs/2026-04-18-chat-scenario-dedup.md`) — medium. UX annoyance; not a correctness bug, but clutters the Scenarios tab.
 3. Strategy-consistency spec — monitor. No brief yet.
