@@ -144,6 +144,26 @@ class AnalysisPipelineOrchestrator:
             )
             await self.session.commit()
 
+            # Spec 061 follow-up — run the structural citation verifier over
+            # the advisor's brief + summary so the reviewer gets grounded
+            # evidence for wrong-act-year / hallucinated-ruling findings
+            # instead of relying purely on LLM judgement.
+            from app.modules.knowledge.retrieval.citation_verifier import (
+                CitationVerifier,
+            )
+
+            citation_verifier = CitationVerifier()
+            brief_verification = citation_verifier.verify_citations(brief, knowledge_chunks)
+            summary_verification = citation_verifier.verify_citations(summary, knowledge_chunks)
+            logger.info(
+                "Citation verification: brief=%d citations (rate %.0f%%), "
+                "summary=%d citations (rate %.0f%%)",
+                len(brief_verification.citations),
+                brief_verification.verification_rate * 100,
+                len(summary_verification.citations),
+                summary_verification.verification_rate * 100,
+            )
+
             # Stage 5: Quality review
             _progress("reviewing", 5, "Verifying calculations and citations...")
             reviewer = ReviewerAgent(api_key=api_key)
@@ -157,6 +177,8 @@ class AnalysisPipelineOrchestrator:
                 financials_data=plan.financials_data,
                 entity_type=plan.entity_type,
                 rate_configs=rate_configs,
+                brief_verification=brief_verification,
+                summary_verification=summary_verification,
             )
 
             # Spec 059 FR-014 — emit one audit event per reviewer disagreement
