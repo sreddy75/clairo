@@ -24,6 +24,7 @@ from app.modules.tax_planning.exceptions import (
     XeroPullError,
 )
 from app.modules.tax_planning.models import TaxPlan
+from app.modules.tax_planning.projection import annualise_linear, annualise_manual
 from app.modules.tax_planning.repository import (
     TaxPlanMessageRepository,
     TaxPlanRepository,
@@ -214,7 +215,10 @@ class TaxPlanningService:
         financials_data = self._transform_xero_to_financials(summary, rows)
         now = datetime.now(UTC)
 
-        # Calculate actual months of data and projection (Spec 056 - US2)
+        # Spec 059 FR-001 — linear annualisation applied in place at ingest.
+        # Income and expenses are scaled to projected full FY; projection_metadata
+        # preserves the YTD snapshot for traceability. The LLM sees exactly one
+        # set of numbers downstream (FR-003).
         fy_start_year = int(plan.financial_year[:4])
         fy_start_date = date(fy_start_year, 7, 1)
         effective_date = recon_date or date.today()
@@ -223,25 +227,54 @@ class TaxPlanningService:
         )
         months_elapsed = max(1, min(months_elapsed, 12))
 
-        financials_data["months_data_available"] = months_elapsed
-        financials_data["is_annualised"] = months_elapsed < 12
+        ytd_income_snapshot = {**financials_data["income"]}
+        ytd_expenses_snapshot = {**financials_data["expenses"]}
+        projected_income, income_meta = annualise_linear(
+            financials_data["income"], months_elapsed
+        )
+        projected_expenses, _ = annualise_linear(
+            financials_data["expenses"], months_elapsed
+        )
+        financials_data["income"] = projected_income
+        financials_data["expenses"] = projected_expenses
+        projection_metadata = income_meta.to_dict()
+        # Snapshot captures both sub-dicts (taken BEFORE the in-place scale).
+        projection_metadata["ytd_snapshot"] = {
+            "income": ytd_income_snapshot,
+            "expenses": ytd_expenses_snapshot,
+        }
+        financials_data["projection_metadata"] = projection_metadata
 
-        if months_elapsed >= 3 and months_elapsed < 12:
-            total_income = financials_data["income"]["total_income"]
-            total_expenses = financials_data["expenses"]["total_expenses"]
-            monthly_avg_rev = total_income / months_elapsed
-            monthly_avg_exp = total_expenses / months_elapsed
-            financials_data["projection"] = {
-                "projected_revenue": round(monthly_avg_rev * 12, 2),
-                "projected_expenses": round(monthly_avg_exp * 12, 2),
-                "projected_net_profit": round((monthly_avg_rev - monthly_avg_exp) * 12, 2),
-                "monthly_avg_revenue": round(monthly_avg_rev, 2),
-                "monthly_avg_expenses": round(monthly_avg_exp, 2),
-                "months_used": months_elapsed,
-                "projection_method": "linear_average",
-            }
-        else:
-            financials_data["projection"] = None
+        # Backward-compat flags retained for existing consumers; projection_metadata
+        # is the authoritative source going forward.
+        financials_data["months_data_available"] = months_elapsed
+        financials_data["is_annualised"] = income_meta.applied
+
+        # Audit: record the annualisation event (Spec 059 §Audit event shapes)
+        try:
+            from app.core.audit import AuditService
+
+            audit = AuditService(self.session)
+            await audit.log_event(
+                event_type="tax_planning.financials.annualised",
+                event_category="data",
+                tenant_id=tenant_id,
+                resource_type="tax_plan",
+                resource_id=plan.id,
+                action="update",
+                outcome="success",
+                metadata={
+                    "months_elapsed": months_elapsed,
+                    "months_projected": income_meta.months_projected,
+                    "rule": income_meta.rule,
+                    "applied": income_meta.applied,
+                    "ytd_total_income": ytd_income_snapshot.get("total_income"),
+                    "projected_total_income": projected_income.get("total_income"),
+                },
+            )
+        except Exception:
+            # Audit failures must never break the tax-plan flow.
+            logger.debug("audit log for financials.annualised failed", exc_info=True)
 
         # Fetch bank context (FR-015, FR-016, FR-017, FR-018)
         # recon_date was already fetched above for the P&L date cap
@@ -665,19 +698,31 @@ class TaxPlanningService:
             + Decimal(str(expenses.get("operating_expenses", 0)))
         )
 
+        manual_income = {
+            "revenue": float(income.get("revenue", 0)),
+            "other_income": float(income.get("other_income", 0)),
+            "total_income": total_income,
+            "breakdown": income.get("breakdown", []),
+        }
+        manual_expenses = {
+            "cost_of_sales": float(expenses.get("cost_of_sales", 0)),
+            "operating_expenses": float(expenses.get("operating_expenses", 0)),
+            "total_expenses": total_expenses,
+            "breakdown": expenses.get("breakdown", []),
+        }
+        # Spec 059 FR-005 — manual entries are treated as confirmed full-year.
+        # No annualisation is applied; projection_metadata records the reason.
+        _, income_meta = annualise_manual(manual_income)
+        _, expenses_meta = annualise_manual(manual_expenses)
+        projection_metadata = income_meta.to_dict()
+        projection_metadata["ytd_snapshot"] = {
+            "income": income_meta.ytd_snapshot,
+            "expenses": expenses_meta.ytd_snapshot,
+        }
+
         financials_data: dict[str, Any] = {
-            "income": {
-                "revenue": float(income.get("revenue", 0)),
-                "other_income": float(income.get("other_income", 0)),
-                "total_income": total_income,
-                "breakdown": income.get("breakdown", []),
-            },
-            "expenses": {
-                "cost_of_sales": float(expenses.get("cost_of_sales", 0)),
-                "operating_expenses": float(expenses.get("operating_expenses", 0)),
-                "total_expenses": total_expenses,
-                "breakdown": expenses.get("breakdown", []),
-            },
+            "income": manual_income,
+            "expenses": manual_expenses,
             "credits": {
                 "payg_instalments": float(credits.get("payg_instalments", 0)),
                 "payg_withholding": float(credits.get("payg_withholding", 0)),
@@ -685,6 +730,8 @@ class TaxPlanningService:
             },
             "adjustments": [adj.model_dump() for adj in data.adjustments],
             "turnover": float(data.turnover),
+            "projection_metadata": projection_metadata,
+            # Retained for backward compat; projection_metadata is authoritative.
             "months_data_available": 12,
             "is_annualised": False,
         }

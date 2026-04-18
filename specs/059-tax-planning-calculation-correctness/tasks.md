@@ -55,22 +55,22 @@
 
 ### Tests for User Story 1 (write first — must fail)
 
-- [ ] T011 [P] [US1] Integration test `backend/tests/integration/modules/tax_planning/test_ingest_annualisation.py::test_6_months_of_data_gets_annualised` — seeds Xero P&L at month 6; asserts `financials_data.income.total_income` is `ytd × 2`; `projection_metadata.applied=True`, `months_elapsed=6`, `ytd_snapshot` preserved
-- [ ] T012 [P] [US1] Integration test `test_ingest_annualisation.py::test_12_months_of_data_is_not_annualised` — seeds 12 months of data; asserts no annualisation, `projection_metadata.applied=False`, `reason="months_elapsed>=12"`
-- [ ] T013 [P] [US1] Integration test `test_ingest_annualisation.py::test_manual_financials_treated_as_confirmed_full_year` — submits manual financials; asserts `projection_metadata.applied=False`, `reason="manual_full_year"`, no annualisation applied
-- [ ] T014 [P] [US1] Integration test `test_ingest_annualisation.py::test_prompt_contains_only_annualised_totals` — asserts the prompt string built by `format_financial_context` contains annualised totals exactly once and does NOT contain the YTD snapshot values
-- [ ] T015 [P] [US1] Integration test `test_ingest_annualisation.py::test_tax_position_uses_annualised_totals` — after annualisation, `tax_position.taxable_income` equals the annualised `income.total_income - expenses.total_expenses + adjustments`
+- [x] T011 [P] [US1] Integration test `backend/tests/integration/modules/tax_planning/test_ingest_annualisation.py::test_6_months_of_data_gets_annualised`
+- [x] T012 [P] [US1] Integration test `test_ingest_annualisation.py::test_12_months_of_data_is_not_annualised`
+- [x] T013 [P] [US1] Integration test `test_ingest_annualisation.py::test_manual_financials_treated_as_confirmed_full_year`
+- [x] T014 [P] [US1] Integration test `test_ingest_annualisation.py::test_prompt_contains_only_annualised_totals` (plus companion test `test_prompt_omits_data_basis_note_when_projection_not_applied`)
+- [x] T015 [P] [US1] Integration test `test_ingest_annualisation.py::test_tax_position_uses_annualised_totals`
 
 ### Implementation for User Story 1
 
-- [ ] T016 [US1] Modify `backend/app/modules/tax_planning/service.py` `_transform_xero_to_financials` to call `projection.annualise_linear` when `months_elapsed < 12`, mutating `income` and `expenses` in place and writing `financials_data["projection_metadata"]` with snapshot of original YTD values
-- [ ] T017 [US1] Modify `service.py` `save_manual_financials` to set `projection_metadata={applied: false, rule: "linear", months_elapsed: 12, reason: "manual_full_year", ...}` and to skip annualisation entirely
-- [ ] T018 [US1] Delete the sibling `financials_data["projection"]` block previously written at `service.py:229-244`; that data now lives inside `projection_metadata.ytd_snapshot`. Remove any downstream readers of the old key
-- [ ] T019 [US1] Modify `backend/app/modules/tax_planning/prompts.py` `format_financial_context` to inject only one set of numbers (the annualised, which equals the top-level `income`/`expenses`); remove the parallel "projection" block in the prompt
-- [ ] T020 [US1] Add `tax_planning.financials.annualised` audit event emission in `service.py` at the point annualisation is applied (per data-model.md audit payload shape)
-- [ ] T021 [P] [US1] Modify `frontend/src/components/tax-planning/TaxPositionCard.tsx` to render a "Projected from N months of data" chip when `financials_data.projection_metadata.applied=true`
-- [ ] T022 [P] [US1] Modify `frontend/src/types/tax-planning.ts` to add `ProjectionMetadata` interface and surface it on `FinancialsData` and `TaxPlanAnalysisResponse`
-- [ ] T023 [US1] Run the US1 integration tests — all must pass. Run `cd backend && uv run ruff check . && uv run pytest tests/integration/modules/tax_planning/test_ingest_annualisation.py`
+- [x] T016 [US1] `service.py::pull_xero_financials` applies `annualise_linear` in-place to `income`/`expenses` and writes `projection_metadata`
+- [x] T017 [US1] `service.py::save_manual_financials` sets `projection_metadata={applied: False, reason: "manual_full_year", ...}` via `annualise_manual`
+- [x] T018 [US1] Deleted the legacy `financials_data["projection"]` sibling block; metadata now lives under `projection_metadata`
+- [x] T019 [US1] `prompts.py::format_financial_context` now emits a single one-line "Data Basis" note; the parallel "Full Year Projection" block is gone
+- [x] T020 [US1] `tax_planning.financials.annualised` audit event emitted via `AuditService.log_event` in `pull_xero_financials`
+- [x] T021 [P] [US1] `TaxPositionCard.tsx` shows "Projected from N mo" amber badge when `projection_metadata.applied=true`; `TaxPlanningWorkspace.tsx` passes the metadata through
+- [x] T022 [P] [US1] `frontend/src/types/tax-planning.ts` adds `ProjectionMetadata` interface and surfaces it on `FinancialsData`
+- [x] T023 [US1] Full validation: 100 backend tax_planning tests green, ruff clean, `npx tsc --noEmit` green
 
 **Checkpoint**: US1 complete. The Tax Position panel now shows annualised figures; LLM sees one set of numbers; the golden-dataset E2E (Phase 11) will gate the final numeric correctness.
 

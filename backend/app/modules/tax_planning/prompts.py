@@ -231,19 +231,19 @@ def format_financial_context(
             ]
         )
 
-    # Full year projection (Spec 056 - US2)
-    projection = financials_data.get("projection")
-    if projection:
+    # Spec 059 FR-003 — a single set of numbers flows to the LLM.
+    # Income and expenses above are ALREADY projected to full FY when
+    # projection_metadata.applied is true; this block only notes the
+    # projection origin, it does NOT re-show the numbers side-by-side.
+    projection_metadata = financials_data.get("projection_metadata")
+    if projection_metadata and projection_metadata.get("applied"):
+        months = projection_metadata.get("months_elapsed", 0)
         lines.extend(
             [
                 "",
-                f"--- Full Year Projection (based on {projection['months_used']} months YTD) ---",
-                f"Projected Revenue: ${projection['projected_revenue']:,.2f}",
-                f"Projected Expenses: ${projection['projected_expenses']:,.2f}",
-                f"Projected Net Profit: ${projection['projected_net_profit']:,.2f}",
-                f"Monthly Avg Revenue: ${projection['monthly_avg_revenue']:,.2f}",
-                f"Monthly Avg Expenses: ${projection['monthly_avg_expenses']:,.2f}",
-                "Note: Linear projection based on YTD monthly averages. Use for planning only.",
+                "--- Data Basis ---",
+                f"Figures above are projected to full financial year from {months} months of YTD data using linear monthly averaging.",
+                "YTD actuals are available on request; do not re-project these totals in your reasoning.",
             ]
         )
 

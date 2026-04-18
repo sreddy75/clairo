@@ -20,6 +20,20 @@ export interface AdjustmentItem {
   type: 'add_back' | 'deduction';
 }
 
+export interface ProjectionMetadata {
+  applied: boolean;
+  rule: 'linear';
+  months_elapsed: number;
+  months_projected: number;
+  ytd_snapshot: {
+    income?: { total_income?: number; revenue?: number; [k: string]: unknown };
+    expenses?: { total_expenses?: number; [k: string]: unknown };
+    [k: string]: unknown;
+  };
+  applied_at: string;
+  reason: string | null;
+}
+
 export interface FinancialsData {
   income: {
     revenue: number;
@@ -48,7 +62,11 @@ export interface FinancialsData {
   last_reconciliation_date?: string;
   period_coverage?: string;
   unreconciled_summary?: UnreconciledSummary;
-  // Projection (Spec 056 - US2)
+  // Spec 059 FR-001 — authoritative projection state. The top-level income
+  // and expenses above are ALREADY annualised when projection_metadata.applied
+  // is true; `ytd_snapshot` preserves the original YTD values for display.
+  projection_metadata?: ProjectionMetadata;
+  // Deprecated: retained for backward compatibility with pre-059 payloads.
   projection?: {
     projected_revenue: number;
     projected_expenses: number;

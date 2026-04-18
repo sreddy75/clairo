@@ -708,6 +708,7 @@ export function TaxPlanningWorkspace({
                 <TaxPositionCard
                   taxPosition={plan.tax_position}
                   entityType={plan.entity_type}
+                  projectionMetadata={plan.financials_data?.projection_metadata}
                 />
               )}
               <div className="lg:col-span-2">

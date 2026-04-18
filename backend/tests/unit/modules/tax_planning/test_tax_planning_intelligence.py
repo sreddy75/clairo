@@ -235,19 +235,35 @@ class TestRevenueForecasting:
         assert should_project
 
     def test_prompt_includes_projection(self):
-        """AI prompt should include projection section when available."""
+        """Spec 059 FR-001: prompt notes the projection basis instead of a parallel
+        block of projected figures (the figures themselves are already annualised
+        in income/expenses)."""
         data = _financials_with_projection()
+        # Spec 059: the new projection_metadata sub-key is what format_financial_context
+        # reads; the legacy `projection` sibling on _financials_with_projection is ignored.
+        data["projection_metadata"] = {
+            "applied": True,
+            "rule": "linear",
+            "months_elapsed": 9,
+            "months_projected": 3,
+            "ytd_snapshot": {},
+            "applied_at": "2026-04-18T00:00:00+00:00",
+            "reason": None,
+        }
         prompt = format_financial_context(data, None, "company")
-        assert "Full Year Projection" in prompt
-        assert "Projected Revenue: $120,000.00" in prompt
-        assert "based on 9 months YTD" in prompt
+        assert "Data Basis" in prompt
+        assert "projected to full financial year from 9 months" in prompt
+        # The pre-059 "Full Year Projection" parallel block MUST NOT be emitted —
+        # that was the bug that gave Claude two sets of numbers.
+        assert "Full Year Projection" not in prompt
 
     def test_prompt_excludes_projection_when_none(self):
-        """AI prompt should not include projection when not available."""
+        """AI prompt should not include projection section when not projected."""
         data = _base_financials(months=12)
         data["projection"] = None
         prompt = format_financial_context(data, None, "company")
         assert "Full Year Projection" not in prompt
+        assert "Data Basis" not in prompt
 
 
 # =============================================================================
@@ -467,14 +483,18 @@ class TestFullEnrichedFinancials:
         data = _base_financials(revenue=100000, expenses=60000, months=9)
         data["total_bank_balance"] = 50000
         data["bank_balances"] = [{"account_name": "Business", "closing_balance": 50000}]
-        data["projection"] = {
-            "projected_revenue": 133333.33,
-            "projected_expenses": 80000,
-            "projected_net_profit": 53333.33,
-            "monthly_avg_revenue": 11111.11,
-            "monthly_avg_expenses": 6666.67,
-            "months_used": 9,
-            "projection_method": "linear_average",
+        # Spec 059: projection metadata replaces the old parallel `projection` block.
+        data["projection_metadata"] = {
+            "applied": True,
+            "rule": "linear",
+            "months_elapsed": 9,
+            "months_projected": 3,
+            "ytd_snapshot": {
+                "income": {"total_income": 75000},
+                "expenses": {"total_expenses": 45000},
+            },
+            "applied_at": "2026-04-18T00:00:00+00:00",
+            "reason": None,
         }
         data["prior_year_ytd"] = {
             "revenue": 85000,
@@ -507,7 +527,10 @@ class TestFullEnrichedFinancials:
 
         # All 6 enrichment sections should be present
         assert "Bank Position" in prompt
-        assert "Full Year Projection" in prompt
+        # Spec 059: "Full Year Projection" parallel block replaced by a one-line
+        # "Data Basis" note (income/expenses are already annualised in place).
+        assert "Data Basis" in prompt
+        assert "Full Year Projection" not in prompt
         assert "Same Period Last Year" in prompt
         assert "Multi-Year Trends" in prompt
         assert "Strategy Constraints" in prompt
