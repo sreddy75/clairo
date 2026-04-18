@@ -13,6 +13,8 @@
  * Click opens `StrategyDetailSheet` with the full strategy content.
  */
 
+import { AlertCircle } from 'lucide-react';
+
 import { badgeVariants } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { StrategyCitationStatus } from '@/types/tax-planning';
@@ -37,7 +39,10 @@ const STATUS_TITLES: Record<StrategyCitationStatus, string> = {
   verified: 'Verified against the strategy knowledge base',
   partially_verified:
     'Strategy id matches but the cited name has drifted — review before relying',
-  unverified: 'No matching published strategy — verify before relying',
+  // Spec 060 T050 — unverified title-attribute copy kept verbatim with the
+  // spec language so screen-reader users and hover-preview users see the
+  // same hint the backend verifier emitted.
+  unverified: 'Strategy not found — verify before relying',
 };
 
 export function StrategyChip({
@@ -68,6 +73,12 @@ export function StrategyChip({
         STATUS_CLASSES[status],
       )}
     >
+      {status === 'unverified' && (
+        <AlertCircle
+          className="mr-1 h-3 w-3 opacity-70"
+          aria-hidden="true"
+        />
+      )}
       [{strategyId}: {citedName}]
     </span>
   );

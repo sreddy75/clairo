@@ -36,8 +36,10 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import type {
+  AuthoringJob,
   StrategyStatus,
   TaxStrategyDetail,
+  TaxStrategyListItem,
 } from '@/lib/api/tax-strategies';
 import { cn } from '@/lib/utils';
 
@@ -143,6 +145,18 @@ export function StrategyAdminDetailSheet({
                       <li key={c}>{c}</li>
                     ))}
                   </ul>
+                </Section>
+              )}
+
+              {detailQuery.data.version_history.length > 0 && (
+                <Section title="Version history">
+                  <VersionHistory rows={detailQuery.data.version_history} />
+                </Section>
+              )}
+
+              {detailQuery.data.authoring_jobs.length > 0 && (
+                <Section title="Authoring jobs">
+                  <AuthoringJobsLog jobs={detailQuery.data.authoring_jobs} />
                 </Section>
               )}
             </>
@@ -287,6 +301,97 @@ function ProseBlock({ children }: { children: string }) {
     <div className="whitespace-pre-wrap text-sm leading-6 text-foreground">
       {children}
     </div>
+  );
+}
+
+function VersionHistory({ rows }: { rows: TaxStrategyListItem[] }) {
+  // Newest first — `updated_at` comes back from the backend in descending
+  // order already via `repo.list_versions`, but sort defensively in case
+  // the contract changes.
+  const sorted = [...rows].sort((a, b) =>
+    b.updated_at.localeCompare(a.updated_at),
+  );
+  return (
+    <ul className="space-y-1 text-sm">
+      {sorted.map((v) => (
+        <li
+          key={`${v.strategy_id}-v${v.version}`}
+          className="flex items-center justify-between gap-3 rounded-md border px-3 py-2"
+        >
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-xs text-muted-foreground">
+              v{v.version}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {v.status.replace('_', ' ')}
+            </span>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {new Date(v.updated_at).toLocaleDateString('en-AU', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            })}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const JOB_STATUS_CLASSES: Record<string, string> = {
+  pending: 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300',
+  running: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+  succeeded:
+    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
+  failed: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+};
+
+function AuthoringJobsLog({ jobs }: { jobs: AuthoringJob[] }) {
+  // Newest first. Backend returns in creation order — reverse so the
+  // most relevant row is at the top.
+  const sorted = [...jobs].sort((a, b) =>
+    b.created_at.localeCompare(a.created_at),
+  );
+  return (
+    <ul className="space-y-2 text-sm">
+      {sorted.map((job) => (
+        <li
+          key={job.id}
+          className="rounded-md border px-3 py-2 text-xs"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="font-mono uppercase text-muted-foreground">
+                {job.stage}
+              </span>
+              <span
+                className={cn(
+                  'rounded px-2 py-0.5 text-[10px] font-medium',
+                  JOB_STATUS_CLASSES[job.status] ?? JOB_STATUS_CLASSES.pending,
+                )}
+              >
+                {job.status}
+              </span>
+            </div>
+            <span className="text-muted-foreground">
+              {new Date(job.created_at).toLocaleString('en-AU', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          </div>
+          {job.error && (
+            <p className="mt-1 text-destructive">
+              <span className="font-semibold">error:</span> {job.error}
+            </p>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 

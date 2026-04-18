@@ -24,6 +24,21 @@ export type StrategyStatus =
 
 export type StrategyStage = 'research' | 'draft' | 'enrich' | 'publish';
 
+// Mirrors ALLOWED_CATEGORIES in backend/app/modules/tax_strategies/schemas.py.
+// Stringly-typed on the wire; kept in sync with the backend's fixed taxonomy.
+export const STRATEGY_CATEGORIES = [
+  'Business',
+  'Recommendations',
+  'Employees',
+  'ATO_obligations',
+  'Rental_properties',
+  'Investors_retirees',
+  'Business_structures',
+  'SMSF',
+] as const;
+
+export type StrategyCategory = (typeof STRATEGY_CATEGORIES)[number];
+
 export type AuthoringJobStatus = 'pending' | 'running' | 'succeeded' | 'failed';
 
 export interface TaxStrategyListItem {

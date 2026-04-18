@@ -23,6 +23,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -33,7 +41,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import type { StrategyStatus } from '@/lib/api/tax-strategies';
+import {
+  STRATEGY_CATEGORIES,
+  type StrategyCategory,
+  type StrategyStatus,
+} from '@/lib/api/tax-strategies';
 import { cn } from '@/lib/utils';
 
 import {
@@ -42,6 +54,7 @@ import {
   useStrategyList,
 } from '../hooks/use-tax-strategies';
 
+import { StrategiesPipeline } from './strategies-pipeline';
 import { StrategyAdminDetailSheet } from './strategy-detail-sheet';
 
 const STATUS_FILTERS: Array<{ value: StrategyStatus | 'all'; label: string }> = [
@@ -99,16 +112,24 @@ export function StrategiesTab() {
   const [statusFilter, setStatusFilter] = useState<StrategyStatus | 'all'>(
     'all',
   );
+  const [categoryFilter, setCategoryFilter] = useState<StrategyCategory | 'all'>(
+    'all',
+  );
+  const [search, setSearch] = useState('');
+  const [view, setView] = useState<'list' | 'pipeline'>('list');
   const [page, setPage] = useState(1);
   const [openStrategyId, setOpenStrategyId] = useState<string | null>(null);
   const [seedConfirmOpen, setSeedConfirmOpen] = useState(false);
   const { toast } = useToast();
 
-  const query = useStrategyList({
+  const listParams = {
     status: statusFilter === 'all' ? null : statusFilter,
+    category: categoryFilter === 'all' ? null : categoryFilter,
+    q: search.trim() || null,
     page,
     page_size: PAGE_SIZE,
-  });
+  };
+  const query = useStrategyList(listParams);
   const statsQuery = usePipelineStats();
   const seed = useSeedFromCsv({
     onSuccess: (summary) => {
@@ -143,6 +164,24 @@ export function StrategiesTab() {
           isLoading={statsQuery.isPending}
         />
         <div className="flex gap-2">
+          <div className="inline-flex rounded-md border" role="tablist" aria-label="View">
+            <Button
+              size="sm"
+              variant={view === 'list' ? 'secondary' : 'ghost'}
+              className="rounded-r-none"
+              onClick={() => setView('list')}
+            >
+              List
+            </Button>
+            <Button
+              size="sm"
+              variant={view === 'pipeline' ? 'secondary' : 'ghost'}
+              className="rounded-l-none"
+              onClick={() => setView('pipeline')}
+            >
+              Pipeline
+            </Button>
+          </div>
           <Button
             size="sm"
             variant="outline"
@@ -154,27 +193,73 @@ export function StrategiesTab() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {STATUS_FILTERS.map((f) => {
-          const active = statusFilter === f.value;
-          return (
-            <Button
-              key={f.value}
-              size="sm"
-              variant={active ? 'default' : 'outline'}
-              onClick={() => {
-                setStatusFilter(f.value);
+      {/* Pipeline view short-circuits the filter/table chrome — the kanban
+          is its own visual index of work-in-flight. */}
+      {view === 'pipeline' && (
+        <StrategiesPipeline
+          onRowClick={(strategyId) => setOpenStrategyId(strategyId)}
+        />
+      )}
+
+      {/* Filters (list view only) */}
+      {view === 'list' && (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            {STATUS_FILTERS.map((f) => {
+              const active = statusFilter === f.value;
+              return (
+                <Button
+                  key={f.value}
+                  size="sm"
+                  variant={active ? 'default' : 'outline'}
+                  onClick={() => {
+                    setStatusFilter(f.value);
+                    setPage(1);
+                  }}
+                >
+                  {f.label}
+                </Button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="w-52">
+              <Select
+                value={categoryFilter}
+                onValueChange={(v) => {
+                  setCategoryFilter(v as StrategyCategory | 'all');
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  {STRATEGY_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c.replace(/_/g, ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Input
+              placeholder="Search name or CLR-id…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
                 setPage(1);
               }}
-            >
-              {f.label}
-            </Button>
-          );
-        })}
-      </div>
+              className="w-72"
+            />
+          </div>
+        </>
+      )}
 
-      {/* Table */}
+      {/* Table (list view only) */}
+      {view === 'list' && (
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -255,9 +340,10 @@ export function StrategiesTab() {
           </Table>
         </CardContent>
       </Card>
+      )}
 
       {/* Pagination */}
-      {total > 0 && (
+      {view === 'list' && total > 0 && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
             {total === 0
