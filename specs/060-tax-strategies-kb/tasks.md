@@ -133,10 +133,10 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 
 #### Frontend — chip + hydration
 
-- [ ] T038 [P] [US1] Implement `StrategyChip` component in `frontend/src/components/tax-planning/StrategyChip.tsx` — green/amber/red Badge variants, renders `[CLR-XXX: Name]`, onClick opens `StrategyDetailSheet`
-- [ ] T039 [P] [US1] Implement `StrategyDetailSheet` in `frontend/src/components/tax-planning/StrategyDetailSheet.tsx` — uses shadcn `Sheet`; shows implementation + explanation + ATO sources + case refs; hydrates via `useStrategyHydration`
-- [ ] T040 [P] [US1] Implement `useStrategyHydration` hook in `frontend/src/components/tax-planning/useStrategyHydration.ts` — takes `strategy_ids: string[]`, returns TanStack Query result hydrating `GET /tax-strategies/public?ids=...`; caches by id
-- [ ] T041 [US1] In the chat message markdown renderer (identify in `frontend/src/components/tax-planning/` — likely `ScenarioChat.tsx` or a message component), add a tokenizer that converts `[CLR-XXX: Name]` substrings into `<StrategyChip/>` React nodes before markdown rendering (architecture §11.4)
+- [X] T038 [P] [US1] Implement `StrategyChip` component in `frontend/src/components/tax-planning/StrategyChip.tsx` — green/amber/red inline span using `badgeVariants` (span, not div, so it's valid inside `<p>`); renders `[CLR-XXX: Name]`; click/Enter/Space opens `StrategyDetailSheet`; status-specific `title` attribute.
+- [X] T039 [P] [US1] Implement `StrategyDetailSheet` in `frontend/src/components/tax-planning/StrategyDetailSheet.tsx` — shadcn `Sheet`; hydrates via `useStrategyHydration`; sections for Implementation, Explanation, ATO sources, Cases; explicit "Strategy not found" empty state when hydration returns nothing (partial T050).
+- [X] T040 [P] [US1] Implement `useStrategyHydration` hook in `frontend/src/components/tax-planning/useStrategyHydration.ts` — TanStack Query wrapping `GET /api/v1/tax-strategies/public?ids=...`; dedupes/sorts ids into the query key; Clerk `getToken()`; 5-minute stale time; cap of 20 ids per batch matches backend.
+- [X] T041 [US1] In `ScenarioChat.tsx` `MessageBubble`, override ReactMarkdown `p`/`li`/`td`/`em`/`strong` components to pipe children through `tokenizeStrategyChips` (replaces `[CLR-XXX: Name]` substrings with `<StrategyChip/>`). Sheet mounted once at the `ScenarioChat` root, driven by the clicked chip's id.
 
 #### Frontend — admin shell
 

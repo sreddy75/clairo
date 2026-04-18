@@ -13,6 +13,11 @@ import { cn } from '@/lib/utils';
 import type { ChatAttachment, CitationVerification, TaxPlanMessage, TaxScenario } from '@/types/tax-planning';
 
 import { CitationBadge } from './CitationBadge';
+import { StrategyDetailSheet } from './StrategyDetailSheet';
+import {
+  buildStrategyChipContext,
+  tokenizeStrategyChips,
+} from './tokenizeStrategyChips';
 
 const ACCEPTED_FILE_TYPES = [
   'image/png',
@@ -53,6 +58,11 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [openStrategyId, setOpenStrategyId] = useState<string | null>(null);
+  const handleOpenStrategy = useCallback(
+    (strategyId: string) => setOpenStrategyId(strategyId),
+    [],
+  );
 
   // Auto-scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -254,6 +264,7 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
   };
 
   return (
+    <>
     <Card className={cn("flex flex-col h-[700px]", className)}>
       <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
         {/* Messages */}
@@ -271,7 +282,11 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
           )}
 
           {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              onOpenStrategy={handleOpenStrategy}
+            />
           ))}
 
           {/* Streaming content */}
@@ -371,6 +386,14 @@ export function ScenarioChat({ planId, disabled, onScenarioCreated, className }:
         </div>
       </CardContent>
     </Card>
+    <StrategyDetailSheet
+      strategyId={openStrategyId}
+      open={openStrategyId !== null}
+      onOpenChange={(next) => {
+        if (!next) setOpenStrategyId(null);
+      }}
+    />
+    </>
   );
 }
 
@@ -388,8 +411,39 @@ function AttachmentBadge({ attachment }: { attachment: ChatAttachment }) {
   );
 }
 
-function MessageBubble({ message }: { message: TaxPlanMessage }) {
+function MessageBubble({
+  message,
+  onOpenStrategy,
+}: {
+  message: TaxPlanMessage;
+  onOpenStrategy: (strategyId: string) => void;
+}) {
   const isUser = message.role === 'user';
+  const chipCtx = buildStrategyChipContext(
+    message.citation_verification?.strategy_citations,
+    onOpenStrategy,
+  );
+  // ReactMarkdown hands every text-containing element its children via
+  // `components`. We wrap the text-holding elements so `[CLR-XXX: Name]`
+  // substrings get replaced with StrategyChip nodes. Block/structural
+  // elements (tables, headings) are left default.
+  const markdownComponents = {
+    p: ({ children }: { children?: React.ReactNode }) => (
+      <p>{tokenizeStrategyChips(children, chipCtx)}</p>
+    ),
+    li: ({ children }: { children?: React.ReactNode }) => (
+      <li>{tokenizeStrategyChips(children, chipCtx)}</li>
+    ),
+    td: ({ children }: { children?: React.ReactNode }) => (
+      <td>{tokenizeStrategyChips(children, chipCtx)}</td>
+    ),
+    em: ({ children }: { children?: React.ReactNode }) => (
+      <em>{tokenizeStrategyChips(children, chipCtx)}</em>
+    ),
+    strong: ({ children }: { children?: React.ReactNode }) => (
+      <strong>{tokenizeStrategyChips(children, chipCtx)}</strong>
+    ),
+  };
 
   return (
     <div className={cn('flex flex-col', isUser ? 'items-end' : 'items-start')}>
@@ -407,7 +461,9 @@ function MessageBubble({ message }: { message: TaxPlanMessage }) {
         {isUser ? (
           message.content
         ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+            {message.content}
+          </ReactMarkdown>
         )}
       </div>
       {!isUser && message.citation_verification && (
