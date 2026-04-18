@@ -73,6 +73,12 @@ Do NOT make an extra call for a combined/package/optimal scenario — the system
         messages: list[dict[str, Any]] = [{"role": "user", "content": user_prompt}]
         scenarios: list[dict[str, Any]] = []
 
+        # Hard cap: one tool call per strategy. Any call beyond this count is
+        # a meta/combined scenario — return an error result so the LLM gets a
+        # valid API response but the scenario is never stored.
+        max_tool_calls = len(top_strategies)
+        tool_call_count = 0
+
         # Tool-use loop (same pattern as existing TaxPlanningAgent)
         response = await self.client.messages.create(
             model=self.model,
@@ -86,20 +92,40 @@ Do NOT make an extra call for a combined/package/optimal scenario — the system
             tool_results = []
             for block in response.content:
                 if block.type == "tool_use":
-                    tool_result = self._execute_tool(
-                        block.input,
-                        financials_data,
-                        entity_type,
-                        rate_configs,
-                    )
-                    scenarios.append(tool_result)
-                    tool_results.append(
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": block.id,
-                            "content": json.dumps(tool_result),
-                        }
-                    )
+                    if tool_call_count >= max_tool_calls:
+                        # Reject the extra call — don't store, return error so
+                        # the API conversation remains valid.
+                        logger.info(
+                            "Modeller: rejecting tool call #%d (title=%r) — exceeds per-strategy cap of %d",
+                            tool_call_count + 1,
+                            block.input.get("scenario_title", "?"),
+                            max_tool_calls,
+                        )
+                        tool_results.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": json.dumps(
+                                    {"error": "Call limit reached. Model individual strategies only."}
+                                ),
+                            }
+                        )
+                    else:
+                        tool_result = self._execute_tool(
+                            block.input,
+                            financials_data,
+                            entity_type,
+                            rate_configs,
+                        )
+                        scenarios.append(tool_result)
+                        tool_call_count += 1
+                        tool_results.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": json.dumps(tool_result),
+                            }
+                        )
 
             messages.append({"role": "assistant", "content": response.content})
             messages.append({"role": "user", "content": tool_results})
@@ -112,8 +138,8 @@ Do NOT make an extra call for a combined/package/optimal scenario — the system
                 tools=[CALCULATE_TAX_TOOL],
             )
 
-        # Strip meta-scenarios before storing or summing — they double-count
-        # because their savings already include the individual strategies.
+        # Layer 2: name-based filter for any meta-scenarios that still slipped
+        # through (e.g. called within the cap by displacing a real strategy).
         _META_KEYWORDS = ("combination", "package", "combined", "optimal strategy", "best strategy")
         real_scenarios = [
             s for s in scenarios
@@ -124,10 +150,31 @@ Do NOT make an extra call for a combined/package/optimal scenario — the system
         ]
         if len(real_scenarios) < len(scenarios):
             logger.info(
-                "Modeller: stripped %d meta-scenario(s): %s",
+                "Modeller: name-filter stripped %d meta-scenario(s): %s",
                 len(scenarios) - len(real_scenarios),
                 [s.get("scenario_title") for s in scenarios if s not in real_scenarios],
             )
+
+        # Layer 3: structural detection — a meta-scenario's saving exceeds the
+        # sum of all other positive-saving scenarios (it represents their
+        # aggregate). Strip any scenario matching this signature.
+        positive = [
+            s for s in real_scenarios
+            if s.get("impact", {}).get("change", {}).get("tax_saving", 0) > 0
+        ]
+        if len(positive) > 1:
+            total_positive = sum(
+                s["impact"]["change"]["tax_saving"] for s in positive
+            )
+            structural_meta = {
+                id(s) for s in positive
+                # saving > 110% of the sum of all others = structural meta-scenario
+                if s["impact"]["change"]["tax_saving"] > 1.1 * (total_positive - s["impact"]["change"]["tax_saving"])
+            }
+            if structural_meta:
+                removed = [s.get("scenario_title") for s in real_scenarios if id(s) in structural_meta]
+                logger.info("Modeller: structural-filter stripped %d meta-scenario(s): %s", len(structural_meta), removed)
+                real_scenarios = [s for s in real_scenarios if id(s) not in structural_meta]
 
         combined = self._build_combined_strategy(real_scenarios)
 
