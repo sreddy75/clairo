@@ -1145,7 +1145,8 @@ function GeneratingProgress({ stage }: { stage: number }) {
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-semibold">Generating Tax Plan...</h3>
         <p className="text-sm text-muted-foreground">
-          This typically takes 2–3 minutes
+          This usually takes 4–6 minutes — the advisor streams a long-form
+          brief and each citation is individually verified
         </p>
       </div>
 
