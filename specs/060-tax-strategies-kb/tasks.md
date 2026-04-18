@@ -216,7 +216,7 @@ description: "Task list for 060-tax-strategies-kb Phase 1 implementation"
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T063 [P] Add structured logging tracer `tax_planning.retrieve.ms` per research §R4 — wraps the `_retrieve_tax_knowledge` call path; logs p50/p95 via existing `app.core.logging`
+- [X] T063 [P] Add structured logging tracer `tax_planning.retrieve.ms` per research §R4 — wraps the `_retrieve_tax_knowledge` call path; logs p50/p95 via existing `app.core.logging`
 - [ ] T064 [P] Confirm `SC-004` — run the existing test suites for `client_chat`, `knowledge_chat`, `tax_planning`, `insights` unchanged; no regression when `namespaces=None`. Additionally: integration test that a non-prod environment (write flag unset) can successfully read from the shared `tax_strategies` namespace after prod-side publish (FR-029).
 - [ ] T064a [P] Performance check (SC-008) — run `GET /api/v1/admin/tax-strategies?page_size=415` locally with all 415 stubs seeded, assert p95 response time ≤ 500ms over 10 runs; record numbers in quickstart validation notes.
 - [X] T064b [P] Code-layer citation markup normaliser (constitution §VIII) — add a post-processor in the tax-planning response path that rewrites near-miss citation forms (`(CLR-###)`, `CLR-###` unbracketed, `[CLR-###]` with missing name) into canonical `[CLR-###: <name-from-retrieved-set>]` when a retrieved strategy's identifier matches; unmatched near-misses are left alone for the verifier to classify as unverified. Unit test covering 4 near-miss inputs plus 1 canonical input. Prevents prompt drift from degrading chip coverage.

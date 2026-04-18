@@ -1293,6 +1293,52 @@ class TaxPlanningService:
         entity_type: str,
         financials_data: dict | None = None,
     ) -> tuple[list[dict], str, list[dict]]:
+        """Latency-traced wrapper around the real retrieval path.
+
+        Spec 060 T063 / research §R4: emit `tax_planning.retrieve.ms` as a
+        structured log so Phase 2 can track p50/p95 against the 800ms SLO
+        without retrofitting instrumentation after content ships.
+        """
+        import time
+
+        start = time.perf_counter()
+        outcome = "success"
+        compliance_count = 0
+        strategy_count = 0
+        try:
+            result = await self._retrieve_tax_knowledge_impl(
+                query, entity_type, financials_data
+            )
+            _, _, retrieved_strategies = result
+            strategy_count = len(retrieved_strategies)
+            # Compliance results live in chunks[] — count entries without a
+            # tax_strategy_id prefix on their chunk_id.
+            compliance_count = sum(
+                1 for c in result[0] if not c.get("chunk_id", "").startswith("strategy:")
+            )
+            return result
+        except BaseException:
+            outcome = "error"
+            raise
+        finally:
+            elapsed_ms = (time.perf_counter() - start) * 1000.0
+            logger.info(
+                "tax_planning.retrieve.ms=%.1f query_len=%d entity=%s "
+                "compliance=%d strategies=%d outcome=%s",
+                elapsed_ms,
+                len(query),
+                entity_type,
+                compliance_count,
+                strategy_count,
+                outcome,
+            )
+
+    async def _retrieve_tax_knowledge_impl(
+        self,
+        query: str,
+        entity_type: str,
+        financials_data: dict | None = None,
+    ) -> tuple[list[dict], str, list[dict]]:
         """Retrieve relevant knowledge base content for a tax planning query.
 
         Spec 060: retrieves across BOTH the compliance_knowledge and
