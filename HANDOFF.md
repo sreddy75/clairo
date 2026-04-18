@@ -24,12 +24,38 @@ The "prompts are suggestions, code is law" principle from CLAUDE.md is structura
 
 ---
 
-## Spec 059 stories remaining
+## Spec 059 stories — status after 059-2
 
-After this meta-scenario resolution, these stories from the original Spec 059 still need attention:
+Each of the three originally-open follow-up stories was re-evaluated against the post-059-2 codebase. Outcome:
 
-- **Story 6**: Citation verification / semantic similarity threshold (the `semantic=0` bug) — surfaced again during 059-2 UAT: the reviewer flagged "TR 2012/8" as possibly fabricated and cited prepayment provisions as ITAA 1997 when they are ITAA 1936. This is the citation verifier's job.
-- **Story 7**: No "pre-Stage-3" rate language in documents
-- **Story 8**: Duplicate scenario titles don't accumulate (upsert logic)
+### Story 6 — Citation verification: **rescoped**
 
-Also noted during 059-2 UAT but out of scope: an unresolved interaction between the Instant Asset Write-Off and SBE Simplified Depreciation Pooling scenarios — they both assume SBE regime election but don't cross-reference. This is a substantive strategy-design concern, not an arithmetic one. Candidate for a future strategy-consistency spec.
+The original bug (semantic-score `dict-key` typo collapsing confidence to near-zero) **was already resolved under Spec 059** — see the fix comment at `backend/app/modules/tax_planning/service.py:1457-1459` and the regression test at `backend/tests/e2e/tax_planning/test_citation_regression_bank.py:97`. Do not re-open.
+
+The 059-2 UAT did surface two **new, unrelated** citation defects the current verifier cannot catch by design: (1) a hallucinated ruling ID passes if any retrieved chunk contains the identifier string even once, regardless of topical relevance; (2) wrong-act-year citations (e.g., "s 82KZM ITAA 1997" when the section belongs to ITAA 1936) are invisible because the extraction regex discards the act-year suffix. Plus a minor streaming-vs-non-streaming confidence-gate divergence.
+
+Captured as a focused brief: `specs/briefs/2026-04-18-citation-substantive-validation.md`. Ready to promote to a full spec.
+
+### Story 7 — Pre-Stage-3 rate language: **verified resolved**
+
+Full grep across `backend/app/modules/tax_planning/` for pre-Stage-3 threshold markers (`32.5%`, `$120,000`, `$120k`, `$180,000`) returns zero matches. The only hit for `37%` is the correct post-Stage-3 `$135,000–$190,000` bracket. The chat agent's `TAX_PLANNING_SYSTEM_PROMPT` already includes explicit Stage 3 brackets and disclaims "Pre-Stage-3 brackets are superseded and must not appear." No code change needed. Closed without ceremony.
+
+### Story 8 — Duplicate scenario titles: **narrowed to chat-flow only**
+
+The analysis-pipeline half of the problem is resolved by 059-2 — the modeller now dedupes by validated `strategy_id` in code, so duplicates are structurally impossible in that flow. The **chat flow** (`backend/app/modules/tax_planning/agent.py` — the legacy single-agent `TaxPlanningAgent`) is untouched by 059-2 and still exhibits the original drift pattern: LLM emits renamed scenarios ("Prepay Rent" → "Prepay Rent - Updated"), `upsert_by_normalized_title` fails to merge them, the Scenarios tab accumulates duplicates.
+
+Captured as a focused brief: `specs/briefs/2026-04-18-chat-scenario-dedup.md`. Recommended approach: apply the same "structured ID addressing" pattern that solved 059-2 to the chat flow's tool schema. Ready to promote to a full spec.
+
+### Non-Story followup surfaced during 059-2 UAT
+
+An unresolved interaction between the Instant Asset Write-Off and SBE Simplified Depreciation Pooling scenarios — both assume SBE regime election but don't cross-reference. Substantive strategy-design concern, not arithmetic. Not yet brief'd; candidate for a future strategy-consistency spec if it recurs.
+
+---
+
+## Next-action priority
+
+Based on the above, the user-visible impact order is:
+
+1. **Citation substantive validation** (`specs/briefs/2026-04-18-citation-substantive-validation.md`) — highest. Directly drives "Needs Review" false-alarms on otherwise-correct plans and creates PI-exposure on wrong-act citations.
+2. **Chat-flow scenario dedup** (`specs/briefs/2026-04-18-chat-scenario-dedup.md`) — medium. UX annoyance; not a correctness bug, but clutters the Scenarios tab.
+3. Strategy-consistency spec — monitor. No brief yet.
