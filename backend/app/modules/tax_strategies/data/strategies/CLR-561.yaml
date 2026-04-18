@@ -1,0 +1,101 @@
+strategy_id: CLR-561
+source_ref: STP-561
+name: Update SMSF deed
+categories:
+- Recommendations
+implementation_text: 'Here is a general outline of the process of updating an SMSF deed:
+
+  1. Review the current deed: The first step is to thoroughly review the existing deed to understand its
+  provisions, especially those related to amending. Some deeds may have specific requirements about how
+  and when they can be updated.
+
+  2. Seek professional advice: Before making changes, it''s wise to consult with professionals, such as
+  SMSF specialists, lawyers, or accountants, to get advice on the necessary updates and to understand
+  any potential implications.
+
+  3. Decide on changes: Determine the exact modifications needed. This could be in response to legislative
+  changes, new financial strategies, or changes in the fund members'' circumstances.
+
+  4. Prepare a deed of variation: A "Deed of Variation" (or similarly named document) is usually prepared
+  once the changes are identified. This deed outlines the specific amendments to the original trust deed.
+
+  5. Trustee approval: All trustees must usually agree to the changes depending on the original trust
+  deed''s provisions. Ensure all trustees sign the Deed of Variation or the updated deed as required.
+
+  6. Witnessing: Depending on jurisdiction and the trust deed''s requirements, signing the updated deed
+  or the Deed of Variation might need to be witnessed. Ensure that this is done correctly.
+
+  7. Retain documentation: Keeping the original trust deed, the Deed of Variation, and other related documentation
+  safe is crucial. These documents may be required for future audits or other verification processes.
+
+  8. Inform relevant parties: Notify all appropriate parties about the deed update. This can include the
+  SMSF''s accountant, financial planner, and auditor.
+
+  9. Review other related documents: After updating the trust deed, it''s a good idea to review other
+  related documents like the fund''s investment strategy, pension documents, and death benefit nominations
+  to ensure they are consistent with the updated deed.
+
+  10. Ongoing review: It''s beneficial to review the deed periodically, even after updating it, to ensure
+  it remains relevant and compliant with the changing landscape of superannuation laws and the needs of
+  the fund''s members.'
+explanation_text: 'Updating the trust deed of a Self Managed Super Fund (SMSF) is vital to ensuring that
+  the fund remains compliant and continues to serve the best interests of its members. Its recommended
+  an SMSF trust deed be updated every three to four years.
+
+
+  The benefits of updating an SMSF deed are:
+
+  1. Ensuring Compliance: Superannuation laws and regulations in Australia change regularly. Updating
+  the deed provides that the SMSF remains compliant with current legislation, helping to avoid penalties
+  or other compliance issues.
+
+  2. Flexibility: A current deed can provide trustees with more flexibility in the operation and management
+  of the SMSF. This can include strategies related to contributions, pensions, and investments.
+
+  3. Accommodating Member Needs: An updated deed can accommodate strategies related to pensions, retirement
+  planning, estate planning, and more.
+
+  4. Protection against Disputes: A clear, up-to-date deed can help reduce the possibility of disputes
+  among members or with regulatory bodies. For instance, it can clearly define processes in case of a
+  member''s death, thus avoiding potential disputes among beneficiaries.
+
+  5. Incorporating New Strategies: Financial and tax strategies evolve. An updated deed can allow members
+  to take advantage of new, beneficial strategies that may not have been available or known when the original
+  deed was drafted.
+
+  6. Avoiding Ambiguities: Over time, some clauses in the original deed might become ambiguous due to
+  changes in laws or the financial landscape. Updating the deed helps in clarifying such ambiguities.
+
+  7. Adding or Removing Members: If the SMSF needs to add or remove members, the deed may need to be updated
+  to accommodate these changes.
+
+  8. Ensuring Efficient Administration: A current deed can simplify the administration of the SMSF by
+  making it easier to process transactions, manage investments, and deal with service providers.
+
+  9. Enhanced Estate Planning: Ensuring that benefits are passed to beneficiaries in a tax-effective manner.
+
+  10. Optimized Investment Strategy: An updated deed can ensure that the trustees have the power to invest
+  in a broader range of assets if they deem it appropriate.'
+ato_sources: []
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- smsf
+- trust deed
+- deed of variation
+- superannuation
+- compliance
+- trustees
+- estate planning
+- investment strategy
+- pension
+- deed update

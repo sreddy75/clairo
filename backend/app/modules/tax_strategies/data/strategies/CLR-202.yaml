@@ -1,0 +1,53 @@
+strategy_id: CLR-202
+source_ref: STP-202
+name: Business registrations
+categories:
+- ATO_obligations
+- Recommendations
+implementation_text: '1. Register for an Australian Business Number (ABN) to identify your business, claim
+  GST credits, confirm your business identity when ordering and invoicing, and avoid PAYG tax on payments
+  received.
+
+  2. Obtain a Tax File Number (TFN), using your personal TFN if operating as a sole trader or partnership,
+  or registering a separate TFN if operating as a company or trust.
+
+  3. Register a business name if you are carrying out business under a name different from your own.'
+explanation_text: 'The Australian Taxation Office (ATO) requires businesses in Australia to complete various
+  registrations, including:
+
+  1. Australian business number (ABN): An 11-digit number that identifies your business and allows you
+  to claim Goods and Services Tax (GST) credits, confirm your business identity to others when ordering
+  and invoicing, and avoid Pay as You Go (PAYG) tax on payments you receive.
+
+  2. Tax file number (TFN): An individual operating as a sole trader or partnership should use their personal
+  TFN for tax matters, while companies and trusts need a separate TFN.
+
+  3. Business name registration: It is essential if carrying out business under a different name.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- abn
+- tfn
+- business registration
+- gst
+- payg
+- sole trader
+- partnership
+- company
+- trust
+- ato obligations
+tenant_id: platform
+version: 1

@@ -1,0 +1,110 @@
+strategy_id: CLR-501
+source_ref: STP-501
+name: Avoid underpaying employees
+categories:
+- Recommendations
+implementation_text: 'To avoid underpaying employees, employers must:
+
+  1. Understand employment laws: Familiarize yourself with Australian employment laws, including minimum
+  wage requirements, working hours, penalty rates, and leave entitlements, and stay up-to-date with any
+  changes in these laws.
+
+  2. Know industry awards: Determine which industry award or enterprise agreement applies to your employees.
+  These agreements outline the minimum conditions and pay rates for specific job roles within an industry.
+
+  3. Proper classification: Accurately classify workers as employees or independent contractors based
+  on their work arrangement.
+
+  4. Payroll compliance: Ensure that your payroll system is set up correctly to calculate wages, overtime,
+  and penalty rates by the relevant award or agreement.
+
+  5. Record keeping: Accurate and detailed records of employee work hours, leave taken, and relevant allowances
+  must be maintained. This documentation is crucial in case of audits or disputes.
+
+  6. Regular reviews: Review your payroll processes to ensure compliance with employment laws and industry
+  agreements.
+
+  7. Employee awareness: Communicate with your employees about their entitlements, pay rates, and the
+  process for requesting leave or reporting any issues.
+
+  8. Training for managers: Train your managers and HR personnel on employment laws and proper payroll
+  practices. This helps ensure that everyone involved in the pay process understands their responsibilities.
+
+  9. Seek professional advice: If you are uncertain about any aspect of employment law or payroll, consult
+  with legal experts, HR consultants, or industry associations to ensure you are following the correct
+  procedures.
+
+  10. Stay updated: Regularly check for updates from government agencies, industry bodies, and legal sources
+  to stay informed about any changes in employment laws or industry standards.
+
+  11. Fair Work Ombudsman: For guidance on complying with employment laws, consult the Fair Work Ombudsman''s
+  resources, including its website, publications, and helpline.'
+explanation_text: 'Underpaying employees occurs when workers are paid less than the minimum wage or are
+  not provided with their correct entitlements and benefits as stipulated by Australian employment laws.
+
+
+  Key factors contributing to underpayments include:
+
+  1. Misclassification: Employers may misclassify workers as independent contractors rather than employees,
+  leading to underpayment of minimum wage, overtime, and leave.
+
+  2. Minimum wage violations: Australia has a legislated minimum wage that employers must adhere to. Underpayment
+  occurs when businesses pay employees less than this minimum wage.
+
+  3. Award and agreement misinterpretation: Many employees are covered by industry awards or enterprise
+  agreements that specify certain minimum conditions (e.g., pay rates, working hours, penalty rates).
+  Employers may misunderstand or intentionally violate these agreements.
+
+  4. Record-keeping issues: Poor record-keeping practices can lead to unintentional underpayment when
+  employers don''t accurately track working hours or fail to apply relevant allowances.
+
+  5. The complexity of labour laws: The Australian industrial relations system can be complex, and small
+  businesses, in particular, may struggle to understand and comply with all the relevant laws and regulations.
+
+  6. Intentional non-compliance: In some cases, businesses may intentionally underpay employees to cut
+  costs and increase profits, which is illegal and unethical.
+
+
+  The penalties for underpaying employees can include the following:
+
+  1. Back payment: Employers must pay the affected employees the owed wages, including any outstanding
+  entitlements like overtime, penalty rates, or leave entitlements.
+
+  2. Penalty rates: Employers may be required to pay additional penalty rates as compensation for the
+  underpayment. These penalty rates can be substantial, especially if the underpayment involves working
+  overtime on weekends or public holidays.
+
+  3. Interest: Employers may be liable to pay interest on underpaid wages, calculated from when the underpayment
+  occurred until it is rectified.
+
+  4. Civil penalties: Employers who deliberately underpay their employees can face significant civil penalties.
+
+  5. Legal proceedings: Underpaid employees can sue their employers to recover unpaid wages and seek additional
+  compensation.
+
+  6. Reputational damage: Underpaying employees can lead to negative publicity and damage the company''s
+  reputation.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- underpaying employees
+- minimum wage
+- payroll compliance
+- industry awards
+- enterprise agreements
+- penalty rates
+- worker misclassification
+- record keeping
+- fair work ombudsman
+- employment law
+- leave entitlements
+- back payment

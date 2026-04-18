@@ -1,0 +1,56 @@
+strategy_id: CLR-014
+source_ref: STP-014
+name: Living away from home allowances (LAFHA)
+categories:
+- Employees
+- Business
+implementation_text: '1. Determine whether the employee is travelling for work (typically less than 21
+  days), living away from home for work purposes, or has relocated.
+
+  2. Ensure that the LAFHA paid does not exceed the reasonable accommodation and meal expenditure limits
+  so no FBT is paid.
+
+  3. The employer reduces the employee''s gross salary and pays them a living away-from-home allowance.
+
+  4. Get the FBT LAFHA and substantiation declarations signed by the employee.
+
+  5. Limit the LAFHA to only the first 12 months of an employee''s work at a particular location (otherwise,
+  FBT will be payable).'
+explanation_text: 'Where an employee is living away from home for work purposes and going to one workplace,
+  then any meals or accommodation costs incurred by the employee at or near their workplace are generally
+  private and non-deductible. For example, if an electrician lives in Perth, but works 21 days each month
+  at the Kalgoorlie office, then their place of work is the Kalgoorlie office. As a result, any meals
+  or accommodation expenses they incur in Kalgoorlie will be private and non-deductible.
+
+
+  The non-deductible meals and accommodation expenses become deductible by having the employer pay the
+  employee a living away-from-home allowance (LAFHA). The LAFHA compensates them for non-deductible expenditures
+  (meals and accommodation) incurred living away from home for work purposes. To the extent that the LAFHA
+  comprises reasonable compensation for accommodation costs and compensation for meals for the employee,
+  the LAFHA can be FBT-exempt and tax-free for the recipient employee.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- lafha
+- living away from home allowance
+- fbt
+- fringe benefits tax
+- salary packaging
+- accommodation
+- meals
+- employee allowance
+- tax-free allowance
+- remote work
+- fly-in fly-out
+- relocation

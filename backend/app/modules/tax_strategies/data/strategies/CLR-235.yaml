@@ -1,0 +1,56 @@
+strategy_id: CLR-235
+source_ref: STP-235
+name: SMSF carrying on a business
+categories:
+- Business
+- SMSF
+implementation_text: '1. The trust deed needs to be updated to allow the SMSF to carry on a business explicitly.
+
+  2. The investment strategy needs to be updated to include the proposed business activities.
+
+  3. We must consider whether the restrictions imposed by the SIS Act make operating the business through
+  the SMSF viable and achievable.'
+explanation_text: 'Subject to compliance with the SIS Act and the sole purpose test, the ATO has confirmed
+  that SMSFs can carry on a business. Although the most common businesses operated through an SMSF are
+  share trading or property development, other business ventures are possible. The advantages of running
+  a business through an SMSF include the following:
+
+  Using members'' superannuation balances to fund the business.
+
+  0%, 10% or 15% tax rates.
+
+  Investing in businesses can produce potentially higher investment returns than passive assets.
+
+
+  The restrictions imposed with operating a business through an SMSF include:
+
+  Restrictions on borrowing.
+
+  Cannot provide loans or financial assistance to members.
+
+  Cannot employ or remunerate members (limited exception applies).
+
+  Cannot acquire assets from related parties.'
+ato_sources: []
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- smsf
+- business
+- sole purpose test
+- sis act
+- trust deed
+- investment strategy
+- share trading
+- property development
+- superannuation
+- tax rates

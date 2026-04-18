@@ -1,0 +1,56 @@
+strategy_id: CLR-054
+source_ref: STP-054
+name: Five year rule for new residential premises
+categories:
+- Investors_retirees
+- Rental_properties
+implementation_text: '1. For this exemption to apply, the property must be continuously rented for at
+  least five years.
+
+  2. No input tax credits can be claimed on the building costs if the property is rented out. If the input
+  tax credits have previously been claimed, as the building would be sold immediately after construction,
+  they must be refunded to the ATO.
+
+  3. From 1st July 2018, purchasers of newly constructed properties will be required to remit the GST
+  directly to the ATO as part of the settlement (instead of the current situation where the vendor does
+  it).'
+explanation_text: 'Residential premises are subject to GST on the sale proceeds if deemed ''new'' residential
+  premises. The ATO defines residential premises as ''new'' residential premises if they:
+
+
+  • Have not previously been sold as residential premises (i.e., newly constructed).
+
+  • Have been created through substantial renovations of a building.
+
+  • Have been or contain a building that has been built, to replace demolished premises on the same land.
+
+
+  The GST is payable by the vendor on ''new'' residential premises could be as high as 1/11th of the sale
+  price but may be lower if the margin scheme applies. The ''five-year rule'' states that residential
+  premises are not ''new'' if rented out for five or more years since they first became residential premises
+  or were last built or substantially renovated. In this case, the sale of the property after being rented
+  out is input taxed (GST-free).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- concession
+keywords:
+- gst
+- new residential premises
+- five year rule
+- input taxed
+- margin scheme
+- input tax credits
+- rental property
+- residential property
+- construction
+- substantial renovation

@@ -1,0 +1,79 @@
+strategy_id: CLR-147
+source_ref: STP-147
+name: Service arrangement
+categories:
+- Business
+implementation_text: '1. Based on the client''s circumstances, determine what the most appropriate service
+  entity structure is.
+
+  2. Setup the service entity - The owners of the service entity are usually family members in lower tax
+  brackets, so they achieve overall tax savings.
+
+  3. Ensure the arrangements make commercial business sense (even ignoring the possible tax savings).
+
+  4. Enter into a written arms-length service agreement between the ''practice entity'' and the service
+  entity before commencing the services.
+
+  5. Ensure the service entity provides the services detailed in the service agreement and payments comply
+  with the agreement.
+
+  6. We need to consider ATO ruling PCG 2021/4 on the allocation of profits within professional firms.'
+explanation_text: 'A service arrangement involves a related party entity providing the taxpayer services
+  (for a fee). Historically service entities have been used by professional persons (i.e. accountants,
+  doctors, dentists, etc.) to divert part of their professional income away from themselves to an associated
+  entity.
+
+
+  A service arrangement generally has the following features:
+
+
+  The taxpayer (and this could be a sole trader, trust, partnership or company) carries on a business
+  or professional practice.
+
+  A trust or company is owned or controlled by the taxpayer or their associates.
+
+  The taxpayer agrees with the service entity to pay specific fees in exchange for the service entity
+  providing certain services. These services could include staff hire, premises, administration services,
+  and plant or equipment.
+
+  The service fees are calculated by way of a markup over all of the costs of the service entity.
+
+  The taxpayer claims a deduction for service fees incurred as an expense in conducting its business.
+
+  The service arrangement gives rise to profits in the service entity, which are either retained by the
+  service entity (if a company) or diverted to the taxpayer''s associates (if a trust).'
+ato_sources:
+- PCG 2021/4
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- accountants
+- doctors
+- dentists
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- service arrangement
+- service entity
+- related party
+- professional practice
+- income splitting
+- arms-length agreement
+- markup
+- family members
+- tax bracket
+- profit allocation
+- professional firms
+- administration services
+- staff hire

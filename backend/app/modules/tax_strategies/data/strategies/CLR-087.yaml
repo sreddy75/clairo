@@ -1,0 +1,74 @@
+strategy_id: CLR-087
+source_ref: STP-087
+name: Research and development
+categories:
+- Business
+implementation_text: '1. Determine whether the R&D activities meet the AusIndustry classification as either
+  core R&D activities or supporting R&D activities.
+
+  2. Register the R&D activities each year with AusIndustry before claiming the R&D tax incentive in the
+  company tax return.
+
+  3. Claim the R&D tax incentive in the company tax return.'
+explanation_text: 'AusIndustry and the ATO jointly administer the research and development (R&D) tax incentive(on
+  behalf of Innovation Australia). The ATO determines if the expenditure claimed in the tax return for
+  the R&D activities is eligible. AusIndustry manages the registration of the R&D activities and checks
+  they comply with the law. For eligible entities with a turnover of less than $20 million pa, the R&D
+  tax incentive is a premium of 18.5 percentage points above a claimant''s company tax rate.
+
+
+  For companies with an aggregated annual turnover of greater than $20 million, an R & D premium applies
+  that ties the rate of non-refundable R&D offset to the incremental intensity of R&D expenditure as a
+  proportion of total spending for the year. The marginal R&D premium is the claimant''s tax rate plus
+  the:
+
+
+  8.5 percentage points for R&D expenditure between 0% to 2% R&D intensity.
+
+  16.5 percentage points for R&D expenditure above 2% R&D intensity.
+
+
+  The requirements to be eligible for the R & D tax incentive include must:
+
+
+  Register the R&D activities each year with AusIndustry before claiming the R&D tax incentive in the
+  company tax return.
+
+  Be an R&D entity, i.e. company.
+
+  Be engaged in eligible R&D activities.
+
+  Have notional R&D deductions of at least $20,000 for the year.
+
+
+  Eligible R&D activities are generally only R&D activities conducted in Australia. To qualify for the
+  R&D tax incentive, the activities must be classified as either core R&D activities or supporting R&D
+  activities.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- offset
+- deduction
+keywords:
+- research and development
+- r&d tax incentive
+- ausindustry
+- core r&d activities
+- supporting r&d activities
+- r&d registration
+- innovation australia
+- r&d offset
+- r&d intensity
+- company tax return
+- notional deductions
+- refundable offset
+- non-refundable offset

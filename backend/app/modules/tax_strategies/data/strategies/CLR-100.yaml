@@ -1,0 +1,47 @@
+strategy_id: CLR-100
+source_ref: STP-100
+name: Logbook for motor vehicles
+categories:
+- Employees
+- Business
+implementation_text: 1. Keep an ATO compliant motor vehicle logbook for each vehicle.
+explanation_text: 'If taxpayers want to maximise their motor vehicle deduction claims, they must keep
+  a logbook for each vehicle. With the logbook method:
+
+  You use the logbook records of your car''s business-related usage to claim the business-use percentage
+  of each motor vehicle expense.
+
+  The logbook must record the business use percentage.
+
+  You must have written evidence (receipts) for the motor vehicle expenses, including fuel, repairs, and
+  insurance.
+
+  A logbook must be kept for 12 weeks and is valid for five years.
+
+  The logbook must record the motor vehicle''s odometer readings at the start and end of the logbook period.
+
+  The logbook can be on paper or Excel, a purchased logbook from a stationery retailer or an app on your
+  smartphone.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- logbook
+- motor vehicle
+- car expenses
+- business use percentage
+- odometer
+- fuel
+- repairs
+- insurance
+- work-related travel
+- deduction

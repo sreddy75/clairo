@@ -1,0 +1,38 @@
+strategy_id: CLR-123
+source_ref: STP-123
+name: General pool balance less than $20,000
+categories:
+- Business
+implementation_text: 1. Writing off the general pool balance if it is below $20,000 on 30th June 2025.
+explanation_text: 'The simplified depreciation rules allow:
+
+  The immediate write-off for depreciating assets is if they are below the write-off thresholds applying
+  to that financial year.
+
+  Pooling with other depreciating assets in the general pool and declining at a 15% diminishing value
+  rate in the first year and 30% after that. Writing off the general pool balance if it is below $20,000
+  on 30th June 2025. This write-off is only allowed if the year''s depreciation deduction plus the closing
+  pool balance total is less than $20,000.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- general pool
+- simplified depreciation
+- write-off
+- depreciating assets
+- small business
+- pool balance
+- diminishing value
+- depreciation deduction
+- 30 june 2025
+- immediate write-off

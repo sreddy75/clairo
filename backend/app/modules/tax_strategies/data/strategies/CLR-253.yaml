@@ -1,0 +1,54 @@
+strategy_id: CLR-253
+source_ref: STP-253
+name: Management fees
+categories:
+- Business
+implementation_text: '1. Ensure the payment of management fees makes commercial business sense (even ignoring
+  the possible tax savings).
+
+  2. Document the management services provided and how the fees are calculated.
+
+  3. Provide management services.
+
+  4. Provide a tax invoice for the management services provided.
+
+  5. Receive payment for the management services provided - ideally during the financial year when the
+  services were provided.'
+explanation_text: 'This strategy involves one entity charging another entity for the management services
+  they have provided. The advantages of this include the following:
+
+
+  Allows one entity to transfer part of its profits to another entity (with potential tax savings).
+
+  Ability to reduce costs by having centralised services such as finance, administration, marketing, and
+  financial systems provided by one entity.
+
+  Enables different assets to be put in separate entities for asset protection purposes. For example,
+  one entity may own the brand name and trademarks, another real estate, other equipment, and another
+  operate the trading business.
+
+  Allows foreign entities to transfer their profits/cash flow from the foreign country to the home country.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- management fees
+- intercompany charges
+- profit transfer
+- centralised services
+- asset protection
+- related entities
+- tax savings
+- business structure
+- tax invoice
+- intragroup

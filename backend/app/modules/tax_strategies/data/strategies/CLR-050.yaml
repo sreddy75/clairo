@@ -1,0 +1,43 @@
+strategy_id: CLR-050
+source_ref: STP-050
+name: Four year construction rule
+categories:
+- Investors_retirees
+- Rental_properties
+implementation_text: '1. Document the basis and time for claiming the four-year construction rule.
+
+  2. The dwelling must become the taxpayer''s principal residence as soon as practical after completing
+  construction. That is, the taxpayer must move into the property.
+
+  3. The dwelling must remain the taxpayer''s principal residence for at least three months.'
+explanation_text: Under the 'four-year construction rule', a taxpayer can treat their completed dwelling
+  (and the land) as if it were their principal residence for up to four years before it becomes their
+  primary residence. This rule allows a taxpayer to apply the principal residence exemption for up to
+  four years during which the block was purchased, and the dwelling was being constructed, repaired, or
+  renovated. For this to apply, the taxpayer cannot claim the principal residence exemption on another
+  property from the date the land was purchased. So a taxpayer living in another principal residence during
+  the construction period of the new primary residence will be subject to capital gains tax on the sale
+  of the 'old' primary house.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- four year construction rule
+- principal residence exemption
+- main residence
+- capital gains tax
+- cgt exemption
+- construction
+- renovation
+- dwelling
+- land purchase
+- property

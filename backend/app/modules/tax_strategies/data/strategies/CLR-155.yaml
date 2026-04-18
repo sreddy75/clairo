@@ -1,0 +1,62 @@
+strategy_id: CLR-155
+source_ref: STP-155
+name: Salary packaging associated leases
+categories:
+- Employees
+- Business
+implementation_text: '1. The employees associate (their spouse, partners, children, parents, associate''s
+  company, or trust) purchases a car using their cash reserves or finances the purchase (either added
+  to their home loan or as a hire purchase arrangement).
+
+  2. The spouse then leases the car to the employee''s employer under an arms-length lease agreement.
+
+  3. The employer then provides the same car back to the employee as a car fringe benefit.
+
+  4. The spouse includes the lease payments as income in their tax return and claims deductions for depreciation,
+  finance, and other costs.
+
+  5. The lease payments the spouse receives can affect their Centrelink Family Tax Benefit Part A & B
+  entitlements.
+
+  6. The employee salary sacrifices the GST-exclusive amount of car expenses (including the lease payments
+  made to the spouse) and any FBT that is payable by the employer concerning the car fringe benefit.'
+explanation_text: 'An associate lease is an agreement where an associate of the employee (typically a
+  spouse or partner) leases an existing or replacement car to the employee''s employer. The employer then
+  provides the vehicle to the employee via a pre-tax salary sacrifice arrangement. The employee pays most
+  of the vehicle''s operating costs from their pre-tax salary as a salary sacrifice arrangement.
+
+
+  The tax savings with salary packaging and associated lease are two-fold. Firstly, salary packaging a
+  car saves the standard $2,700 pa in tax due to the concessional valuation rules that apply to car fringe
+  benefits. The second more substantial tax savings result as the employee''s salary package is reduced
+  by the lease payments included in the assessable income of the spouse (who is taxed at a much lower
+  marginal tax rate than the employee).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+keywords:
+- salary packaging
+- associate lease
+- car fringe benefit
+- salary sacrifice
+- spouse
+- fbt
+- pre-tax salary
+- concessional valuation
+- centrelink
+- family tax benefit
+- depreciation
+- income splitting
+- vehicle
+- hire purchase
+- arms-length

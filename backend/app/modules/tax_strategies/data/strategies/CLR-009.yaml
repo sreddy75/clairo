@@ -1,0 +1,52 @@
+strategy_id: CLR-009
+source_ref: STP-009
+name: Relocation expenses
+categories:
+- Employees
+- Business
+implementation_text: '1. The employer pays for the employee''s relocation costs and reduces the employee''s
+  gross wages (salary sacrifice), or
+
+  2. The employee pays for the relocation costs and is reimbursed by the employer. The employer then claims
+  the tax deduction, reducing the employee''s gross wage.'
+explanation_text: 'Employees who relocate for work are not entitled to a tax deduction for the relocation
+  costs and airfares they incur (as those expenses are deemed private). In contrast, an employer receives
+  a tax deduction for paying or reimbursing an employee''s relocation costs. Employees must sacrifice
+  their relocation costs with their employer to make their relocation expenses tax-deductible. The employee
+  reduces their gross annual wage by the amount of relocation costs. The employer then either pays the
+  relocation costs directly or reimburses the employee for the relocation costs they have already paid.
+
+
+  Example: Jill relocates from Perth to Darwin for a new job and pays $11,000 in relocation costs to transport
+  her furniture. Once starting work in Darwin, Jill''s salary sacrifices the $11,000 in expenses with
+  her employer. The employer reduces Jill''s gross wage for the first month by $10,000, not $11,000, as
+  the employer claims back the $1,000 GST input tax credits on the $11,000 relocation expenses reimbursement.
+  The employer then reimburses Jill for the $11,000 relocation costs she has incurred. This results in
+  no overall cost to the employer. The benefits to Jill are:
+
+  • It saves $4,700 in tax (which she would have typically paid on $10,000 of salary income).
+
+  • Saves the $1,000 GST on the $11,000 relocation expenses (which is claimed back by the employer).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- relocation expenses
+- salary sacrifice
+- employee relocation
+- employer reimbursement
+- gst input tax credits
+- gross wage reduction
+- work relocation
+- tax deduction
+- airfares
+- fringe benefits

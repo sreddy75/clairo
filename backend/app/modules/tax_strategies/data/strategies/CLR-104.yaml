@@ -1,0 +1,47 @@
+strategy_id: CLR-104
+source_ref: STP-104
+name: Prepayment deductions
+categories:
+- Business
+implementation_text: '1. When prepaying interest, it is essential to talk to the bank to ensure they treat
+  the payments as prepaid interest (which will be tax-deductible) and not prepaid principal loan repayments
+  (which will be capital and non-deductible).
+
+  2. Prepay expenditure before 30th June has a service period of fewer than 12 months.'
+explanation_text: 'Prepayments are amounts paid for by a business before the goods or services are received.
+  Small business entity taxpayers can claim an outright deduction for prepaid business expenses if
+
+
+  • The prepaid expenditure has an eligible service period (the period over which the business will benefit
+  from the spending) of less than 12 months. So, the eligible service period for an expense prepaid in
+  2023/24 is June 30th, 2025.
+
+  • The expenditure is less than $1,000 or required by law or wages incurred under a contract.
+
+
+  Business expenses that could be prepaid before June 30th include super guarantee payments, seminars
+  and conferences, interest on business loans, accommodation and airfares for business trips, insurance,
+  rent, equipment and motor vehicle leases, electricity, telephone, and computer software licencing fees.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- prepayment
+- prepaid expenses
+- small business entity
+- outright deduction
+- business expenses
+- interest prepayment
+- june 30
+- service period
+- super guarantee
+- insurance prepayment

@@ -1,0 +1,43 @@
+strategy_id: CLR-093
+source_ref: STP-093
+name: Luxury car leases
+categories:
+- Business
+implementation_text: '1. Confirm the motor vehicle exceeds the luxury car limit.
+
+  2. Depreciate the motor vehicle up to the luxury car limit.
+
+  3. Deduct 100% of the interest expense - Irrespective of the value of the motor vehicle financed.'
+explanation_text: Luxury car leases are motor vehicle leases where the purchase cost of the motor vehicle
+  exceeds the luxury car limit (which is indexed yearly but is $80,567 for 2024/25, or $91,387 if a fuel-efficient
+  vehicle). For tax purposes, luxury car leases are not leases but a sale by the lessor to the lessee
+  with finance provided (a loan). The lessee is treated as the vehicle's owner until the lease ends. The
+  lessee will be entitled to depreciate the car's value over its productive life up to the motor vehicle
+  depreciation limit of $69,674. So, for example, if the vehicle has a value of $150,000, only $69,674
+  will be subject to depreciation over its useful life. The lessee will also be entitled to deduct the
+  interest expense on the motor vehicle financed through the lease. The total interest expense will be
+  deductible even if the funding of a $500,000 motor vehicle (i.e. the luxury car limit doesn't apply).
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- luxury car
+- motor vehicle
+- lease
+- depreciation
+- interest expense
+- luxury car limit
+- fuel-efficient vehicle
+- business vehicle
+- car depreciation limit
+- lessee
+- finance lease

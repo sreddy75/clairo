@@ -1,0 +1,66 @@
+strategy_id: CLR-164
+source_ref: STP-164
+name: Remote area housing benefits
+categories:
+- Employees
+- Business
+implementation_text: '1. Confirm that the accommodation is located in a remote area - Located at least
+  100 km from an urban centre that, in the 1981 Census, had a population of 130,000 or more.
+
+  2. Confirm that the housing benefit would meet the remote area housing benefit criteria.
+
+  3. Have the employer provide the remote area housing to the employee as part of their total salary package
+  but not as part of a salary sacrifice agreement.
+
+  4. Where a housing benefit is provided to an employee shareholder of the employer company, the housing
+  benefit must be provided to other employees who perform the same duties as the family employees. I.e.
+  All of the company''s managers receive the same housing benefit. Failure to do this will breach the
+  arms-length requirement condition.'
+explanation_text: 'Remote housing benefit enables the employer to claim a tax deduction for the employee''s
+  housing costs, and no FBT is payable. This strategy converts an employee''s private housing costs into
+  a tax-deductible expense. A housing benefit qualifies as a remote area housing benefit where:
+
+  For the whole of the tenancy period, the unit of accommodation is in a remote area (that is, it is not
+  located in or adjacent to an eligible urban area.
+
+  For the whole of the tenancy period, the accommodation is occupied by a person who is your current employee,
+  and the usual place of employment of the employee is in a remote area.
+
+  The benefit wasn''t provided to the employee under either a non-arm''s length arrangement or an arrangement
+  entered into by any parties to obtain the concession.
+
+  It must be necessary for you to provide accommodation for employees or to arrange to supply such accommodation
+  because:
+
+  The nature of your business is that such employees are liable to move frequently from one residential
+  location to another,
+
+  There is insufficient suitable residential accommodation otherwise available at or near the place or
+  places where the employees are employed, or
+
+  It is customary for employers in that industry to provide free or subsidised accommodation for employees.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+keywords:
+- remote area housing
+- fbt exemption
+- fringe benefits tax
+- employee housing
+- remote accommodation
+- tax deductible housing
+- salary package
+- employer benefit
+- arms length
+- remote area benefit

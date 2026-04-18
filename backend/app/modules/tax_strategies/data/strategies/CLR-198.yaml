@@ -1,0 +1,60 @@
+strategy_id: CLR-198
+source_ref: STP-198
+name: Health coaching, lifestyle and weight-loss
+categories:
+- Employees
+- Business
+implementation_text: '1. Employer provides work-related counselling to employees and claims a tax deduction
+  for the cost.
+
+  2. The counselling cannot be part of an employee''s remuneration or salary sacrifice arrangement.
+
+  3. If counselling an associate of an employee (for example, the employee''s spouse), the employee must
+  accompany the associate.'
+explanation_text: 'Work-related counselling provided to employees (and their associates) to improve or
+  maintain their efficiency at work or prepare them for retirement will be tax-deductible and FBT-exempt.
+  It can be provided as individual or group counselling and can be related to matters such as:
+
+  Quit smoking programs. Weight Watchers programs to lose weight.
+
+  Safe work practices.
+
+  Health.
+
+  Fitness.
+
+  Personal relationships.
+
+  Outplacement services.
+
+  Stress management.
+
+  Drug or alcohol abuse.
+
+  Retirement problems.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- work-related counselling
+- fbt exempt
+- employee benefits
+- health coaching
+- weight loss
+- quit smoking
+- stress management
+- outplacement
+- salary sacrifice
+- employer deduction
+- fringe benefits tax
+- wellness program

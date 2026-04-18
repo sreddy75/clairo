@@ -1,0 +1,55 @@
+strategy_id: CLR-421
+source_ref: STP-421
+name: Pty Ltd with family trust as shareholders
+categories:
+- Business_structures
+implementation_text: 'Process:
+
+  1. Establish a family trust (ideally with a corporate trustee).
+
+  2. Establish a second company with the sole shareholder being the family trust.'
+explanation_text: 'This strategy involves having a company''s ordinary shares owned by a family trust
+  structure (instead of the individual directors). This strategy applies irrespective of whether the company
+  operates a business or holds investments. The advantages of this strategy include:
+
+
+  Provides asset protection—If the directors personally go bankrupt, the company is protected, as the
+  family trust owns its shares.
+
+  It enables the company to pay fully franked dividends to the family trust, which can then be streamed
+  to beneficiaries in the most tax-effective manner. Beneficiaries in low tax brackets will have some
+  (or all) the dividends franking credits refunded to them.
+
+  This enables the company to initiate a share buyback, allowing capital gains accruing to the family
+  trust to be streamed to beneficiaries in the most tax-effective manner. Ideally, distributions will
+  be made to beneficiaries with carried-forward capital losses.
+
+  Ability to distribute fully franked dividend income to adult children (aged over 18 years) who are either
+  studying or working part-time and are in low tax brackets. If $18,200 is distributed to a child studying
+  full-time, they benefit from having the franking credits refunded.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- family trust
+- pty ltd
+- shareholder
+- franked dividends
+- franking credits
+- asset protection
+- share buyback
+- capital gains
+- income splitting
+- beneficiaries
+- corporate trustee
+- discretionary trust

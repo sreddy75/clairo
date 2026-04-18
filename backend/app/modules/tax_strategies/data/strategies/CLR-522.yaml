@@ -1,0 +1,143 @@
+strategy_id: CLR-522
+source_ref: STP-522
+name: Employment agreements
+categories:
+- Recommendations
+implementation_text: 'Businesses must draft employment agreements compliant with Australian employment
+  laws and regulations. Employment agreements typically include several key components:
+
+
+  • Job description and title
+
+  • Compensation and benefits
+
+  • Work schedule
+
+  • Term of employment
+
+  • Probation period
+
+  • Confidentiality and non-disclosure
+
+  • Non-compete and non-solicitation clauses
+
+  • Intellectual property
+
+  • Termination clause
+
+  • Dispute Resolution
+
+  • Governing law
+
+  • Severability
+
+  • Amendments
+
+
+  Preparing employment agreements involves the following steps to ensure legal compliance and clarity:
+
+
+  1. Identify employment terms and conditions: The position, compensation, working hours, leave entitlements,
+  termination procedures, and any specific clauses relevant to your business.
+
+  2. Familiarise yourself with employment laws: Research Australian laws and regulations to understand
+  the minimum wage requirements, leave entitlements, and termination notice periods. Ensure that your
+  agreements comply with these legal requirements.
+
+  3. Draft the employment agreement: Create a comprehensive draft of the employment agreement based on
+  the terms and conditions you''ve identified and the legal requirements you''ve researched. You can use
+  online templates or seek professional legal advice to draft the agreement.
+
+  4. Include necessary clauses: Include essential clauses such as job description, compensation details,
+  probationary period (if applicable), confidentiality, intellectual property rights, non-compete and
+  non-solicitation clauses (if needed), and dispute resolution procedures.
+
+  5. Customise to business needs: Different positions may have different requirements, so ensure that
+  the agreement accurately reflects the job''s responsibilities and expectations.
+
+  6. Consult legal professionals: Employment laws can be complex, and legal experts can help ensure the
+  deal is legally sound and compliant with current regulations.
+
+  7. Finalise the agreement: Once the agreement accurately reflects your intentions and is legally compliant,
+  finalise the document.
+
+  8. Signing and distribution: Once both parties are satisfied, have the employee sign the agreed contract
+  and sign it as the employer. Keep a copy of the signed agreement on file.
+
+  9. Ongoing communication: Remember that an employment agreement is not a static document. If terms change,
+  or if you need to amend the deal, communicate with the employee and follow the proper procedures for
+  making updates.
+
+  10. Training and compliance: Ensure you and your management team know the terms outlined in the employment
+  agreements and adhere to them consistently. This helps avoid potential disputes and legal issues.
+
+  11. Regular review: Periodically review your employment agreements to ensure they remain up-to-date
+  with employment laws and regulations changes.'
+explanation_text: 'An employment agreement is a legal document that outlines the terms and conditions
+  of the working relationship between an employer and an employee. It serves as a written record of the
+  expectations and obligations of both parties during employment.
+
+
+  The benefits of having employment agreements for all staff include:
+
+
+  1. Clarity and consistency: Outlining the terms and conditions of employment in a transparent and standardized
+  manner helps avoid misunderstandings and disputes between employers and employees regarding job expectations,
+  duties, and other employment-related matters.
+
+  2. Legal compliance: Employers can reduce the risk of legal disputes and penalties by including required
+  terms and conditions, such as minimum wages, leave entitlements, and notice periods.
+
+  3. Protection for intellectual property: For roles that involve creating intellectual property (IP),
+  such as inventions, designs, or content, an employment agreement can specify that the employer owns
+  the rights to such IP, providing clarity about ownership and usage rights.
+
+  4. Customization: It can be tailored to the business''s specific needs and the employee''s role, reflecting
+  the unique nature of the work being performed.
+
+  5. Termination procedures: Clear termination clauses in employment agreements define the conditions
+  and notice periods required for employers and employees to end the employment relationship. This clarity
+  can help prevent disputes and wrongful termination claims.
+
+  6. Protection of confidential information: This includes clauses requiring employees to maintain the
+  confidentiality of sensitive company information, trade secrets, and client data.
+
+  7. Non-compete and non-solicitation clauses prevent employees from competing with the business or soliciting
+  clients or employees for a specified period after leaving the company.
+
+  8. Probationary periods allow employers to assess the employee''s suitability for the role before confirming
+  permanent employment.
+
+  9. Flexibility and adaptability: Can be updated and amended as business needs change to accommodate
+  evolving circumstances.
+
+  10. Dispute resolution: Includes procedures for resolving disputes between employers and employees,
+  which can help mitigate the need for costly and time-consuming legal actions.
+
+  11. Documentation: Written employment agreements demonstrate a commitment to professional and ethical
+  employment practices and serve as valuable documentation in case of disagreements or legal disputes.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- employment agreement
+- contract of employment
+- employee obligations
+- employer compliance
+- termination clause
+- non-compete clause
+- confidentiality
+- probationary period
+- intellectual property
+- dispute resolution
+- leave entitlements
+- minimum wage
+- workplace compliance

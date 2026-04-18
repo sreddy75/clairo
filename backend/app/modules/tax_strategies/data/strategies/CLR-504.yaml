@@ -1,0 +1,101 @@
+strategy_id: CLR-504
+source_ref: STP-504
+name: Business insurance - the essentials
+categories:
+- Recommendations
+implementation_text: 'Here''s a step-by-step guide to help you work out what business insurance your business
+  needs and can afford:
+
+  1. Identify your risks: Start by assessing the unique risks associated with your business. Consider
+  factors such as the nature of your industry, the size of your company, the types of products or services
+  you offer, the number of employees, your location, and any potential legal or regulatory requirements.
+
+  2. Review legal requirements: Research the insurance requirements mandated by local laws, industry regulations,
+  or contracts with clients or partners. These requirements may dictate the minimum coverage you must
+  have.
+
+  3. Consult with experts: Work with them to evaluate your identified risks and discuss suitable coverage
+  options.
+
+  4. Consider core coverage: General liability insurance, property insurance, and workers'' compensation
+  (if you have employees) are fundamental for most businesses. Consider these core policies as a starting
+  point.
+
+  5. Assess your budget: Determine how much you can afford to spend on insurance premiums while ensuring
+  your business remains financially stable.
+
+  6. Prioritize: Consider the risks that could have the most significant financial impact or those that
+  are required for legal compliance.
+
+  7. Bundle policies: This can be a cost-effective way to get comprehensive protection.
+
+  8. Review coverage regularly: As your business evolves, so do its risks. Review your insurance needs
+  periodically, especially when you expand, introduce new products/services, or experience revenue or
+  employee count changes. Adjust your coverage accordingly.
+
+  9. Compare quotes: Don''t settle for the first insurance quote you receive. Shop around and get quotes
+  from multiple reputable insurance providers. Compare coverage options, deductibles, limits, and premiums
+  to find the best value.
+
+  While cost is a significant factor, balancing affordability and adequate coverage is essential to protect
+  your business from potentially devastating financial losses.'
+explanation_text: 'Commercial insurance protects businesses and organizations from various risks and potential
+  financial losses. It covers unexpected events that could impact a company''s operations, assets, employees,
+  and liability. The most common types of business insurance are:
+
+  1. General liability insurance: This protects a business from claims related to bodily injury, property
+  damage, and personal injury caused by the business''s operations, products, or services.
+
+  2. Property insurance: Covers damage or loss to a business''s physical assets, such as buildings, equipment,
+  inventory, and furniture, due to fire, theft, vandalism, or natural disasters.
+
+  3. Business interruption insurance: Helps businesses recover lost income and cover ongoing expenses
+  if their operations are interrupted due to a covered event (e.g., fire or natural disaster), allowing
+  the company to continue operating.
+
+  4. Workers'' compensation insurance: Required by law and provides coverage for medical expenses and
+  lost wages for employees who are injured or become ill on the job.
+
+  5. Professional indemnity insurance: Essential for businesses that provide professional services or
+  advice as it protects against claims of negligence, errors, or omissions in the services offered.
+
+  6. Cyber liability insurance: Protect businesses from financial losses due to cyber-attacks, data breaches,
+  and other cyber risks.
+
+  7. Motor vehicle insurance: Covers the vehicles, drivers, and potential liability in accidents.
+
+  8. Directors and officers (D&O) Insurance: Protects company executives and directors from legal actions
+  related to decisions made while managing the company.
+
+  9. Product liability insurance: Overs legal claims related to product defects or injuries caused by
+  the products.
+
+  10. Employment practices liability insurance: Protects businesses from claims related to employment
+  practices, such as wrongful termination, discrimination, or harassment.
+
+  11. Legal liability: Without liability insurance, a business may be personally liable for claims arising
+  from accidents, injuries, or damages caused by its products, services, or operations.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- business insurance
+- general liability
+- property insurance
+- workers compensation
+- professional indemnity
+- cyber liability
+- directors and officers
+- product liability
+- business interruption
+- risk management
+- insurance premiums
+- commercial insurance

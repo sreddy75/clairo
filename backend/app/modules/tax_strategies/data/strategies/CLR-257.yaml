@@ -1,0 +1,52 @@
+strategy_id: CLR-257
+source_ref: STP-257
+name: Travel to tax agent
+categories:
+- Employees
+- Investors_retirees
+- Business
+implementation_text: 'Implementation Process and Costs:
+
+  • Receipts are evidencing the expenses paid.
+
+  • Diary evidencing kilometres travelled for tax-related purposes.
+
+  • We need to determine whether the sole purpose of the trip is for managing tax affairs or if there
+  is a private component, so apportionment of expenses is necessary.'
+explanation_text: 'A taxpayer can claim a deduction for the cost of travel to obtain tax advice. This
+  travel includes:
+
+  • Using the taxpayer''s vehicle to visit the accountant''s office - this can be calculated on a cents
+  per km basis.
+
+  • Out-of-pocket transport costs incurred, such as airfare or taxi fare.
+
+  • Accommodation and meals incurred visiting their tax agent. (This allows country-based taxpayers to
+  have a tax-deductible overnight trip to the city if they have a city-based accountant).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- travel
+- tax agent
+- accountant
+- deduction
+- cents per km
+- vehicle
+- airfare
+- taxi
+- accommodation
+- meals
+- tax advice
+- apportionment
+- diary
+- receipts

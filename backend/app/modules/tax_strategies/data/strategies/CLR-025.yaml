@@ -1,0 +1,51 @@
+strategy_id: CLR-025
+source_ref: STP-025
+name: Self-development courses and seminars
+categories:
+- Employees
+- Business
+implementation_text: '1. Have the employer provide a letter to the employee stating how the self-development
+  course and seminar relate to the employee''s current income-earning activities.
+
+  2. Review each module in the course to determine which ones are deductible.
+
+  3. The deduction will include the course or seminar cost, travel expenses and incidentals - Keep appropriate
+  records.'
+explanation_text: 'The cost of a personal development course will only be deductible where the course
+  is directly related to a taxpayer''s current income-earning activities. Suppose a course of study is
+  too general about the taxpayer''s everyday income-earning activities. In that case, the cost of the
+  self-improvement or personal development courses is generally not allowable. If a course includes modules
+  that partly relate to income-earning activities, then a proportion of the course fees will be deductible.
+  Modules potentially deductible include project management, leadership, leading change, mentoring staff,
+  presentation skills, written communication, marketing, etc.
+
+
+  Modules or courses that would be private or too general and, as such non-deductible include diet, nutrition,
+  meditation, empowering emotions, decision making, getting along with others, communication, stress management,
+  improving social abilities, fulfilling aspirations, improving wealth, improving self-awareness, building
+  self-esteem, enhancing lifestyle, developing strengths, etc.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- self-development
+- personal development
+- seminar
+- training
+- work-related education
+- deductible courses
+- employee deductions
+- professional development
+- income-earning activities
+- course fees
+- travel expenses
+- apportionment

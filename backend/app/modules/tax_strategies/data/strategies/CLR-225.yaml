@@ -1,0 +1,91 @@
+strategy_id: CLR-225
+source_ref: STP-225
+name: Family trust election
+categories:
+- ATO_obligations
+implementation_text: 'Here are the general steps and requirements for making an FTE:
+
+  1. Determine Eligibility: Before making an FTE, it''s important to determine whether the trust is eligible
+  to make one. Consider why the election is being made – for instance, to utilise trust losses or access
+  specific concessions.
+
+  2. Nominate the Specified Individual: As part of the FTE, you must nominate a specified individual.
+  This person''s family will define the family group for the trust. Beneficiaries of the trust will be
+  limited to this family group once the FTE is in place.
+
+  3. Complete the Relevant Form: You must complete the appropriate form to make an FTE. This is typically
+  a section in the trust''s annual tax return. The form requires you to provide:
+
+  The name and tax file number (TFN) of the trust.
+
+  The name and TFN of the specified individual.
+
+  Details about the income year for which the election is made.
+
+  Any other relevant details or declarations as set by the ATO.
+
+  4. Keep Detailed Records: It''s important to keep comprehensive records of the FTE, including details
+  of the specified individual, the family group, and any variations to the election.
+
+  5. Submit the Form: Lodge the trust tax return containing the FTE details with the ATO by the relevant
+  deadline. The election generally needs to be made by the due date of the trust''s tax return for the
+  income year in which you want the election to apply. However, there are certain circumstances where
+  an FTE can be made later.
+
+  6. Ongoing Compliance: Once the FTE has been made, ensure that the trust''s distributions are consistent
+  with the election to avoid adverse tax implications. This typically means distributing only to the specified
+  individual''s family group members.
+
+  7. Review Periodically: It''s advisable to periodically review the FTE, especially if there are changes
+  in the family circumstances, to ensure it continues to serve the intended purpose.
+
+  Remember, the implications of making an FTE are significant. It restricts who can benefit from the trust
+  and impacts various tax-related decisions.'
+explanation_text: 'A Family Trust Election (FTE) is an election made by a family trust to specify the
+  trust''s beneficiaries, particularly for tax purposes. Creating a Family Trust Election (FTE) has the
+  following key benefits:
+
+  1. Loss Utilisation: Without an FTE, trusts may face stricter tests that prevent them from offsetting
+  current-year losses against future income. With an FTE, a family trust can more readily apply past losses
+  to reduce future taxable income.
+
+  2. Avoiding Penalty Tax Rates: Having an FTE ensures that as long as distributions are made within the
+  family group, they are taxed at the beneficiaries'' marginal tax rates and not at penalty rates.
+
+  3. Franking Credits: Making an FTE allows a trust to flow through franking credits to beneficiaries
+  more favourably.
+
+  4. Estate Planning Flexibility: Distributions can be structured to align with the family''s changing
+  needs while ensuring the trust complies with tax laws.
+
+  5. Debt Forgiveness Rules: Certain concessions are available under the debt forgiveness provisions for
+  trusts that have made an FTE. This can be beneficial in scenarios where debts are forgiven within the
+  family group.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+- structure
+keywords:
+- family trust election
+- fte
+- trust losses
+- family group
+- specified individual
+- franking credits
+- debt forgiveness
+- beneficiaries
+- marginal tax rates
+- estate planning
+- trust distributions
+- loss utilisation
+- tax return

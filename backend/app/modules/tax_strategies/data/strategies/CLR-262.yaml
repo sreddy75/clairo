@@ -1,0 +1,44 @@
+strategy_id: CLR-262
+source_ref: STP-262
+name: External training expenditure
+categories:
+- Business
+implementation_text: ''
+explanation_text: 'A 20% bonus deduction applies to eligible external training for business employees.
+  The eligibility criteria include the following:
+
+
+  - The expenditure must be charged by a registered training provider and be within the scope of the provider''s
+  registration.
+
+  - The registered training provider must not be the entity claiming the additional deduction or an associate
+  of the entity.
+
+  - This doesn''t apply to training sole traders, partners in a partnership and independent contractors.
+
+  - Businesses must have a turnover of less than $50 million.
+
+  - Applies to expenditures incurred between 29 March 2022 and 30 June 2024.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: 50000000
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- external training
+- bonus deduction
+- registered training provider
+- employee training
+- 20% deduction
+- training expenditure
+- small business
+- workforce development
+- skills training
+- eligible expenditure

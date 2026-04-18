@@ -1,0 +1,73 @@
+strategy_id: CLR-139
+source_ref: STP-139
+name: Eliminate Division 7A loans
+categories:
+- Business
+- ATO_obligations
+implementation_text: '1. Calculate the tax payable on each of the options available to clear the director''s
+  loan balance.
+
+  2. Consider what options are possible considering the client''s financial circumstances - i.e. cash
+  resources, taxable income, and age.
+
+  3. Select a strategy to eliminate the Division 7A loan.
+
+  4. Implement the strategy.'
+explanation_text: 'Division 7A is an ATO integrity measure to ensure that private companies don''t make
+  tax-free distributions of profits to shareholders or associates in the form of payments, loans and debts
+  forgiven. These rules only apply where the companies have retained profits. Under Division 7A, shareholders
+  or associates who receive payments or loans from their private company must include the value of those
+  payments or loans as unfranked dividends in their tax returns. This is not a tax-effective strategy
+  as these unfranked dividends will be taxed at the individual''s marginal tax rate.
+
+
+  The options to eliminate Division 7A loan problems include the following:
+
+
+  • Have the payments or loans repaid before the date of lodgement of the company''s tax return with the
+  ATO.
+
+  • Enter into a written Division 7A loan agreement before the date of lodgement of the company tax return.
+  The Division 7A loan agreement must have a maximum seven-year loan period (if the loan is unsecured)
+  with interest and repayments dictated by the Division 7A legislation. The interest rate is based on
+  the FBT interest rate.
+
+  • Pay directors'' fees or wages in the 30th June financials to eliminate the Division 7A loan. The directors''
+  fees will be taxable to the individual, but the company will receive a tax deduction for the payment.
+
+  • Have the director sell assets to the company or take over some of the company''s liabilities (must
+  be done at market values).
+
+  • Have the ''bucket'' company purchase the operating business from the trust structure.
+
+  • Pay a dividend (ideally franked).'
+ato_sources:
+- Division 7A
+case_refs: []
+entity_types:
+- company
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- division 7a
+- director loan
+- private company
+- unfranked dividend
+- loan agreement
+- retained profits
+- shareholders
+- associates
+- fbt interest rate
+- directors fees
+- franked dividend
+- bucket company
+- trust structure

@@ -1,0 +1,51 @@
+strategy_id: CLR-195
+source_ref: STP-195
+name: Taxi, Uber and ride-share travel
+categories:
+- Business
+implementation_text: 1. Uber travel provided by an employer to an employee is eligible for the FBT exemption
+  in S.58Z of the FBT Act from 1st April 2019.
+explanation_text: 'Employer-provided taxi travel that is a single trip beginning or ending at the employer''s
+  place of work will be tax-deductible to the employer and an FBT-exempt benefit to the employee. This
+  enables an employer to provide an employee with a single taxi trip to the office every day and another
+  trip home from the office every night (making the employee''s home-to-work travel tax-deductible to
+  the employer).
+
+
+  Also, any benefit arising from taxi travel by an employee is an exempt benefit if the journey is both:
+
+
+  A result of the sickness of, or injury to, the employee.
+
+  The whole or a part of the journey is directly between the employee''s place of work, the employee''s
+  place of residence, or any other place necessary or appropriate, for the employee to go as a result
+  of the sickness or injury.'
+ato_sources:
+- S.58Z of the FBT Act
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- taxi
+- uber
+- ride-share
+- fbt
+- fringe benefits tax
+- employer
+- employee
+- travel
+- exempt benefit
+- home-to-work
+- workplace travel
+- sickness
+- injury
+- transport

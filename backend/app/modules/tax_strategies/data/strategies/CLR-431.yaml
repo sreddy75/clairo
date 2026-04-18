@@ -1,0 +1,53 @@
+strategy_id: CLR-431
+source_ref: STP-431
+name: Trustee company
+categories:
+- Business_structures
+implementation_text: ''
+explanation_text: 'A trustee company is a legal entity that acts as a fiduciary, agent or trustee on behalf
+  of a person or business for administration, management and the eventual transfer of assets to a beneficial
+  party.
+
+
+  Trustee companies provide independent trustee services and can undertake the following activities:
+
+
+  Producing offer documents
+
+  Overseeing investment decisions
+
+  Adhering to legislative and regulatory requirements
+
+  Custody services
+
+  Management of external service providers
+
+  Scheme administration
+
+  Fund and unit accounting
+
+  Registry services'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- trustee company
+- fiduciary
+- trust structure
+- asset management
+- business structures
+- trustee services
+- asset transfer
+- scheme administration
+- legal entity
+- custody services

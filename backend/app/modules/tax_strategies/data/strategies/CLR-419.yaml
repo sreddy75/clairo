@@ -1,0 +1,58 @@
+strategy_id: CLR-419
+source_ref: STP-419
+name: Professional practice company
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Review the regulations of professional bodies regarding practice companies.
+
+  2. Incorporate a practice company with a unique constitution that complies with the specific professional
+  body''s regulations.'
+explanation_text: 'A professional practice company is a proprietary company that uses a unique constitution
+  for a professional industry. Certain professional bodies require members operating through a limited
+  liability company structure to have a unique constitution that complies with their regulations. The
+  particular constitution usually imposes restrictions on the qualifications and expertise required to
+  be a director or shareholder of the company.
+
+
+  Professional practice companies are compulsory for:
+
+  • Certified Practicing Accountants (CPAs)
+
+  • Institute of Chartered Accountants (ICA)
+
+  • Law Institute of Victoria members.
+
+  • Architects.
+
+  • And others.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- accountants
+- architects
+- lawyers
+financial_impact_type:
+- structure
+keywords:
+- professional practice company
+- proprietary company
+- constitution
+- professional body
+- limited liability
+- cpa
+- chartered accountants
+- law institute
+- architects
+- incorporation
+- director qualifications
+- shareholder restrictions

@@ -1,0 +1,66 @@
+strategy_id: CLR-015
+source_ref: STP-015
+name: Bona fide travel allowance
+categories:
+- Employees
+- Business
+implementation_text: '1. The employer pays the employee a travel allowance when travelling overnight for
+  work at the TD 2024/3 rates. This travel allowance is shown on the payment summary and included as income
+  in the employee''s tax return.
+
+  2. If the employee incurs expenses up to the TD 2024/3 travel allowance received, they claim a deduction.
+
+  3. The employee should keep some receipts (not all) to substantiate that they incurred expenses up to
+  the TD 2024/3 rates.'
+explanation_text: 'A bona fide travel allowance is a travel allowance paid to an employee who is required
+  to travel overnight for work purposes, where the amount paid covers the employee''s travel expenses
+  for the trip. The employee must include the travel allowance in their tax return as income. Employees
+  travelling for work and away from home overnight are entitled to a deduction for accommodation, meals,
+  and incidental expenses incurred (subject to having the necessary receipts and travel diary). Expenses
+  incurred but not supported by the relevant receipts will be non-deductible.
+
+
+  In contrast, employees in receipt of a bona fide travel allowance don''t require receipts to substantiate
+  their expenditure if the following three conditions are met:
+
+
+  • The employee is paid a bona fide travel allowance to cover the cost of food, drink and accommodation,
+
+  • The travel allowance covers a specific trip undertaken for overnight work travel, and
+
+  • The amount claimed by the employee does not exceed the appropriate, reasonable allowance amount prescribed
+  by the ATO.
+
+
+  The reasonable allowance amounts prescribed in TD 2024/3 are pretty high. For example, an employee travelling
+  overnight to Perth in 2024/25 on a salary of under $143,650 would receive a deduction of $340.90 per
+  night. Even though the substantiation requirements don''t apply to a bona fide travel allowance, the
+  employee can only claim a deduction for the expenditure they incurred, not just a standard $340.90 per
+  night, for example. This means that if the employee travelling to Perth overnight stays with a relative
+  for free, they should claim $0 as a deduction.'
+ato_sources:
+- TD 2024/3
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- travel allowance
+- bona fide
+- overnight travel
+- employee
+- substantiation
+- accommodation
+- meals
+- incidental expenses
+- td 2024/3
+- work travel
+- deduction
+- receipts

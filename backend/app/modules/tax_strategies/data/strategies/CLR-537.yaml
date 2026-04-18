@@ -1,0 +1,92 @@
+strategy_id: CLR-537
+source_ref: STP-537
+name: MInimum pension payments
+categories:
+- ATO_obligations
+- Recommendations
+implementation_text: 'Here are some steps and strategies to ensure you meet the minimum payment requirement
+  each financial year:
+
+  1. Understand the requirement: Familiarize yourself with the minimum percentages based on age brackets.
+  Make sure you know which rate applies to you each financial year.
+
+  2. Regularly review your account balance: Since the minimum pension payment is calculated on your pension
+  account balance (typically as of July 1st of each financial year), regularly check your balance and
+  recalculate the minimum amount needed.
+
+  3. Set up automatic payments: Consider setting up monthly or quarterly automatic withdrawals from your
+  pension account.
+
+  4. Monitor payments: Keep track of the payments made throughout the financial year.
+
+  5. Calendar reminders: Set reminders for yourself, especially towards the end of the financial year,
+  to check if you''ve met the required minimum.
+
+  6. Maintain documentation: Keep records of all pension payments made, including dates and amounts.
+
+  7. Be mindful of exceptional circumstances: If you commenced or ceased a pension partway through the
+  year, the minimum pension payment will be pro-rated based on the days the pension was in place.
+
+  8. Seek rectification if needed: Making additional withdrawals before the end of the financial year
+  can help rectify the situation..'
+explanation_text: 'Minimum pension payments refer to the minimum amount a person must withdraw from their
+  account-based pension each year. It''s a measure to ensure that superannuation benefits are used primarily
+  to provide income in retirement rather than as a tax-advantaged estate planning tool. The minimum pension
+  payment amounts are based on a percentage of the account balance, and that percentage varies according
+  to age:
+
+  Under 65: 4%
+
+  65-74: 5%
+
+  75-79: 6%
+
+  80-84: 7%
+
+  85-89: 9%
+
+  90-94: 11%
+
+  95 and older: 14%
+
+
+  If you don''t meet the minimum pension payment requirements for your account-based pension in a financial
+  year, there are several consequences:
+
+  1. Loss of tax exemption: That means the fund''s earnings will be taxed at the standard superannuation
+  tax rate of 15%.
+
+  2. Potential for excess contributions: If you underpay the minimum pension and then attempt to roll
+  the pension back into the accumulation phase, you might inadvertently create an excess contribution,
+  leading to additional taxes.
+
+  3. Compliance issues: Failing to meet the minimum pension requirements is a compliance breach.
+
+  4. Reporting requirements: You must report it to the Australian Taxation Office (ATO) when you file
+  your fund''s annual return.
+
+  5. No pro-rata reductions: If you started your pension partway through a year and didn''t meet the minimum
+  pension requirements, there''s no reduction in the minimum pension amount.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- minimum pension payment
+- account-based pension
+- superannuation
+- pension withdrawal
+- retirement income
+- tax exemption
+- compliance
+- pension age brackets
+- smsf
+- annual pension requirement

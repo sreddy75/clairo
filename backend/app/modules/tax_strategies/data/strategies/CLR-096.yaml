@@ -1,0 +1,52 @@
+strategy_id: CLR-096
+source_ref: STP-096
+name: Changing effective life of depreciating assets
+categories:
+- Business
+implementation_text: 1. Review each depreciating asset on 30th June to determine whether it should be
+  scrapped or the useful life reduced.
+explanation_text: 'Depreciating assets are written off as a deduction over their productive life. Business
+  owners can use the practical life tables provided by the Australian Taxation Office or calculate each
+  asset''s useful life. If the circumstances relating to a depreciating asset have changed, the business
+  owner can choose to recalculate the depreciating asset''s productive life.
+
+
+  To calculate the useful life of a depreciating asset, consider the following information:
+
+
+  The physical life of the purchase.
+
+  The manufacturer''s specifications.
+
+  The business owner''s own experience with similar assets.
+
+  The experience of other users of similar assets.
+
+  The level of repairs and maintenance commonly adopted by users of the asset.
+
+  Retention periods.
+
+  Scrapping or abandonment practices.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- depreciation
+- effective life
+- depreciating assets
+- productive life
+- scrapping
+- asset write-off
+- useful life
+- tax deduction
+- business assets
+- abandonment

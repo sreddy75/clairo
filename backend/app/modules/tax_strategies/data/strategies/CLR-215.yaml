@@ -1,0 +1,49 @@
+strategy_id: CLR-215
+source_ref: STP-215
+name: Super contributions from downsizing
+categories:
+- Investors_retirees
+- SMSF
+implementation_text: '1. The super fund trust deed will need to be updated to allow members to specifically
+  make downsizer contributions to the fund.
+
+  2. The super contributions must be contributed to the super fund within 90 days of settlement on the
+  residence.
+
+  3. Each individual is only allowed one downsizer contribution in their lifetime.'
+explanation_text: 'A person aged 55 or over can make a non-concessional contribution into superannuation
+  of up to $300,000 from the proceeds of selling their principal residence (if they have owned it for
+  at least ten years). This concession is available to both couple members for the same home.
+
+
+  The contributions are exempt from the age test, work test, contribution caps, and $1.9m superannuation
+  balance test for making non-concessional contributions. This strategy is ideal for superannuants over
+  75 because they cannot make any non-concessional super contributions under the current rules.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: 55
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+keywords:
+- downsizer contribution
+- superannuation
+- non-concessional contribution
+- principal residence
+- property sale
+- smsf
+- retirees
+- age 55
+- contribution caps
+- work test exemption
+- trust deed
+- superannuation balance
+- downsizing

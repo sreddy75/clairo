@@ -1,0 +1,51 @@
+strategy_id: CLR-090
+source_ref: STP-090
+name: Environmental protection activities
+categories:
+- Business
+- Rental_properties
+implementation_text: 1. Consider whether the expenditure meets the definition of environmental protection
+  activities - As this makes the expenditure deductible instead of being capital.
+explanation_text: 'Environmental protection activities (EPA) prevent, fight or remedy pollution or treat,
+  clean up, remove or store waste from the business earning activities. A company can deduct expenditures
+  incurred on environmental protection activities. The business can also claim a deduction for cleaning
+  up a site on which a predecessor substantially performed the same business activity. For the expenditure
+  to be deductible, the business''s earnings activities must be for the following:
+
+
+  They are producing assessable income (excluding capital gains).
+
+  Exploration or prospecting.
+
+  Mining site rehabilitation.
+
+
+  Also, rental property owners are allowed a deduction for environmental protection activities such as
+  expenditure incurred in demolishing and removing a shed constructed of asbestos from a rental property.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- mining
+financial_impact_type:
+- deduction
+keywords:
+- environmental protection activities
+- epa
+- pollution
+- waste removal
+- asbestos
+- rental property
+- deductible expenditure
+- mining rehabilitation
+- site cleanup
+- capital vs deductible
+- exploration
+- prospecting

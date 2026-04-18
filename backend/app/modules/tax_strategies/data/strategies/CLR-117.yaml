@@ -1,0 +1,61 @@
+strategy_id: CLR-117
+source_ref: STP-117
+name: Streaming trust income
+categories:
+- Investors_retirees
+- Business
+implementation_text: '1. Before 30th June, the trustees estimate the year''s taxable income and consider
+  how to distribute that amongst the possible beneficiaries.
+
+  2. Before 30th June, the trustees write on how the trust income will be distributed to the various beneficiaries
+  for that financial year.'
+explanation_text: 'The advantages of a discretionary trust are the ability to decide on June 30th each
+  year to whom to distribute the taxable trust income. This flexibility can result in tax savings where
+  income is distributed to beneficiaries in lower tax brackets. Streaming trust income involves streaming
+  fully franked dividends or capital gains to specific recipients, so the overall tax payable on the trust
+  income is minimised. So, for example, the trust could allocate the $50,000 capital gain to beneficiary
+  A and $20,000 franked dividends to beneficiary B.
+
+
+  The general trust streaming rules are:
+
+  - Franked dividends to low-taxed Australian residents (as the excess franking credits are available
+  to reduce the tax payable on other income or are refundable).
+
+  - Foreign income should be distributed to foreign beneficiaries (as it is not taxable).
+
+  - Australian interest income should be distributed to foreign residents as it is only subject to a final
+  10% withholding tax).
+
+  - Capital gains shouldn''t be distributed to companies.
+
+  - Franked dividends distributed to companies are not subject to any further tax.
+
+  - Capital gains should be allocated to beneficiaries with capital losses carried forward (so that the
+  capital losses absorb the capital gains and no tax is payable on the capital gains).'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- trust streaming
+- discretionary trust
+- franked dividends
+- capital gains
+- trust distribution
+- beneficiaries
+- tax brackets
+- franking credits
+- foreign income
+- withholding tax
+- capital losses
+- income splitting
+- trust income

@@ -1,0 +1,94 @@
+strategy_id: CLR-288
+source_ref: STP-288
+name: PAYG withholding obligations
+categories:
+- ATO_obligations
+implementation_text: '1. Register for PAYG withholding if you need to withhold an amount from a payment.
+
+  2. Withhold amounts from wages and salaries paid to employees, directors, officeholders, religious practitioners,
+  and other payees as required.
+
+  3. Report and remit withheld amounts to the ATO at the required frequency based on the total amount
+  withheld.
+
+  4. Lodge monthly or quarterly activity statements to report and pay PAYG withholding amounts depending
+  on your circumstances.
+
+  5. Provide each employee or payee with an income statement or PAYG payment summary and submit a PAYG
+  withholding payment summary annual report to the ATO at the end of the financial year.
+
+  6. Withhold 47% from payments made to an entity that does not quote an ABN.
+
+  7. Maintain records of all payments made, amounts withheld, and activity statements related to PAYG
+  withholding for five years.
+
+  8. Enter into voluntary agreements to withhold amounts from payments made to contractors where applicable.'
+explanation_text: 'PAYG withholding is a system where employers withhold an amount from payments made
+  to their employees to cover the employee''s potential tax liability. These amounts are then remitted
+  to the Australian Taxation Office (ATO).
+
+
+  Businesses primary PAYG withholding obligations are:
+
+
+  1. Registration: Businesses must register for PAYG withholding if they need to withhold an amount from
+  a payment.
+
+  2. Withhold amounts: Employers must withhold amounts from wages and salaries paid to employees. This
+  also applies to payments to directors, officeholders, religious practitioners, under a labour-hire arrangement
+  or specified by regulations, payments where an Australian Business Number (ABN) has not been quoted
+  under certain circumstances.
+
+  3. Report and pay to the ATO: Once the business withholds an amount, it must report and remit this to
+  the ATO. The frequency of these payments (e.g., monthly or quarterly) depends on the total amount withheld.
+
+  4. Annual reports: At the end of the financial year, businesses must provide: (i) An income statement
+  or a PAYG payment summary to each employee or payee detailing the amounts paid and withheld, (ii) a
+  PAYG withholding payment summary annual report to the ATO for the amounts withheld.
+
+  5. Other payments: Besides wages and salaries, businesses might need to withhold amounts from other
+  payments, such as payments to contractors who have a voluntary agreement in place, payments from a business
+  to a non-resident, payments from a business to another business if the recipient does not provide an
+  ABN and certain other conditions are met, certain other payments like dividends, interest, and royalties
+  are paid to non-residents.
+
+  6. Maintain records: Businesses are required to keep records of all transactions related to PAYG withholding
+  for five years. These records should detail all payments made, amounts withheld, and activity statements.
+
+  7. Lodging activity statements: Businesses should lodge monthly or quarterly activity statements, depending
+  on their circumstances, to report and pay their PAYG withholding amounts.
+
+  8. Voluntary agreements: If a business pays contractors who work for them, they might enter into a voluntary
+  agreement to withhold amounts from these payments.
+
+  9. No ABN withholding: If a business makes a payment to another entity for services and that entity
+  doesn''t quote an ABN, the business might need to withhold 47% (the top individual tax rate) from the
+  payment.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- payg withholding
+- employer obligations
+- tax withheld
+- wages
+- salaries
+- activity statements
+- no abn withholding
+- contractors
+- voluntary agreement
+- labour hire
+- non-resident payments
+- record keeping
+- payroll
+- ato remittance
+tenant_id: platform
+version: 1

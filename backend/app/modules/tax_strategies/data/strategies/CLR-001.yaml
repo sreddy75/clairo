@@ -1,0 +1,60 @@
+strategy_id: CLR-001
+source_ref: STP-001
+name: Salary packaging private motor vehicles
+categories:
+- Employees
+- Business
+implementation_text: '1. This strategy requires the employer''s approval - so may or may not be possible
+  depending on the employer''s flexibility. Ideal for the self-employed operating through a company or
+  trust.
+
+  2. Employer owns or leases the motor vehicle and provides the motor vehicle to the employee as a fringe
+  benefit as part of the employee''s overall salary package.
+
+  3. Employer pays the motor vehicle operating expenses.
+
+  4. Employer claims back GST on motor vehicle cost and expenses.
+
+  5. The employer ensures the employee''s overall salary package doesn''t increase by reducing the employee''s
+  cash salary paid to cover the motor vehicle and fringe benefits tax costs.'
+explanation_text: 'When a motor vehicle is used 100% for private purposes, there is usually no tax deduction
+  on the expenditure. With this strategy, employees can generate annual tax savings of $2,500 - $3,000
+  pa by salary packaging their private motor vehicle with their employer. The tax savings result from
+  the motor vehicle tax concessions available under the Fringe Benefits Tax Act and the GST savings on
+  the motor vehicle purchase cost and operating expenses. For example, the upfront GST savings on purchasing
+  a $40,000 motor vehicle are $3,636.
+
+
+  This strategy involves the employer owning or leasing the motor vehicle and providing the motor vehicle
+  to the employee as a fringe benefit (as part of the employee''s overall salary package). The employer
+  ensures the employee''s overall salary package doesn''t increase by reducing the cash salary paid to
+  cover the motor vehicle and fringe benefits tax costs. As such, it should also be used to salary package
+  a spouse or children''s motor vehicles if they are used for private purposes only.'
+ato_sources:
+- Fringe Benefits Tax Act
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- salary packaging
+- motor vehicle
+- fringe benefits tax
+- fbt
+- private use
+- gst savings
+- salary sacrifice
+- employer
+- employee
+- company car
+- operating expenses
+- cash salary reduction

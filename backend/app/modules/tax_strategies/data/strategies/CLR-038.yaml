@@ -1,0 +1,55 @@
+strategy_id: CLR-038
+source_ref: STP-038
+name: School building fund levy
+categories:
+- Employees
+implementation_text: '1. Confirm that the school building fund is a DGR.
+
+  2. Keep the receipts for contributions to the school building fund.
+
+  3. Confirm that no material benefits were received by the donors.'
+explanation_text: 'Gifts to a school building fund will qualify for a tax deduction where the school building
+  fund has been endorsed as a Deductible Gift Recipient (DGR) by the Australian Taxation Office, and the
+  donor receives no tangible benefit. Tax-deductible gifts must have the following characteristics:
+
+
+  They are made voluntarily.
+
+  They do not provide a material benefit to the donor.
+
+  They primarily arise from benefaction.
+
+
+  Gifts to a school building fund will not be tax-deductible where the donor receives the following material
+  benefits:
+
+  A reduction in school fees.
+
+  The grant of scholarships to nominated students.
+
+  Raffle tickets.
+
+  Tickets to functions.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- school building fund
+- dgr
+- deductible gift recipient
+- charitable donation
+- tax deduction
+- donation
+- gift
+- benefaction
+- school fees
+- voluntary contribution

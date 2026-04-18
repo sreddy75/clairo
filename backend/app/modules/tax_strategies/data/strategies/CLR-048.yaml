@@ -1,0 +1,71 @@
+strategy_id: CLR-048
+source_ref: STP-048
+name: Negatively gearing the family home
+categories:
+- Employees
+- Business
+- Rental_properties
+implementation_text: '1. Due to their business, occupation or financial circumstances, the taxpayer is
+  highly concerned about asset protection. Consequently, they decide to purchase their family home in
+  a trust.
+
+  2. Factor in the tax consequences of forgoing the main residence exemption.
+
+  3. A Private Ruling can be gained from the ATO before implementing this strategy (if desired).
+
+  4. The family home is purchased in a trust for asset protection purposes and is negatively geared.
+
+  5. Commercial arms-length lease and rental paid.
+
+  6. Additional taxable income is diverted to the trust to absorb and benefit from the negative gearing
+  taxable loss.'
+explanation_text: 'The general rule is that interest on borrowings used to purchase the family home is
+  non-deductible. An exception to this is where a discretionary trust buys a house with bank finance and
+  rents it to family members at a commercial rent. If the interest and other expenses exceed the rental
+  income, tax losses will be created, and the property will be deemed ''negatively geared''. This strategy
+  will be attractive where the trust has other income to absorb the rental loss. For this strategy to
+  be successful, it is essential that:
+
+
+  Commercial arms-length rent is paid.
+
+  A lease should be signed and subject to standard commercial arms-length terms, i.e. bond paid, etc.
+
+  The dominant purpose of having the negatively geared family home in the trust is for asset protection
+  purposes, not tax savings.
+
+
+  The ATO confirmed the above strategy in the Janmor Nominees Pty Ltd case. The advantages of the above
+  strategy include the following:
+
+
+  Asset protection is a trust, not family members own the family home. This ownership structure is attractive
+  for high-risk professionals such as doctors, solicitors, business owners, etc.
+
+  The rental property is initially negatively geared in the trust, so tax savings will be available to
+  the trust if it has other income.'
+ato_sources: []
+case_refs:
+- Janmor Nominees Pty Ltd
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- negative gearing
+- family home
+- discretionary trust
+- asset protection
+- rental property
+- interest deduction
+- commercial rent
+- arms-length lease
+- tax losses
+- high-risk professionals

@@ -1,0 +1,63 @@
+strategy_id: CLR-084
+source_ref: STP-084
+name: Change a hobby into a business
+categories:
+- Business
+implementation_text: '1. Determine the most optimum and effective structure to operate the business through
+  - Generally, structures like companies or trusts with corporate trustees are popular due to their limited
+  liability and the protection afforded to the business owner''s assets.
+
+  2. Consider the non-commercial loss rules, as these can result in a taxable loss (and tax benefit) being
+  carried forward.
+
+  3. Ensure the activity is organised and carried on in a businesslike manner. This may include keeping
+  business records, operating a separate bank account, having licences or qualifications, having a registered
+  business name, operating from business premises, etc.'
+explanation_text: 'Changing a hobby into a business can make some private expenses tax-deductible. Expenses
+  like motor vehicles, home offices, travel, and professional development may become deductible. Of course,
+  the income generated will now be taxable, but the taxpayer will benefit overall if the expenses exceed
+  the income.
+
+
+  Businesses have the following characteristics:
+
+
+  The activity is organised and carried on in a businesslike manner. Evidence of this includes keeping
+  business records, operating a separate bank account, having licences or qualifications, having a registered
+  business name, operating from business premises, etc.
+
+  The size or scale of the activity is consistent with other businesses in the industry.
+
+  Repetition of the activities. For example, the taxpayer continually buys and sells coins.
+
+  The objective is to make a profit, even if unlikely to do so in the short term.
+
+  The taxpayer has registered an ABN or applied for a business name.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- hobby
+- business
+- tax-deductible
+- non-commercial loss
+- private expenses
+- motor vehicle
+- home office
+- travel
+- professional development
+- abn
+- business structure
+- businesslike manner
+- profit

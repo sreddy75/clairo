@@ -1,0 +1,69 @@
+strategy_id: CLR-566
+source_ref: STP-566
+name: Workers compensation insurance
+categories:
+- Employees
+- Recommendations
+implementation_text: '1. Obtain a worker''s compensation policy through an insurance company or use an
+  insurance broker to organise the policy.
+
+  2. The premium rate is calculated on the wages paid and the type of work the employees perform (higher-risk
+  work results in higher premiums as they have more claims).
+
+  3. Workers'' compensation may:
+
+  - Cover some of the employee''s wages while they recover away from work
+
+  - Cover medical and hospital costs, as well as other rehabilitation treatments
+
+  - Pay a lump sum if they receive a permanent impairment
+
+  - Pay funeral expenses, periodic payments for dependents and lump sum compensation to their family if
+  they are tragically killed at work'
+explanation_text: 'Workers'' compensation insurance protects your business from financial costs when a
+  worker sustains a work-related injury or disease. It also protects injured workers by providing weekly
+  payments to cover loss of earning capacity, payment of reasonable medical and rehabilitation expenses,
+  and other entitlements. Under Australian law, employers must have workers'' compensation insurance coverage;
+  it''s compulsory.
+
+
+  Workers'' compensation insurance offers financial support to enable employees to focus on getting better
+  without worrying about treatment costs. It also provides rehabilitation services to ensure employees
+  have a safe, durable and timely return to work.
+
+
+  If you don''t have workers'' compensation insurance, your business could be liable for:
+
+  - Costs above $600,000 if a worker is injured
+
+  - Fines of up to $5,000 per worker
+
+  - Any avoided premiums going back five years
+
+  - Liability for the cost of any action taken at common law
+
+  - Legal expenses involved in any court action.
+
+  - Criminal charges.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- workers compensation
+- insurance
+- employees
+- workplace injury
+- compulsory insurance
+- employer obligations
+- rehabilitation
+- premium
+- work-related injury
+- liability

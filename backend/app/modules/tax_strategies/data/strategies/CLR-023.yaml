@@ -1,0 +1,53 @@
+strategy_id: CLR-023
+source_ref: STP-023
+name: Departing Australia superannuation payment
+categories:
+- Employees
+implementation_text: '1. The temporary resident leaves Australia permanently and has a temporary visa
+  cancelled.
+
+  2. Australian citizens, New Zealand citizens, permanent Australian residents, retirement visa holders,
+  and investor retirement visa holders cannot claim a Departing Australia Superannuation Payment.
+
+  3. While residing overseas, the taxpayer completes and lodges the online application to claim their
+  Departing Australia Superannuation Payment.
+
+  4. New Zealand citizens leaving Australia permanently may transfer their super to New Zealand under
+  the Trans-Tasman Retirement Savings Portability scheme for individuals.'
+explanation_text: 'When a temporary resident has departed Australia permanently and had their visa cancelled,
+  they can apply online to refund their accumulated superannuation benefits (after the ATO has deducted
+  the appropriate withholding tax). The ATO withholding tax rates that apply to payments of a Departing
+  Australia Superannuation Payment are:
+
+  0% for the tax-free component.
+
+  35% for a taxed element.
+
+  45% for an untaxed element.
+
+
+  From 1st July 2017, a DASP made to a working holidaymaker (who holds a WHM subclass 417 or 462 visas)
+  will be taxed at 65% on both the taxed and untaxed elements. Any tax-free component of the DASP will
+  continue to be taxed at 0%.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- departing australia superannuation payment
+- dasp
+- temporary resident
+- superannuation refund
+- withholding tax
+- working holidaymaker
+- visa cancellation
+- trans-tasman portability
+- superannuation benefits
+- temporary visa

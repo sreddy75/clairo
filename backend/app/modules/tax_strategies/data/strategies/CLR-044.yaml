@@ -1,0 +1,50 @@
+strategy_id: CLR-044
+source_ref: STP-044
+name: New Energy Incentive
+categories:
+- Business
+implementation_text: ''
+explanation_text: 'On 30 April 2023, the Australian Government announced it would provide businesses with
+  an annual turnover of less than $50 million with an additional 20% deduction on spending that supports
+  electrification and more efficient use of energy. Eligible assets or upgrades must be first used or
+  installed and ready for use between 1 July 2023 and 30 June 2024. Up to $100,000 of total expenditure
+  will be eligible for the incentive, with the maximum bonus tax deduction being $20,000 per business.
+
+
+  The measure will help small businesses make investments like:
+
+
+  • electrifying their heating and cooling systems
+
+  • upgrading to more efficient fridges and induction cooktops
+
+  • installing batteries and heat pumps.
+
+
+  Excludes expenditure on electric vehicles, renewable electricity generation assets, capital works, and
+  assets not connected to the electricity grid.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: 50000000
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- energy incentive
+- electrification
+- small business
+- bonus deduction
+- energy efficiency
+- heating cooling
+- heat pump
+- battery
+- induction cooktop
+- eligible assets
+- 20% deduction
+- energy upgrade

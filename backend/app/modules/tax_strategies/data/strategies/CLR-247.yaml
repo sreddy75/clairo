@@ -1,0 +1,65 @@
+strategy_id: CLR-247
+source_ref: STP-247
+name: Overnight travel expenses
+categories:
+- Employees
+- Business
+implementation_text: '1. Keep receipts of all expenditures.
+
+  2. The expenses must be apportioned when overnight travel is partly for work or business purposes and
+  partly for private purposes (say, a holiday). Apportionment is calculated on time by determining how
+  many days in the trip are related to work/business purposes and how many are private.
+
+  3. A travel diary is compulsory if the overseas travel is over six nights. Also, a travel diary is mandatory
+  for local travel where the trip is not exclusively for work/business purposes, i.e. part private purposes.
+
+  4. Work or business travel days include:
+
+  - Travels days.
+
+  - Weekend days between two work/business days.
+
+  - Days where more than 50% of the day was spent on work/business activities'
+explanation_text: 'Overnight travel expenses involve being away from home for at least one night for work
+  or business purposes. Business or work travel contrasts with other types of private travel, such as
+  for leisure purposes or regularly commuting between home and the workplace. Reasons for work or business
+  trips include servicing customers, working at different job sites, visiting suppliers, training, conferences,
+  seminars, and networking.
+
+
+  Deductible overnight travel expenses will include the following:
+
+  - Meals.
+
+  - Accommodation.
+
+  - Incidental expenses, including snacks, toiletries, movies, and magazines.
+
+  - Car hire and car parking fees.
+
+  - Air, bus, train, tram and taxi fares.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- overnight travel
+- travel expenses
+- work travel
+- business travel
+- travel diary
+- accommodation
+- meals
+- apportionment
+- deductible expenses
+- receipts
+- overseas travel
+- incidental expenses

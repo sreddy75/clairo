@@ -1,0 +1,61 @@
+strategy_id: CLR-013
+source_ref: STP-013
+name: Self education expenses
+categories:
+- Employees
+implementation_text: '1. Letter from the employer detailing how the course relates to the employee''s
+  current employment.
+
+  2. Confirm that the course is not too general or relates to non-income-producing purposes. For example,
+  an accountant doing an art course part-time or undertaken for the taxpayer to get a new job or open
+  up a new business opportunity, e.g. an accountant doing a law degree part-time.
+
+  3. Keep the receipts and records for self-education expenses incurred (but not reimbursed by the employer).'
+explanation_text: 'Taxpayers'' self-education expenses will be deductible where they are connected to
+  the taxpayer''s current job or income-earning activities and:
+
+  The course of education will maintain or improve the taxpayer''s knowledge and skills in their current
+  job; or
+
+  It is likely to lead to increased income regarding their everyday income-earning activities.
+
+
+  Deductions for self–education expenses include:
+
+  Textbooks, student union fees and stationery.
+
+  Home office running costs.
+
+  Computer depreciation.
+
+  Course fees include HECS-HELP (where the student is enrolled in a fee-paying place) and FEE-HELP.
+
+  Interest on money borrowed where the funds pay the taxpayer''s self-education expenses.
+
+  Travel expenses to and from university or TAFE.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- self education
+- education expenses
+- employee deductions
+- course fees
+- hecs-help
+- fee-help
+- textbooks
+- study expenses
+- work-related education
+- computer depreciation
+- travel expenses
+- home office
+- upskilling

@@ -1,0 +1,45 @@
+strategy_id: CLR-438
+source_ref: STP-438
+name: SMSFs investing in non-controlled entities
+categories:
+- Business_structures
+implementation_text: 'Process:
+
+  1. Establish an investment entity.
+
+  2. Ensure that the SMSF does not control the entity - i.e. less than 50% ownership.'
+explanation_text: 'This strategy involves an SMSF investing in non-controlled unit trusts or companies.
+  The non-controlled entities can operate businesses, be geared, and invest without breaching the SIS
+  legislation. This structure allows multiple unrelated SMSFs to invest in these entities and have the
+  trust distributions, dividends, and capital gains taxed at the SMSF concessional tax rates (i.e. 0-15%).
+
+
+  The critical requirement is that the SMSF must not control the entity (less than 50% of the entity,
+  and ideally, less than 33%). Also, the trustees/directors of the fund must ensure that the other investors
+  in the non-controlled entities are not members of the fund, employer-sponsors of the fund, or associates
+  of either the member or employer-sponsor.'
+ato_sources: []
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- smsf
+- non-controlled entity
+- unit trust
+- company
+- concessional tax rate
+- SIS legislation
+- investment structure
+- trust distributions
+- dividends
+- capital gains
+- superannuation
+- ownership threshold

@@ -1,0 +1,94 @@
+strategy_id: CLR-244
+source_ref: STP-244
+name: FBT obligations
+categories:
+- ATO_obligations
+implementation_text: 'Employers providing fringe benefits to their employees have specific obligations
+  under the Fringe Benefits Tax (FBT) system. Here are the primary obligations of employers:
+
+  1. Register for FBT: If an employer provides taxable fringe benefits to their employees, they must register
+  for FBT with the ATO.
+
+  2. Keep records: Employers must keep detailed records that substantiate the provision of fringe benefits
+  and any calculation associated with the FBT payable. These records should be kept for at least five
+  years.
+
+  3. Calculate the taxable value: Employers must determine the taxable value of the fringe benefits they
+  provide. Different valuation rules apply depending on the type of benefit.
+
+  4. Report and lodge FBT returns: Employers must lodge an FBT return with the ATO annually if they provide
+  taxable fringe benefits. The FBT year runs from April 1 to March 31.
+
+  5. Pay FBT: After calculating the amount of FBT owed, employers must pay it to the ATO.
+
+  6. Report on employees'' payment summaries: Certain fringe benefits (''reportable fringe benefits'')
+  must be reported on an employee''s payment summary. This does not mean the employee pays tax on the
+  benefit, but it may affect their entitlements to government benefits or obligations.
+
+  7. Review exemptions and concessions: The FBT law contains several concessions and exemptions that can
+  reduce the amount of FBT payable.
+
+  8. Obligation for associates: FBT doesn''t only apply to benefits given to employees. If employers provide
+  benefits to associates of employees (like family members), they might also have FBT obligations.'
+explanation_text: 'Fringe Benefits Tax (FBT) is a tax employers pay on certain benefits they provide to
+  their employees or their associates. If an employer offers certain perks or benefits to employees other
+  than their regular salary, they may be liable to pay FBT. The employer is responsible for paying the
+  FBT, not the employee.
+
+
+  The ten most common fringe benefits provided by employers are:
+
+  1. Company cars and car allowances: The private use of company cars or car allowances given to employees
+  for personal use is a common fringe benefit.
+
+  2. Loan benefits: If an employer provides an employee with a loan at a reduced interest rate, it''s
+  a fringe benefit.
+
+  3. Expense payment benefits: When an employer pays or reimburses an employee for personal expenses,
+  such as school fees or private health insurance.
+
+  4. Housing benefits: Providing free or subsidized accommodation to employees.
+
+  5. Entertainment benefits: These could be tickets to sporting events, movies, or concerts, as well as
+  meals provided in entertainment settings.
+
+  6. Living away from home allowance (LAFHA): Provided to employees who are required to live away from
+  their usual residence for work purposes.
+
+  7. Health insurance: Either provided as a policy or the employer paying the premium on behalf of the
+  employee.
+
+  8. Property benefits: Providing employees with goods (e.g., electronic devices) at a reduced cost or
+  for free.
+
+  9. Employee discounts: When employees can purchase the goods or services their employer sells at a discounted
+  rate.
+
+  10. Work-related Items: While these are often exempt from Fringe Benefits Tax (FBT), items like laptops,
+  mobile phones, and tools specific to the job can be provided as benefits.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- fringe benefits tax
+- fbt
+- employer obligations
+- reportable fringe benefits
+- company car
+- lafha
+- living away from home
+- entertainment benefits
+- fbt registration
+- fbt return
+- taxable value
+- employee benefits
+- fbt exemptions
+- payment summary

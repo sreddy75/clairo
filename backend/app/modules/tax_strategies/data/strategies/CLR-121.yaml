@@ -1,0 +1,78 @@
+strategy_id: CLR-121
+source_ref: STP-121
+name: Entertainment
+categories:
+- Business
+implementation_text: '1. Ensure entertainment provided to employees or associates is treated as a fringe
+  benefit and that fringe benefits tax is paid by the employer to claim a deduction.
+
+  2. Provide overtime meals as food or drink to employees to qualify for a deductible entertainment expense.
+
+  3. Keep gifts to employees or clients inexpensive and consumable at home, ensuring each gift costs less
+  than $100, to qualify as deductible entertainment.
+
+  4. Provide employee meals on a working day within an in-house dining facility to qualify for a deductible
+  entertainment expense.
+
+  5. Claim meals, accommodation, and travel costs for employees on business trips as deductible entertainment
+  expenses.
+
+  6. Ensure seminar meals are only claimed as deductible entertainment where the seminar runs for at least
+  four hours and is not merely a general business discussion.
+
+  7. Claim advertising and promotional entertainment expenses or public access promotions as deductible
+  entertainment.'
+explanation_text: 'Generally, expenditure on entertainment is not tax-deductible. This expenditure includes
+  entertaining clients, business lunches, social functions, and Christmas parties. As an exception, entertainment
+  will be deductible when provided as a fringe benefit to an employee or associate, and the employer pays
+  fringe benefits tax on the use. As the FBT rate is 47% versus 25% for the company tax rate, this is
+  generally not tax efficient. Deductible entertainment expenses are tax effective to the employer as
+  they receive a tax deduction for the expenditure, a refund of the GST input tax credits, and pay no
+  fringe benefits tax. Employees also benefit as they receive a tax-free benefit.
+
+
+  The following will generally be deductible entertainment:
+
+  Food or drink is provided to employees for overtime meals.
+
+  Gifts that are relatively inexpensive and will be consumed by the employee or client at home (e.g. a
+  bottle of wine, hamper). Cheap gifts mean gifts costing less than $100 each.
+
+  Meals for employees are provided on a working day in an ''in-house dining facility''.
+
+  Meals, accommodation or travel costs for an employee on a business trip.
+
+  Meals at seminars provided the seminar runs for at least four hours and is not merely a general business
+  discussion.
+
+  Advertising and promotional entertainment expenses or public access promotions.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- entertainment
+- fringe benefits tax
+- fbt
+- business meals
+- christmas party
+- client entertainment
+- deductible entertainment
+- gst input tax credits
+- overtime meals
+- staff gifts
+- in-house dining
+- business trip
+- seminar meals
+- advertising entertainment
+tenant_id: platform
+version: 1

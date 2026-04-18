@@ -1,0 +1,59 @@
+strategy_id: CLR-067
+source_ref: STP-067
+name: Holiday homes
+categories:
+- Rental_properties
+implementation_text: '1. List the holiday home for rent with a real estate management agent.
+
+  2. Keep diary records recording when the property is available for rent, actually rented, and when used
+  for private purposes.'
+explanation_text: 'Taxpayers who own holiday homes to generate rental income (even part-time) will be
+  entitled to claim certain rental property expenses as a tax deduction. The deductible rental costs for
+  a holiday home are the same as for a typical rental property, i.e. interest, depreciation, building
+  write-off, rates, taxes, repairs, and management fees.
+
+
+  With income-generating holiday homes, as the property is both income-producing and private (e.g. own
+  personal use), the rental expenses incurred must be apportioned between the deductible percentage and
+  non-deductible percentage. The costs are typically allocated based on time to calculate the allowable
+  rate. That is the percentage of the year the property is rented or available for rent. So, for example,
+  if the property were rented or available for rent 40% of the time, then 40% of the rental property expenses
+  would be deductible. The ATO deems a property available for rent if listed for rent with a real estate
+  management agent. Suppose there is uncertainty about the correctness of claiming rental property losses
+  on a holiday house. In that case, the ATO''s policy limits the deductions to the amount of rental income
+  received.
+
+
+  Three fundamental investment principles with purchasing a holiday home:
+
+  • Buying a holiday house in an area you wish to retire in locks in your future retirement property at
+  today''s prices.
+
+  • Freestanding holiday houses have more potential capital gains than apartments due to the flexibility
+  to improve the properties or sub-divide in the future.
+
+  • The ideal location is where holiday houses are rented for similar returns as traditional rental properties.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- holiday home
+- rental property
+- apportionment
+- private use
+- deductible expenses
+- interest
+- depreciation
+- management fees
+- available for rent
+- capital gains
+- diary records

@@ -1,0 +1,49 @@
+strategy_id: CLR-138
+source_ref: STP-138
+name: Tax deductible dogs
+categories:
+- Business
+implementation_text: 1. Detail how the dog is used to generate income.
+explanation_text: 'Dogs can be a legitimate tax deduction when used in the following ways:
+
+  On farms for rounding up sheep, cattle and other livestock.
+
+  Guard dogs at factories.
+
+  At workplaces (offices and factories) to improve employee morale, interaction, communication and stress
+  levels.
+
+  Guarding tradespersons'' tools on worksites from theft.
+
+
+  The purchase cost of the dog (and training fees) are not deductible as they are capital costs. In contrast,
+  vet and pet food bills may qualify as tax deductions. Whether an individual''s dog costs are deductible
+  depends on each case''s facts and whether the dogs are helping generate income. For this deduction to
+  be successful with the ATO, the taxpayer must be able to explain how the dog creates income. If the
+  dog is mainly used for private and personal reasons, i.e. the family pet, then no expenses will be deductible.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- dog
+- tax deductible
+- vet bills
+- pet food
+- farm
+- guard dog
+- workplace
+- livestock
+- tradespeople
+- income generating
+- capital cost
+- private use
+- business expense

@@ -1,0 +1,61 @@
+strategy_id: CLR-086
+source_ref: STP-086
+name: Employee meal expenses on business premises
+categories:
+- Business
+implementation_text: '1. Business owners should operate their business through a trust or company structure
+  - so they become employees of the business and can also access this strategy for their meals.
+
+  2. The business incurs the expense for employee meals and claims a tax deduction.
+
+  3. The employee meals are consumed on the employer''s premises during a normal work day.'
+explanation_text: 'Employee meal costs, like breakfast, lunch or dinner during a normal workday, are ordinarily
+  private non-deductible expenses. But an employer can provide the following meals to employees, claim
+  a tax deduction for the costs, and pay no fringe benefits tax:
+
+  Tea, coffee and cakes are provided for employees and customers on business premises.
+
+  Sandwiches, muffins, fruit, pastries, etc., consumed during a work meeting or training session on business
+  premises.
+
+  A light meal and drink are consumed on business premises while working. This includes pizza, takeaway
+  food, drinks, etc.
+
+  A light meal and drink consumed at a café by an employee during a meal break on a work day.
+
+  A few drinks whilst consuming the meal. This can include alcohol as long as not consumed at a party,
+  social event, or Friday night drinks.
+
+
+  By providing employees with free meals during the workday, employers benefit from increased employee
+  satisfaction, easier employee recruitment (as employees are getting a free benefit not offered by most
+  employers), and increased employee productivity (as employees are more likely to work longer hours if
+  they don''t need to leave the business premises for meals).'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- employee meals
+- meal expenses
+- business premises
+- fringe benefits tax
+- fbt exempt
+- staff meals
+- tax deduction
+- employer
+- trust structure
+- company structure
+- workday meals
+- light meal
+- employee benefit

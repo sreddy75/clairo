@@ -1,0 +1,48 @@
+strategy_id: CLR-027
+source_ref: STP-027
+name: Accommodation and meals at remote sites
+categories:
+- Employees
+implementation_text: '1. Travel diary documenting the dates at the remote work sites - The employee can
+  work there for longer than 21 days and still claim a deduction for accommodation and meal expenses as
+  long as it is not a permanent place of work.
+
+  2. Employees must also substantiate their accommodation and meal deductions with the usually written
+  receipts.
+
+  3. Alternatively, suppose an employer pays for these costs. In that case, the employer will be entitled
+  to a tax deduction for the expenses and have no fringe benefits tax liability due to the ''otherwise
+  deductible rule''. The accommodation and meals benefit received by the employee is tax-free to them.'
+explanation_text: 'Generally, accommodation and meals incurred by employees at work are private and non-deductible.
+  As such, lodging and meals at remote sites should be non-deductible.
+
+
+  But as an exception to this general rule, accommodation and meal expenses will be deductible to an individual
+  where the individual works at a remote work site for short periods and is required to live at or near
+  the worksite. This exception doesn''t apply if the employee keeps returning to the same workplace. Employees
+  must also substantiate their accommodation and meal deductions with the usually written receipts.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- accommodation
+- meals
+- remote work site
+- travel diary
+- fringe benefits tax
+- otherwise deductible rule
+- employee deductions
+- substantiation
+- receipts
+- worksite
+- temporary work

@@ -1,0 +1,46 @@
+strategy_id: CLR-020
+source_ref: STP-020
+name: Refund of Division 293 tax for temporary residents permanently leaving Australia
+categories:
+- Employees
+implementation_text: '1. The employee first needs to have received a Departing Australia Superannuation
+  Payment.
+
+  2. Lodge the form with the ATO to have the division 293 tax refunded.'
+explanation_text: 'An individual is entitled to a refund of all the Division 293 tax they have paid in
+  Australia if they received a Departing Australia Superannuation Payment and applied to the Commissioner
+  in the approved form for the refund. The actual tax savings could be substantial. For example, if the
+  temporary resident were on a taxable income greater than $250,000 and received $25,000 super contributions
+  yearly, the division 293 tax would be $3,750 pa. If the employee was a temporary resident for five years,
+  this is an $18,750 tax that will be refundable.
+
+
+  The Division 293 tax results in individuals with ''income'' exceeding $250,000 per annum having their
+  concessional superannuation contributions taxed at 30%. The super fund pays a 30% tax on the super contributions,
+  15%, and 15% by the individual. The individual can pay their 15% tax from their pocket or apply for
+  the funds released from their super fund.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- rebate
+keywords:
+- division 293
+- temporary resident
+- departing australia superannuation payment
+- superannuation
+- concessional contributions
+- tax refund
+- leaving australia
+- high income
+- super tax
+- visa
+- non-resident

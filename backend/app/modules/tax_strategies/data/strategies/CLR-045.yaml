@@ -1,0 +1,42 @@
+strategy_id: CLR-045
+source_ref: STP-045
+name: Compulsory work uniform
+categories:
+- Employees
+implementation_text: 1. Confirm that the compulsory work uniform is compulsory and distinctive.
+explanation_text: 'A compulsory work uniform is a uniform that the employer strictly enforces and makes
+  mandatory for all employees. The uniform must be distinctive, have the company logo, identify the employee
+  with their place of work, and not be available to be worn by the general public. Examples of compulsory
+  work uniforms include police, defence force, airline pilot, nurse, bank employees, etc. Taxpayers can
+  only claim the cost of shoes, socks, belts and stockings if they are an essential part of the distinctive
+  compulsory uniform and have characteristics specified in the employer''s uniform policy concerning style,
+  colour and type.
+
+
+  In contrast, an employer often encourages non-compulsory uniforms but does not strictly enforce them.
+  These uniforms will only be deductible to an employee if the outfit is registered with AusIndustry.
+  Regular business and conventional clothing are not allowable to an employee even when the employer makes
+  it compulsory for the employee to wear them. For example, a legal firm may make all employees wear suits.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- compulsory uniform
+- work uniform
+- distinctive uniform
+- clothing deduction
+- employee deduction
+- AusIndustry
+- uniform policy
+- work clothing
+- shoes socks belts
+- non-compulsory uniform

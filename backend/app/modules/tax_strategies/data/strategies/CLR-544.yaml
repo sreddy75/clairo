@@ -1,0 +1,113 @@
+strategy_id: CLR-544
+source_ref: STP-544
+name: Privacy & data protection
+categories:
+- Recommendations
+implementation_text: 'Here are some steps businesses can take to ensure compliance:
+
+  1. Privacy policy: Develop and maintain a comprehensive privacy policy that is transparent and easily
+  accessible. This should outline how personal data is collected, processed, stored, and shared.
+
+  2. Data mapping: Understand where data comes from, where it''s stored, how it''s used, and who has access
+  to it. This helps identify potential vulnerabilities and ensures that data is managed correctly.
+
+  3. Training: Provide regular training and updates for staff on privacy laws, the business''s privacy
+  policy, and best practices to ensure compliance.
+
+  4. Appoint a data protection officer (DPO): A DPO can oversee and manage data protection responsibilities.
+
+  5. Data minimization: Only collect and retain data necessary for the intended purpose.
+
+  6. Security measures: Implement robust security measures like encryption, firewalls, and regular security
+  audits. Ensure regular updates and patches are applied to all systems.
+
+  7. Third-party vetting: If you share data with or outsource data processing to third-party vendors,
+  ensure they comply with necessary privacy standards.
+
+  8. Consent management: Ensure you have explicit and informed consent from individuals before collecting
+  and processing their data. Include opt-in and opt-out options where necessary.
+
+  9. Access and correction: Establish procedures allowing individuals to access their data, correct inaccuracies,
+  or even delete it upon request.
+
+  10. Incident response plan: Develop a plan to address any data breaches, including steps to contain
+  them, notify affected individuals, and report to relevant authorities if necessary.
+
+  11. Documentation: Keep detailed records of data processing activities, consent, data sharing, and other
+  relevant actions. This can be useful for audits and accountability purposes.
+
+  12. Impact assessments: Conduct privacy impact assessments when launching new products, services, or
+  processes that might impact personal data. This can help identify and mitigate potential risks.
+
+  13. Transparency with stakeholders: Regularly discuss your data protection practices with customers,
+  employees, and other stakeholders. This builds trust and can also provide feedback to improve your processes
+  further.
+
+  14. Engage legal counsel: Regularly consult with professionals familiar with data protection laws and
+  regulations to ensure your practices align with current requirements.'
+explanation_text: 'In Australia, businesses'' privacy and data protection obligations largely stem from
+  the Privacy Act 1988 (Cth) and the Australian Privacy Principles (APPs) contained within. Here are some
+  critical aspects of the Privacy Act and APPs as they relate to businesses:
+
+  1. Scope: The Privacy Act applies to Australian Government agencies, all private sector and not-for-profit
+  organizations with an annual turnover of more than $3 million, all private health service providers,
+  and some smaller organizations.
+
+  2. Australian privacy principles (APPs): The APPs are a set of 13 principles that guide how applicable
+  entities manage personal information. These principles cover the collection, use, storage, and disclosure
+  of personal data and access to and correction of that information.
+
+  3. Sensitive information: The Privacy Act has special provisions for sensitive information, including
+  race, religion, political opinions, health information, and more.
+
+  4. Notification: If a business collects personal information, it generally must notify the individuals
+  about why it''s being collected, who it might be shared with, and how the individual can access or correct
+  it.
+
+  5. Use and disclosure: Personal information can usually only be used or disclosed for the primary purpose
+  for which it was collected unless an exception applies.
+
+  6. Security: Organizations must take reasonable steps to protect personal information from misuse, interference,
+  loss, unauthorized access, modification, or disclosure.
+
+  7. Access and correction: Individuals have the right to access their personal information held by an
+  organization and to have it corrected if it''s inaccurate.
+
+  8. Direct marketing: The Privacy Act identifies when an organization may use personal information for
+  direct marketing purposes.
+
+  9. Cross-border disclosure: Organizations are responsible for sending personal information overseas,
+  including ensuring that the overseas recipient does not breach the APPs.
+
+  10. Notifiable data breaches (NDB) scheme: Introduced in 2018, the NDB scheme requires organizations
+  to notify individuals and the Australian Information Commissioner about "eligible data breaches". An
+  eligible data breach occurs when personal information is accessed or disclosed without authorization
+  or is lost, which is likely to seriously harm any of the individuals to whom the information relates.
+
+  11. Other regulations: Depending on the industry, additional restrictions might apply. For instance,
+  businesses in the health sector might also need to adhere to specific health record privacy.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- privacy
+- data protection
+- privacy act 1988
+- australian privacy principles
+- apps
+- data breach
+- notifiable data breaches
+- personal information
+- compliance
+- data security
+- consent
+- data mapping
+- cross-border disclosure

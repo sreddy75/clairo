@@ -1,0 +1,50 @@
+strategy_id: CLR-078
+source_ref: STP-078
+name: Interest deductions for rental properties
+categories:
+- Rental_properties
+implementation_text: '1. Keep appropriate records to calculate the interest expense and determine if it''s
+  deductible.
+
+  2. Loans with redraw facilities shouldn''t pay private expenses. Any private payment through a redraw
+  facility (even if promptly repaid) will change part of the borrowings into private (with the result
+  that some of the interest expense will become private and non-deductible).'
+explanation_text: 'Interest will be deductible for a rental property under the following circumstances:
+
+  The rental property is either actually rented or genuinely available to rent, i.e. listed with a real
+  estate agent for rent. Work is done on a rental property after purchase to make it more attractive to
+  tenants.
+
+  A rental property is vacant to allow repairs or improvements.
+
+  Borrowed monies are used for repairs or renovations, to buy depreciating assets for the rental property,
+  or to pay deductible rental property expenses. When borrowed funds finance a rental property purchase,
+  where any part of the loan is for private purposes, the interest will not be deductible.
+
+  Interest incurred before settlement. Where a rental property realises a loss on sale and a loan shortfall
+  amount continues after the sale.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- interest deduction
+- rental property
+- investment loan
+- redraw facility
+- private purposes
+- repairs
+- renovations
+- loan shortfall
+- pre-settlement interest
+- negative gearing
+- borrowing costs
+- depreciating assets

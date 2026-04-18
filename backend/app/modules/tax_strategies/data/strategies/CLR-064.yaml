@@ -1,0 +1,55 @@
+strategy_id: CLR-064
+source_ref: STP-064
+name: Margin scheme
+categories:
+- Rental_properties
+implementation_text: '1. Check whether the margin scheme can be applied.
+
+  2. Ensure the vendor and purchaser agree in writing to apply the margin scheme and that its documented
+  in the contract for sale.'
+explanation_text: 'Usually, the GST payable on a taxable supply of real property is calculated as 1/11th
+  of the GST-inclusive price. In contrast, where the margin scheme is applied, GST is 1/11th of the ''margin''
+  on the sale. The ''margin'' is generally the amount by which the consideration for the sale exceeds
+  the consideration for the property acquisition. Where the margin scheme is applied to a sale, the purchaser
+  is not entitled to ITCs on the purchase and no tax invoice is issued. Suppose the purchaser is an unregistered
+  entity (i.e. a private individual buying a house and land package from a developer). In that case, applying
+  the margin scheme will reduce the GST on the sale and achieve stamp duty savings for the purchaser.
+  The vendor may also achieve higher net sale proceeds.
+
+
+  The vendor can only apply the margin scheme to a taxable supply of real property if they were not entitled
+  to claim an ITC on the acquisition of the property because it was acquired:
+
+  • From an unregistered entity.
+
+  • As an input taxed supply of residential premises.
+
+  • Before 1st July 2000 (i.e. pre-GST).
+
+  • Under a sale where the margin scheme was applied.
+
+  • As part of a GST-free going concern.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- margin scheme
+- gst
+- real property
+- taxable supply
+- itc
+- input tax credit
+- residential premises
+- stamp duty
+- going concern
+- property developer
+- vendor
+- purchaser

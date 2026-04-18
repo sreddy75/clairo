@@ -1,0 +1,67 @@
+strategy_id: CLR-040
+source_ref: STP-040
+name: Managing tax affairs
+categories:
+- Employees
+- Investors_retirees
+- Business
+implementation_text: '1. Diary evidencing kilometres travelled for tax-related purposes.
+
+  2. Receipts evidencing the expenses paid.
+
+  3. We need to determine whether the sole purpose of the trip is for managing tax affairs or if there
+  is a private component, so apportionment of expenses is necessary.'
+explanation_text: 'Taxpayers can claim a deduction for expenses incurred in managing their tax affairs.
+  These expenses will be deductible in the year paid. The deductible expenses include:
+
+
+  The cost of travel to obtain tax advice. This travel could be calculated on a cents per kilometre basis
+  if the taxpayer''s vehicle was used to visit the accountant''s office. Alternatively, the out-of-pocket
+  transport cost, such as airfare or taxi fare, will be deductible.
+
+  Accommodation and meals incurred visiting their tax agent. (This allows country-based taxpayers to have
+  a tax-deductible overnight trip to the city if they have a city-based accountant).
+
+  Costs of preparing and lodging tax returns, business activity statements, or tax advice received from
+  a registered tax agent, barrister or solicitor.
+
+  Tax reference books, materials, and subscriptions.
+
+  Legal expenses and costs incurred in appealing to the Administrative Appeals Tribunal or Courts concerning
+  tax affairs.
+
+  Rental property depreciation report.
+
+  Interest paid to the ATO.
+
+
+  In contrast, the non-deductible costs of managing tax affairs include fees paid to non-registered tax
+  agents, advice and expenses concerning exempt income, and tax advice about non-taxable payments.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- tax affairs
+- managing tax affairs
+- tax agent fees
+- travel to accountant
+- cents per kilometre
+- accommodation
+- tax return preparation
+- business activity statements
+- administrative appeals tribunal
+- interest paid to ato
+- deductible expenses
+- apportionment
+- registered tax agent
+- rental property depreciation
+- tax reference books

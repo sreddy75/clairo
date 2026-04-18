@@ -1,0 +1,52 @@
+strategy_id: CLR-176
+source_ref: STP-176
+name: 5 year catch-up super contributions
+categories:
+- Employees
+- Business
+implementation_text: '1. Calculate the amount of unused five year super contribution caps available to
+  be utilised.
+
+  2. Make the deductible super contributions.'
+explanation_text: 'From 1st July 2018, fund members with a fund balance of less than $500,000 can make
+  additional catch-up super contributions. The catch-up super contributions are made from unused super
+  contribution caps from 1st July 2018 and can be personal or salary sacrifices. The maximum five-year
+  catch-up super contributions are allowed over a rolling five-year period, and the amount not used after
+  five years expire. For example, if a taxpayer has a fund balance of less than $500,000 and made no super
+  contributions in 2021, 2022, 2023, and 2024, they could make up to $137,500 in 2025 (year 5).
+
+
+  The catch-up super contributions are most attractive to the following taxpayers:
+
+  - Women who have been on maternity leave so have not been using their deductible superannuation contribution
+  caps.
+
+  - Farmers or business owners who have inconsistent income.
+
+  - Taxpayers who inherit funds that can be contributed to super.
+
+  - Taxpayers who have made a substantial capital gain on property or shares.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- farmers
+financial_impact_type:
+- deduction
+keywords:
+- catch-up super
+- concessional contributions
+- unused cap
+- superannuation
+- salary sacrifice
+- fund balance
+- maternity leave
+- capital gain
+- rolling five-year
+- deductible super

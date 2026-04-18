@@ -1,0 +1,50 @@
+strategy_id: CLR-089
+source_ref: STP-089
+name: Cash 'v' accrual accounting methods
+categories:
+- Business
+implementation_text: 1. Determine the most appropriate method of accounting for the business, which will
+  be accrual for all businesses except personal services businesses.
+explanation_text: 'The two methods of accounting for business income and expenses are the cash or accrual
+  method. Cash accounting records cash received and the money paid out. In cash accounting, if you invoice
+  a client, you don''t record that as income until you receive the money from the client. With expenses,
+  when you receive a service or good and get the invoice, nothing is recorded until you make the payment.
+  With accrual accounting, you record income and expenses when they occur, not when the cash is received
+  or paid out. For example, if an accountant invoices a client for taxation services with payment due
+  in 30 days, the accountant will record the income on the invoice date, not in 30 days when the client
+  pays. The financial statements for a business using accrual accounting will include debtors (income
+  invoiced but not paid for yet) and creditors (expenses incurred but not paid for, however).
+
+
+  The accrual method is most appropriate for businesses deriving income from a trading or manufacturing
+  business. In contrast, the cash method may suit employee and personal services-related income. Generally,
+  cash accounting is best suited to smaller businesses like hairdressers and sole trader service businesses.
+  Although accrual accounting is more complicated than cash accounting, most firms should use it as it
+  tracks the actual financial position of a business, as it includes money owed and money owed.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- hairdressers
+financial_impact_type: []
+keywords:
+- cash accounting
+- accrual accounting
+- accounting method
+- business income
+- personal services
+- debtors
+- creditors
+- trading business
+- manufacturing
+- sole trader
+- bookkeeping
+- invoice
+- cash basis

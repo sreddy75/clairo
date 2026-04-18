@@ -1,0 +1,54 @@
+strategy_id: CLR-233
+source_ref: STP-233
+name: Maximising the $1.9m pension cap
+categories:
+- Investors_retirees
+- SMSF
+implementation_text: '1. Ensuring only the minimum pension payments are drawn, and any additional payments
+  withdrawn are taken as a partial commutation. Partial commutations increase the members ''cap space''
+  by the payment amount and allow for the future transfer of additional funds into the pension phase.
+
+  2. Ensuring that all loan repayments are made from pension assets (funds) when a pension asset is financed
+  via a Limited Recourse Borrowing Arrangement. Otherwise, if loan repayments are made from accumulation
+  assets, the pension cap will be reduced by the amount of the loan repayments made.
+
+  3. Contributing Structured Settlement Contributions to the pension account (as they are excluded from
+  the $1.9m pension cap).
+
+  4. Contributing Super Contributions from Downsizing to the pension account (as they are excluded from
+  the $1.9m pension cap). A person aged 55 or over can make a non-concessional contribution into superannuation
+  of up to $300,000 from the proceeds of selling their principal residence (if they have owned it for
+  at least ten years). This is available to both members of a couple for the same home.'
+explanation_text: The amount of capital a member can have in the tax-free retirement (pension phase) is
+  limited to $1.9 million. This restriction means the pension earnings exemption only applies to $1.9
+  million of the member's superannuation balance, and the earnings on the excess superannuation balance
+  are subject to the standard 15% tax.
+ato_sources: []
+case_refs: []
+entity_types:
+- smsf
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+- exemption
+keywords:
+- pension cap
+- transfer balance cap
+- pension phase
+- retirement
+- smsf
+- superannuation
+- partial commutation
+- limited recourse borrowing
+- downsizer contribution
+- structured settlement
+- non-concessional contribution
+- tax-free retirement
+- pension earnings exemption

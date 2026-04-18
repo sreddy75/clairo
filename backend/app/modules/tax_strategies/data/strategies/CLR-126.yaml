@@ -1,0 +1,54 @@
+strategy_id: CLR-126
+source_ref: STP-126
+name: Active assets indefinitely
+categories:
+- Business
+implementation_text: '1. For all assets that have previously been used a business, review their ownership
+  period to see which assets have become active asset indefinitely.
+
+  2. Apply the small business CGT concessions to the sale of active assets.'
+explanation_text: 'An active asset is owned by a taxpayer and used in a business by the taxpayer, an affiliate
+  of the taxpayer, or another connected entity. An active asset can be a tangible asset (such as commercial
+  property) or an intangible asset (such as goodwill). Small businesses (those with a turnover of less
+  than $2m pa) that sell active assets may be entitled to the small business capital gains tax (CGT) concessions.
+  This small business CGT concessions will reduce the taxable capital gain and may make the profit tax-free.
+  The active asset test requires the CGT asset to be an active asset for:
+
+
+  Half the period of ownership if owned for 15 years or less.
+
+  7.5 years if held for more than 15 years.
+
+
+  As such, if an asset has been active for at least 7.5 years, it will be an active asset indefinitely,
+  regardless of when the asset is sold and what other uses it has been used for. So, for example, if a
+  residential house has been used as an office for a business for 7.5 years and then rented as a residential
+  property for 20 years, the asset will always be an active asset. As such, when the asset is sold 20
+  years later, the small business capital gains tax concessions will still apply and will reduce the tax
+  liability payable.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+keywords:
+- active asset
+- small business cgt concessions
+- capital gains tax
+- asset sale
+- active asset test
+- goodwill
+- commercial property
+- small business
+- cgt exemption
+- ownership period
+- tangible asset
+- intangible asset
+- tax-free profit

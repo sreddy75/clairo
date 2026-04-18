@@ -1,0 +1,67 @@
+strategy_id: CLR-538
+source_ref: STP-538
+name: Mortgage offset account
+categories:
+- Recommendations
+implementation_text: "Setting up a mortgage offset account typically involves the following steps:\n1.\
+  \ Research and choose a lender: If you don't already have a home loan, you'll need to research lenders\
+  \ to find one that offers a mortgage with an offset account option.\n2. Application process:\n   - Existing\
+  \ borrowers: If you're already with a lender, they might require you to fill out a form to link an offset\
+  \ account to your mortgage or open a new one.\n   - New borrowers: If you're applying for a new mortgage,\
+  \ the option to include an offset account will typically be part of the process.\n3. Terms and conditions:\
+  \ Read all the terms and conditions associated with the offset account. These might include minimum\
+  \ balance requirements, fees, and other specifics.\n4. Linking the account: Once approved, the offset\
+  \ account should be connected to your mortgage.\n5. Depositing funds: Deposit funds into the offset\
+  \ account. Remember, the more funds you have in the account, the greater the interest savings on your\
+  \ mortgage.\n6. Regular review: Regularly check your mortgage and offset account statements to ensure\
+  \ the offset is calculated correctly.\n7. Avoid withdrawals: While the primary advantage of an offset\
+  \ account is its flexibility (you can access funds when needed), remember that frequent withdrawals\
+  \ reduce the interest-saving benefits.\n8. Banking facilities: Some lenders might offer features like\
+  \ a debit card, online banking, or mobile banking for the offset account, making it easier to manage\
+  \ and access your funds.\n9. Stay updated: Lenders might change offset accounts' terms, fees, or conditions."
+explanation_text: 'A mortgage offset account is a special savings or transaction account linked to a home
+  loan. The balance in the offset account effectively "offsets" the mortgage balance for interest calculations,
+  potentially saving the borrower significant sums over the life of the loan. Here''s a more detailed
+  breakdown of how it works:
+
+  1. Interest calculation: A standard home loan calculates the total outstanding loan balance. With an
+  offset account, interest is calculated on the loan balance minus the amount in the offset account. For
+  instance, if you have a mortgage of $400,000 and $100,000 in your offset account, you''ll only pay interest
+  on $300,000.
+
+  2. Potential savings: By reducing the effective balance on which interest is charged, you could save
+  a significant amount in interest payments over the life of the loan.
+
+  3. Accessibility: Unlike the extra repayments made directly towards the mortgage, money in an offset
+  account is easily accessible.
+
+  4. Multiple uses: Some borrowers use their offset account as their primary transaction account, ensuring
+  that every dollar they earn is immediately working to reduce their interest payments. Others might keep
+  emergency savings or other lump sums in their offset, making their money work for them in two ways:
+  as a safety net and a way to reduce mortgage interest.
+
+  5. Tax efficiency: Earning interest on savings is taxable. You can achieve a similar benefit (reduced
+  interest payments) without earning taxable interest by keeping excess funds in an offset account instead
+  of a regular savings account.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- mortgage offset account
+- home loan
+- interest savings
+- tax efficiency
+- savings account
+- offset balance
+- interest calculation
+- liquidity
+- borrower
+- transaction account

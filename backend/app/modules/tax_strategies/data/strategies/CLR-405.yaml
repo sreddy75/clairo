@@ -1,0 +1,68 @@
+strategy_id: CLR-405
+source_ref: STP-405
+name: Discretionary trust
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Establish a company as trustee (best practice)
+
+  2. Establish the discretionary trust.'
+explanation_text: 'A discretionary trust (or family trust) is established to hold a family''s assets or
+  operate a business. Generally, they are created for asset protection and tax purposes.
+
+
+  The benefits of a discretionary trust include the following:
+
+
+  - Flexibility on income distributions. The trustee decides before the 30th of June each financial year
+  how that year''s trust income is allocated between the various beneficiaries. Generally, income will
+  be distributed to beneficiaries in lower tax brackets.
+
+  - Ability to distribute income to adult children (aged over 18 years) who are either studying or working
+  part-time and are in low tax brackets. Could distribute $18,200 tax-free to a child studying full-time.
+
+  - Ability to stream capital gains and franked dividends to specific beneficiaries. For example, capital
+  gains should be streamed to beneficiaries with carried-forward capital losses.
+
+  - Provides asset protection from creditors, ex-spouses, and legal claims.
+
+  - The ideal structure for owning capital-appreciating assets (such as land and shares) is that the beneficiaries
+  can access the 50% CGT discount on any realised capital gains (if the assets were owned for over 12
+  months).
+
+  - Allows succession planning and wealth transfer to future generations without immediate tax consequences.
+
+  - Ability to hold personal use assets such as holiday homes, boats, racehorses, etc.
+
+  - Reduces the land tax payable on multiple properties by owning each property in a separate family trust
+  (thereby having each family trust access the tax-free threshold for each property).
+
+  - There are no investment rules, no contribution rules, and no preservation rules (unlike superannuation).'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- discretionary trust
+- family trust
+- income splitting
+- asset protection
+- cgt discount
+- capital gains streaming
+- franked dividends
+- land tax
+- succession planning
+- trustee
+- beneficiaries
+- tax-free threshold
+- wealth transfer

@@ -1,0 +1,47 @@
+strategy_id: CLR-006
+source_ref: STP-006
+name: Travel between two unrelated places of employment
+categories:
+- Employees
+implementation_text: 'The two methods available for calculating the deduction are the following:
+
+  1. ''Cents per kilometre'' method - a set rate is applied to each work or business kilometre the motor
+  vehicle travelled, up to 5,000 business kilometres per year. For example, the fixed rate for 2023/24
+  is 0.85 cents per kilometre. The advantage of this method is that the taxpayer does not require written
+  evidence of their motor vehicle expenses, only records to make a reasonable estimate of business kilometres
+  travelled during the year, or
+
+  2. ''Logbook'' method - the taxpayer estimates their motor vehicle''s work or business use percentage
+  and applies it to the allowable expenses incurred during the income year. The business use percentage
+  is worked out from logbooks and odometer records. The logbook must cover a 12-week continuous period
+  and record all the work or business-related trips and kilometres travelled. All motor vehicle expenses,
+  et for fuel and oil, must be evidenced by receipts.'
+explanation_text: Employees who use their motor vehicle for work-related travel are entitled to a tax
+  deduction for the costs incurred. A deduction is generally allowed for the cost of travelling directly
+  between two unrelated places of work where the taxpayer does not reside at either workplace. For example,
+  an employee going to an office to complete some work before travelling to a second branch office would
+  be allowed a deduction for the travel between the two offices. The employee's journey to the first office
+  and from the second office home again would still be private non-deductible travel.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- motor vehicle
+- travel deduction
+- work-related travel
+- cents per kilometre
+- logbook method
+- two workplaces
+- employee deduction
+- business kilometres
+- odometer records
+- work travel

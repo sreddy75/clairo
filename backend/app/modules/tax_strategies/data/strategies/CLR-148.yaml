@@ -1,0 +1,46 @@
+strategy_id: CLR-148
+source_ref: STP-148
+name: Employing the family
+categories:
+- Business
+implementation_text: '1. Determine arms-length wage amounts for related parties.
+
+  2. Ensure wages are subject to the usual employment conditions, PAYG withholding, and superannuation.
+
+  3. Ideally, have an employment agreement.
+
+  4. When considering the tax savings from employing family members, we must consider whether government
+  assistance payments, such as family tax benefits, will be affected and reduced.'
+explanation_text: This strategy involves the small business employing family members, e.g. the spouse
+  or children employed as bookkeepers, receptionists, labourers, secretaries, managers, gardeners, etc.
+  There are no minimum age restrictions for parents using their children to work in their businesses.
+  The Australian Taxation Office has the power under ITAA97 s26-35 to reduce the amount of the deduction
+  claimed by the employer for salary and wages paid to a relative to an amount that the ATO considers
+  reasonable. Where a company employs a family member, we need to ensure ITAA 36 s109 concerning excessive
+  payments is not breached.
+ato_sources:
+- ITAA97 s26-35
+- ITAA 36 s109
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- family employment
+- arms length wages
+- salary splitting
+- spouse wages
+- children employees
+- payg withholding
+- superannuation
+- small business
+- family tax benefits
+- related party payments

@@ -1,0 +1,54 @@
+strategy_id: CLR-142
+source_ref: STP-142
+name: Finance with 100% overseas debt
+categories:
+- Business
+- Rental_properties
+implementation_text: '1. Businesses with foreign interest expense deductions of less than $2m per year
+  are excluded from the thin capitalisation rules, so they should be financed with 100% overseas debt.
+
+  2. Ensure the interest expense paid to overseas related parties is documented and arms-length.
+
+  3. Foreign interest expense payments are subject to a final 10% withholding tax (which must be paid
+  to the ATO before the international interest expense can be claimed as a tax deduction).'
+explanation_text: 'Multinational businesses often finance their Australian business investments with large
+  amounts of overseas debt instead of equity as it is more tax effective for the following reasons:
+
+  Subject to compliance with the thin capitalisation rules, the interest expense is deductible against
+  the Australian business''s profits. Each $1.00 interest expense saves $0.25 or $0.30 in tax.
+
+  The interest expenses payable to non-residents are only subject to a final 10% withholding tax.
+
+
+  The ATO defines a thinly capitalised entity as one whose assets are funded by a high level of debt and
+  relatively little equity. These entities'' investments are financed by $3 of debt for every $1 of capital.
+  Where the debt exceeds 75% of the net value of the assets, then part of the interest expense will be
+  non-deductible. Businesses with foreign interest expense deductions of less than $2m per year are excluded
+  from the thin capitalisation rules. That means these businesses can be financed with 100% overseas debt.
+  These businesses often end up with no Australian taxable income or tax liability after paying the foreign
+  interest expense. Also, the interest expenses incurred with financing rental property investments are
+  excluded from the thin capitalisation rules, which means all rental property investments can be funded
+  with 100% debt.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- thin capitalisation
+- overseas debt
+- foreign interest expense
+- withholding tax
+- multinational
+- debt financing
+- rental property
+- interest deduction
+- non-resident
+- arms-length

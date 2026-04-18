@@ -1,0 +1,39 @@
+strategy_id: CLR-060
+source_ref: STP-060
+name: Main residence 6 month rule
+categories:
+- Rental_properties
+implementation_text: 1. Confirm that the main residence exemption is only applied on both residences for
+  a maximum six months.
+explanation_text: The principal residence is a tax-effective investment because any capital gains made
+  on the sale are tax-free if the main residence exemption applies. The principal residence exemption
+  generally refers to a dwelling owned by the taxpayer to the extent the house was the taxpayer's primary
+  residence and not used for income-earning purposes during the ownership period. The ownership period
+  is from the settlement date on the acquisition of the property to the settlement date on the sale of
+  the property. Generally, the principal residence exemption is only available for one dwelling at any
+  time. An exception is the six-month rule, which states that when a taxpayer acquires a new home to become
+  their principal residence and the taxpayer still owns their existing primary residence, both dwellings
+  can be treated as the taxpayer's principal residence for up to 6 months.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- main residence
+- principal residence exemption
+- six month rule
+- capital gains
+- cgt exemption
+- property sale
+- dwelling
+- tax-free
+- two properties
+- settlement date

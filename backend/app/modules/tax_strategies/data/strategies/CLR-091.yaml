@@ -1,0 +1,38 @@
+strategy_id: CLR-091
+source_ref: STP-091
+name: Main residence exemption
+categories:
+- Employees
+- Rental_properties
+implementation_text: 1. If a taxpayer has several main residences, claim the main residence exemption
+  on the property which has made the largest capital gain.
+explanation_text: The primary residence is a tax-effective investment because if the principal residence
+  exemption applies, any capital gains made on the home's sale are tax-free. The main residence exemption
+  generally refers to a dwelling owned by the taxpayer to the extent the housing was the taxpayer's principal
+  residence and not used for income-earning purposes during the ownership period. The primary home can
+  be located in Australia or overseas. A taxpayer can have several principal places at the same time.
+  If this is the case, then when selling a property, they should apply the main residence exemption to
+  the property which has made the largest capital gain.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- main residence exemption
+- principal place of residence
+- capital gains tax
+- cgt exemption
+- property sale
+- tax-free
+- dwelling
+- home ownership
+- multiple residences
+- investment property

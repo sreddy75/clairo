@@ -1,0 +1,154 @@
+strategy_id: CLR-531
+source_ref: STP-531
+name: Keep everything legal
+categories:
+- Recommendations
+implementation_text: 'Here are steps and strategies small businesses can employ to ensure they comply
+  with their legal obligations:
+
+  1. Educate and train: Owners, managers, and employees should be trained on legal requirements. Regular
+  training sessions can keep everyone updated on new laws and regulations.
+
+  2. Hire or consult experts: Engage a solicitor, accountant, or other professionals with expertise in
+  areas of concern.
+
+  3. Stay updated: Laws and regulations change. Joining industry associations, subscribing to newsletters,
+  and following relevant government websites can help businesses stay informed about updates.
+
+  4. Develop internal policies: Create clear and comprehensive internal policies and procedures that align
+  with legal requirements. This will ensure that day-to-day operations respect the law.
+
+  5. Regular audits: Conduct periodic internal audits to check for compliance in different business areas,
+  such as finances, HR, health and safety, etc.
+
+  6. Use compliance software: Many tools can help businesses track and ensure compliance, especially in
+  accounting, HR, and data protection.
+
+  7. Document everything: Maintain thorough records of all business activities. Good documentation can
+  demonstrate compliance in inquiries or investigations and can be invaluable if disputes arise.
+
+  8. Build a compliance culture: Encourage a culture of integrity and compliance within the organization.
+
+  9. Engage with regulatory bodies: A actively engage with relevant regulatory agencies instead of avoiding
+  them. They often provide resources, training, and guidance to help businesses comply with rules.
+
+  10. Establish a reporting mechanism: Employees should have a way to report potential compliance issues
+  or concerns. This could be a suggestion box, regular meetings, or an anonymous helpline.
+
+  11. Review contracts regularly: Ensure that all business contracts, whether with vendors, clients, or
+  partners, are periodically reviewed for compliance and updated if necessary.
+
+  12. Obtain necessary licenses and permits: Always ensure you have the required licenses and permits
+  for your business operations.
+
+  13. Establish contingency plans: In case of a breach or non-compliance issue, have a plan to address
+  it. This might include steps for internal review, legal consultation, and public relations.'
+explanation_text: 'Operating a small business in Australia necessitates a thorough understanding of the
+  legal landscape to ensure compliance with various laws and regulations. Here is an overview of some
+  legal issues and laws small businesses typically need to consider:
+
+  1. Business structure: Decide on the appropriate business structure (sole trader, partnership, company,
+  or trust). Each structure has its legal implications, including differences in liability, taxation,
+  and administrative requirements.
+
+  2. Business registration:
+
+  - Register your business name with the Australian Securities & Investments Commission (ASIC).
+
+  - Obtain an Australian Business Number (ABN), which is crucial for various tax purposes.
+
+  - If applicable, register for Goods and Services Tax (GST).
+
+  3. Licenses and permits: Depending on the industry and locality, you may need specific licenses or permits
+  to operate legally.
+
+  4. Employment law: If you hire employees:
+
+  - Comply with the National Employment Standards (NES).
+
+  - Understand the relevant awards or enterprise agreements.
+
+  - Take note of obligations related to superannuation, leave entitlements, and termination.
+
+  - Adhere to workplace health and safety standards.
+
+  5. Consumer law: The Australian Consumer Law (ACL) protects consumers and governs how businesses interact
+  with their customers. It covers issues like product safety, warranties, and misleading advertising.
+
+  6. Taxation: Includes obligations related to GST, Pay As You Go (PAYG) withholding, and other relevant
+  taxes.
+
+  7. Privacy: Be aware of the Privacy Act and the Australian Privacy Principles (APPs) to protect personal
+  data.
+
+  8. Intellectual property (IP): Protect your business ideas, products, and services using patents, trademarks,
+  copyrights, or designs.
+
+  9. Contracts: Understand the importance of contracts, whether with customers, suppliers, or partners.
+  Ensure they are legally sound and protect your business interests.
+
+  10. Leases: If you''re renting a commercial space, be aware of the legalities in commercial leases.
+
+  11. Environmental laws: Depending on the type of business, you may need to adhere to specific environmental
+  regulations.
+
+  12. Insurance: Depending on the nature of your business, certain types of insurance, such as workers''
+  compensation insurance, might be mandatory.
+
+  13. Industry-specific regulations: Additional regulations may exist depending on the industry. For instance,
+  the food industry has strict health and safety regulations, and the financial services sector has compliance
+  requirements.
+
+  14. E-commerce and online business: If you operate online, you must know the laws surrounding online
+  sales, advertising, data protection, and consumer rights.
+
+
+  Non-compliance with laws can lead to a range of consequences for small businesses, including:
+
+  - Fines and penalties.
+
+  - Legal proceedings.
+
+  - Loss of license.
+
+  - Reputational damage.
+
+  - Compensation.
+
+  - Operational disruption
+
+  - Increased costs
+
+  - Loss of contracts.
+
+  - Personal liability'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- legal compliance
+- small business
+- business registration
+- abn
+- gst
+- employment law
+- consumer law
+- payg
+- privacy act
+- licenses
+- permits
+- superannuation
+- contracts
+- insurance

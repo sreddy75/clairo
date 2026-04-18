@@ -1,0 +1,57 @@
+strategy_id: CLR-018
+source_ref: STP-018
+name: Double tax agreement
+categories:
+- Employees
+- Investors_retirees
+- Business
+implementation_text: 1. Review the DTA for the country where the foreign income is sourced.
+explanation_text: 'Double tax agreements (DTA) are agreements between Australia and approximately forty-six
+  other countries that aim to prevent double taxation and fiscal evasion and assist each country''s tax
+  authorities in enforcing their respective tax laws. DTAs do not impose tax but override domestic income
+  tax provisions to produce a taxing outcome consistent with the agreements.
+
+
+  When Australian tax residents have foreign income, the DTA for the country where the foreign income
+  is sourced needs to be reviewed. The DTA will clarify whether the foreign income is taxable in Australia,
+  taxable only in the foreign country, or taxable in both countries (subject to foreign tax offsets being
+  available to avoid double taxation). The DTAs with each country are slightly different, and different
+  types of income (employment, business, interest, rent, capital gains, etc.) can all have different taxing
+  rules.
+
+
+  For example, Australian tax residents are typically taxed on worldwide income, i.e. Australian and foreign
+  income. So, it''s clear that foreign business income is taxable in Australia. But an Australian tax
+  resident with South African business income must read the South African DTA to determine how the business
+  income is taxed. The South African DTA agreement states that if Australian tax residents operate businesses
+  in South Africa, that business income will only be taxed in South Africa. This means that South African
+  business income is not taxable in Australia.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- offset
+keywords:
+- double tax agreement
+- dta
+- foreign income
+- overseas income
+- tax treaty
+- foreign tax offset
+- double taxation
+- fiscal evasion
+- australian tax resident
+- worldwide income
+- foreign business income
+- south africa
+- employment income
+- interest income
+- capital gains

@@ -1,0 +1,108 @@
+strategy_id: CLR-569
+source_ref: STP-569
+name: Benchmarking
+categories:
+- Recommendations
+implementation_text: 'Here''s a step-by-step guide to the benchmarking process:
+
+  1. Identify objectives and scope:
+
+  - Determine what aspects of your business you want to benchmark (e.g., financial performance, processes,
+  customer satisfaction, etc).
+
+  2. Select benchmarking criteria:
+
+  - Top 20% in the industry.
+
+  - ATO benchmarking data.
+
+  3. Collect data:
+
+  - The organisation''s Xero, MYOB and Quickbooks data must be up-to-date and accurate.
+
+  4. Analyse findings:
+
+  - The TaxFitness software compares the organisation''s financial performance against the industry''s
+  Top 20% of businesses.
+
+  - The software identifies areas for improvement, performance gaps, strengths, and weaknesses.
+
+  5. Develop action plans:
+
+  - Develop action plans to address the identified performance deficiencies based on the analysis.
+
+  - Set clear goals and objectives for the changes you intend to make.
+
+  6. Implement changes:
+
+  - Implement the action plans, making necessary changes to your processes, operations, or strategies.
+
+  7. Monitor progress:
+
+  - Either monthly or quarterly, review the results and adjust the action plans as needed.
+
+  - Measure the impact of the changes on your organisation''s performance using relevant key performance
+  indicators (KPIs).
+
+  8. Share and learn:
+
+  - Share the results of your benchmarking efforts with relevant stakeholders within your organisation,
+  i.e. management, investors, and employees.
+
+  9. Sustain continuous improvement:
+
+  - Make benchmarking and continuous improvement a part of your organisation''s culture.
+
+  - Regularly repeat the benchmarking process to stay competitive and identify new opportunities for enhancement.'
+explanation_text: 'Benchmarking is the process whereby businesses measure and compare their performance
+  against competitors and industry leaders. The primary goal of benchmarking is to identify best practices,
+  improvement areas, and innovation opportunities.
+
+
+  The benefits of benchmarking include:
+
+  1. Profit improvement: By comparing their financial performance against industry leaders, they can adopt
+  proven strategies and techniques to enhance their performance.
+
+  2. Process optimisation: Eliminate inefficiencies, reduce costs, and enhance productivity.
+
+  3. Competitive advantage: Enables organisations to stay competitive by staying abreast of industry trends
+  and best practices.
+
+  4. Customer satisfaction: Benchmarking can improve customer satisfaction by adopting practices that
+  meet customer needs and expectations.
+
+  5. Strategic decision-making: Make more informed choices about resource allocation, investments, and
+  future initiatives based on the knowledge gained from benchmarking.
+
+  6. Risk mitigation: The opportunity to address potential challenges and reduce the likelihood of adverse
+  outcomes.
+
+  7. Measurable results: This data-driven approach to improvement ensures that efforts achieve tangible
+  results.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- benchmarking
+- ato benchmarking
+- business performance
+- industry comparison
+- kpi
+- process optimisation
+- competitive advantage
+- financial performance
+- continuous improvement
+- top 20%
+- taxfitness
+- xero
+- myob
+- quickbooks

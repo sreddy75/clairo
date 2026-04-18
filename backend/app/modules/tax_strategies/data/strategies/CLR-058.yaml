@@ -1,0 +1,38 @@
+strategy_id: CLR-058
+source_ref: STP-058
+name: Share investment seminars
+categories:
+- Investors_retirees
+implementation_text: '1. Determine whether the share investment seminar content relates to income-earning
+  activities or making capital gains.
+
+  2. Apportion the share investment expenditure between deductible and capital as necessary.'
+explanation_text: A deduction is allowed to the extent that the share investment seminar relates to either
+  a share trader or a share investor's current income-earning activities. So, for a share investor, the
+  workshop would need to connect to managing dividend-earning investments to maximise the dividend yields
+  on those investments. Seminars that enable the taxpayer to gain the knowledge and skills to establish
+  a strategy for trading in shares or for making future share investments are not deductible as they are
+  capital.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- share investment
+- seminar
+- deduction
+- share trader
+- share investor
+- dividend
+- capital
+- apportionment
+- income-earning
+- workshop

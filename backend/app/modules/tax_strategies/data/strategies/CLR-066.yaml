@@ -1,0 +1,41 @@
+strategy_id: CLR-066
+source_ref: STP-066
+name: Property seminars
+categories:
+- Investors_retirees
+- Rental_properties
+- Employees
+implementation_text: Review the modules that make up the property seminar to split the seminar cost between
+  the deductible and non-deductible portions.
+explanation_text: 'Property seminar costs are deductible to the extent that the seminar deals with how
+  to manage a taxpayer''s existing rental properties and increase the rental income. As such, a deductible
+  property seminar would include topics on: Improving rental returns. Selecting better tenants. How to
+  evict ''bad'' tenants. How to deal with the managing agents and select a good managing agent. Carrying
+  out property repairs. How to collect outstanding rent. In contrast, property seminar costs are not deductible
+  where the seminar deals with maximising opportunities for future property ownership or how to maximise
+  capital gains on properties. These property seminar costs are capital and are included as part of the
+  cost base of a property when its sold. If a seminar covers deductible and non-deductible modules, then
+  the cost can be apportioned, and the deducible modules claimed.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- property seminar
+- rental property
+- deductible expenses
+- seminar costs
+- apportionment
+- rental income
+- capital cost base
+- property investor
+- managing agent
+- tenant management

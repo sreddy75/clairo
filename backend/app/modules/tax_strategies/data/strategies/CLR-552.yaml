@@ -1,0 +1,97 @@
+strategy_id: CLR-552
+source_ref: STP-552
+name: Self-audit FBT obligations
+categories:
+- Recommendations
+implementation_text: 'Here are the steps and strategies a business can adopt to ensure they meet their
+  fringe benefit obligations:
+
+  1. Educate & train: Ensure that the appropriate personnel, especially those in HR and finance departments,
+  are trained on the nuances of the Fringe Benefits Tax (FBT) regulations and their implications.
+
+  2. Maintain detailed records: Keep comprehensive and detailed records of all transactions and benefits
+  provided to employees. This includes documentation on the benefits'' type, value, and frequency and
+  any calculations or evaluations made concerning those benefits.
+
+  3. Regularly review fringe benefit policies: Review and update company policies concerning fringe benefits
+  to ensure they align with current tax regulations.
+
+  4. Stay updated: Tax laws and regulations can change. Ensure you''re subscribed to updates from the
+  Australian Taxation Office (ATO) or relevant tax bodies so you know of any modifications to FBT regulations.
+
+  5. Implement systems & software: Use accounting and payroll software that includes features to track
+  and calculate FBT.
+
+  6. Seek external audits: Periodically, get an external audit or review of your fringe benefit calculations.
+  This can help identify discrepancies and ensure you''re on the right track.
+
+  7. Clear communication: Ensure employees know the value and implications of the fringe benefits they
+  receive. Providing fringe benefits can sometimes be a joint decision, especially in situations like
+  salary packaging.
+
+  8. Plan: If the business anticipates providing a new fringe benefit or changing the existing benefits
+  structure, it''s crucial to understand the FBT implications in advance.
+
+  9. Lodge FBT returns on time: Ensure that FBT returns are lodged with the ATO by the due date.
+
+  10. Review exemptions and concessions: The FBT law provides various exemptions and concessions. Regularly
+  review these to ensure the business is not overpaying FBT or missing out on any benefits.'
+explanation_text: 'Fringe benefits tax (FBT) is a tax employers pay on certain benefits they provide to
+  their employees. The FBT is separate from income tax and is based on the taxable value of the various
+  fringe benefits provided. Some fringe benefits include car benefits, entertainment, reimbursement of
+  an employee''s private expenses, free or discounted goods and services, etc.
+
+
+  Businesses should self-audit their FBT obligations for the following reasons:
+
+  1. Early identification of errors: Self-auditing allows businesses to identify and rectify mistakes
+  before they escalate into significant issues or are spotted during an external audit.
+
+  2. Avoidance of penalties: By proactively checking FBT calculations and obligations, businesses can
+  avoid potential fines and penalties from the Australian Taxation Office (ATO) for non-compliance.
+
+  3. Financial predictability: Regular self-audits can help a business accurately forecast its tax liabilities,
+  leading to better financial planning and cash flow management.
+
+  4. Operational efficiency: A self-audit can help streamline FBT calculation processes by highlighting
+  areas of inefficiency or redundancy, leading to smoother operations over time.
+
+  5. Maintain good standing with ATO: Demonstrating a proactive approach to tax compliance can help maintain
+  a good relationship with the ATO, which can be beneficial during any interactions or negotiations.
+
+  6. Confidence in reporting: When businesses regularly audit their processes, they can have greater confidence
+  in the accuracy and integrity of their FBT reports.
+
+  7. Capture changes in business operations: As businesses grow, change, or restructure, the nature and
+  extent of fringe benefits provided might change. Regular self-audits can ensure that the FBT obligations
+  related to these changes are captured.
+
+  8. Cost savings: In the long run, the cost of self-auditing (in terms of time and resources) will be
+  much less than the fines, penalties, and rectification costs arising from non-compliance.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- fringe benefits tax
+- fbt
+- self-audit
+- employer obligations
+- salary packaging
+- fbt return
+- fbt exemptions
+- fbt concessions
+- compliance
+- employee benefits
+- car benefits
+- entertainment
+- payroll
+- tax compliance
+- ato obligations

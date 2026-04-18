@@ -1,0 +1,75 @@
+strategy_id: CLR-150
+source_ref: STP-150
+name: Small business restructure roll-over
+categories:
+- Business
+implementation_text: 'The rollover can only apply when the following conditions are satisfied:
+
+  1. The transfer of the asset by the transferor is or is part of, a ''genuine restructure'' of an ongoing
+  business.
+
+  2. The transferee and transferor must satisfy the small business entity requirement.
+
+  3. The transfer does not materially affect which individual, or individuals, have the ultimate economic
+  ownership of the asset.
+
+  4. The asset satisfied the active asset test at the time of transfer.
+
+  5. Both the transferee and the transferor must satisfy the residency requirement; and
+
+  6. The transferee and transferor choose to apply the new rollover to the asset transferred.'
+explanation_text: 'Business entity changes involve transferring a business from its current structure
+  to a more advantageous structure. The most common reasons for a business restructuring are:
+
+  Change in ownership: If an existing business is acquired (say, a company), the business structure may
+  be changed (to a trust).
+
+  Change in management: Taking on a business partner would involve a sole trader moving to a partnership,
+  company or trust.
+
+  Operational reasons: Reorganising business functions to improve performance.
+
+  Legal reasons: Some professionals can only operate through specific structures.
+
+  Financial reasons: Restructuring to meet business goals.
+
+  Business growth: Restructuring to improve cash flow by reducing tax, i.e. moving from a sole trader
+  to a company.
+
+  An economic downturn or downsizing: Downsizing and simplifying a business structure to reduce costs,
+  i.e. moving from a company structure to a sole trader.
+
+
+  Small businesses with an annual turnover of less than $10 million pa can change their business legal
+  structure without attracting any capital gains tax liability (CGT) at that point. Gains made on CGT
+  assets, depreciating assets, trading stock, and revenue assets are all eligible for the rollover.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: 10000000
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- small business
+- restructure
+- roll-over
+- rollover
+- capital gains tax
+- cgt
+- business structure
+- active asset
+- genuine restructure
+- small business entity
+- transferor
+- transferee
+- depreciating assets
+- trading stock

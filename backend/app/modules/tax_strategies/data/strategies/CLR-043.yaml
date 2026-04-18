@@ -1,0 +1,42 @@
+strategy_id: CLR-043
+source_ref: STP-043
+name: Protective clothing
+categories:
+- Employees
+implementation_text: '1. Determine whether the clothing meets the ATO definition of protective clothing
+  - No deduction is allowed for ordinary jeans, jumpers, jackets or shirts that lack protective qualities.
+
+  2. A standard deduction of up to $150 pa can be claimed with no receipts or a higher amount if substantiated
+  by receipts.
+
+  3. Taxpayers are allowed a deduction for cleaning protective clothing, such as overalls.'
+explanation_text: Protective clothing includes helmets, goggles, or other garments or equipment designed
+  to protect the wearer's body from injury or infection. The hazards addressed by protective clothing
+  include physical, electrical, heat, chemicals, biohazards, and airborne particulate matter. A deduction
+  is allowed if the garment has protective qualities and is principally to protect against the risk of
+  illness or injury or to protect other clothing from damage when carrying out income-earning activities.
+  Examples include overalls, safety glasses, earplugs, non-slip shoes, sun hats, safety helmets, breathing
+  apparatus, and protective gloves.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- protective clothing
+- work clothing deduction
+- safety equipment
+- overalls
+- cleaning deduction
+- no receipts
+- substantiation
+- income-earning activities
+- employee deductions
+- occupational safety

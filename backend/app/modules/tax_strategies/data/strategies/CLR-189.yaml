@@ -1,0 +1,52 @@
+strategy_id: CLR-189
+source_ref: STP-189
+name: Increasing giving via discretionary trusts
+categories:
+- Investors_retirees
+- Business
+implementation_text: '1. Check the trust deed to ensure the trust deed allows distributions to not-for-profit,
+  tax-exempt organisations.
+
+  2. Confirm that the not-for-profit organisation is tax-exempt (as not all are).
+
+  3. Written trust distribution minutes prepared and signed before 30th June distributing the trust income
+  to the various beneficiaries (including the not-for-profit organisation).
+
+  4. Within two months of the end of the financial year, the non-profit organisation is physically paid
+  their trust distribution or notified in writing of the trust distribution.
+
+  5. Under the pay or notify anti-avoidance rule, if a tax-exempt beneficiary is not made aware of their
+  present entitlement to trust income within two months of the end of the income year, the trustee will
+  generally be taxed on a corresponding share of the trust''s net income.'
+explanation_text: 'This strategy involves a discretionary trust making pre-tax trust distributions to
+  a tax-exempt beneficiary. If the beneficiary is tax-exempt (a not-for-profit organisation or church),
+  then the beneficiary will pay no income tax on that income. The beneficiary does not need to be able
+  to receive tax-deductible donations (i.e. be a deductible gift recipient). Example: To give $1,000 to
+  your church, you first need to earn approximately $1,500 and pay $500 tax. In contrast, if a discretionary
+  trust provided the gift, they could give the $1,500 (and the giving has increased by 50%).'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- discretionary trust
+- trust distribution
+- tax-exempt
+- not-for-profit
+- charitable giving
+- church
+- beneficiary
+- pre-tax distribution
+- trust deed
+- anti-avoidance
+- present entitlement
+- income year
+- trustee

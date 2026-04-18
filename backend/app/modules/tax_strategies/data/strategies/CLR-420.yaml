@@ -1,0 +1,80 @@
+strategy_id: CLR-420
+source_ref: STP-420
+name: Proprietary limited company (limited by shares)
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Incorporate the company with ASIC.
+
+  2. Ideally, the company''s shareholders should be a family trust (not individual directors). This provides
+  flexibility and enables the future distribution of dividends and capital gains to be distributed to
+  lower-taxed beneficiaries (as well as providing asset protection benefits).
+
+  3. Apply for ABN, TFN, and business name registration for the company.'
+explanation_text: 'Proprietary limited companies are Australia''s most common structure, accounting for
+  98.5% of all companies. They are generally the most appropriate company structure for small businesses.
+
+
+  A Proprietary Limited company (also known as a Pty Ltd company) cannot raise capital from the public
+  and is restricted to a maximum of 50 non-employee shareholders. Shareholders'' assets are protected
+  due to the company''s limited liability status. The advantages of operating a business through a proprietary
+  limited company include:
+
+  30% tax rate (standard company tax rate).
+
+  25% tax rate for companies with a turnover of less than $50m pa.
+
+  Limited liability – this ensures the shareholder''s liability is limited to the capital invested in
+  the company.
+
+  The ability for investors to pool their investment funds together.
+
+  Ability to introduce new shareholders and change current shareholders.
+
+  More natural succession planning (as companies have perpetual succession).
+
+  Additional tax-saving opportunities/strategies. For example, the owners'' private motor vehicles can
+  be salary packaged by a company, but not a sole trader.
+
+  Privacy - the ability to keep the company''s owners (shareholders) secret.
+
+
+  The main disadvantages of operating through a company are:
+
+  It doesn''t receive the 50% general capital gain discount like individuals.
+
+  Other compliance and regulatory costs (i.e. annual ASIC fee).
+
+  The director''s legal obligations and duties need to be considered.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+- concession
+keywords:
+- proprietary limited company
+- pty ltd
+- company structure
+- small business
+- family trust
+- shareholders
+- limited liability
+- company tax rate
+- dividends
+- succession planning
+- asset protection
+- salary packaging
+- asic
+- incorporation
+- capital gains

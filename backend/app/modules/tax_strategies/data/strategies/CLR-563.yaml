@@ -1,0 +1,118 @@
+strategy_id: CLR-563
+source_ref: STP-563
+name: Voluntary bankruptcy
+categories:
+- Recommendations
+implementation_text: 'Here''s a brief outline of the voluntary bankruptcy process in Australia:
+
+  1. Petitioning: The debtor completes and submits a Bankruptcy Form (a ''Debtor''s Petition'') along
+  with a Statement of Affairs to the AFSA. This form provides details about the debtor''s financial situation.
+
+  2. Declaration of bankruptcy: Once the AFSA accepts and processes the documents, the individual is formally
+  declared bankrupt. The date of bankruptcy is backdated to the date the forms were submitted.
+
+  3. Control of assets: Upon declaring bankruptcy, a trustee is appointed (either by the individual or
+  the AFSA). The trustee takes control of the bankrupt''s assets and sells them to repay creditors. Certain
+  assets, such as necessary household goods, some tools of trade, and most superannuation funds, are protected
+  and won''t be sold.
+
+  4. Duration: Bankruptcy typically lasts three years but can be extended. During this period, the bankrupt
+  has certain restrictions and obligations. For example, they cannot manage a company or travel overseas
+  without the trustee''s permission.
+
+  5. Discharge: At the end of the bankruptcy period, the individual is discharged, and most of their debts
+  are cleared. However, the bankruptcy will remain indefinitely on their credit report for another two
+  years (five years in total) and the National Personal Insolvency Index (NPII).
+
+  6. Obligations: The bankrupt individual must inform the trustee of any changes in circumstances, such
+  as receiving new income or assets. If their income exceeds a set threshold, they may be required to
+  make compulsory contributions.
+
+  7. Consequences: Besides the restrictions during bankruptcy, there are other consequences. Being declared
+  bankrupt can impact one''s ability to get credit in the future, rent a house, or secure certain types
+  of employment.
+
+  Individuals considering voluntary bankruptcy should seek financial and legal advice before proceeding.
+  Bankruptcy is a serious step, and alternative debt solutions may be available.'
+explanation_text: 'Voluntary bankruptcy occurs when an individual cannot pay their debts and petition
+  the Australian Financial Security Authority (AFSA) to be declared bankrupt. This differs from involuntary
+  bankruptcy, where creditors petition the court to declare a debtor bankrupt.
+
+
+  Pros of declaring voluntary bankruptcy:
+
+  1. Debt relief: Most unsecured debts are cleared once the bankruptcy is discharged.
+
+  2. Protection from creditors: Unsecured creditors can''t take further action to recover their debts
+  once individuals declare bankruptcy. This can provide significant stress relief for many individuals.
+
+  3. Allows for a fresh start: After the period of bankruptcy ends, you can start rebuilding your financial
+  life without the burden of most of your previous debts.
+
+  4. Set payments: You must pay your trust if your income exceeds a certain threshold. However, these
+  are set amounts, potentially more manageable than previous debt repayments.
+
+  5. Preservation of certain assets: Some assets, such as essential household items, specific tools of
+  the trade, and most superannuation, are protected in bankruptcy.
+
+  6. Limited duration: Bankruptcy generally lasts three years, after which most of your debts are wiped
+  clean. This is a relatively short period compared to some other debt solutions.
+
+
+  Cons of declaring voluntary bankruptcy:
+
+  1. Loss of assets: The trustee may sell unprotected assets to repay creditors. This could include your
+  home if it has significant equity.
+
+  2. Travel restrictions: You cannot travel overseas without the permission of your trustee.
+
+  3. Credit implications: Bankruptcy will be listed on your credit report for five years from the date
+  you became bankrupt or two years from your bankruptcy discharge, whichever is later. This can make obtaining
+  credit, renting, or even some job applications challenging.
+
+  4. Income contributions: If you earn over a set amount, you must contribute to your trustee to benefit
+  creditors.
+
+  5. Employment implications: Some professions or job roles prohibit individuals from being declared bankrupt.
+
+  6. Public record: Your name and some details will appear indefinitely on the National Personal Insolvency
+  Index (NPII), a public record.
+
+  7. Inability to hold certain positions: A bankrupt person can''t be a company director or manage a company.
+
+  8. Potential impact on future business: If you wish to start a business, you might find it challenging
+  to secure suppliers or finance if they learn about your past bankruptcy.
+
+  9. Certain debts remain: Some debts, such as court-imposed penalties, HECS-HELP debts, debts incurred
+  after bankruptcy, and others, aren''t wiped out by bankruptcy.
+
+  10. Emotional and social implications: Bankruptcy can carry a stigma, and some people may feel a sense
+  of failure or shame, which can impact their mental well-being.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- voluntary bankruptcy
+- insolvency
+- debtor's petition
+- afsa
+- debt relief
+- unsecured debts
+- trustee
+- bankruptcy discharge
+- npii
+- creditors
+- asset protection
+- superannuation
+- hecs-help
+- financial hardship
+- debt management

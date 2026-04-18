@@ -1,0 +1,56 @@
+strategy_id: CLR-052
+source_ref: STP-052
+name: Division 43
+categories:
+- Rental_properties
+implementation_text: 1. Access a current property depreciation report for each income-producing building.
+  Even buildings built more than 40 years ago benefit from a property depreciation report, as all buildings
+  usually have had improvements and renovations over time.
+explanation_text: 'Division 43 allows certain capital expenditures incurred on income-producing buildings
+  to be eligible for capital works deductions/building write-offs. Subsequent owners can continue the
+  same claim each year until the cost of construction of the building has been wholly written off for
+  income tax purposes. The types of capital works to which the building write-off applies include:
+
+
+  Buildings used for accommodation, e.g. hotels.
+
+  Commercial, residential and industrial buildings.
+
+  Structural improvements were made to buildings, including sealed roads, car parks, driveways, and retaining
+  walls.
+
+
+  Depending upon the type of capital expenditure and when it was incurred, the cost of the building and
+  other structural improvements may be deducted at either 2.5% or 4% a year. Generally, the 2.5% rate
+  will apply where construction commenced after 15 September 1987. The building write-off is based on
+  the amount of ''construction expenditure'', which is limited to the actual costs of development and
+  not the purchase price of the building. The write-off commences the first day the building is used for
+  income-producing purposes. For Capital Gains Tax purposes, the cost base of the building must be reduced
+  to the extent that the taxpayer claimed, or was entitled to claim, a deduction for capital works under
+  Division 43.'
+ato_sources:
+- Division 43
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- division 43
+- capital works
+- building write-off
+- depreciation
+- rental property
+- construction expenditure
+- income-producing building
+- structural improvements
+- property depreciation report
+- 2.5% rate
+- 4% rate
+- capital gains tax

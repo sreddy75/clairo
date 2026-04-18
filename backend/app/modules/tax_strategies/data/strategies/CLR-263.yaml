@@ -1,0 +1,60 @@
+strategy_id: CLR-263
+source_ref: STP-263
+name: Invest to save tax
+categories:
+- Employees
+- Investors_retirees
+- Business
+implementation_text: ''
+explanation_text: 'Tax-saving investments achieve the twin aims of simultaneously saving tax and being
+  an investment. Twelve tax-saving investments are:
+
+  Concessional super contributions.
+
+  Negative gearing shares or property.
+
+  Negatively gearing the family home.
+
+  Early-stage investors.
+
+  Exploration development incentive.
+
+  Farm management deposits.
+
+  Agribusiness schemes.
+
+  Film industry incentives.
+
+  Art.
+
+  Antique, veteran or vintage car
+
+  Purchase a farm or winery.
+
+  Holiday homes.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- invest
+- tax saving
+- negative gearing
+- super contributions
+- concessional
+- farm management deposits
+- agribusiness
+- film incentives
+- early stage investors
+- holiday homes
+- shares
+- property
+- winery

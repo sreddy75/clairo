@@ -1,0 +1,62 @@
+strategy_id: CLR-094
+source_ref: STP-094
+name: Occupational health and counselling
+categories:
+- Business
+implementation_text: '1. Have the employer incur the occupational health and counselling expenses and
+  claim a tax deduction.
+
+  2. The employer provides the benefits to the employees as a tax-free fringe benefit.'
+explanation_text: 'Occupational health is promoting and maintaining workers'' highest degree of physical,
+  mental and social well-being by establishing and maintaining a safe and healthy working environment.
+  Occupational health services include:
+
+  Identification and assessment of the risks from health hazards in the workplace.
+
+  Providing advice, training and education on occupational health, safety, ergonomics, and protective
+  equipment.
+
+  Providing first aid and emergency treatment.
+
+  Planning and designing workplaces to ensure the worker''s adaptation to working is promoted.
+
+  Monitoring of workers'' health concerning work.
+
+
+  The following employee occupational health and counselling expenses are deductible to employers and
+  not subject to FBT:
+
+  Work-related medical tests – including pre-employment tests.
+
+  Vaccinations, e.g. flu. Work-related counselling - for example, to former employees who have been retrenched.
+
+  Migrant language training.
+
+  Health coaching, lifestyle and weight loss counselling where it is made available to all employees and
+  prevents employees from suffering work-related trauma.
+
+  First aid training.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- occupational health
+- counselling
+- fringe benefits tax
+- fbt exempt
+- employer deduction
+- workplace health
+- employee benefits
+- vaccinations
+- first aid
+- work-related medical

@@ -1,0 +1,42 @@
+strategy_id: CLR-238
+source_ref: STP-238
+name: 'Motor vehicle expenses: cents per km method'
+categories:
+- Employees
+- Investors_retirees
+- Business
+implementation_text: 1. Record the reasons why the motor vehicle was used for income producing purposes,
+  and also the number of km's traveled.
+explanation_text: 'Employees, investors or businesses that use their motor vehicle for work, investment
+  or business purposes are entitled to a tax deduction for the costs incurred.
+
+
+  Under the cents per kilometre method - a set rate is applied to each work or business kilometre the
+  motor vehicle travelled up to a maximum of 5,000 business kilometres per year. For example, the fixed
+  rate for 2025 is $0.88 per kilometre. The advantage of this method is that the taxpayer does not require
+  written evidence of their motor vehicle expenses, only records to estimate work/business kilometres
+  travelled during the year. The cents per km method applies to each motor vehicle so that a taxpayer
+  could claim 5,000km for several cars yearly.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- motor vehicle
+- cents per kilometre
+- car expenses
+- work travel
+- business kilometres
+- employee deduction
+- vehicle deduction
+- tax deduction
+- income producing
+- 5000km

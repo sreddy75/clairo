@@ -1,0 +1,59 @@
+strategy_id: CLR-088
+source_ref: STP-088
+name: Primary production business
+categories:
+- Business
+implementation_text: ''
+explanation_text: 'A primary producer is an individual, partnership, trust or company carrying on a primary
+  production business. A primary producer is carrying on a business of:
+
+  Maintaining animals to sell them or their bodily produce, including natural increase.
+
+  Manufacturing dairy produce from raw materials they have made.
+
+  Cultivating or propagating plants, fungi or their products in any physical environment.
+
+  Conducting operations relating directly to taking or catching fish, pearls, crustaceans, etc.
+
+  Planting or tending trees in a plantation or forest intended to be felled.
+
+
+  Primary producers receive additional tax concessions that are not available to other business owners,
+  including:
+
+  Special capital expenses write-offs (including 100% write-off for water, fodder and fencing-related
+  expenses).
+
+  Access to the Farm Management Deposit Scheme.
+
+  Tax averaging.
+
+  Special valuation rules for plants and animals, including natural increases.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- partnership
+- trust
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+keywords:
+- primary production
+- primary producer
+- farm management deposit
+- tax averaging
+- capital expenses write-off
+- water fodder fencing
+- animals plants
+- agriculture
+- fishing
+- forestry

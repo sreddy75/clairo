@@ -1,0 +1,43 @@
+strategy_id: CLR-199
+source_ref: STP-199
+name: Migrant language training
+categories:
+- Employees
+- Business
+implementation_text: 1. The migrant language training should be provided and paid for by the employer.
+explanation_text: 'Language training courses designed to teach English or explain Australian citizenship
+  and lifestyle to a person who is, or intends to become, an immigrant of Australia are tax-deductible
+  to the employer and FBT-exempt. The travel costs incurred are also exempt. To qualify for the exemption:
+
+
+  • The benefit must be an expense payment benefit.
+
+  • Migrant language training is provided to an employee or associate.
+
+
+  In contrast, language training courses paid for by an employee will be deemed private and non-deductible.
+  The course will be private even when the English language course assists employees in doing their job.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- migrant
+- language training
+- english
+- fbt exempt
+- employer
+- employee
+- immigration
+- fringe benefits tax
+- tax deductible
+- expense payment benefit

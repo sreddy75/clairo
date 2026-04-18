@@ -1,0 +1,45 @@
+strategy_id: CLR-172
+source_ref: STP-172
+name: Antique, veteran or vintage car
+categories:
+- Business
+implementation_text: '1. A logbook is kept to detail the business use.
+
+  2. The vehicle should be used for business purposes only to maximise tax savings.'
+explanation_text: 'Purchasing an antique, veteran or vintage car for use in a business will provide the
+  normal depreciation and operating deductions. Of course, they are still subject to the luxury car limit
+  and logbook obligation for business use. Motor vehicles, including antique, veteran and vintage cars,
+  are exempt from capital gains. The CGT exemption is a win for collectable car owners as collectable
+  vehicles have shown appreciation over time. This directly contrasts with the average motor vehicle,
+  which eventually becomes worthless.
+
+
+  The maximum tax savings are achieved by ensuring the antique, veteran or vintage car is 100% business
+  use (i.e. no private use). As such, the vehicle should be garaged at the work premises and only used
+  for business-related travel.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- antique car
+- vintage car
+- veteran car
+- motor vehicle
+- depreciation
+- logbook
+- luxury car limit
+- cgt exemption
+- business use
+- collectable vehicle
+- operating deductions
+- capital gains exemption

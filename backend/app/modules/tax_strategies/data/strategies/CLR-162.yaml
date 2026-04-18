@@ -1,0 +1,50 @@
+strategy_id: CLR-162
+source_ref: STP-162
+name: Build-To-Rent Developments
+categories:
+- Business
+- Rental_properties
+implementation_text: 'These incentives only apply to build-to-rent projects comprising 50 or more apartments
+  or dwellings made available for rent to the general public.
+
+  The dwellings must be retained under single ownership for at least ten years.
+
+  Landlords must offer a lease term of at least three years for each dwelling.'
+explanation_text: 'On 28 April 2023, the Australian Government announced it would provide incentives to
+  increase the supply of housing by:
+
+  They are reducing the withholding tax rate for eligible fund payments from managed investment trusts
+  (MIT) attributable to residential build-to-rent projects from 30% to 15%. This measure will apply from
+  1 July 2024 for income attributable to newly built build-to-rent projects. Foreign residents from an
+  information exchange country are subject to a final MIT withholding tax rate of 30% for income attributable
+  to a residential property, including build-to-rent projects.
+
+  Increasing the capital works tax deduction depreciation rate for eligible new build-to-rent projects
+  from 2.5% to 4% per year. This measure will apply to projects where construction commences after the
+  Budget (9 May 2023) and will shorten the period that construction costs of eligible buildings are depreciated
+  from 40 to 25 years.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+keywords:
+- build-to-rent
+- managed investment trust
+- MIT
+- withholding tax
+- capital works
+- depreciation
+- residential
+- housing supply
+- rental
+- construction

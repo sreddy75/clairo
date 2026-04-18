@@ -1,0 +1,65 @@
+strategy_id: CLR-122
+source_ref: STP-122
+name: Valuing trading stock
+categories:
+- Business
+implementation_text: '1. The method used to value trading stock can vary year by year.
+
+  2. Different methods of valuing stock can be used for each physical item of stock, i.e. some stock items
+  are valued using cost, others by market selling price, and the balance by replacement costs.
+
+  3. The ATO requires that each business undertake an annual physical stocktake (i.e. physically inspect
+  and value each stock item) on the last day of the income year (30th June). As an exception, small business
+  entity taxpayers can choose not to account for changes in the value of their trading stock if the difference
+  is less than $5,000.'
+explanation_text: 'Changes in the value of the trading stock from year to year will affect the gross and
+  net profits of a trading business. If the closing inventory for this year can be adjusted to lower than
+  last year''s closing stock, then the gross and net profits will be lower. Taxpayers can value trading
+  stock at the end of the financial year using one of three methods:
+
+
+  Cost: This generally refers to the total absorption cost of an item of trading stock, including the
+  purchase price, freight costs, and overhead costs involved in manufacturing a product.
+
+  Market selling value: This is the standard selling price of the stock.
+
+  Replacement costs: This is the value that stock can be purchased from a regular supplier on the last
+  day of the income year.
+
+
+  The method used to value trading stock can vary year by year. Also, different ways of valuing stock
+  can be used for each physical item, i.e. some stock items are valued using cost, others by market selling
+  price and the balance by replacement costs.
+
+
+  The ATO requires that each business undertake an annual physical stocktake (i.e. physically inspect
+  and value each stock item) on the last day of the income year (30th June). As an exception, small business
+  entity taxpayers can choose not to account for changes in the value of their trading stock if the difference
+  is less than $5,000. They record the same opening and closing stock figures in their financial statements.
+  This concession saves a tremendous amount of time for some small businesses.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+- deduction
+keywords:
+- trading stock
+- stock valuation
+- closing inventory
+- cost method
+- market selling value
+- replacement cost
+- stocktake
+- small business entity
+- gross profit
+- net profit
+- year-end valuation
+- inventory

@@ -1,0 +1,53 @@
+strategy_id: CLR-068
+source_ref: STP-068
+name: Primary producer tax averaging
+categories:
+- Business
+implementation_text: '1. Confirm your eligibility as a primary producer to apply tax averaging across
+  a maximum of five years to account for fluctuations in prices and production.
+
+  2. Compare your average income against your taxable income (excluding capital gains) to determine whether
+  an averaging tax offset applies.
+
+  3. Review your notice of assessment to obtain the details of the automatically calculated averaging
+  tax offset or extra income tax amount.'
+explanation_text: 'As a primary producer, tax averaging evens out your income and tax payable over a maximum
+  of five years to allow for fluctuations in prices and production. This ensures that you do not pay more
+  tax over a number of years than taxpayers on comparable but steady incomes.
+
+
+  When your average income is:
+
+
+  • less than your taxable income (excluding capital gains) – you receive an averaging tax offset
+
+  • more than your taxable income (excluding any capital gains) – you must pay extra income tax.
+
+
+  The amount of the averaging tax offset or extra income tax is calculated automatically and your notice
+  of assessment will show you the details.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- offset
+keywords:
+- primary producer
+- tax averaging
+- income averaging
+- averaging tax offset
+- fluctuating income
+- farming
+- agriculture
+- five year averaging
+- taxable income
+- capital gains exclusion
+tenant_id: platform
+version: 1

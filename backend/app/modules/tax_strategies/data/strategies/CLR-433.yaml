@@ -1,0 +1,67 @@
+strategy_id: CLR-433
+source_ref: STP-433
+name: Unit trust
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Incorporate the company as a trustee (best practice).
+
+  2. Incorporate unit trust.
+
+  3. Prepare a written unitholder agreement to protect their interests and resolve any inevitable disputes.
+
+  4. Consider whether the unit trust unitholder should be a family trust (not individuals) - this provides
+  flexibility and enables future distributions of dividends and capital gains to be distributed to lower-taxed
+  beneficiaries (as well as providing asset protection benefits).'
+explanation_text: 'A unit trust is a structure whereby the beneficiaries have a fixed interest in the
+  trust assets. Unit trusts are attractive when non-related parties want to join to operate a business
+  or make investments. Unit trust structures have the following advantages:
+
+  Each party''s investment interest is fixed through ownership of units in the unit trust (similar to
+  company shares).
+
+  Ability to pool resources with other investors.
+
+  The unit trust profits are distributed to the unitholders in proportion to their percentage unitholding
+  in the trust. Each unitholder is taxed on their trust distribution at their marginal tax rates.
+
+  The unitholders receive the general 50% CGT discount on any capital gains the unit trust makes on investments
+  for more than twelve months. In contrast, companies do not receive the available 50% CGT discount.
+
+  It is easy to introduce new investors into the unit trust or exit other unitholders.
+
+  Limited liability if the trustee is a company.
+
+
+  A disadvantage of unit trusts, generally trusts, is that they cannot distribute losses to the unitholders.
+  Any losses incurred by the unit trust must be carried forward to be offset against future income.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+- concession
+keywords:
+- unit trust
+- trust structure
+- unitholders
+- fixed interest
+- cgt discount
+- marginal tax rate
+- asset protection
+- limited liability
+- corporate trustee
+- family trust
+- investment structure
+- business structure
+- capital gains

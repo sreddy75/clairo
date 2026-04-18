@@ -1,0 +1,61 @@
+strategy_id: CLR-041
+source_ref: STP-041
+name: Computers, tools, equipment and other assets
+categories:
+- Employees
+implementation_text: '1. Receipts are required to substantiate the deduction.
+
+  2. Items costing less than $300 each (and that don''t form part of a set) can be deducted immediately.
+
+  3. Items costing more than $300 each need to be depreciated over their useful life.
+
+  4. A diary must be kept to calculate the work use deduction if the items are used for personal and work-related
+  purposes.'
+explanation_text: 'Computers, tools, equipment, and other assets purchased to help earn income are either
+  wholly or partly deductible.
+
+  Examples include:
+
+  Computers, laptops, iPad, cameras, video recorders and software.
+
+  Mobile phones.
+
+  Hand tools & power tools.
+
+  Equipment.
+
+  Desks, chairs and cabinets.
+
+  Professional libraries & reference books.
+
+  Safety equipment and protective items.
+
+  Technical instruments.
+
+  Travel bags, overnight bags, suitcases & luggage trolleys.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- computers
+- tools
+- equipment
+- assets
+- depreciation
+- work-related
+- deduction
+- employees
+- instant asset write-off
+- laptops
+- mobile phones
+- safety equipment
+- work expenses

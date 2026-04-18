@@ -1,0 +1,47 @@
+strategy_id: CLR-099
+source_ref: STP-099
+name: Art
+categories:
+- Business
+implementation_text: '1. Ensure the business is registered for GST - and claim back the GST on purchases.
+
+  2. Purchase individual pieces of art for the business.
+
+  3. Store the art at the business''s office, warehouse, farm, or home office.'
+explanation_text: 'Small businesses buying art can apply the instant asset write-off to the purchase (subject
+  to complying with the instant asset write-off thresholds). There are no restrictions on the type of
+  art or the number of pieces purchased. Where art costs more than the applicable instant asset threshold,
+  the asset will instead go into the general pool, where it''s depreciated at 15% in the first year of
+  purchase and 30% per year after that. Irrespective of the art''s purchase price, all GST-registered
+  businesses are entitled to claim an input tax credit back on the purchase price (where the artist or
+  gallery charged GST on the sale). This GST refund means the ATO is funding 1/11 of your upfront cost.
+
+
+  Art in the workplace reduces stress, increases productivity, improves communication and stimulates creative
+  thinking. In a recent survey, 82% of employees said art was relevant in their work environment, and
+  73% said they would change employers if their workplace art were removed. Besides, art is an excellent
+  investment and has produced long-term annual capital gains of 4-5% over the last 465 years.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+keywords:
+- art
+- instant asset write-off
+- small business
+- gst
+- input tax credit
+- depreciation
+- general pool
+- workplace
+- capital gains
+- deduction

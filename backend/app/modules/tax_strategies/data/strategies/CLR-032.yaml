@@ -1,0 +1,79 @@
+strategy_id: CLR-032
+source_ref: STP-032
+name: Change ownership of assets
+categories:
+- Investors_retirees
+- Business
+implementation_text: '1. Review ownership of assets to choose the optimum ownership structure for the
+  taxpayer''s unique circumstances.
+
+  2. Calculate the costs of changing the asset ownership, i.e. stamp duty, establishment costs, accountants
+  fees, legal fees, capital gains tax, etc.
+
+  3. Get the value of the assets valued.
+
+  4. Choose the optimum ownership structure (s).
+
+  5. Establish new business structure (s) - where necessary.
+
+  6. Transfer the assets'
+explanation_text: 'Moving personal assets, businesses and investments between individuals or entities
+  can save tax in several ways:
+
+  It can create upfront or ongoing tax deductions (or both). For example, transferring a private motor
+  vehicle to a company will generate an upfront deduction (if the instant asset write-off rules can be
+  applied), plus ongoing tax savings of $2,500 - $3,000 pa.
+
+  It can create taxable or capital losses. These losses can be achieved by selling loss-making investments
+  (to related parties or by selling them and repurchasing them).
+
+  Changing the taxpayer (individual or entity) receiving the assets'' income and deductions. For example,
+  selling a commercial property from a high-income earner to their self-managed super fund reduces the
+  tax rate on income earned.
+
+  Factors to consider in reviewing the ownership of assets include:
+
+  Tax - now, in the future, and on an asset sale.
+
+  Simplicity. Whether it separates business assets from valuable assets/investments.
+
+  Commercial considerations.
+
+  Borrowing and finance.
+
+  Exit strategies.
+
+  Growth and flexibility options.
+
+  Business risk levels.
+
+  Control of the business and assets'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- company
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- asset ownership
+- transfer assets
+- ownership structure
+- capital gains
+- instant asset write-off
+- self-managed super fund
+- commercial property
+- motor vehicle
+- capital losses
+- tax planning
+- entity restructure
+- stamp duty

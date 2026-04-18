@@ -1,0 +1,58 @@
+strategy_id: CLR-250
+source_ref: STP-250
+name: All-inclusive holiday package
+categories:
+- Business
+implementation_text: '1. Ensure the employer incurs the entertainment facility leasing expenses.
+
+  2. The 50-50 split method for entertainment facility leasing costs doesn''t apply to salary-packaged
+  employee benefits.'
+explanation_text: 'Providing an all-inclusive holiday package to an employee organised through a travel
+  agent that includes both flights and the hire or lease of holiday accommodation will be a single benefit
+  of which the taxable value is partly attributable to entertainment facility leasing expenses. The benefit
+  is partly due to entertainment facility leasing expenses so that the whole package will be treated as
+  an entertainment facility leasing payment. This strategy involves using the 50-50 split method for entertainment
+  facility leasing costs incurred by the employer. As such, 50% of the expenses are non-deductible. The
+  other 50% is deductible but subject to FBT. Under this option, the after-tax cost of $10,000 on an all-inclusive
+  holiday package is $12,076. In contrast, an individual taxpayer in the 47% tax bracket would cost $18868.
+
+
+  Example of $10,000 incurred on holiday package:
+
+  Flights and lease of holiday accommodation $10,000
+
+  GST refunded (50% x $10,000 x 1/11) (454)
+
+  Tax saving on ($4,546 expense x 25%)) (1,136)
+
+  FBT payable ($5,000 x 2.0802 x 47%) 4,888
+
+  Tax savings on FBT paid ($4,888 x 25%) (1,222)
+
+  Total after-tax cost $12,076'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- holiday package
+- entertainment facility leasing
+- fringe benefits tax
+- fbt
+- 50-50 split method
+- salary packaging
+- employer
+- employee benefit
+- travel
+- accommodation
+- gst
+- non-deductible
+- after-tax cost

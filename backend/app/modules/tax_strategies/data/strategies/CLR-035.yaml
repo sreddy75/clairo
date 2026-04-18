@@ -1,0 +1,45 @@
+strategy_id: CLR-035
+source_ref: STP-035
+name: Temporary residents
+categories:
+- Employees
+implementation_text: '1. Obtain the Medicare levy exemption certificate from Medicare office to avoid
+  paying the medicare levy on taxable income.
+
+  2. Claim the medicare levy exemption in the individual tax return.'
+explanation_text: Unlike Australian tax residents, temporary residents are only taxed on their Australian
+  source income. This means their foreign-sourced income isn't taxed in Australia. Also, temporary residents
+  only pay capital gains tax on the sale of Australian property. From 9th May 2017, temporary residents
+  can no longer access the CGT principal residence exemption. Any capital gains made on the sale of Australian
+  shares are tax-free. Temporary residents are not entitled to access the Medicare health system when
+  living in Australia and require their private health coverage. As such, temporary residents will be
+  exempt from paying the Medicare levy (2% of taxable income). They need a Medicare levy exemption certificate
+  to claim the Medicare levy exemption.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- temporary resident
+- medicare levy
+- medicare levy exemption
+- foreign income
+- australian source income
+- cgt
+- capital gains tax
+- principal residence exemption
+- australian shares
+- visa holder
+- non-resident
+- tax-free
+- private health
+- exemption certificate
+- individual tax return

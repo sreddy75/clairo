@@ -1,0 +1,55 @@
+strategy_id: CLR-439
+source_ref: STP-439
+name: Child maintenance trust
+categories:
+- Business_structures
+implementation_text: '1. Establish child maintenance trust.
+
+  2. Seek legal advice and assistance so consent orders made by the Family Court of Australia ensure that
+  income flowing under a CMT arrangement would reduce maintenance obligations.
+
+  3. Transfer assets to the CMT - Instead of transferring shares or property to the CMT, the taxpayer
+  could transfer a business, patent or copyright.'
+explanation_text: 'A child maintenance trust (CMT) is a particular type of trust set up and established
+  with income-earning assets (typically shares or property) to provide support for a child (or children).
+  Under the CMT deed, the capital assets can only be distributed to the children for whose benefit the
+  trust was established. Although the trust income can be distributed to any beneficiary, it is typically
+  only to the children. Often, CMT arrangements are put in place where there is an obligation to provide
+  maintenance for a child. Legal agreements whereby income flowing under a CMT arrangement results in
+  reduced maintenance obligations are generally embodied in consent orders made by the Family Court of
+  Australia. Despite substituting before-tax income for after-tax income, these agreements typically provide
+  that a dollar of income, under the CMT arrangement, fully satisfies the obligation to give a dollar
+  of tax-exempt maintenance income.
+
+
+  A CMT arrangement is attractive where the person required to provide maintenance payments for the child
+  faces high marginal tax rates on their income. The CMT allows them to pay for the maintenance payments
+  in pre-tax dollars instead of after-tax dollars, saving up to 47% tax. Income flowing to a child under
+  a CMT arrangement is not exempt from income tax (like a maintenance payment is). Where the income flowing
+  under the CMT arrangements is less than the $18,200 tax-free threshold and is the child''s only income,
+  the income tax payable will be nil.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- child maintenance trust
+- cmt
+- family court
+- consent orders
+- maintenance payments
+- trust income
+- tax-free threshold
+- marginal tax rate
+- pre-tax dollars
+- income splitting
+- family law
+- trust structure

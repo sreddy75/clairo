@@ -1,0 +1,58 @@
+strategy_id: CLR-223
+source_ref: STP-223
+name: Residential property transferred to SMSF by related party
+categories:
+- Rental_properties
+- SMSF
+implementation_text: '1. Recommend a Private Ruling before implementing this strategy to ensure it complies
+  fully with the SIS Act.
+
+  2. The residential property must be sold to the SMSF at market value.
+
+  3. Stamp duty on the transfer may be payable (depending on the State where the property is located).'
+explanation_text: 'Under section 66 of the SIS Act, a fund cannot acquire an asset from a member of the
+  fund (or related party) unless it falls into certain exceptions. The only possible exception with real
+  property is if it''s business real property. Business real property is a property that is used wholly
+  and exclusively in a business.
+
+
+  In SMSFFR 2009/1 ''Self Managed Superannuation Funds: business real property for the Superannuation
+  Industry (Supervision) Act 1993'', example 14 details when a residential property is in a property investment
+  business. Factors indicating a property investment business are:
+
+
+  - Scale - 10 plus rental properties.
+
+  - The owners manage them (so there is no outside management).
+
+  - Carried on in a business-like manner involving repetition, purpose and planning.
+
+
+  If a residential property investment business is carried on, the taxpayer can sell residential properties
+  to their SMSF. The advantage of this strategy is moving income-producing real property to a low, or
+  nil, taxing environment.'
+ato_sources:
+- SMSFFR 2009/1
+- section 66 of the SIS Act
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- smsf
+- residential property
+- related party
+- business real property
+- sis act
+- property transfer
+- superannuation
+- property investment business
+- market value
+- rental properties

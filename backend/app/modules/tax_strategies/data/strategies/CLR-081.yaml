@@ -1,0 +1,48 @@
+strategy_id: CLR-081
+source_ref: STP-081
+name: Super withdrawal and recontribution strategy
+categories:
+- SMSF
+implementation_text: '1. Determine that a condition of release under the SIS Act has been met and the
+  member is at least 60.
+
+  2. Have the member withdraw super from the fund.
+
+  3. Have the member recontribute the super back to the fund as non-deductible contributions - Ensure
+  that the contributed amounts do not exceed the superannuation contribution caps.'
+explanation_text: The superannuation withdrawal and contribution strategy involve the super's withdrawal
+  and the super's contribution back to the same fund. The super withdrawal can only be made if the member
+  has met a condition of release, such as retiring or turning 65. Super withdrawals by members over the
+  age of 60 are generally tax-free. The super withdrawn is usually allocated to a 'taxable' component
+  comprising taxable super contributions and fund earnings. If the member dies and their superannuation
+  balance is paid to an adult child, the 'taxable' super part will be taxed at 17%. The benefit of this
+  strategy is that the contributed super turns into a 'tax-free' element in the fund. As such, if the
+  member dies, their superannuation balance can be paid to adult children tax-free (thereby saving 17%
+  tax).
+ato_sources:
+- SIS Act
+case_refs: []
+entity_types:
+- smsf
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- super withdrawal
+- recontribution
+- smsf
+- tax-free component
+- taxable component
+- death benefit
+- adult children
+- condition of release
+- non-concessional contributions
+- superannuation caps
+- estate planning
+- 17% tax

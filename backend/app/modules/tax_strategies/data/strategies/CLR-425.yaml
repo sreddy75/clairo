@@ -1,0 +1,76 @@
+strategy_id: CLR-425
+source_ref: STP-425
+name: Service trust
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Determine what the most appropriate service entity structure is.
+
+  2. Set up the service entity.
+
+  3. Ensure the arrangements make commercial business sense from a business point of view (not just the
+  possible tax savings).
+
+  4. Enter into a written arms-length service agreement between the ''practice entity'' and the service
+  entity before commencing the services.
+
+  5. Ensure the service entity provides the services detailed in the service agreement and payments comply
+  with the deal.'
+explanation_text: 'A service arrangement involves a related party entity providing the taxpayer services
+  (for a fee). A service arrangement generally has the following features:
+
+  The taxpayer (and this could be a sole trader, trust, partnership or company) carries on a business
+  or professional practice.
+
+  A trust or company is owned or controlled by the taxpayer or their associates.
+
+  The taxpayer agrees to pay specific fees to the service entity in exchange for the service entity providing
+  certain services. These services could include staff hire, premises, administration services, and plant
+  or equipment.
+
+  The service fees are calculated by way of a markup over all of the costs of the service entity.
+
+  The taxpayer claims a deduction for service fees incurred as an expense in conducting its business.
+
+  The service arrangement generates profits for the service entity, either retained by the service entity
+  (if a company) or diverted to the taxpayer''s associates (if a trust).
+
+
+  Historically, service entities have been used by professional persons (i.e. accountants, doctors, dentists,
+  etc.) to divert part of their professional income away from themselves to an associated trust. The beneficiaries
+  of the related trust are usually family members in lower tax brackets, so overall tax savings are made.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- accountants
+- doctors
+- dentists
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- service trust
+- service entity
+- related party
+- service fees
+- arms length
+- income splitting
+- family trust
+- professional practice
+- markup
+- tax savings
+- business structure
+- administration services
+- staff hire

@@ -1,0 +1,47 @@
+strategy_id: CLR-082
+source_ref: STP-082
+name: Divorcing spouses CGT asset rollover
+categories:
+- Investors_retirees
+- Rental_properties
+implementation_text: '1. Divorcing spouses should consult legal and tax professionals for advice before
+  doing anything. This is because when splitting the joint assets, the attached tax liabilities can be
+  very material and must be factored into any property settlement.
+
+  2. An asset transferred from a company or trust to a spouse may create a Division 7A problem.'
+explanation_text: This strategy is about minimising the tax payable by divorcing spouses. The sale of
+  assets between spouses (or ex-spouses) generally results in capital gains tax. As an exception to this
+  rule, the ATO allows an automatic rollover when assets are transferred between spouses due to marriage
+  or relationship breakdowns. This rollover ensures the transferor spouse disregards a capital gain or
+  loss that would otherwise arise. In effect, the one who receives the asset (the transferee spouse) will
+  make the capital gain or loss when they dispose of the asset. The transferee's cost base will be the
+  transferor spouse's original cost base for that asset. This rollover is mandatory and automatically
+  applies if a marriage or relationship ended after 20 September 1985, an asset was transferred to a spouse,
+  an investment was transferred from a spouse, or a company or trust transferred an asset to a spouse.
+ato_sources:
+- Division 7A
+case_refs: []
+entity_types:
+- individual
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- cgt rollover
+- divorce
+- marriage breakdown
+- relationship breakdown
+- capital gains tax
+- asset transfer
+- spouse
+- cost base
+- property settlement
+- ex-spouse
+- rollover relief

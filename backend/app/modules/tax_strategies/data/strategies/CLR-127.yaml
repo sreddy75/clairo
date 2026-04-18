@@ -1,0 +1,56 @@
+strategy_id: CLR-127
+source_ref: STP-127
+name: 15 year small business CGT exemption
+categories:
+- Business
+implementation_text: '1. The requirements for the 15-year exemption to apply for an individual are the
+  individual continuously owned the CGT asset for the 15 years just before the CGT sale, or at the time
+  of the CGT event, the individual was at least 55 years of age, and the event happened in connection
+  with their retirement.
+
+  2. If the entity is a company or trust, then to access the 15-year exemption, the entity must have had
+  a significant individual for a total of at least 15 years during which the entity owned the asset (and
+  the individual who was the significant individual just before the CGT event retires or is permanently
+  incapacitated). An individual is a significant individual if they own at least 20% of the entity or
+  has an ownership interest in the entity and is a spouse of a significant individual.
+
+  3. Even though the $2 million turnover test or the $6 million net asset test failed, it may still be
+  possible to restructure net assets to pass the subsequent $6 million net asset test. This could be done
+  by selling assets and transferring them into either super or the primary residence (where the dollars
+  are excluded from the $6 million net asset test).'
+explanation_text: If the 15-year small business capital gains tax (CGT) exemption applies, any capital
+  gains on the sale of business assets will be entirely exempt, i.e. 100% tax-free. The small business
+  entity or the maximum net asset value test must be passed to access the small business CGT exemptions.
+  A small business entity is an entity that is carrying on a business and has less than a $2 million aggregated
+  turnover. The maximum net asset value test requires that the total net value of CGT assets owned by
+  certain entities does not exceed $6 million just before the CGT event that results in the capital gain
+  occurs.
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- cgt
+- capital gains tax
+- 15 year exemption
+- small business
+- business asset sale
+- retirement
+- net asset value
+- significant individual
+- superannuation
+- restructure
+- сgt concession
+- turnover test
+- asset test

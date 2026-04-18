@@ -1,0 +1,88 @@
+strategy_id: CLR-163
+source_ref: STP-163
+name: Export market development grant
+categories:
+- Business
+implementation_text: 'Applying for the Export Market Development Grant (EMDG) in Australia typically involves
+  the following structured process:
+
+  1. Determine Eligibility: Before you begin the application process, ensure your business meets the eligibility
+  criteria set by Austrade. Typically, this involves assessing whether you promote Australian products,
+  services, intellectual property, or events in overseas markets and whether your annual turnover meets
+  the stipulated requirements.
+
+  2. Gather Documentation: Prepare all necessary documentation to support your claim. This might include:
+
+  Details of your promotional activities and their associated expenses.
+
+  Evidence of payment for the claimed expenses.
+
+  Details about your overseasrelated sales andd receipts.
+
+  Any other documentation as specified in the grant guidelines.
+
+  3. Apply Online: The primary method of application for the EMDG is through the Austrade online portal.
+  Ensure you have all the required documentation and information when you start the process.
+
+  4. Lodge the Application: Apply before the deadline. Typically, businesses must apply after the end
+  of their financial year in which the promotional expenses were incurred.
+
+  5. Await Assessment: After submission, Austrade will assess your application. They may request additional
+  information or clarifications during this time.
+
+  6. Receive Outcome: If your application is successful, you''ll receive the grant amount determined by
+  the assessment. However, the actual amount you receive might differ from your claimed amount based on
+  the assessment''s outcome and the available budget for the grant scheme.
+
+  7. Audits: Be prepared for the possibility of an audit. Austrade may audit EMDG recipients to ensure
+  compliance with the scheme''s rules.
+
+  8. Successive Claims: Businesses can apply for the grant up to eight times.
+
+  9. Engage a Consultant: Given the intricacies of the application process and the importance of getting
+  it right, many businesses engage EMDG consultants to assist with the process.'
+explanation_text: 'Austrade administers the Export Market Development Grant (EMDG) scheme and offers financial
+  assistance to Australian businesses by providing them with reimbursement of certain export promotion
+  expenses. The goal is to encourage the creation, development, and expansion of foreign markets for Australian
+  products and services.
+
+
+  The EMDG scheme provides the following financial benefits to eligible Australian businesses:
+
+  1. Partial Reimbursement of Marketing Expenses: The EMDG scheme provides reimbursements for a percentage
+  of eligible export promotional expenses, which can significantly reduce the financial burden on businesses
+  trying to expand internationally.
+
+  2. Risk Mitigation: Expanding into new international markets is risky and capital-intensive. The financial
+  support from the EMDG can help mitigate some of the financial risks associated with international marketing
+  and promotional activities.
+
+  3. Facilitated Growth: With the financial strain of international expansion being partially alleviated,
+  businesses can potentially scale up faster in foreign markets, leading to increased sales and profits
+  in the long term.
+
+  4. Intellectual Property Protection: The scheme covers costs related to intellectual property registration
+  and insurance. Protecting IP is crucial when entering new markets, and the financial support from EMDG
+  can make this process more affordable.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- export market development grant
+- emdg
+- austrade
+- export promotion
+- international markets
+- grant
+- reimbursement
+- marketing expenses
+- intellectual property
+- overseas markets

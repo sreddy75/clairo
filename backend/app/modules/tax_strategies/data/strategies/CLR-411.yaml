@@ -1,0 +1,69 @@
+strategy_id: CLR-411
+source_ref: STP-411
+name: Husband and wife partnerships
+categories:
+- Business_structures
+implementation_text: 'Prepare a written partnership agreement. As a minimum, partnership agreements should
+  include the following details:
+
+  1. Business objectives.
+
+  2. Percentage of ownership.
+
+  3. Division of profit and loss.
+
+  4. Length of the partnership.
+
+  5. Decision-making process.
+
+  6. Method for resolving disputes.
+
+  7. Partner authority.
+
+  8. What happens when the partnership dissolves or on the death of a partner?
+
+  Ideally, partnership agreements should be prepared by a solicitor or online legal provider.'
+explanation_text: 'Husband-and-wife partnerships involve the two spouses operating a business together.
+  As they are related parties, the ATO generally requires the profits to be split based on the individual
+  partners'' contributions to the partnership (i.e., expertise, unique skills and qualifications, hours
+  worked, and capital contributed).
+
+
+  The ATO look at the following factors in deciding whether spouses are carrying on a business as partners
+  for tax purposes:
+
+  The mutual consent and intention of the parties,
+
+  Joint ownership of business assets,
+
+  The extent to which the parties are involved in the conduct of the business,
+
+  Business records,
+
+  Joint business bank account, and
+
+  Trading in joint names and public recognition of the partnership.'
+ato_sources: []
+case_refs: []
+entity_types:
+- partnership
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- husband wife partnership
+- spouse partnership
+- profit splitting
+- related parties
+- partnership agreement
+- income splitting
+- business structure
+- spouses
+- joint business
+- partnership tax

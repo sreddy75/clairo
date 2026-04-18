@@ -1,0 +1,61 @@
+strategy_id: CLR-002
+source_ref: STP-002
+name: Home office occupancy expenses
+categories:
+- Employees
+- Business
+implementation_text: 1. Confirm that the facts support the 'place of business' test.
+explanation_text: 'If a taxpayer''s home has the character of a ''place of business'', then occupancy
+  costs like interest expenses, rates, rent, insurance, maintenance, etc., may be tax-deductible. The
+  actual home office occupancy expenses claimed will be a percentage of the total household occupancy
+  expenses. The rate claimed is calculated as the home office floor area (in metres squared) divided by
+  the entire house floor area. Home offices typically average 5-10% of the total house floor area. These
+  tax consequences contrast with the normal situation for employees who use their home office for convenience
+  and, as such, are only allowed deductions for home office running costs (like electricity and depreciation
+  of home office furniture), and not occupancy costs.
+
+
+  The ATO states a home will have the character of a place of business in the following two situations:
+
+
+  • An area is set aside exclusively for the carrying on of a business by a self-employed person. For
+  example, a self-employed carpenter uses their home as a base for operations.
+
+  • An area is used as a taxpayer''s sole basis for income-producing purposes, as the employer provides
+  no other work location to the employee.
+
+
+  Factors that will evidence this include:
+
+
+  • The room at home was used exclusively for income-earning purposes.
+
+  • There was no alternative place of work, and it was necessary to work from home.
+
+  • The nature of the work required that the taxpayer needed a place of work or business.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- home office
+- occupancy expenses
+- place of business
+- interest expenses
+- rates
+- rent
+- insurance
+- maintenance
+- self-employed
+- floor area
+- running costs
+- employee
+- deduction

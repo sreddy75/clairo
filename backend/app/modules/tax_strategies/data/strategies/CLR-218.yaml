@@ -1,0 +1,50 @@
+strategy_id: CLR-218
+source_ref: STP-218
+name: Change bad debt into good debt
+categories:
+- Investors_retirees
+- Business
+implementation_text: '1. First, use all available cash flow to pay down bad debt quickly.
+
+  2. Good debt should be structured as interest-only payments or ideally capitalised entirely (i.e. no
+  repayments).
+
+  3. Implement negative gearing tax strategies.
+
+  4. When purchasing investments with good debt, they should be 100% debt-financed.
+
+  5. Redraw facilities should not be used to pay private expenses or debts.
+
+  6. Sell debt-free investments to pay out bad debt. Beneficial ownership of the assets can be kept by
+  selling them to a related party (spouse or entity).'
+explanation_text: This strategy is all about changing bad debt into good debt. Bad debts don't help you
+  build wealth, and the interest expense is non-deductible. This includes personal credit card debts,
+  loans, HECS debts, primary residence home loans, etc. In contrast, good debt is a debt that works to
+  help you build wealth and where the interest expense is tax-deductible. Good debt includes debts used
+  to finance investments in shares, rental properties, and businesses.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- bad debt
+- good debt
+- negative gearing
+- interest deductible
+- debt conversion
+- investment loans
+- shares
+- rental properties
+- hecs debt
+- debt restructure
+- interest-only
+- wealth building
+- debt recycling

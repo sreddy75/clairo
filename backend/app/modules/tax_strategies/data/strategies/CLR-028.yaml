@@ -1,0 +1,42 @@
+strategy_id: CLR-028
+source_ref: STP-028
+name: Income protection insurance
+categories:
+- Employees
+- Business
+implementation_text: '1. Review any finance contracts to determine whether you are paying income protection
+  insurance. Sometimes the policy is for the loan term only and paid upfront as part of the borrowing
+  costs. In this case, the policy costs are deductible over the loan term.
+
+  2. Claim a deduction for any income protection insurance paid - Ensure the income protection policy
+  does not also include life insurance (which is non-deductible).'
+explanation_text: When an employee goes to the bank to get finance (whether for their private residence,
+  investment property, or motor vehicle), the bank often makes it compulsory to take on the bank's income
+  protection insurance policy. The cost of the insurance premiums for income protection insurance is tax-deductible.
+  The monthly income protection insurance payments received under the insurance policy replace the employee's
+  salary income and are taxable. Precisely like an employee's regular salary income, PAYG tax is deducted
+  by the insurance company from the gross insurance payments. At year-end, the employee receives a payment
+  summary from the insurance company showing their annual gross income and PAYG tax deducted.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- income protection insurance
+- insurance premiums
+- tax-deductible
+- payg
+- salary replacement
+- borrowing costs
+- loan term
+- life insurance
+- payment summary
+- employee finance

@@ -1,0 +1,84 @@
+strategy_id: CLR-026
+source_ref: STP-026
+name: Div 7A loan agreement
+categories:
+- ATO_obligations
+implementation_text: 'Here''s a step-by-step guide to implementing such an agreement:
+
+  1. Identify the need: Before creating a Div 7A loan agreement, determine why the private company needs
+  to provide a loan to a shareholder or an associate. It could be for shareholder liquidity, business
+  expansion, or other valid reasons.
+
+  2. Understand the Division 7A rules: Familiarize yourself with the requirements and terms set out by
+  the Australian Taxation Office (ATO) for Div 7A loan agreements.
+
+  3. Draft the loan agreement: Documenting the loan is crucial. The loan agreement should include:
+
+  The parties involved (lender and borrower)
+
+  The loan amount
+
+  The term of the loan (which, as per ATO guidelines, can be either a 7-year unsecured loan or a 25-year
+  secured loan)
+
+  The minimum interest rate, as specified by the ATO for that year
+
+  Repayment terms, including both principal and interest
+
+  4. Secure the loan (if needed): If you opt for a 25-year loan term, it must be secured by a mortgage
+  over real property. Ensure the security value is at least equal to the loan amount.
+
+  5. Ensure commercial terms: Particularly concerning the minimum benchmark interest rate, which the ATO
+  can change yearly.
+
+  6. Maintain regular repayments: Ensure the borrower makes the required minimum yearly repayments (MYR)
+  of principal and interest by the end of each financial year. Failure to meet these repayments can result
+  in the unpaid amount being treated as a deemed dividend.
+
+  7. Record keeping: Maintain meticulous records of the loan agreement, repayments, and related transactions.
+
+  8. Annual review: It''s a good practice to review the Div 7A loan agreement annually, especially around
+  the end of the financial year, to ensure all obligations are met and the loan remains compliant.'
+explanation_text: 'Implementing a Division 7A (Div 7A) loan agreement in compliance with the Australian
+  Income Tax Assessment Act 1936 offers several benefits to private companies and their shareholders:
+
+  1. Avoiding deemed dividends: This means the shareholder or associate won''t have the loan amount assessed
+  as income, potentially saving them from a significant tax liability.
+
+  2. Tax efficiency: Allows funds to be extracted from a company without immediate tax implications for
+  the shareholder or associate, provided that the loan is repaid according to the terms of the agreement.
+
+  3. Flexibility: Instead of immediately declaring and paying dividends or increasing wages/salaries (both
+  of which have tax consequences), a private company can provide a loan to shareholders or associates.
+
+  4. Financial discipline: The loan must be repaid within a specific period, ensuring the funds are not
+  indefinitely withheld from the company.'
+ato_sources:
+- Australian Income Tax Assessment Act 1936
+case_refs: []
+entity_types:
+- company
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- div 7a
+- division 7a
+- loan agreement
+- deemed dividend
+- private company
+- shareholder loan
+- minimum yearly repayment
+- benchmark interest rate
+- unsecured loan
+- secured loan
+- associate
+- company distributions
+- tax compliance
+- itaa 1936

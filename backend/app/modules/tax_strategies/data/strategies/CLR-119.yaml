@@ -1,0 +1,55 @@
+strategy_id: CLR-119
+source_ref: STP-119
+name: 'Passively-held assets: Small Business CGT Concessions'
+categories:
+- Business
+implementation_text: 1. Once an asset has been active for a minimum of 7.5 years, it will be an active
+  asset indefinitely, so it can access the small business concessions indefinitely (even when rented to
+  third parties as a passive rental property).
+explanation_text: 'Owners of passively-held assets (like offices, factories, and warehouses) are not carrying
+  on a business, so they are not entitled to access the capital gains tax (CGT) small business concessions
+  when selling these assets. An exception to this rule applies whereby a taxpayer that owns a passively-held
+  asset can access the CGT small business concessions for the asset if it is used in a business carried
+  on by an affiliate or a connected entity and certain conditions are satisfied.
+
+
+  The following conditions must be satisfied in the income year:
+
+  - The affiliate, or connected entity, is a small business entity for the income year the asset is sold.
+
+  - The affiliate or connected entity is a small business entity that carries on a business, uses the
+  asset in that business, and meets the active asset test.
+
+  - The taxpayer does not carry on a business other than in a partnership, and the CGT asset is not an
+  interest in an asset of the partnership.
+
+
+  If a taxpayer leases their asset to an affiliate or a connected entity for use in their business, the
+  purchase may still qualify as an active asset. This enables the taxpayer to access the small business
+  CGT concessions even though the individual or entity owning the investment is not operating a business.
+  An example would be company A running a business and company B owning and renting the commercial premises
+  to company A. If the two companies are connected, then company B will be a connected entity of company
+  A and entitled to the small business CGT concessions.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- small business cgt concessions
+- passively-held assets
+- active asset test
+- capital gains tax
+- connected entity
+- affiliate
+- commercial property
+- small business entity
+- cgt exemption
+- passive rental

@@ -1,0 +1,48 @@
+strategy_id: CLR-098
+source_ref: STP-098
+name: Fuel efficient luxury cars
+categories:
+- Employees
+- Business
+implementation_text: 1. Check the fuel-efficient rating of the vehicle to determine whether the higher
+  fuel-efficient luxury car limit applies.
+explanation_text: 'The ATO defines fuel-efficient vehicles as those with a fuel consumption not exceeding
+  seven litres per 100 kilometres as a combined rating under the vehicle standards in force under section
+  7 of the Motor Vehicle Standards Act 1989.
+
+
+  The luxury car limit for 2024/25 for fuel-efficient vehicles is $91,387 versus the standard $80,567)
+  for non-fuel-efficient cars. Although the owners of a fuel-efficient vehicle can only claim depreciation
+  and GST input tax credits on the car cost limit of $69,674, there are still tax savings. The tax savings
+  are due to the luxury car tax being calculated on the GST-inclusive value of a fuel-efficient vehicle
+  that exceeds $91,387 versus the standard $80,567 for non-fuel-efficient cars. The luxury car tax is
+  imposed at 33% above these two thresholds, so the tax-saving available with a fuel-efficient vehicle
+  is effective $3,571.'
+ato_sources:
+- Motor Vehicle Standards Act 1989 s 7
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+- deduction
+keywords:
+- fuel efficient
+- luxury car
+- luxury car tax
+- car limit
+- depreciation
+- gst input tax credits
+- vehicle
+- lct
+- fuel consumption
+- car cost limit
+- business vehicle
+- employee vehicle
+- tax saving

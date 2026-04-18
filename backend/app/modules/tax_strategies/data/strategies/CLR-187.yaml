@@ -1,0 +1,84 @@
+strategy_id: CLR-187
+source_ref: STP-187
+name: Entertainment facility leasing expenses
+categories:
+- Business
+implementation_text: '1. Ensure the entertainment facility leasing expenses are incurred by the employer
+  (and not reimbursing the employee).
+
+  2. Suppose the employee is provided with the EFLEs under a salary packaging arrangement. In that case,
+  the fringe benefit must be valued using the actual method - not the 50/50 method (so there will be no
+  tax savings).'
+explanation_text: 'Entertainment facility leasing expenses (EFLEs) are expenses incurred in hiring or
+  leasing:
+
+  A corporate box.
+
+  Boats, yachts or planes for providing entertainment.
+
+  A function room in a club or hotel that has been hired to the exclusion of others.
+
+  A hotel/motel room.
+
+  A room in a bed and breakfast facility.
+
+  A cabin on a cruise ship.
+
+  A cabin or on-site van at a caravan park.
+
+  The hire of a marquee.
+
+  The hire or lease of a golf course for a set time or full day to exclude others, for example, a corporate
+  golf day.
+
+
+  Entertainment facility leasing expenses exclude the portion of the costs related to food or beverages
+  provided that would be an allowable income tax deduction. This strategy involves using the 50-50 split
+  method for entertainment facility leasing costs incurred by the employer. This means that 50% of the
+  expenses are non-deductable. The other 50% is deductible but subject to FBT. Under this option, the
+  after-tax cost of $20,000 on entertainment leasing expenses is $23,517. In contrast, an individual taxpayer
+  in the 47% tax bracket would have a pre-tax cost of $37,736.
+
+
+  Example of $20,000 incurred on hiring a golf course for a corporate golf day:
+
+  The cost of the sponsorship package is $20,000
+
+  GST refunded on 5% advertising component (5% @ $20,000 @ 1/11) (91)
+
+  Tax savings on 5% advertising component ($909 @ 25%) (227)
+
+  GST refunded ($19,000 @ 50% @ 1/11) (864)
+
+  Tax savings ($18,136 expense @ 50% @ 25%) (2,267)
+
+  FBT payable ($19,000 @ 50% @ 2.0802 @ 47%) 9,288
+
+  Tax savings on FBT paid ($9,288 @ 25%) (2,322)
+
+  Total after-tax cost $23,517'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- entertainment facility leasing
+- efle
+- 50-50 split method
+- fbt
+- fringe benefits tax
+- corporate box
+- salary packaging
+- golf course
+- employer
+- gst
+- deduction
+- entertainment expenses

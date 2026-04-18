@@ -1,0 +1,66 @@
+strategy_id: CLR-146
+source_ref: STP-146
+name: Transferring business premises into a SMSF
+categories:
+- Business
+- SMSF
+implementation_text: '1. Establish SMSF - Ideally, with a corporate trustee.
+
+  2. Prepare the contract of sale to sell the business premises at market value to the super fund.
+
+  3. Arrange finance to fund the purchase.
+
+  4. Appoint a settlement agent to affect the property transfer and pay the stamp duty. A stamp duty concession
+  or an exemption is available in certain states for selling business premises by an individual or trust
+  to the super fund.
+
+  5. Apply the small business CGT concessions to the sale of the business premises (so no tax may be payable
+  on this transfer).
+
+  6. Prepare an arms-length rental agreement.
+
+  7. Ensure rent is paid per the terms of the arms-length rental agreement.'
+explanation_text: 'This strategy involves a business owner transferring their premises into their self-managed
+  super fund (SMSF).This strategy has the following advantages:
+
+
+  Rent paid to the SMSF is taxed at between 0-15% in the SMSF. The 0% rate is applicable when the SMSF
+  is in the pension phase.
+
+  The business receives a tax deduction for any rent paid to the SMSF.
+
+  Any capital gain will be taxed at 0- 10% when the SMSF sells the premises. The 0% rate is applicable
+  when the SMSF is in the pension phase.
+
+  Asset protection – SMSF assets are protected if the business or owner has financial difficulties.'
+ato_sources: []
+case_refs: []
+entity_types:
+- smsf
+- individual
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+- exemption
+- structure
+keywords:
+- smsf
+- business premises
+- property transfer
+- small business cgt concessions
+- arms-length rental
+- pension phase
+- stamp duty
+- asset protection
+- capital gain
+- self-managed super fund
+- corporate trustee
+- rent deduction

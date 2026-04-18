@@ -1,0 +1,84 @@
+strategy_id: CLR-428
+source_ref: STP-428
+name: Sole trader
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Consider the business risk - Sole trader structures are only suitable for very low-risk and low-profit
+  businesses.
+
+  2. Register ABN and business name.
+
+  3. Open a business bank account.
+
+  4. Register for GST or PAYG withholding (if applicable)'
+explanation_text: 'The sole trader business structure involves the individual personally operating their
+  business. The advantages of running a business as a sole trader include:
+
+
+  • Simple and easy to understand.
+
+  • It is cheap to establish and dismantle (basically, you need a business name, ABN, GST registration,
+  and business bank account).
+
+  • No other tax return must be prepared and lodged (just the standard ''I form'' with the business schedule
+  completed).
+
+  • Saves tax if the business profits are low. Companies are taxed 25% on each dollar of taxable income,
+  while a sole trader can earn $18,200 before starting to pay any tax.
+
+  • It can be the ideal structure for new start-up businesses that are being trialled and may not have
+  a long-term future.
+
+  • Subject to the non-commercial loss provisions concerning business losses, individuals can apply the
+  tax losses against their other income. The individual''s employment income often supports loss-making
+  start-up businesses until they become viable. The cash inflow from getting PAYG withholding tax refunded
+  by the ATO helps finance the business losses.
+
+  • Easy to access the small business CGT concessions.
+
+  • Minimal paperwork and government regulation. In contrast, companies are subject to the Corporations
+  Act.
+
+
+  The disadvantages of the sole trader structure are:
+
+
+  • No asset protection - individuals are personally liable for all business debts and legal claims. The
+  individual''s private assets (including their home) are at risk.
+
+  • Highly profitable businesses will pay tax at the top marginal rate of 48.5% (versus 25% for a company).
+
+  • No income splitting with spouse or children (unless employed).
+
+  • All the business capital needs to be provided by the individual.
+
+  • It cannot be easy to raise finance. Most banks won''t provide unsecured funding to a sole trader due
+  to their increased risk of only dealing with one individual.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+- structure
+keywords:
+- sole trader
+- business structure
+- abn registration
+- gst registration
+- small business
+- non-commercial losses
+- cgt concessions
+- asset protection
+- startup
+- payg withholding

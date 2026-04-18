@@ -1,0 +1,83 @@
+strategy_id: CLR-072
+source_ref: STP-072
+name: Transition to retirement pensions
+categories:
+- Investors_retirees
+- SMSF
+implementation_text: '1. Once the preservation age has been reached, complete the TRIS paperwork. The
+  TRIS pension pack can be purchased from an online legal provider.
+
+  2. Reduce the gross salary and salary sacrifice additional funds into super so that the total annual
+  super contributions equal the deductible super contribution limit.
+
+  3. If the taxpayer is under 60, limit the pension payment drawdowns to only 4%.
+
+  4. The fund must pay an annual pension to the member of between 4% and 10% of the member''s 30th June
+  account balance.'
+explanation_text: 'Transition to retirement income streams (TRISs) has the following essential features:
+
+
+  It helps older workers transition to retirement by allowing them to reduce their working hours and supplement
+  their income from super.
+
+  Allows access to super while still working.
+
+  Enables retrenched older workers to access their super to support themselves while looking for new employment.
+
+  Enables the withdrawal of money as part of a strategy to equalise member balances to stay below the
+  $1.9 million tax-free super pension ceiling.
+
+  Saves tax - for taxpayers over 56 years old, sacrificing pre-tax income into superannuation and drawing
+  pension income from the fund can save $5,000 tax annually.
+
+
+  The tax savings from starting a TRIS are:
+
+
+  The employee receives less salary (due to extra salary sacrificing into super), so less tax is paid
+  on salary income.
+
+  The pension income is taxed at tax rates lower than the taxpayer''s marginal tax rates and receives
+  a 15% tax offset. For taxpayers under 60, the transition to retirement pension income will comprise
+  a tax-free component (non-taxable) and a taxable component (taxable). Once the taxpayer turns 60, all
+  the transition to retirement pension income is tax-free.
+
+  Salary sacrificed super contributions are only taxed in the fund at 15% (whereas the top personal marginal
+  tax rate is 49%).
+
+  Fund income is taxed at 15% (and only 10% for capital gains on assets held for at least 12 months).
+
+  Enables a member to lock in their pension''s tax-free and taxable proportions under the proportioning
+  rule.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+- offset
+keywords:
+- transition to retirement
+- tris
+- preservation age
+- salary sacrifice
+- superannuation
+- pension income
+- tax offset
+- smsf
+- retirement income stream
+- super contributions
+- tax-free component
+- taxable component
+- fund income
+- older workers
+- pension drawdown

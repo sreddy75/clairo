@@ -1,0 +1,50 @@
+strategy_id: CLR-056
+source_ref: STP-056
+name: Dividend deductions
+categories:
+- Investors_retirees
+implementation_text: 1. Interest on loans used to buy shares will only be deductible where the shares
+  pay a dividend or could potentially pay a dividend. As such, interest on loans used to purchase mining
+  exploration companies, for example, will be nondeductible (and instead, the interest will be added to
+  the cost base for capital gains tax purposes).
+explanation_text: 'The following expenses are generally deductible against dividend income:
+
+  Interest and borrowing costs on loans where the borrowed funds buy shares.
+
+  Ongoing management fees are paid to financial planners, stockbrokers, and investment managers.
+
+  Travel expenses for visiting investment managers, attending company meetings, etc.
+
+  Investment journals, subscriptions, and training.
+
+  Computer depreciation and software programmes.
+
+  Telephone, internet and home office running costs.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- dividend
+- deductions
+- shares
+- interest
+- borrowing costs
+- investment expenses
+- management fees
+- travel expenses
+- capital gains tax
+- cost base
+- investors
+- retirees
+- home office
+- stockbroker
+- depreciation

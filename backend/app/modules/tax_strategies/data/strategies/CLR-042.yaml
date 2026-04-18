@@ -1,0 +1,59 @@
+strategy_id: CLR-042
+source_ref: STP-042
+name: Genuine redundancy payments
+categories:
+- Employees
+- Business
+implementation_text: '1. Determine whether a genuine redundancy of the directors and related parties has
+  occurred and document the supporting evidence.
+
+  2. Provide evidence that genuine redundancy payment amounts are arms-length.
+
+  3. Report the redundancy payments to the ATO and include them on applicable payment summaries.
+
+  4. Pay the redundancy payments.'
+explanation_text: 'Company directors or related party employees are eligible to be paid redundancy payments.
+  As these dismissals will not be arms-length, the redundancy payments must not be higher than expected
+  if the termination was arms-length. The tax-free limit for genuine redundancy payments for the 2024/25
+  financial year is $12,524 plus $6,264 for each completed year of service (part years are disregarded).
+  The tax-free amount of a genuine redundancy payment is recorded at Label D on the employee''s payment
+  summary and not included in the tax return as income.
+
+
+  An employer has four valid reasons for terminating an employee''s employment:
+
+
+  Capacity – This relates to the employee''s ability to perform the job.
+
+  Conduct - Refers to contraventions of company policies, safety obligations, and inappropriate behaviour.
+
+  Performance – Poor performance of duties.
+
+  Genuine redundancy occurs when a position is no longer required to be performed by anyone due to changes
+  in the employer''s operational requirements.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- genuine redundancy
+- redundancy payment
+- tax-free limit
+- payment summary
+- label d
+- termination
+- company director
+- related party
+- arms-length
+- employment termination
+- 2024-25
+- year of service

@@ -1,0 +1,34 @@
+strategy_id: CLR-029
+source_ref: STP-029
+name: Airport lounge memberships
+categories:
+- Employees
+implementation_text: 1. Diary evidencing the use of the airport lounge membership for business or work
+  purposes.
+explanation_text: Employees are entitled to a personal tax deduction for their total membership fee, where
+  they use their airport lounge membership predominantly for business travel. Predominantly is not explicitly
+  defined by the ATO but generally means more than 50%. In contrast, if the employee uses their airport
+  lounge membership equally for personal and business travel, only 50% of the membership fee is tax-deductible.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- airport lounge
+- membership
+- employee deduction
+- business travel
+- work-related travel
+- predominantly business
+- travel expenses
+- personal tax deduction
+- diary evidence
+- work purposes

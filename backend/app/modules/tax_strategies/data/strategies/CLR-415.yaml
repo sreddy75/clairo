@@ -1,0 +1,56 @@
+strategy_id: CLR-415
+source_ref: STP-415
+name: Partnership of discretionary trusts
+categories:
+- Business_structures
+implementation_text: "The process is:\n1. Establish discretionary trusts with corporate trustees.\n2.\
+  \ Prepare a written partnership agreement (drafted by a solicitor or online legal provider). As a minimum,\
+  \ partnership agreements should include the following details:\n   i. Percentage of ownership.\n   ii.\
+  \ Division of profit and loss.\n   iii. Length of the partnership.\n   iv. Decision-making process.\n\
+  \   v. Method for resolving disputes.\n   vi. Partner authority.\n   vii. What happens when the partnership\
+  \ dissolves or on the death of a partner\n   viii. Business objectives"
+explanation_text: 'A partnership of discretionary trusts is a partnership where each partner is a discretionary
+  trust. This is a good structure for unrelated parties wanting to operate a business or invest together
+  because:
+
+  • Provides each partner with a fixed interest in the partnership, say 50% each.
+
+  • Allows access to the CGT small business concessions.
+
+  • Provides asset protection (when set up with a company as the trustee of each discretionary trust).
+
+  • Flexibility in splitting profits amongst family members.
+
+  • Simple to establish and relatively easy to dissolve.
+
+  • Partners are not employees, so superannuation contributions and workers'' compensation insurance are
+  not payable.
+
+  • Shared management, combined skills, experience and knowledge, can produce a better product or service.'
+ato_sources: []
+case_refs: []
+entity_types:
+- partnership
+- trust
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- partnership
+- discretionary trust
+- corporate trustee
+- asset protection
+- profit splitting
+- cgt small business concessions
+- business structure
+- family trust
+- unrelated parties
+- joint venture
+- partnership agreement
+- income splitting

@@ -1,0 +1,64 @@
+strategy_id: CLR-173
+source_ref: STP-173
+name: Salary packaging for FBT-exempt employees
+categories:
+- Employees
+implementation_text: '1. PBIs and HPCs must be registered with the ACNC as a PBI or HPC to access the
+  FBT exemption.
+
+  2. A religious institution and a non-profit company that is a charity must be registered with the Australian
+  Charities and Not-For-Profits Commission (ACNC) to access the FBT exemption.
+
+  3. If the employer is FBT-exempt, organise a salary-sacrificing arrangement with the employer to the
+  FBT capping threshold.
+
+  4. The FBT capping thresholds apply to each employer. So, for example, an employee working part-time
+  at three different PBIs could access the $17,000 cap three times.
+
+  5. The capping thresholds apply even if the employee wasn''t employed for the full year.'
+explanation_text: 'Certain public and non-profit hospitals, ambulance services, public benevolent institutions
+  (PBIs), religious institutions, and health promotion charities (HPCs) are eligible for an FBT exemption.
+  The benefits provided to employees are FBT-exempt if the total grossed-up value of benefits for each
+  employee during the FBT year is equal to, or less than, the capping threshold. The employer must pay
+  FBT on the excess if the total grossed-up amount of fringe benefits provided to an employee exceeds
+  the capping threshold. The FBT capping thresholds are:
+
+  PBIs - (other than hospitals) - $30,000 per employee
+
+  HPCs - $30,000 per employee
+
+  Public and not-for-profit hospitals - $17,000 per employee
+
+  Public ambulance services - $17,000 per employee
+
+  Religious institutions for benefits provided to religious practitioners - no cap applies.
+
+  Car parking benefits are excluded from the FBT capping thresholds.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- salary packaging
+- salary sacrifice
+- fbt exemption
+- fringe benefits tax
+- public benevolent institution
+- pbi
+- health promotion charity
+- hpc
+- non-profit
+- hospital
+- ambulance
+- religious institution
+- acnc
+- capping threshold
+- employees

@@ -1,0 +1,59 @@
+strategy_id: CLR-143
+source_ref: STP-143
+name: Accrued expenses
+categories:
+- Business
+implementation_text: '1. Review the July and August invoices to determine the expenses incurred before
+  30th June.
+
+  2. Claim the accrued expenses in the 30th June financials and tax return.'
+explanation_text: 'For tax purposes, a small business entity (SBE) taxpayer can generally claim a deduction
+  on June 30th for expenses that have been incurred but not paid (or even invoiced). An SBE business taxpayer
+  will incur a deduction where:
+
+
+  The taxpayer has a presently existing liability to pay a sum. The deduction applies provided it is capable
+  of reasonable estimation.
+
+  The taxpayer is subjected to the loss or outgoing.
+
+
+  The following are possible accrued expenses for SBE businesses:
+
+  Interest – owing on June 30th.
+
+  Telephone, legal, accounting, etc., were invoiced but not paid on June 30th.
+
+  Commissions – owing to sales-people, but not paid.
+
+  Directors'' fees – if authorised by shareholder resolution before June 30th.
+
+  Staff bonuses.
+
+  Salary and wages – accrued until June 30th but not paid until July.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- accrued expenses
+- small business entity
+- sbe
+- june 30
+- tax deduction
+- unpaid expenses
+- salary accrual
+- directors fees
+- staff bonuses
+- year end
+- commissions
+- interest accrual
+- tax planning

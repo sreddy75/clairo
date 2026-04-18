@@ -1,0 +1,63 @@
+strategy_id: CLR-106
+source_ref: STP-106
+name: Farm management deposits
+categories:
+- Business
+implementation_text: '1. Open an FMD account.
+
+  2. Contribute to, and withdraw funds from, the FMD based on primary producers'' cash flow and taxation
+  needs.
+
+  3. Link the FMD to a loan or debt of the FMD owner under a loan-offset account. This account linking
+  enables the FMD to reduce the interest payable on the loan, with reduced (or eliminated) interest earned
+  on the FMD.'
+explanation_text: 'The farm management deposits (FMD) scheme allows eligible primary producers to move
+  income from a year in which they don''t need it to a later year when needed. This income shifting is
+  achieved by allowing the primary producer a deduction in the financial year in which they make an eligible
+  deposit to the FMD account (a special bank account with an institution that accepts farm management
+  deposits).
+
+
+  When the primary producer withdraws funds from the FMD account, that income is assessable and is included
+  in their tax return as income. Farm management deposits are deductible if all of the following are satisfied:
+
+  • The taxable non-primary production income is less than $100,000.
+
+  • The taxpayer is carrying on a primary production business when making the deposit.
+
+  • The individual deposits are not less than $1,000, and total deposits are not more than $800,000.
+
+  • Individual deposits do not exceed the amount of the taxpayer''s taxable primary production income.
+
+  • The deposits are held for at least 12 months or qualify for one of the early repayment exemptions.
+
+  • If the taxpayer stopped carrying on a primary production business during the year, they recommenced
+  carrying it within 120 days.
+
+  • The taxpayer is not deceased.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- timing
+keywords:
+- farm management deposits
+- fmd
+- primary producer
+- income deferral
+- primary production
+- deduction
+- loan offset
+- cash flow
+- income shifting
+- agricultural
+- deposit scheme
+- taxable income

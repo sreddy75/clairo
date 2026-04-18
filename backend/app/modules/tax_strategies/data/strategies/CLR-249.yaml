@@ -1,0 +1,59 @@
+strategy_id: CLR-249
+source_ref: STP-249
+name: Smartwatch
+categories:
+- Employees
+- Business
+implementation_text: '1. Have the employer purchase the FBT exempt work-related items and claim an upfront
+  tax deduction for their cost.
+
+  2. The employee salary sacrifices the cost of the items (ex GST).'
+explanation_text: 'A smartwatch is a wearable computer in the form of a wristwatch. The watch''s functionality
+  is similar to smartphones and includes the:
+
+  Mobile apps.
+
+  Mobile operating system. WiFi/Bluetooth connectivity.
+
+  Portable media players with FM radio and digital audio and video file playback.
+
+  Making and receiving phone calls.
+
+  Sending and receiving emails.
+
+  Digital cameras.
+
+  Heart rate monitors.
+
+  microSD cards (which are recognized as storage devices by many other kinds of computers).
+
+
+  The ATO deems smartphones portable electronic devices exempt from fringe benefits when used primarily
+  for the employee''s employment. As exempt fringe benefits, businesses can provide these devices to employees
+  under salary sacrifice arrangements. Even when employees'' salaries sacrifice the cost of the items
+  with their employers, they still benefit from saving the GST and having an upfront tax saving (instead
+  of purchasing the item and depreciating it over several years in their tax return).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- smartwatch
+- fringe benefits tax
+- fbt exempt
+- salary sacrifice
+- work-related items
+- portable electronic device
+- employer deduction
+- gst saving
+- wearable technology
+- employee benefits

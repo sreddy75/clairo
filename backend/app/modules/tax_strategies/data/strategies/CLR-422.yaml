@@ -1,0 +1,108 @@
+strategy_id: CLR-422
+source_ref: STP-422
+name: Review business structures
+categories:
+- Business
+- Business_structures
+implementation_text: 'Implementation process to change business structures:
+
+  1. Review business structures to choose the optimum business structure for the taxpayer''s unique circumstances.
+
+  2. Calculate the costs of changing business structures, i.e. stamp duty, establishment costs, accountant
+  fees, legal fees, capital gains tax, etc.
+
+  3. Choose the optimum business structure (s)
+
+  4. Establish new business structure (s).
+
+  5. Transfer business and assets to new business structure (s).'
+explanation_text: 'Business entity changes involve transferring a business from its current structure
+  to a more advantageous structure.
+
+
+  The most common reasons for a business restructuring are:
+
+  Change in ownership - If an existing business is acquired (for example, a company), the business structure
+  may be changed (perhaps to a trust).
+
+  Change in management - Taking on a business partner would involve a sole trader moving to a partnership,
+  company or trust.
+
+  Operational reasons - Reorganising business functions to improve performance.
+
+  Legal reasons - Some professionals can only operate through specific structures.
+
+  Financial reasons - Restructuring to meet financial goals.
+
+  Business growth - Restructuring to improve cash flow by reducing tax, i.e. moving from a sole trader
+  to a company.
+
+  Economic downturn or downsizing - Downsizing and simplifying a business structure to reduce costs, i.e.
+  moving from a company structure to a sole trader.
+
+
+  Changing or establishing different business structures can save tax. The tax savings are due to:
+
+  Different taxpayers are taxed at different rates. For example, an individual''s top marginal tax rate
+  is 47%, while a super fund in the pension phase has a zero-tax rate.
+
+  Different entities are subject to additional rules on taxing income, deductibility of deductions, and
+  access to offsets. For example, the R & D offset is only available to companies.
+
+  Taxpayer''s circumstances are changing. What was the ideal and most tax-effective structure for the
+  taxpayer five years ago, or even last year, may not be so today.
+
+
+  Factors to consider in reviewing business structures include:
+
+  Tax - now, in the future, and on asset/business sale.
+
+  Simplicity.
+
+  It separates business assets from valuable assets/investments.
+
+  They are protecting retained profits.
+
+  I am separating risk between individuals.
+
+  Commercial considerations.
+
+  Borrowing and finance.
+
+  Exit strategies.
+
+  Growth and flexibility options.
+
+  Business risk levels. Who has control of the business and assets?'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+keywords:
+- business structure
+- restructure
+- sole trader
+- company
+- trust
+- partnership
+- tax rate
+- capital gains tax
+- stamp duty
+- asset protection
+- ownership change
+- tax planning
+- business growth
+- r&d offset
+- marginal tax rate

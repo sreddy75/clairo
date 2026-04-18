@@ -1,0 +1,54 @@
+strategy_id: CLR-039
+source_ref: STP-039
+name: Legal expenses
+categories:
+- Employees
+implementation_text: '1. Confirm that legal expenses are incurred in gaining assessable income and are
+  not of a capital or private nature.
+
+  2. Review legal expenses invoices - They will be deductible when incurred, not paid.
+
+  3. Legal expenses will generally not be deductible when incurred by an employee to defend their name
+  and reputation or to the extent they do not relate to an employee''s income-earning activities.'
+explanation_text: 'Legal expenses for an employee will only be deductible where they are incurred in gaining
+  or producing assessable income and are not of a capital or private nature. Legal costs can also be allowable
+  even if the employee''s legal claim is unsuccessful. Generally speaking, the following legal expenses
+  may be deductible for an employee:
+
+  Legal costs to recover unpaid wages.
+
+  Legal costs to recover unpaid unused annual leave or long service leave.
+
+  Legal fees in settling disputes arising from an existing employment contract.
+
+  Legal costs in changing the conditions of a current agreement with the same employer.
+
+  Legal costs to defend dismissal.
+
+  Legal fees to defend how an employee carries out duties.
+
+  Legal expenses to defend charges which arise from a taxpayer''s income-earning activities'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- legal expenses
+- employee deductions
+- assessable income
+- unpaid wages
+- dismissal
+- employment contract
+- legal fees
+- work-related deductions
+- income-earning activities
+- annual leave
+- long service leave

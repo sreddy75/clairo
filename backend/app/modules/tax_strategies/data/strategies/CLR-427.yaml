@@ -1,0 +1,68 @@
+strategy_id: CLR-427
+source_ref: STP-427
+name: SMSF bare trust
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Establish the super fund.
+
+  2. Rollover members'' super balances held with public offer funds to the new fund and make additional
+  super contributions (as necessary).
+
+  3. Make the purchase offer for the property or shares subject to finance.
+
+  4. Arrange the super fund financing with the taxpayer''s bank. Generally, a 30% deposit will be required.
+
+  5. Establish a new company as a trustee of the bare trust (best practice).
+
+  6. Establish the SMSF bare trust - the taxpayer or the bank will do this.'
+explanation_text: 'An SMSF bare trust is established to enable super funds to comply with section 67A
+  of the SIS Act and finance investments with limited recourse borrowing arrangements. Limited recourse
+  borrowing arrangements must comply with the following:
+
+
+  Borrowing is only permitted on a single asset or a collection of identical assets with the same market
+  value, such as one property or parcel of BHP shares.
+
+  The lender''s recourse against the super fund on default is limited to the single asset financed under
+  the limited recourse loan. Thus, all the super fund''s other assets are protected.
+
+  The super fund cannot borrow to improve an asset (for example, real property).
+
+
+  The advantage of borrowing in a super fund is that the capital gains can be magnified, and the super
+  fund benefits from negative gearing (so tax can be saved). All borrowing entails risks, so the super
+  fund needs to ensure sufficient income (from investment earnings or employer/member contributions) to
+  meet the loan repayments and expenses on the borrowings. The ultimate aim with self-managed super funds
+  is to build a portfolio of investment-earning assets (a mix of term deposits, shares and property) so
+  that on retirement when the fund is put into the pension phase, 100% of the fund earnings will be tax-free.'
+ato_sources:
+- section 67A of the SIS Act
+case_refs: []
+entity_types:
+- smsf
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+keywords:
+- smsf
+- bare trust
+- limited recourse borrowing
+- self-managed super fund
+- property investment
+- negative gearing
+- pension phase
+- capital gains
+- super contributions
+- borrowing
+- SIS Act
+- retirement

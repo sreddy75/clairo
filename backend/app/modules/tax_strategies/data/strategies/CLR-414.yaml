@@ -1,0 +1,69 @@
+strategy_id: CLR-414
+source_ref: STP-414
+name: Joint venture
+categories:
+- Business_structures
+implementation_text: 'A joint venture is governed by a written joint venture agreement (which should be
+  drafted by a solicitor).
+
+  The written joint venture agreement should include details on the following:
+
+  1. The joint venture structure and objectives;
+
+  2. Financial contributions and division of profits and losses;
+
+  3. The committee/management team (including powers and duties);
+
+  4. Finance and expenses;
+
+  5. Books of account and audit;
+
+  6. Distribution of proceeds of the joint venture;
+
+  7. Equipment and assets;
+
+  8. Default and termination (i.e. exit strategy);
+
+  9. Dispute resolution procedure.'
+explanation_text: 'A joint venture is an agreement between two or more individuals or companies in which
+  parties work together toward the same strategic goal while maintaining separate businesses/entities.
+  Due to their short-term nature, joint ventures are distinguished from partnerships. Joint ventures are
+  commonly used for property development, mining, research and development syndicates, and other purposes.
+
+
+  Advantages of a joint venture include:
+
+  • It is only temporary (the relationship finishes when the project ends).
+
+  • Each of the parties is responsible for the debts incurred by the project.
+
+  • Ability to pool capital, expertise and labour to achieve the same strategic goal.
+
+  • Reduced/shared costs'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- property development
+- mining
+- research and development
+financial_impact_type: []
+keywords:
+- joint venture
+- agreement
+- business structure
+- property development
+- mining
+- research and development
+- profit sharing
+- pooling resources
+- temporary arrangement
+- separate entities

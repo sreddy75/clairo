@@ -1,0 +1,68 @@
+strategy_id: CLR-418
+source_ref: STP-418
+name: Private investment companies
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Establish a Pty Ltd investment company (ideally, a family trust should be the sole shareholder for
+  asset protection, flexibility and tax savings).
+
+  2. Contribute funds to the investment company via loans or equity.
+
+  3. Research investment options considering risk and return.
+
+  4. Invest the investment funds.'
+explanation_text: 'Private investment companies are private companies that invest in shares, property,
+  and other investments.
+
+
+  The benefits of using a private company to accumulate investments include:
+
+  25% company tax rate.
+
+  Ability to retain profits after tax (significant in the lead-up to retirement when individual taxable
+  incomes can be high).
+
+  Fully franked dividends can be accumulated tax-free due to the dividend imputation system.
+
+  Borrowing with banks is much more straightforward than through a trust structure.
+
+  The profits can be distributed as dividends once the individual taxpayers retire (and receive tax-free
+  superannuation benefits). Two retired spouses could take out a franked dividend of $96,180 each pear
+  and pay no additional tax due to the attached franking credits of $41,220.
+
+  Can contribute additional investment funds to the company at any time.
+
+  Access cash from the investment company at any time (through directors'' loans, share buybacks, or dividends).
+
+  Companies have perpetual succession (so useful for estate planning purposes)'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- private investment company
+- pty ltd
+- family trust
+- franked dividends
+- dividend imputation
+- company tax rate
+- asset protection
+- retirement planning
+- estate planning
+- profit retention
+- share investment
+- property investment
+- directors loans
+- perpetual succession
+- franking credits

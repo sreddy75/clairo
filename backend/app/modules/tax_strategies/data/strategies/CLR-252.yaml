@@ -1,0 +1,42 @@
+strategy_id: CLR-252
+source_ref: STP-252
+name: Amend prior year tax returns
+categories:
+- Employees
+- Investors_retirees
+- Business
+implementation_text: '1. Determine the amendment period that applies to the taxpayer.
+
+  2. Review prior years'' tax returns for omitted deductions.
+
+  3. Ensure substantiation requirements are met and then lodge the amended tax return.'
+explanation_text: 'Reviewing the prior year''s tax returns to identify any omitted allowable deductions
+  is good practice. Amend the preceding year''s returns when the omitted deductions can be substantiated
+  and fall within the amendment period time limits.
+
+
+  The time limit for amending individual and small business tax returns is generally two years, and for
+  other taxpayers, four years.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- amended tax return
+- prior year
+- omitted deductions
+- amendment period
+- substantiation
+- two year limit
+- four year limit
+- small business
+- individual
+- tax return review

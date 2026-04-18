@@ -1,0 +1,55 @@
+strategy_id: CLR-102
+source_ref: STP-102
+name: Delay income and the realisation of assets
+categories:
+- Investors_retirees
+- Business
+implementation_text: '1. Delay invoicing May and June''s sales until after the 30th June.
+
+  2. Delay executing an asset sale contract until after 1st July.'
+explanation_text: 'For businesses accounting for income on a cash basis, delaying the receipt of income
+  from May or June to July results in tax savings for two reasons:
+
+
+  The income is included in the next financial year, not this year. The tax savings arise as the tax liability
+  on the income will be paid next year, not this year.
+
+  The expenses incurred to generate the delayed income can be claimed this year as a deduction as they
+  must pay (even though they may not be paid for until next year).
+
+
+  The easiest way to delay income is to not invoice May and June''s sales or fees until after the 30th
+  of June. Delaying invoicing ensures that May and June''s revenue will be received in July or August
+  (therefore included as income in the following year).
+
+
+  In addition, income will be taxed in the following financial year by delaying the realisation of assets
+  (and any assessable capital gains) until after the financial year ends. To achieve this, the sale contract
+  must not be signed until after the end of the financial year (as it is the contract execution date that
+  determines the disposal date for CGT purposes).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- timing
+- deduction
+keywords:
+- delay income
+- cash basis
+- invoicing
+- june
+- july
+- capital gains
+- cgt
+- asset sale
+- contract execution
+- deferral
+- financial year end
+- tax timing

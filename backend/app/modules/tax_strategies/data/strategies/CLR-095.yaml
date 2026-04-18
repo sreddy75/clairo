@@ -1,0 +1,61 @@
+strategy_id: CLR-095
+source_ref: STP-095
+name: Intangible depreciating assets
+categories:
+- Business
+implementation_text: '1. Determine which specific intangible assets can be written off.
+
+  2. Taxpayers can self-assess their useful lives for intangible assets with fixed statutory lives acquired
+  after 1st July 2016. This can mean faster depreciation claims and make their purchase more tax effective.
+
+  3. A licence is deductible over the term of the licence - In contrast, the grant of a franchise or the
+  purchase of goodwill is a capital cost (and non-deductible).'
+explanation_text: 'The ATO allows the cost of acquiring intangible depreciating assets to be written off
+  over their useful life. The useful life of the following intangible depreciating assets is as follows:
+
+  Standard patent – 20 years.
+
+  Innovative patent – 8 years.
+
+  Petty patent – 6 years.
+
+  Registered design – 6 years.
+
+  Copyright (except film) – the shorter of 25 years or the period until the copyright ends.
+
+  A licence – the term of the licence.
+
+  A licence relating to copyright – the shorter of 25 years or the period until the licence ends.
+
+  In-house software – 4 years.
+
+  Spectrum licence – the term of the licence.
+
+  Datacasting transmitter licence – 15 years.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- intangible assets
+- depreciation
+- write off
+- patent
+- copyright
+- licence
+- in-house software
+- useful life
+- self-assess
+- registered design
+- spectrum licence
+- goodwill
+- capital cost
+- tax effective

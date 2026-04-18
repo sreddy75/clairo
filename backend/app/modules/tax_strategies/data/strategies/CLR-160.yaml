@@ -1,0 +1,31 @@
+strategy_id: CLR-160
+source_ref: STP-160
+name: Customer disputed amounts
+categories:
+- Business
+implementation_text: 1. Record the disputed income in the financials as a liability.
+explanation_text: For businesses operating on an accrual basis, income subject to a client dispute may
+  be deferred until the dispute is settled. The disputed income should be recorded in the financials as
+  a liability and only registered as income when the conflict is finalised.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- disputed income
+- accrual basis
+- client dispute
+- income deferral
+- liability
+- revenue recognition
+- contested amounts
+- accrual accounting
+- income timing
+- dispute settlement

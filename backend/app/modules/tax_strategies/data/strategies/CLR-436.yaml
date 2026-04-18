@@ -1,0 +1,64 @@
+strategy_id: CLR-436
+source_ref: STP-436
+name: Companies
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Incorporate the company with ASIC.
+
+  2. Ideally, the company shareholder should be a family trust (not individual directors). This provides
+  flexibility and enables the future distribution of dividends and capital gains to be distributed to
+  lower-taxed beneficiaries (as well as providing asset protection benefits).
+
+  3. Apply for ABN, TFN, and business name registration for the company.'
+explanation_text: 'The advantages of operating a business through a company include the following:
+
+  30% tax rate (standard company tax rate)
+
+  25% tax rate for companies with a turnover of less than $50m pa.
+
+  Limited liability – this ensures the shareholder''s liability is limited to the capital invested in
+  the company.
+
+  The ability for investors to pool their investment funds together.
+
+  Access tax strategy, Salary Packaging Private Motor Vehicles.
+
+  Access tax strategy, Employee Meal Expenses on Business Premises.
+
+
+  The main disadvantage of operating through a company is that it doesn''t receive the 50% general capital
+  gain discount like individuals. Compliance and regulatory costs and directors'' legal obligations and
+  duties must also be considered.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+- concession
+keywords:
+- company
+- incorporation
+- corporate tax rate
+- 25% tax rate
+- 30% tax rate
+- family trust
+- shareholder
+- limited liability
+- capital gains
+- dividends
+- asset protection
+- business structure
+- ASIC
+- ABN
+- TFN

@@ -1,0 +1,52 @@
+strategy_id: CLR-211
+source_ref: STP-211
+name: Sell a business and pay no tax
+categories:
+- Business
+implementation_text: '1. Ensure the $2 million turnovers or $6 million net assets test is passed.
+
+  2. Apply the most attractive tax strategy - generally, 15-year small business exemption first, then
+  the retirement exemption CGT concession for small business, and finally the small business CGT rollover.'
+explanation_text: 'This strategy involves selling your business and paying no tax. This strategy only
+  applies to businesses that pass either the $2 million turnover test or the $6 million net assets test.
+  The three tax strategies that can achieve this are listed in the order of their attractiveness :
+
+
+  Tax strategy, 15-Year Small Business CGT Exemption.
+
+  Tax strategy, Retirement Exemption - CGT Concession for Small Business.
+
+  Tax Strategy, Small Business CGT Rollover.
+
+
+  Although the three tax strategies can all result in no tax payable on the business sale, they are not
+  equally attractive. 15-Year Small Business CGT Exemption is the best; if this is applied, no tax is
+  payable now or in the future. In contrast, with Small Business CGT Rollover, no tax is payable now,
+  but it is only deferred into the future.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- concession
+keywords:
+- cgt
+- capital gains tax
+- small business
+- business sale
+- 15-year exemption
+- retirement exemption
+- cgt rollover
+- net assets
+- turnover test
+- tax free sale
+- business concessions
+- small business cgt
+- exit strategy

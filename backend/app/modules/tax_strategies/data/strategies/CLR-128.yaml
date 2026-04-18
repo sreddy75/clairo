@@ -1,0 +1,84 @@
+strategy_id: CLR-128
+source_ref: STP-128
+name: Blackhole expenditure
+categories:
+- Business
+implementation_text: '1. First, determine if the expenditure is deductible under another section of the
+  tax act and not explicitly excluded from section 40-880 of the ITAA.
+
+  2. A shareholder, beneficiary, or partner may be able to deduct capital expenditure incurred by them
+  to deregister a company or wind up a trust or partnership, provided that the company, trust or partnership
+  has carried on a business.
+
+  3. For individual taxpayers, non-commercial loss provisions may defer the deductions for pre- and post-business
+  expenditures.'
+explanation_text: 'Section 40-880 provides a deduction for certain business capital expenditure (i.e.
+  blackhole expenditure) on a straight-line basis over five years. Section 40-880 only applies to capital
+  costs incurred concerning a past, present or proposed business that is not deductible under any other
+  income tax provisions. Therefore, section 40-880 is a ''provision of last resort''. Typically, the business
+  has incurred the blackhole expenditure and claims the deduction. In addition, a shareholder, beneficiary,
+  or partner may be able to deduct the capital expenditure they incur to deregister a company or wind
+  up a trust or partnership, provided that the company, trust or partnership has carried on a business.
+
+
+  Capital expenditure is generally not deductible under section 40-880 to the extent that the expense
+  is:
+
+  • Private or domestic.
+
+  • Non-deductible under income tax laws.
+
+  • It can be deducted under some other provision of the ITAA 1997.
+
+  • Included in the cost base of land.
+
+  • Part of the cost of depreciating assets.
+
+  • It is included in the calculation of a capital gain or loss.
+
+
+  Business capital costs that may be deductible under section 40-880 include:
+
+  • Costs of establishing the business structure (e.g. company incorporation costs).
+
+  • Due diligence costs.
+
+  • Capital raising costs.
+
+  • Business relocation costs.
+
+  • Market research reports.
+
+  • Business cessation costs.'
+ato_sources:
+- section 40-880
+- ITAA 1997
+case_refs: []
+entity_types:
+- company
+- trust
+- partnership
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- blackhole expenditure
+- capital expenditure
+- section 40-880
+- business setup costs
+- incorporation costs
+- due diligence
+- capital raising
+- business cessation
+- straight-line deduction
+- five years
+- provision of last resort
+- non-commercial loss
+- business relocation

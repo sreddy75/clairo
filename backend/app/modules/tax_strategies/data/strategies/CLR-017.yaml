@@ -1,0 +1,87 @@
+strategy_id: CLR-017
+source_ref: STP-017
+name: ATO payment plan
+categories:
+- ATO_obligations
+implementation_text: 'Who can enter into a payment plan:
+
+  individuals
+
+  sole traders
+
+  businesses
+
+  registered tax or BAS agents on behalf of their clients.
+
+
+  Before entering into a payment plan, you need to be aware of the following:
+
+  If you have multiple tax debts which are overdue, your payment plan may default, and you will need to
+  pay any tax debt in full or set up payment plans to avoid defaulting or debt recovery action.
+
+  Any tax credits and refunds you receive will be used to reduce your tax debt - it doesn''t replace the
+  required instalment payment.
+
+  A general interest charge (GIC) will accrue until the debt is paid.
+
+  You can make additional voluntary payments or pay off the debt anytime.
+
+  You must still lodge your activity statements and tax returns and pay any associated liabilities on
+  time.
+
+
+  When thinking about setting up a payment plan, you need to consider the following:
+
+  Negotiating payment plans for all debts
+
+  How much you can pay to meet each scheduled instalment (including interest on any overdue amounts)
+
+  Your future obligations.'
+explanation_text: 'An ATO payment plan allows you to break down your payment into smaller amounts made
+  via instalments and spread over a fixed period. Within a payment plan, you pay an agreed sum of money
+  weekly, fortnightly or monthly until the balance is cleared.
+
+
+  The benefits of entering an ATO payment plan:
+
+  1. Flexible repayment terms: The ATO considers factors such as income, expenses, and other financial
+  commitments, making it more manageable for taxpayers to meet their obligations.
+
+  2. Avoiding penalties: Taxpayers may be able to prevent or reduce the accumulation of penalties and
+  interest that would otherwise accrue on unpaid tax debts.
+
+  3. Maintain compliance: Entering a payment plan demonstrates a willingness to meet tax obligations and
+  maintain compliance with tax laws.
+
+  4. Preserve cash flow: Allows taxpayers to preserve their cash flow.
+
+  5. Reduced stress: Can alleviate the stress and uncertainty of dealing with significant tax debt.
+
+  6. Avoid legal actions: Can prevent ATO legal actions, such as garnishments or asset seizures.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- sole_trader
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- ato payment plan
+- tax debt
+- instalments
+- general interest charge
+- gic
+- debt recovery
+- cash flow
+- compliance
+- overdue tax
+- activity statements
+- tax returns
+- penalties
+- garnishment

@@ -1,0 +1,58 @@
+strategy_id: CLR-144
+source_ref: STP-144
+name: Averaging for authors, artists, inventors and sports persons
+categories:
+- Business_structures
+implementation_text: 'Taxpayers are eligible for the special professional income averaging tax concession
+  if:
+
+  - They are an individual who was an Australian resident at any time during the income year (i.e. not
+  applicable to companies).
+
+  - They are a special professional (i.e. an author of literary, dramatic, musical or artistic work, an
+  inventor, a performing artist, a production associate or sportsperson).
+
+  - They satisfy the first-year requirement of $2,500 special professional income in either the current
+  income year or an earlier income year.'
+explanation_text: 'Special professionals such as authors of literary, dramatic, musical or artistic work,
+  inventors, performing artists, production associates or sportspersons typically find their professional
+  income varies significantly from year to year.
+
+
+  The averaging provisions ensure that if the special professional receives a significant sprecial professional
+  income in one year, it isnt taxed at that year''s marginal tax rate (which could be 47%). Instead, the
+  income is taxed at the special professionals marginal tax rate over the preceeding years (which is likely
+  to be lower).'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- authors
+- artists
+- inventors
+- sports_persons
+- performing_artists
+financial_impact_type:
+- concession
+keywords:
+- income averaging
+- special professional
+- author
+- artist
+- inventor
+- sportsperson
+- performing artist
+- production associate
+- marginal tax rate
+- variable income
+- concession
+- literary
+- dramatic
+- musical

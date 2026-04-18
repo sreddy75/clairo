@@ -1,0 +1,55 @@
+strategy_id: CLR-036
+source_ref: STP-036
+name: Spouse super contributions
+categories:
+- Employees
+- Investors_retirees
+- Business
+implementation_text: '1. Make a $3,000 non-deductible super contribution for the low-income earning spouse.
+
+  2. The high-income earning spouse claims a $540 tax offset on the contribution - The maximum $540 tax
+  offset is equivalent to a $1,800 deduction.'
+explanation_text: 'Spouse super contribution involves contributing to a spouse''s super fund to build
+  their retirement savings. Typically this includes the working spouse making a super contribution to
+  the low-income earning or non-working spouse''s super fund. A spouse can be of the same or opposite
+  sex, including de-facto relationships. The benefits of this strategy include the following:
+
+
+  • Ability to claim a tax offset (tax refund) for contributions made on behalf of a low-income earning
+  or non-working spouse.
+
+  • Grow the super balance of a spouse with little or no super and grow the couple''s joint retirement
+  savings.
+
+  • Accumulate wealth faster as earnings within super are taxed at lower rates than investments outside
+  super.
+
+
+  The maximum tax offset claimable is $540. This offset is only available if the low-income earning spouse''s
+  taxable income is less than $37,000 and $3,000 of non-deductible super contributions are contributed
+  to their super fund. Additional conditions required to claim the tax offset include that the spouse
+  receiving the super contributions must be under 75. Both spouses must be Australian tax residents, not
+  permanently living separately and apart.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- offset
+keywords:
+- spouse super contributions
+- tax offset
+- low income spouse
+- superannuation
+- retirement savings
+- non-deductible contribution
+- de facto
+- spouse offset
+- super fund
+- joint retirement

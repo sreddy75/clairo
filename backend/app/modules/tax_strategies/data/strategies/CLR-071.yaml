@@ -1,0 +1,64 @@
+strategy_id: CLR-071
+source_ref: STP-071
+name: Electric Cars are FBT Free
+categories:
+- Employees
+- Business
+implementation_text: '1. Confirm that the electric car was first held and used after 1st July 2022 to
+  satisfy the eligibility date requirement.
+
+  2. Verify that the car''s purchase price is below $91,387 for 2024/25 to meet the luxury car tax threshold
+  condition.
+
+  3. Ensure the car qualifies as a ''zero or low emissions vehicle'' as required for the FBT exemption.
+
+  4. Confirm the vehicle is being provided by the employer to a current employee for private use.
+
+  5. Ensure all FBT exemption conditions are satisfied before salary packaging the electric car so that
+  the arrangement is 100% FBT exempt.
+
+  6. Structure the arrangement so that the costs are tax-deductible to the employer and no FBT is payable
+  on the employee''s tax-free benefit.'
+explanation_text: 'The Treasury Laws Amendment (Electric Car Discount) Bill 2022 removed the Fringe Benefits
+  Tax (FBT) on eligible cars employers provide to current employees for private use. The exemption applies
+  under the following circumstances:
+
+
+  To eligible electric vehicles first held and used after 1st July 2022.
+
+  To cars with a purchase price below $91,387 for 2024/25 (the luxury car tax threshold for fuel-efficient
+  cars). When the car is a ''zero or low emissions vehicle'',.
+
+
+  If all FBT exemption conditions are satisfied, salary packaging an electric car for employees'' private
+  use is 100% FBT exempt. I.e. the costs are tax-deductible to the employer, and no FBT is payable on
+  the employee''s tax-free benefit.'
+ato_sources:
+- Treasury Laws Amendment (Electric Car Discount) Bill 2022
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- deduction
+keywords:
+- electric vehicle
+- fbt
+- fringe benefits tax
+- salary packaging
+- electric car
+- employer
+- employee
+- zero emissions
+- luxury car tax
+- private use
+- tax-deductible
+- benefit
+tenant_id: platform
+version: 1

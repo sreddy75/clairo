@@ -1,0 +1,98 @@
+strategy_id: CLR-514
+source_ref: STP-514
+name: Company deregistration
+categories:
+- Recommendations
+implementation_text: 'Deregistering an Australian company is a formal process overseen by the Australian
+  Securities and Investments Commission (ASIC). If a company''s directors decide to deregister the company
+  voluntarily, they must follow specific steps to ensure compliance with the Corporations Act 2001:
+
+  1. Check eligibility: Before applying for deregistration, ensure the company meets the necessary criteria:
+
+  • The company is not carrying on business.
+
+  • All members of the company agree to deregister.
+
+  • The company''s assets are worth less than $1,000.
+
+  • The company has no outstanding liabilities.
+
+  • The company is not a party to any legal proceedings.
+
+  • The company has paid all fees and penalties under the Corporations Act 2001.
+
+  2. Ensure all legal obligations are met: Before proceeding, the company should ensure that all its tax
+  obligations are met, including lodgment of any outstanding tax returns, payment of any unpaid taxes,
+  and obtaining necessary clearances from the Australian Taxation Office.
+
+  3. Obtain members'' approval: Secure the approval of all company members for deregistration. This usually
+  means getting a written agreement or resolution from all shareholders.
+
+  4. Application to ASIC: Apply to deregister the company using Form 6010. This form can be submitted
+  electronically through the ASIC Connect portal. A fee is associated with the application, which can
+  be found on the ASIC website.
+
+  5. ASIC review: After receiving the application, ASIC will review the submission to ensure all criteria
+  are met. If everything is in order, ASIC will publish a notice announcing the proposed deregistration
+  on its website. This serves as a public notice and gives potential claimants a chance to come forward.
+
+  6. Final deregistration: ASIC will deregister the company if no issues arise during the review period
+  (typically two months from the date of the notice). ASIC will send a confirmation notice to the company
+  or its agent after deregistration. From then on, the company is officially deregistered and ceases to
+  exist as a legal entity.
+
+  7. Post-deregistration considerations: Even after deregistration, former company officeholders must
+  maintain the company''s records for at least three years. If any liabilities or obligations emerge after
+  deregistration, those involved in the company''s management might be held personally responsible.'
+explanation_text: 'Company deregistration formally removes a company from the Australian Securities and
+  Investments Commission (ASIC) register, effectively ending its existence as a legal entity. Once a company
+  is deregistered, it cannot carry on business or incur debts.
+
+
+  A company or its directors might choose to deregister a company for the following reasons:
+
+  1. Ceasing business operations: If a company has terminated its business operations and has no intention
+  of resuming them, it may deregister to avoid ongoing regulatory obligations and costs.
+
+  2. Redundancy: A company might become redundant due to restructuring or merger activities. If another
+  company has taken over its functions or its business model no longer fits the current corporate structure,
+  deregistering might be more efficient.
+
+  3. Cost savings: Maintaining a registered company incurs ongoing costs, including ASIC annual review
+  and accounting fees for preparing financial statements.
+
+  4. Simplification: Deregistering some entities can simplify the overall business structure, making management,
+  financial reporting, and governance more straightforward.
+
+  5. Finalizing affairs after selling the business: If the business assets and operations have been sold,
+  the company may no longer have a purpose. Once all obligations are settled post-sale, the owners might
+  decide to deregister the company.'
+ato_sources:
+- Corporations Act 2001
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+keywords:
+- company deregistration
+- asic
+- voluntary deregistration
+- wind up
+- close company
+- corporate structure
+- regulatory obligations
+- form 6010
+- cease business
+- cost savings
+- shareholders
+- legal entity
+- compliance
+- restructuring

@@ -1,0 +1,53 @@
+strategy_id: CLR-154
+source_ref: STP-154
+name: Eligible start-up costs
+categories:
+- Business
+implementation_text: 1. The professional advice or services can be about how the business may be best
+  structured, setting up legal arrangements or business systems for the structure, due diligence (where
+  an existing business is being purchased), and developing a business plan.
+explanation_text: 'Eligible start-up costs can be fully deducted in the year they were incurred if they
+  relate to setting up a proposed small business (an entity with an aggregate annual turnover of less
+  than $10 million) and are either:
+
+  Advice or services from lawyers and accountants relating to the proposed structure.
+
+  Advice and services concerning the operation of the proposed business include professional advice on
+  the viability of the proposed business (including due diligence where an existing business is being
+  purchased) and the development of a business plan.
+
+  A payment to an Australian government agency of a fee, tax or charge incurred with setting up a business
+  or establishing its operating structure. E.g. ASIC fee for forming a company.
+
+  Stamp duty payable on transferring assets to the entity intended to carry on the proposed business (e.g.
+  cars, property, etc.).
+
+  Costs associated with raising capital (debt or equity) for the operation of the proposed business. For
+  example, expenses incurred in accessing crowd-sourced equity funding).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: 10000000
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- start-up costs
+- small business
+- deduction
+- legal fees
+- accountant fees
+- business plan
+- due diligence
+- stamp duty
+- ASIC fee
+- capital raising
+- crowd-sourced equity
+- proposed business
+- structure setup
+- business formation

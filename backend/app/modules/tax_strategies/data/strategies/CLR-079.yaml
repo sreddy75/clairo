@@ -1,0 +1,58 @@
+strategy_id: CLR-079
+source_ref: STP-079
+name: Salary packaging rental property expenses to double dip and save the GST
+categories:
+- Investors_retirees
+- Rental_properties
+implementation_text: '1. The taxpayer needs to discuss, and get a commitment from their employer, that
+  the employer allows salary packaging.
+
+  2. The employee pays for their rental property expenses as standard.
+
+  3. The employer reimburses the employee for rental property expenses they have incurred (upon receipt
+  of the rental property receipts) and reduces the employee''s gross wages by the corresponding amount.
+
+  4. Employee claims a tax deduction for the GST cost of acquiring rental property assets that cost less
+  than $300 each.'
+explanation_text: 'Investors owning a residential rental property are not entitled to claim an input tax
+  credit for the GST included in rental property expenses paid. This strategy enables an employee to salary
+  package certain rental property expenses and effectively avoid paying the GST on the costs. An example
+  of how this works in practice. Firstly the employee pays for say $5,500 of rental property expenses
+  that include GST, expenses such as management fees, repairs and maintenance, new furniture, etc. The
+  employee then has their employer reimburse them for the $5,500 rental property expenses. The employer
+  claims back the $500 input tax credits on the GST so only reduces the employee''s gross salary by $5,000.
+  This results in no additional cost to the employer, but the employee has had an initial $500 tax saving.
+
+
+  Also, where the employer has reimbursed the cost of acquiring rental property assets that cost less
+  than $300 each, the employee may ''double-dip'' by claiming an outright deduction for the GST-inclusive
+  price of the asset as well. For example, if an employee paid $300 for a new chair for their rental property,
+  the employee could have their employer reimburse them the $300 cost and reduce their gross wage by $273.
+  The employee saves $27 GST, but will also receive a $300 tax deduction. At the 47% marginal tax rate,
+  this would save $141 in tax.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- salary packaging
+- rental property
+- gst
+- input tax credit
+- double dip
+- employee
+- employer reimbursement
+- management fees
+- repairs and maintenance
+- tax deduction
+- marginal tax rate
+- residential rental

@@ -1,0 +1,62 @@
+strategy_id: CLR-011
+source_ref: STP-011
+name: Itinerant travel
+categories:
+- Employees
+implementation_text: '1. Diary evidencing business or work-related km travelled.
+
+  2. Letter from the employer evidencing that the employee is required to use their motor vehicle for
+  work purposes and that they have no fixed place of work.'
+explanation_text: 'Itinerant travel involves working in different places for short periods. Employees
+  with itinerant travel include home care nurses, labourers, plumbers, electricians, home visit doctors,
+  etc. The general rule is that an employee''s journey to and from work is private and non-deductible.
+  An exception to this rule is where a taxpayer has ''shifting places of work'', i.e. they are itinerant.
+
+
+  Indicators of itinerant travel are:
+
+
+  • Where travel is a fundamental part of an employee''s work, they must carry out their duties at several
+  places.
+
+  • The employee has no fixed place of work.
+
+  • The employee travels from one work site to another during the day, i.e., at least two work sites each
+  day.
+
+  • There is a degree of uncertainty with the location of the employee''s employment.
+
+
+  Examples of employee travel that is not itinerant include:
+
+
+  • An employee works each day of the week at a different office location. This travel is considered a
+  private home-to-work travel.
+
+  • An employee travels to the office to a different location during the day. The home-to-office travel
+  is private, but the journey from the first office to the second office will be deductible for work travel.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- itinerant travel
+- work-related travel
+- motor vehicle deduction
+- shifting places of work
+- no fixed place of work
+- home care nurses
+- labourers
+- plumbers
+- electricians
+- travel diary
+- employee deductions
+- work travel

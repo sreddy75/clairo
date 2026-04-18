@@ -1,0 +1,75 @@
+strategy_id: CLR-408
+source_ref: STP-408
+name: Establish a family SMSF
+categories:
+- Business_structures
+implementation_text: 'Process:
+
+  1. Establish an SMSF (with a corporate trustee).
+
+  2. Roll over the member''s public offer superannuation balances into the SMSF.
+
+  3. Develop an investment strategy and make investments.'
+explanation_text: 'A self-managed super fund (SMSF) is a superannuation trust structure that benefits
+  its members upon retirement. The main difference between SMSFs and other super funds is that SMSF members
+  are the fund''s trustees.
+
+
+  The advantages of establishing a family SMSF are:
+
+
+  • Tax savings - 0% on the first $1.9 million of a member''s super balance in the pension phase, 10%
+  on any capital gains where the assets are owned for more than 12 months and 15% on any other taxable
+  income.
+
+  • Can combine the super fund balances of up to 6 members to make more substantial investments than a
+  single member could finance (like a farm, commercial property, residential property, etc.).
+
+  • A family''s super contributions are consolidated and kept together (so no multiple super accounts
+  or lost super!).
+
+  • Owning shares in an SMSF is very tax effective as any fully franked dividends will have attached franking
+  credits, giving the SMSF credit for the 30% tax paid by the company. As the standard super fund tax
+  rate is 15%, the excess franking credits will be available to reduce the tax payable on other super
+  fund income or be refunded. Also, even where the SMSF is solely in the pension phase (i.e. paying 0%
+  tax on the first $1.9 million of a member''s super balance), it can still claim a refund of franking
+  credits on any franked dividend income received.
+
+  • Can purchase the business premises or farm (and rent it back to the operating business for arms-length
+  rental income).
+
+  • Non-recourse borrowings can be used to finance the acquisition of more significant investments.
+
+  • Can invest in non-controlled entities that operate businesses and are leveraged.
+
+  • Excellent asset protection, even if the member goes bankrupt. The member''s superannuation balance
+  is still protected from creditors.'
+ato_sources: []
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+- exemption
+- structure
+keywords:
+- smsf
+- self-managed super fund
+- family smsf
+- superannuation
+- pension phase
+- franking credits
+- non-recourse borrowing
+- asset protection
+- corporate trustee
+- retirement
+- capital gains
+- commercial property
+- investment strategy

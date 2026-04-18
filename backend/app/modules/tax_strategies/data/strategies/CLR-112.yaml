@@ -1,0 +1,51 @@
+strategy_id: CLR-112
+source_ref: STP-112
+name: Prepaid income - Arthur Murray case
+categories:
+- Business
+implementation_text: '1. Review the income to determine whether the Arthur Murray case principles would
+  apply.
+
+  2. Prepaid income should be recorded in the financial statements as a liability.
+
+  3. As the services are provided, this liability will be reduced, and the amounts will be treated as
+  income for accounting and tax purposes.'
+explanation_text: 'This strategy deals with how taxpayers receiving up-front prepaid income from a contract
+  that straddles several tax years is taxed. This prepaid income includes prepaid advertising, web service
+  fees, prepaid gym memberships, and construction contracts paid up-front with the services provided over
+  the following 12 months.
+
+
+  Where the Arthur Murray case principles apply, the business receiving the income can allocate the payment
+  to the financial years in which the services are provided to the customers (i.e. over several financial
+  years) and not just the financial year when the up-front payment was received. In deciding Arthur Murray,
+  the Court found that amounts received in advance for dancing lessons were not derived until the lessons
+  were given. Additionally, the circumstances of the receipt made it necessary as a matter of good business
+  sense that the taxpayer should treat ''fees received but not yet earned'' as a liability. The fees are
+  subject to the contingency that the whole or part may have to be repaid, even if only as damages if
+  the taxpayer failed to render the agreed services.'
+ato_sources: []
+case_refs:
+- Arthur Murray
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- prepaid income
+- arthur murray
+- deferred income
+- income recognition
+- contract straddling
+- advance payments
+- gym memberships
+- construction contracts
+- tax deferral
+- unearned income
+- liability accounting
+- multi-year contracts

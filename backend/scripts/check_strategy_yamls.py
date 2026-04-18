@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 # and near-empty prose, not to penalise brief but legitimate content.
 _MIN_IMPL_CHARS = 30
 _MIN_EXPL_CHARS = 150
-_MIN_NAME_CHARS = 4
+_MIN_NAME_CHARS = 2  # "Art" (CLR-099) is a legit strategy — a 3-char name is fine
 
 
 def check_one(path: Path) -> tuple[list[str], list[str]]:

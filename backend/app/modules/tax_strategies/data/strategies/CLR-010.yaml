@@ -1,0 +1,56 @@
+strategy_id: CLR-010
+source_ref: STP-010
+name: Home to work travel
+categories:
+- Employees
+- Business
+implementation_text: '1. The employer provides the employee with a work motor vehicle, a taxi, a panel
+  van or a utility.
+
+  2. The employer incurs the operating costs.
+
+  3. The employee only uses the motor vehicle for home-to-work travel.'
+explanation_text: 'Usually home to work travel for an employee is not tax-deductible as its deemed private
+  travel. An employer can make the employee''s home-to-work travel tax-deductible for the employer if:
+
+
+  The employer provides the employee with a work motor vehicle, a taxi, a panel van or a utility. The
+  utility can be two or four-door, and the carrying capacity is irrelevant.
+
+  The employee only uses the motor vehicle for travelling to and from work and for work-related travel.
+  Any private use of the motor vehicle by the employee is minor, infrequent and irregular.
+
+
+  Achieving the above two requirements means an employer can claim a 100% tax deduction for the motor
+  vehicle expenses incurred and have no fringe benefits tax liability. Also, this motor vehicle benefit
+  is tax-free to the employee as well.
+
+
+  Example: Tom operates an accounting practice and uses the company motor vehicle to visit clients and
+  travel to and from work. As the company motor vehicle is a four-door utility, Tom''s trip from home
+  to the office and return is business travel and tax-deductible. The actual tax savings by making the
+  travel to and from home tax deductible will depend on the distances travelled daily to work but should
+  generally be several thousand dollars per year.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- home to work travel
+- motor vehicle
+- fringe benefits tax
+- fbt exempt
+- utility vehicle
+- panel van
+- employer provided vehicle
+- work travel
+- tax deduction
+- private travel

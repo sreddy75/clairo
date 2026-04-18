@@ -1,0 +1,91 @@
+strategy_id: CLR-434
+source_ref: STP-434
+name: Add holding company to trading company
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Determine if the holding company structure makes economic and tax sense (document why in writing).
+
+  2. Apply to the ATO for a Private Ruling for the transactions.
+
+  3. Determine the market value of the trading company shares. Independent valuation may be required.
+
+  4. Revalue the goodwill value in the trading company financials.
+
+  5. Establish the holding company. The shareholders should be a family trust for asset protection and
+  dividend streaming.
+
+  6. The individual shareholders in the trading company sell their shares to the holding company at market
+  value. Ideally, the sale consideration should be a 100% cash or vendor finance loan (which can be repaid
+  over time when funds are available).
+
+  7. Update the trading companies'' ASIC records for the change in shareholders.'
+explanation_text: 'A holding company is a parent corporation that owns enough voting shares in another
+  company to control its policies and management. The benefits of adding a holding company as the parent
+  corporation of a trading company include the following:
+
+
+  The holding company is protected from losses if a subsidiary company fails and is liquidated. The subsidiary
+  company''s creditors have no claim against the holding company''s assets.
+
+  Allows different company assets to be owned by other subsidiary companies. For example, one subsidiary
+  may own the brand name and trademarks, another real estate, another equipment, and another to operate
+  the trading business.
+
+  Subsidiary companies may be domiciled and operate in a country other than the parent company. The subsidiary
+  most likely has its senior management structure, products, and clients.
+
+  Subsidiary company costs are minimised by having the holding company provide certain centralised services
+  such as finance, administration, marketing, and financial systems.
+
+  Holding companies can raise equity capital and loan funds more cheaply than an individual subsidiary
+  company (as it provides investors and lenders with lower risk than a subsidiary company).
+
+
+  The tax advantages of establishing a holding company for a trading company include the following:
+
+
+  Franked dividends paid by the trading company can be tax-free and accumulated tax-free in the holding
+  company, which can then invest these funds.
+
+  The shareholders in the trading company can realise the market value of their shares (and release cash
+  to themselves) by selling their claims to the holding company. The trading company shareholders may
+  be able to apply the small business CGT concessions to reduce or eliminate any tax liabilities on the
+  transaction.
+
+  The tax consolidation regime can be applied to wholly-owned subsidiaries, so the losses of one group
+  company are available to the consolidated entity. For tax purposes, inter-group transactions are also
+  eliminated.
+
+  The holding company can charge the subsidiary companies for services provided and shift profits (subject
+  to arms-length transfer pricing prices).'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- holding company
+- trading company
+- asset protection
+- franked dividends
+- small business cgt concessions
+- tax consolidation
+- corporate structure
+- subsidiary
+- family trust
+- transfer pricing
+- dividend streaming
+- share sale
+- market value
+- private ruling
+- intergroup transactions
