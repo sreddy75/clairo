@@ -287,6 +287,9 @@ export interface TaxPlan {
   data_stale?: boolean;
   // Spec 059 FR-006 — bounded on-demand payroll sync status
   payroll_sync_status?: 'ready' | 'pending' | 'unavailable' | 'not_required' | null;
+  // Spec 059.1 — user-selectable projection basis. ISO date (YYYY-MM-DD)
+  // or null = follow the Xero reconciliation date.
+  as_at_date?: string | null;
 }
 
 export interface TaxPlanListItem {

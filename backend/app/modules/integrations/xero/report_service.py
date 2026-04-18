@@ -731,6 +731,7 @@ class XeroReportService:
         self,
         connection_id: UUID,
         force_refresh: bool = False,
+        to_date_override: str | None = None,
     ) -> list[dict[str, Any]]:
         """Get per-account bank balances from the Bank Summary report.
 
@@ -740,6 +741,10 @@ class XeroReportService:
         Args:
             connection_id: The Xero connection ID.
             force_refresh: Bypass cache and fetch fresh data from Xero.
+            to_date_override: Optional ISO date (YYYY-MM-DD) that anchors the
+                Bank Summary report to that date rather than "now". Used by
+                Spec 059.1 when the accountant has set an as-at date on the
+                tax plan.
 
         Returns:
             List of per-account balance dicts.
@@ -751,6 +756,7 @@ class XeroReportService:
             report_type="bank_summary",
             period_key="current",
             force_refresh=force_refresh,
+            to_date_override=to_date_override,
         )
         rows_data = report_data.get("rows", [])
         if not rows_data:

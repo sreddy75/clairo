@@ -136,12 +136,19 @@ export async function pullXeroFinancials(
   token: string,
   planId: string,
   forceRefresh = false,
+  // Spec 059.1 — optional as-at anchor. When provided, the plan's
+  // as_at_date is updated before the pull so the refreshed numbers align
+  // with the new anchor in one round-trip. Pass an ISO date string
+  // (YYYY-MM-DD) or null/undefined to leave the existing anchor in place.
+  asAtDate?: string | null,
 ): Promise<FinancialsPullResponse> {
+  const body: Record<string, unknown> = { force_refresh: forceRefresh };
+  if (asAtDate !== undefined) body.as_at_date = asAtDate;
   const response = await apiClient.post(
     `${BASE}/${planId}/financials/pull-xero`,
     {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ force_refresh: forceRefresh }),
+      body: JSON.stringify(body),
     },
   );
   return apiClient.handleResponse<FinancialsPullResponse>(response);

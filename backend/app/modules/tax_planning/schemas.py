@@ -1,7 +1,7 @@
 """Pydantic request/response schemas for the Tax Planning module."""
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Literal
 
@@ -31,6 +31,11 @@ class TaxPlanUpdate(BaseModel):
     status: TaxPlanStatus | None = None
     notes: str | None = None
     entity_type: EntityType | None = None
+    # Spec 059.1 — setting as_at_date does NOT trigger a refresh on its own;
+    # the refresh endpoint (POST /tax-plans/{id}/financials/pull-xero) reads
+    # the updated value. Explicit two-step so the accountant can edit notes
+    # without triggering an expensive Xero pull.
+    as_at_date: date | None = None
 
 
 class IncomeBreakdownItem(BaseModel):
@@ -72,6 +77,11 @@ class FinancialsInput(BaseModel):
 
 class XeroPullRequest(BaseModel):
     force_refresh: bool = False
+    # Spec 059.1 — when provided, the plan's as_at_date is updated before
+    # the Xero pull so the refreshed numbers honour the new anchor in a
+    # single round-trip. Null is a no-op (leave the existing anchor in
+    # place, whether that's a previous user-set date or null).
+    as_at_date: date | None = None
 
 
 class ChatMessageRequest(BaseModel):
@@ -256,6 +266,10 @@ class TaxPlanResponse(BaseModel):
     # Spec 059 FR-006 — payroll sync lifecycle reported to the frontend so it
     # can render the "payroll still syncing" banner and poll for updates.
     payroll_sync_status: Literal["ready", "pending", "unavailable", "not_required"] | None = None
+    # Spec 059.1 — user-selectable "as at" anchor for projections. Null means
+    # "follow the Xero reconciliation date"; typically set to a BAS quarter
+    # end so the projection basis is a known-clean checkpoint.
+    as_at_date: date | None = None
 
 
 class TaxPlanListItem(BaseModel):
