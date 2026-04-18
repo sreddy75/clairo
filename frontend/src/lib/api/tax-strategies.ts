@@ -99,6 +99,18 @@ export interface PipelineStatsResponse {
   counts: Record<StrategyStatus, number>;
 }
 
+export type StalenessReason =
+  | 'content_drift'
+  | 'missing_row'
+  | 'version_ahead'
+  | 'yaml_missing';
+
+export interface StalenessReportResponse {
+  total: number;
+  by_reason: Partial<Record<StalenessReason, string[]>>;
+  entries: Array<{ strategy_id: string; reason: StalenessReason }>;
+}
+
 export interface ListStrategiesParams {
   status?: StrategyStatus | null;
   category?: string | null;
@@ -202,6 +214,15 @@ export async function rejectToDraft(
     body: JSON.stringify({ reviewer_notes: reviewerNotes }),
   });
   return apiClient.handleResponse<TaxStrategyDetail>(response);
+}
+
+export async function getStalenessReport(
+  token: string,
+): Promise<StalenessReportResponse> {
+  const response = await apiClient.get(`${ADMIN_BASE}/staleness`, {
+    headers: authHeader(token),
+  });
+  return apiClient.handleResponse<StalenessReportResponse>(response);
 }
 
 export async function seedFromCsv(token: string): Promise<SeedSummaryResponse> {

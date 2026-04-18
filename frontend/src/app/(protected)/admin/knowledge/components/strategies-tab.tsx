@@ -43,6 +43,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import {
   STRATEGY_CATEGORIES,
+  type StalenessReportResponse,
   type StrategyCategory,
   type StrategyStatus,
 } from '@/lib/api/tax-strategies';
@@ -51,6 +52,7 @@ import { cn } from '@/lib/utils';
 import {
   usePipelineStats,
   useSeedFromCsv,
+  useStalenessReport,
   useStrategyList,
 } from '../hooks/use-tax-strategies';
 
@@ -131,6 +133,7 @@ export function StrategiesTab() {
   };
   const query = useStrategyList(listParams);
   const statsQuery = usePipelineStats();
+  const stalenessQuery = useStalenessReport();
   const seed = useSeedFromCsv({
     onSuccess: (summary) => {
       setSeedConfirmOpen(false);
@@ -157,6 +160,8 @@ export function StrategiesTab() {
 
   return (
     <div className="space-y-4">
+      <StalenessBanner data={stalenessQuery.data} />
+
       {/* Top bar: status counts + actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <StatusCounts
@@ -450,6 +455,39 @@ function StatusCounts({
           {s.replace('_', ' ')}
         </span>
       ))}
+    </div>
+  );
+}
+
+function StalenessBanner({
+  data,
+}: {
+  data: StalenessReportResponse | undefined;
+}) {
+  if (!data || data.total === 0) return null;
+  const drift = data.by_reason.content_drift ?? [];
+  const missing = data.by_reason.missing_row ?? [];
+  const ahead = data.by_reason.version_ahead ?? [];
+  const orphan = data.by_reason.yaml_missing ?? [];
+
+  const parts: string[] = [];
+  if (drift.length) parts.push(`${drift.length} content drift`);
+  if (missing.length) parts.push(`${missing.length} missing DB rows`);
+  if (ahead.length) parts.push(`${ahead.length} version bump pending`);
+  if (orphan.length) parts.push(`${orphan.length} YAML missing (potential orphan)`);
+
+  return (
+    <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-900/40 dark:bg-amber-950/30">
+      <p className="font-medium text-foreground">
+        Strategy catalogue is out of sync with the committed YAMLs
+      </p>
+      <p className="mt-1 text-muted-foreground">
+        {parts.join(' · ')}. Run{' '}
+        <code className="rounded bg-amber-100 px-1 py-0.5 text-xs dark:bg-amber-900/40">
+          uv run python scripts/sync_strategies_from_yaml.py
+        </code>{' '}
+        to reconcile.
+      </p>
     </div>
   );
 }

@@ -152,6 +152,37 @@ async def get_pipeline_stats(
     return PipelineStatsResponse(counts=counts)
 
 
+@router.get("/staleness")
+async def get_staleness_report(
+    _user: SuperAdmin,
+    session: DbSession,
+) -> dict:
+    """Compare live `TaxStrategy` rows against committed `data/strategies/*.yaml`.
+
+    Three drift types reported per strategy id:
+      - content_drift: both YAML and DB row exist but content hashes differ
+        (someone edited a YAML without running the sync).
+      - missing_row: YAML file exists but no DB row for it (sync never ran).
+      - version_ahead: YAML version is higher than DB's live row — explicit
+        version bump still pending sync.
+      - yaml_missing: DB row exists but no YAML — candidate orphan.
+
+    Consumed by the admin Strategies tab to surface a drift banner.
+    """
+    from app.modules.tax_strategies.sync import compute_staleness_report
+
+    entries = await compute_staleness_report(session)
+    # Group by reason for easier rendering in the frontend.
+    grouped: dict[str, list[str]] = {}
+    for e in entries:
+        grouped.setdefault(e.reason, []).append(e.strategy_id)
+    return {
+        "total": len(entries),
+        "by_reason": grouped,
+        "entries": [{"strategy_id": e.strategy_id, "reason": e.reason} for e in entries],
+    }
+
+
 @router.get("/{strategy_id}", response_model=TaxStrategyDetail)
 async def get_tax_strategy_detail(
     strategy_id: str,

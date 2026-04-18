@@ -20,6 +20,7 @@ import {
 import {
   approveAndPublish,
   getPipelineStats,
+  getStalenessReport,
   getStrategyDetail,
   listStrategies,
   rejectToDraft,
@@ -30,6 +31,7 @@ import {
   type ListStrategiesParams,
   type PipelineStatsResponse,
   type SeedSummaryResponse,
+  type StalenessReportResponse,
   type StrategyStage,
   type TaxStrategyDetail,
   type TaxStrategyListResponse,
@@ -46,6 +48,7 @@ export const taxStrategiesKeys = {
   detail: (strategyId: string) =>
     [...taxStrategiesKeys.all, 'detail', strategyId] as const,
   pipelineStats: () => [...taxStrategiesKeys.all, 'pipeline-stats'] as const,
+  staleness: () => [...taxStrategiesKeys.all, 'staleness'] as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -89,6 +92,20 @@ export function usePipelineStats(options: { enabled?: boolean } = {}) {
       const token = await getToken();
       if (!token) throw new Error('Not authenticated');
       return getPipelineStats(token);
+    },
+    enabled: options.enabled ?? true,
+    staleTime: 30_000,
+  });
+}
+
+export function useStalenessReport(options: { enabled?: boolean } = {}) {
+  const { getToken } = useAuth();
+  return useQuery<StalenessReportResponse>({
+    queryKey: taxStrategiesKeys.staleness(),
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token) throw new Error('Not authenticated');
+      return getStalenessReport(token);
     },
     enabled: options.enabled ?? true,
     staleTime: 30_000,

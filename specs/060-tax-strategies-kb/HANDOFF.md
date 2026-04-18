@@ -1,6 +1,6 @@
 # Spec 060 — Handoff
 
-**Status as of 2026-04-19**: Phase 1 code-complete for US1–US4 except where blocked on external inputs (415-row CSV) or harness work (DB integration test fixture). Backend citation pipeline + draft/enrich LLM tasks + admin API + seed API all green. Frontend chip layer, admin shell, US2 polish, US3 filters/kanban/history, seed button, status counts, and unit tests all shipped. `58/77` tasks done (~75%). Remaining work is real-data population (T059), heavy-infra integration tests (T022/T023/T024/T052/T058), end-to-end walkthrough (T066), and PR/merge (TFINAL-3..6).
+**Status as of 2026-04-19**: Phase 1 code-complete + YAML-based bulk-import workflow in place. 5 pilot strategy YAMLs extracted from the Tax Fitness PDFs with two-pass strict verification. Sync pipeline + idempotent publish (content_hash check in Pinecone) + staleness report (backend + admin UI banner) all wired. Remaining work is: running the extractor over the remaining 304 PDFs, running the local bulk publish (requires flipping `TAX_STRATEGIES_VECTOR_WRITE_ENABLED=true` on local, against prod Pinecone credentials), deploying, then running `sync_strategies_from_yaml` in prod (which reuses the already-embedded vectors).
 
 ---
 

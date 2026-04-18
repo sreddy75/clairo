@@ -198,20 +198,67 @@ async def _execute_publish(
     # 2. Get-or-create the singleton tax_strategies_internal KnowledgeSource.
     source_id = await _ensure_strategy_source(session)
 
-    # 3. Embed all chunk bodies in one call (Voyage batch).
-    voyage = VoyageService()
+    # 3. Idempotency check — fetch any existing vectors up front. If every
+    # vector id already exists in Pinecone with a matching content_hash
+    # (the hash is stored in the vector's metadata), we skip both the
+    # Voyage embed call AND the Pinecone upsert. The Postgres rows
+    # (ContentChunk + BM25IndexEntry) are still written since they're
+    # per-environment state — this is what lets prod "catch up" to local
+    # without re-embedding (local already populated Pinecone during the
+    # one-off bulk bootstrap).
+    target_namespace = get_namespace_with_env(_STRATEGY_COLLECTION)
     pinecone = PineconeService(get_settings())
-    vector_ids: list[str] = []
-    pinecone_payloads: list[dict[str, Any]] = []
-    pinecone_vectors: list[list[float]] = []
 
-    now = datetime.now(UTC)
+    # Precompute vector ids + chunk content hashes in one pass so we can
+    # interrogate Pinecone before doing any embedding work.
+    chunk_records: list[dict[str, Any]] = []
+    vector_ids: list[str] = []
     for chunk in chunks:
         section = chunk.metadata["chunk_section"]
         vector_id = (
             f"tax_strategy:{strategy.strategy_id}:{section}:v{strategy.version}"
         )
-        embedding = await voyage.embed_document(chunk.text)
+        chunk_records.append(
+            {
+                "chunk": chunk,
+                "section": section,
+                "vector_id": vector_id,
+                "content_hash": _content_hash(chunk.text),
+            }
+        )
+        vector_ids.append(vector_id)
+
+    existing_vectors = await pinecone.fetch_vectors(
+        index_name=INDEX_NAME, ids=vector_ids, namespace=target_namespace
+    )
+    all_present_and_matching = True
+    for rec in chunk_records:
+        fetched = existing_vectors.get(rec["vector_id"])
+        if fetched is None:
+            all_present_and_matching = False
+            break
+        # Pinecone Vector objects expose `.metadata` as a dict. Be defensive
+        # — some SDK shapes return dicts directly.
+        meta = (
+            getattr(fetched, "metadata", None)
+            if not isinstance(fetched, dict)
+            else fetched.get("metadata")
+        )
+        if not meta or meta.get("content_hash") != rec["content_hash"]:
+            all_present_and_matching = False
+            break
+
+    # 4. Embed + upsert — but only if the idempotency check failed.
+    voyage = VoyageService()
+    now = datetime.now(UTC)
+    pinecone_payloads: list[dict[str, Any]] = []
+    pinecone_vectors: list[list[float]] = []
+
+    for rec in chunk_records:
+        chunk = rec["chunk"]
+        section = rec["section"]
+        vector_id = rec["vector_id"]
+        content_hash_val = rec["content_hash"]
 
         payload: dict[str, Any] = {
             "chunk_id": str(uuid4()),
@@ -233,6 +280,7 @@ async def _execute_publish(
             "content_type": "tax_strategy",
             "source_type": "tax_strategy",
             "text": chunk.text,
+            "content_hash": content_hash_val,
         }
         # Optional numeric bands — Pinecone rejects None, so include only
         # when set.
@@ -251,15 +299,17 @@ async def _execute_publish(
         if strategy.fy_applicable_to is not None:
             payload["fy_applicable_to"] = strategy.fy_applicable_to.isoformat()
 
-        # Persist ContentChunk + BM25IndexEntry before Pinecone upsert so a
-        # vector-store failure doesn't leave orphan vectors.
+        # Always write ContentChunk + BM25IndexEntry — these are Postgres
+        # state per environment. The chunk_id is a fresh UUID on every
+        # run; Pinecone metadata's chunk_id is authoritative for vector
+        # lookups either way.
         content_chunk_id = UUID(payload["chunk_id"])
         content_chunk = ContentChunk(
             id=content_chunk_id,
             source_id=source_id,
             qdrant_point_id=vector_id,
             collection_name=_STRATEGY_COLLECTION,
-            content_hash=_content_hash(chunk.text),
+            content_hash=content_hash_val,
             source_url=f"clairo://tax_strategies/{strategy.strategy_id}",
             title=strategy.name,
             source_type="tax_strategy",
@@ -287,25 +337,33 @@ async def _execute_publish(
         )
         session.add(bm25)
 
-        vector_ids.append(vector_id)
-        pinecone_vectors.append(embedding)
-        pinecone_payloads.append(payload)
+        if not all_present_and_matching:
+            # Only do the expensive embed call when we're actually going to
+            # upsert. Preserves the per-chunk order of vector_ids.
+            embedding = await voyage.embed_document(chunk.text)
+            pinecone_vectors.append(embedding)
+            pinecone_payloads.append(payload)
 
     await session.flush()
 
-    # 4. Upsert into Pinecone. Runs AFTER the DB rows are flushed so a
-    # failure here rolls back on session exit and no orphan ContentChunks
-    # are committed (we haven't called session.commit() yet).
-    target_namespace = get_namespace_with_env(_STRATEGY_COLLECTION)
-    await pinecone.upsert_vectors(
-        index_name=INDEX_NAME,
-        ids=vector_ids,
-        vectors=pinecone_vectors,
-        payloads=pinecone_payloads,
-        namespace=target_namespace,
-    )
+    # 5. Upsert into Pinecone — only when we needed to embed.
+    if all_present_and_matching:
+        logger.info(
+            "publish_strategy.idempotent_skip vectors=%d strategy=%s "
+            "(all vectors present with matching content_hash; skipping embed+upsert)",
+            len(vector_ids),
+            strategy.strategy_id,
+        )
+    else:
+        await pinecone.upsert_vectors(
+            index_name=INDEX_NAME,
+            ids=vector_ids,
+            vectors=pinecone_vectors,
+            payloads=pinecone_payloads,
+            namespace=target_namespace,
+        )
 
-    # 5. Transition the parent to published; emits .published audit event.
+    # 6. Transition the parent to published; emits .published audit event.
     await svc._transition_status(
         strategy,
         new_status="published",
@@ -313,6 +371,7 @@ async def _execute_publish(
         extra_metadata={
             "chunk_count": len(chunks),
             "vector_store_namespace": target_namespace,
+            "vectors_reused": all_present_and_matching,
         },
     )
 

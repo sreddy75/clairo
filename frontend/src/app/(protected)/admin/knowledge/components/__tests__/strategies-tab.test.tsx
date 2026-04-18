@@ -12,14 +12,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { StrategiesTab } from '@/app/(protected)/admin/knowledge/components/strategies-tab';
+import type * as TaxStrategiesApi from '@/lib/api/tax-strategies';
 
 type ListParams = Record<string, unknown>;
 const recordedCalls: ListParams[] = [];
 
 vi.mock('@/lib/api/tax-strategies', async () => {
-  const actual = await vi.importActual<
-    typeof import('@/lib/api/tax-strategies')
-  >('@/lib/api/tax-strategies');
+  const actual =
+    await vi.importActual<typeof TaxStrategiesApi>('@/lib/api/tax-strategies');
   return {
     ...actual,
     listStrategies: vi.fn((_token: string, params: ListParams) => {
@@ -119,7 +119,7 @@ describe('StrategiesTab', () => {
     fireEvent.click(screen.getByRole('button', { name: 'In review' }));
     await waitFor(() => {
       const last = recordedCalls[recordedCalls.length - 1];
-      expect(last.status).toBe('in_review');
+      expect(last?.status).toBe('in_review');
     });
   });
 
