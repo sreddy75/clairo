@@ -42,6 +42,7 @@ import logging
 import sys
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -53,12 +54,19 @@ from sqlalchemy.ext.asyncio import (  # noqa: E402
 from sqlalchemy.pool import NullPool  # noqa: E402
 
 from app.config import get_settings  # noqa: E402
+from app.core.tenant_context import TenantContext  # noqa: E402
 from app.modules.tax_strategies.env_gate import vector_writes_enabled  # noqa: E402
 from app.modules.tax_strategies.sync import (  # noqa: E402
     DEFAULT_STRATEGIES_DIR,
     SyncSummary,
     sync_all,
 )
+
+# Sentinel UUID used for platform-scope audit events emitted by this
+# bulk-sync CLI. `tax_strategies.tenant_id` is the string "platform" —
+# the audit log needs a UUID tenant. Using the nil UUID makes platform-
+# scope events distinguishable from per-tenant events at a glance.
+_PLATFORM_TENANT_UUID = UUID(int=0)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
@@ -102,6 +110,10 @@ async def run(args: argparse.Namespace) -> int:
 
     if args.dry_run:
         logger.info("DRY RUN — no DB writes")
+
+    # Platform-scope audit — audit_log requires a UUID tenant even though
+    # tax_strategies operate under the string tenant "platform".
+    TenantContext.set_current_tenant_id(_PLATFORM_TENANT_UUID)
 
     factory = _make_session_factory()
     async with factory() as session:
