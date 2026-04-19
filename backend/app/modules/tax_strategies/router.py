@@ -59,13 +59,27 @@ async def require_super_admin(
 
     Frontend also enforces this in the admin page guard; this is a backend
     check so direct API callers can't bypass the UI gate.
+
+    Dev fallback: `DEV_SUPER_ADMIN_EMAILS` env var (comma-separated) lets
+    admin users bypass the role check when Clerk's default JWT template
+    doesn't include `public_metadata.role` at session token level. Must
+    stay empty in prod — the Clerk JWT template should carry the role
+    claim there.
     """
-    if user.role != "super_admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="super_admin role required",
-        )
-    return user
+    if user.role == "super_admin":
+        return user
+
+    import os
+
+    fallback = os.environ.get("DEV_SUPER_ADMIN_EMAILS", "")
+    allowed = {e.strip().lower() for e in fallback.split(",") if e.strip()}
+    if user.email and user.email.lower() in allowed:
+        return user
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="super_admin role required",
+    )
 
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
