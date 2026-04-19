@@ -60,20 +60,30 @@ async def require_super_admin(
     Frontend also enforces this in the admin page guard; this is a backend
     check so direct API callers can't bypass the UI gate.
 
-    Dev fallback: `DEV_SUPER_ADMIN_EMAILS` env var (comma-separated) lets
-    admin users bypass the role check when Clerk's default JWT template
-    doesn't include `public_metadata.role` at session token level. Must
-    stay empty in prod — the Clerk JWT template should carry the role
-    claim there.
+    Dev fallbacks: when Clerk's default session JWT template omits `role`,
+    `email`, and/or `public_metadata`, the check falls back to
+    comma-separated `DEV_SUPER_ADMIN_EMAILS` or `DEV_SUPER_ADMIN_SUBS` env
+    vars (matching `sub` is the most reliable since Clerk's default JWT
+    carries `sub` unconditionally). Both must stay empty in staging/prod —
+    configure the Clerk JWT template there to include `role` (and
+    optionally `email`) from `user.public_metadata`.
     """
     if user.role == "super_admin":
         return user
 
+    # Dev fallbacks — Clerk's default session JWT omits email + role, only
+    # carries `sub`. Match against either the email (if the JWT template is
+    # configured to include it) or the Clerk user id (`sub`) from env vars.
     import os
 
-    fallback = os.environ.get("DEV_SUPER_ADMIN_EMAILS", "")
-    allowed = {e.strip().lower() for e in fallback.split(",") if e.strip()}
-    if user.email and user.email.lower() in allowed:
+    email_fallback = os.environ.get("DEV_SUPER_ADMIN_EMAILS", "")
+    allowed_emails = {e.strip().lower() for e in email_fallback.split(",") if e.strip()}
+    if user.email and user.email.lower() in allowed_emails:
+        return user
+
+    sub_fallback = os.environ.get("DEV_SUPER_ADMIN_SUBS", "")
+    allowed_subs = {s.strip() for s in sub_fallback.split(",") if s.strip()}
+    if user.sub and user.sub in allowed_subs:
         return user
 
     raise HTTPException(
