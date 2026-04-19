@@ -36,6 +36,10 @@ RUN uv pip install -e ".[ai]"
 COPY app/ ./app/
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
+# Ship one-off maintenance scripts (e.g. spec 060
+# `sync_strategies_from_yaml.py` for the prod catch-up run). Run via
+# `railway ssh --service backend-api` then `python scripts/<name>.py`.
+COPY scripts/ ./scripts/
 
 # ============================================================================
 # Stage 2: Runtime - Minimal production image
