@@ -71,18 +71,24 @@ async def require_super_admin(
     if user.role == "super_admin":
         return user
 
-    # Dev fallbacks — Clerk's default session JWT omits email + role, only
-    # carries `sub`. Match against either the email (if the JWT template is
-    # configured to include it) or the Clerk user id (`sub`) from env vars.
     import os
+    import sys
 
     email_fallback = os.environ.get("DEV_SUPER_ADMIN_EMAILS", "")
     allowed_emails = {e.strip().lower() for e in email_fallback.split(",") if e.strip()}
-    if user.email and user.email.lower() in allowed_emails:
-        return user
-
     sub_fallback = os.environ.get("DEV_SUPER_ADMIN_SUBS", "")
     allowed_subs = {s.strip() for s in sub_fallback.split(",") if s.strip()}
+
+    print(
+        f"[require_super_admin] role={user.role!r} email={user.email!r} "
+        f"sub={user.sub!r} allowed_emails={sorted(allowed_emails)} "
+        f"allowed_subs={sorted(allowed_subs)}",
+        file=sys.stderr,
+        flush=True,
+    )
+
+    if user.email and user.email.lower() in allowed_emails:
+        return user
     if user.sub and user.sub in allowed_subs:
         return user
 
