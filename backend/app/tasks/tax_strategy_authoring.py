@@ -213,7 +213,7 @@ async def _execute_publish(
     # without re-embedding (local already populated Pinecone during the
     # one-off bulk bootstrap).
     target_namespace = get_namespace_with_env(_STRATEGY_COLLECTION)
-    pinecone = PineconeService(get_settings())
+    pinecone = PineconeService(get_settings().pinecone)
 
     # Precompute vector ids + chunk content hashes in one pass so we can
     # interrogate Pinecone before doing any embedding work.
@@ -260,7 +260,7 @@ async def _execute_publish(
         raise VectorWriteDisabledError(strategy.strategy_id)
 
     # 4. Embed + upsert — but only if the idempotency check failed.
-    voyage = VoyageService()
+    voyage = VoyageService(get_settings().voyage)
     now = datetime.now(UTC)
     pinecone_payloads: list[dict[str, Any]] = []
     pinecone_vectors: list[list[float]] = []
