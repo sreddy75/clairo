@@ -217,13 +217,36 @@ async def _execute_publish(
 
     # Precompute vector ids + chunk content hashes in one pass so we can
     # interrogate Pinecone before doing any embedding work.
+    #
+    # Vector-id scheme: `tax_strategy:CLR-XXX:section:vN` for single-chunk
+    # sections (backward compatible with the original design), and
+    # `tax_strategy:CLR-XXX:section:M:vN` (with zero-based `M` index) when a
+    # section splits into multiple chunks — which happens for strategies
+    # whose implementation_text or explanation_text exceeds
+    # _MAX_BODY_TOKENS and gets broken at paragraph boundaries by the
+    # chunker. Without the index, multi-chunk sections collide on
+    # `uq_content_chunks_qdrant_point`.
+    section_chunk_counts: dict[str, int] = {}
+    for chunk in chunks:
+        s = chunk.metadata["chunk_section"]
+        section_chunk_counts[s] = section_chunk_counts.get(s, 0) + 1
+
+    section_indices: dict[str, int] = {}
     chunk_records: list[dict[str, Any]] = []
     vector_ids: list[str] = []
     for chunk in chunks:
         section = chunk.metadata["chunk_section"]
-        vector_id = (
-            f"tax_strategy:{strategy.strategy_id}:{section}:v{strategy.version}"
-        )
+        if section_chunk_counts[section] > 1:
+            idx = section_indices.get(section, 0)
+            vector_id = (
+                f"tax_strategy:{strategy.strategy_id}:{section}:{idx}:"
+                f"v{strategy.version}"
+            )
+            section_indices[section] = idx + 1
+        else:
+            vector_id = (
+                f"tax_strategy:{strategy.strategy_id}:{section}:v{strategy.version}"
+            )
         chunk_records.append(
             {
                 "chunk": chunk,
@@ -310,43 +333,75 @@ async def _execute_publish(
         if strategy.fy_applicable_to is not None:
             payload["fy_applicable_to"] = strategy.fy_applicable_to.isoformat()
 
-        # Always write ContentChunk + BM25IndexEntry — these are Postgres
-        # state per environment. The chunk_id is a fresh UUID on every
-        # run; Pinecone metadata's chunk_id is authoritative for vector
-        # lookups either way.
-        content_chunk_id = UUID(payload["chunk_id"])
-        content_chunk = ContentChunk(
-            id=content_chunk_id,
-            source_id=source_id,
-            qdrant_point_id=vector_id,
-            collection_name=_STRATEGY_COLLECTION,
-            content_hash=content_hash_val,
-            source_url=f"clairo://tax_strategies/{strategy.strategy_id}",
-            title=strategy.name,
-            source_type="tax_strategy",
-            entity_types=list(strategy.entity_types),
-            industries=list(strategy.industry_triggers),
-            content_type="tax_strategy",
-            section_ref=strategy.strategy_id,
-            topic_tags=list(strategy.categories),
-            natural_key=strategy.strategy_id,
-            tax_strategy_id=strategy.id,
-            chunk_section=section,
-            context_header=chunk.metadata["context_header"],
-            created_at=now,
-            updated_at=now,
+        # ContentChunk + BM25IndexEntry writes are idempotent on re-run —
+        # required so that a partial prior run (e.g. one that crashed after
+        # writing some chunks but not others) can be resumed cleanly. Look
+        # up by qdrant_point_id (unique constraint); update content +
+        # metadata on hit, insert on miss.
+        existing_chunk_q = await session.execute(
+            select(ContentChunk).where(ContentChunk.qdrant_point_id == vector_id)
         )
-        session.add(content_chunk)
+        existing_chunk = existing_chunk_q.scalar_one_or_none()
+
+        if existing_chunk is not None:
+            existing_chunk.content_hash = content_hash_val
+            existing_chunk.title = strategy.name
+            existing_chunk.entity_types = list(strategy.entity_types)
+            existing_chunk.industries = list(strategy.industry_triggers)
+            existing_chunk.topic_tags = list(strategy.categories)
+            existing_chunk.tax_strategy_id = strategy.id
+            existing_chunk.chunk_section = section
+            existing_chunk.context_header = chunk.metadata["context_header"]
+            existing_chunk.updated_at = now
+            content_chunk_row = existing_chunk
+            # Pinecone payload's chunk_id stays aligned with the existing
+            # DB row so upsert metadata continues to link back correctly.
+            payload["chunk_id"] = str(existing_chunk.id)
+        else:
+            content_chunk_row = ContentChunk(
+                id=UUID(payload["chunk_id"]),
+                source_id=source_id,
+                qdrant_point_id=vector_id,
+                collection_name=_STRATEGY_COLLECTION,
+                content_hash=content_hash_val,
+                source_url=f"clairo://tax_strategies/{strategy.strategy_id}",
+                title=strategy.name,
+                source_type="tax_strategy",
+                entity_types=list(strategy.entity_types),
+                industries=list(strategy.industry_triggers),
+                content_type="tax_strategy",
+                section_ref=strategy.strategy_id,
+                topic_tags=list(strategy.categories),
+                natural_key=strategy.strategy_id,
+                tax_strategy_id=strategy.id,
+                chunk_section=section,
+                context_header=chunk.metadata["context_header"],
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(content_chunk_row)
         await session.flush()
 
-        tokens = _tokenise_for_bm25(chunk.text)
-        bm25 = BM25IndexEntry(
-            chunk_id=content_chunk.id,
-            collection_name=_STRATEGY_COLLECTION,
-            tokens=tokens,
-            section_refs=[strategy.strategy_id],
+        # BM25IndexEntry primary key is chunk_id — upsert via existence
+        # check against the chunk we just reconciled.
+        existing_bm25_q = await session.execute(
+            select(BM25IndexEntry).where(
+                BM25IndexEntry.chunk_id == content_chunk_row.id
+            )
         )
-        session.add(bm25)
+        existing_bm25 = existing_bm25_q.scalar_one_or_none()
+        tokens = _tokenise_for_bm25(chunk.text)
+        if existing_bm25 is not None:
+            existing_bm25.tokens = tokens
+            existing_bm25.section_refs = [strategy.strategy_id]
+        else:
+            bm25 = BM25IndexEntry(
+                chunk_id=content_chunk_row.id,
+                collection_name=_STRATEGY_COLLECTION,
+                tokens=tokens,
+                section_refs=[strategy.strategy_id],
+            )
+            session.add(bm25)
 
         if not all_present_and_matching:
             # Only do the expensive embed call when we're actually going to
