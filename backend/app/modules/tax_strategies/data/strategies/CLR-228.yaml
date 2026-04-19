@@ -1,0 +1,64 @@
+strategy_id: CLR-228
+source_ref: STP-228
+name: Releasing trapped company franking credits
+categories:
+- Investors_retirees
+- Business
+implementation_text: '1. The company pays a dividend from untaxed profits.
+
+  2. Trapped franking credits are used to frank these profits, so the dividends are fully franked.'
+explanation_text: 'Under the imputation system, franking credits can become trapped in a company and wasted.
+  Trapped franking credits will occur where:
+
+
+  Company profits were taxed at 30% (or higher), and the maximum franking credit that can be paid out
+  is a lower rate, say 25%. The extra 5% franking credits are trapped.
+
+  A company has a non-deductible add-back for tax purposes such as Christmas party expenditures. As a
+  consequence, taxable income is higher than the accounting profit.
+
+
+  The company must pay a dividend from untaxed profits to release the trapped franking credits. Although
+  these profits have not previously been taxed when paid out as dividends, trapped franking credits can
+  be used to frank these profits. Companies can have the following untaxed profits:
+
+
+  Unrealised capital profits that have been credited to the asset revaluation reserve.
+
+  Pre-CGT capital gains.
+
+  Small businesses have 50% active asset reductions.
+
+  Tax-exempt government grants.
+
+  Tax deductions that don''t reduce accounting profits. For example, Division 43 building allowance deductions.
+
+  Any exempt income.'
+ato_sources:
+- Division 43
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- franking credits
+- trapped franking credits
+- imputation system
+- dividends
+- untaxed profits
+- fully franked
+- company tax
+- asset revaluation reserve
+- pre-cgt
+- division 43
+- tax-exempt income
+- small business
+- active asset reduction
+- franking account

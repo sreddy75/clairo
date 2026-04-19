@@ -1,0 +1,75 @@
+strategy_id: CLR-024
+source_ref: STP-024
+name: Payroll tax
+categories:
+- ATO_obligations
+- Recommendations
+implementation_text: '1. Payroll tax is self-assessed, and you must register with each state and territory
+  where you pay taxable wages when your taxable Australia-wide wages exceed the threshold.
+
+  2. Payroll tax is complicated and can cover wages, contract payments, labour hire payments, and connected
+  entities.
+
+  3. Have a payroll tax self-assessment audit (ideally by a payroll tax expert, typically your accountant).'
+explanation_text: 'Payroll tax is a state-based tax imposed by the various state and territory governments.
+  It is levied on the wages employers pay their employees, including wages, contract payments, bonuses,
+  and other forms of remuneration. Payroll tax is one of the ways that state governments generate revenue
+  to fund their public services and infrastructure projects.
+
+
+  The specific rules and rates for payroll tax vary from State to State, as each State and territory has
+  its legislation governing payroll tax. The tax is usually calculated as a percentage of the total wages
+  paid by the employer in a specific period, such as a month or a quarter. Each State has a threshold
+  below which an employer is not required to pay payroll tax. If an employer''s total wages exceed this
+  threshold, they must pay the tax on the portion of salary that exceeds the threshold.
+
+
+  It''s essential for businesses operating in Australia to be aware of the payroll tax regulations in
+  their specific State or territory and to ensure compliance with these rules. Businesses may face the
+  following penalties if they fail to meet their payroll tax obligations.
+
+
+  1. Interest: If a business fails to pay the required payroll tax on time, it may be subject to interest
+  charges on the unpaid tax amount.
+
+  2. Late Payment Penalties: These penalties are typically calculated as a percentage of the unpaid tax
+  and can accumulate until the tax is fully paid.
+
+  3. Fines: Businesses that repeatedly fail to pay their payroll tax or deliberately evade tax will be
+  subject to penalties imposed by the tax authorities. These fines can be significant and are intended
+  to deter non-compliance.
+
+  4. Legal Action: Tax authorities may take legal action to recover unpaid payroll tax. This can involve
+  court proceedings, asset seizures, and other legal measures to collect the outstanding tax.
+
+  5. Additional Audits: Non-compliant businesses may be subject to increased scrutiny and audits by tax
+  authorities. If other irregularities are discovered, this can lead to additional administrative burdens,
+  costs, and penalties.
+
+  6. Recovery Measures: Tax authorities may use various recovery measures to collect unpaid payroll tax,
+  including garnishing wages, freezing bank accounts, and seeking payment from directors or responsible
+  persons of the business.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- payroll tax
+- state tax
+- wages
+- employer obligations
+- compliance
+- registration
+- contract payments
+- labour hire
+- penalties
+- self-assessment
+- audit
+- connected entities

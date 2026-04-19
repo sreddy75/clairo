@@ -1,0 +1,60 @@
+strategy_id: CLR-196
+source_ref: STP-196
+name: FBT exempt work-related items
+categories:
+- Employees
+- Business
+implementation_text: '1. Have the employer purchase the FBT exempt work-related items and claim an upfront
+  tax deduction for their cost.
+
+  2. The employee salary sacrifices the cost of the items (ex GST).'
+explanation_text: 'Providing the following work-related items to employees is tax-deductible and FBT-exempt:
+
+  Portable electronic devices include mobile phones, laptops, tablets, portable printers and GPS navigation
+  receivers.
+
+  Computer software.
+
+  Protective clothing
+
+  Briefcases.
+
+  Tools of the trade.
+
+
+  When employees'' salary sacrifice the cost of the items with their employer, they benefit from saving
+  the GST and also having an upfront tax saving (instead of purchasing the item and depreciating it over
+  several years in their tax return). The FBT exemption is limited to items primarily for use in the employee''s
+  employment and one per FBT year for items with substantially identical functions unless the item is
+  a replacement item. An exception to this rule allows small businesses to provide employees with more
+  than one work-related portable electronic device in an FBT year - even if the devices have substantially
+  identical functions.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- fbt
+- fringe benefits tax
+- salary sacrifice
+- work-related items
+- portable electronic devices
+- laptop
+- mobile phone
+- tax deduction
+- gst saving
+- employer
+- employee benefits
+- small business
+- tools of trade
+- protective clothing
+- computer software

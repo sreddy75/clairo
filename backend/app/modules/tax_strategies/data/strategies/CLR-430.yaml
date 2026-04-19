@@ -1,0 +1,41 @@
+strategy_id: CLR-430
+source_ref: STP-430
+name: Super fund trustee company
+categories:
+- Business_structures
+implementation_text: '1. Incorporate the special purpose company with ASIC.
+
+  2. Apply for ABN and TFN.'
+explanation_text: 'A super fund trustee company is a type of special-purpose proprietary company that
+  is only permitted to act as trustee of a self-managed superannuation fund and cannot trade in any form
+  or act as a trustee of any other trust. A super fund trustee company''s constitution must contain a
+  clause prohibiting the company from distributing income or property to its members and limiting its
+  ability to act in any other capacity.
+
+
+  Superfund trustee companies are a type of specialised company and are subject to a reduced annual return
+  fee of $53.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- super fund trustee company
+- special purpose company
+- smsf trustee
+- corporate trustee
+- asic incorporation
+- self-managed superannuation
+- reduced annual fee
+- proprietary company
+- trustee structure
+- smsf setup

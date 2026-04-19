@@ -1,0 +1,58 @@
+strategy_id: CLR-136
+source_ref: STP-136
+name: Allocating the purchase price of business assets acquired
+categories:
+- Business
+implementation_text: '1. Ideally, the client (whether a vendor or purchaser) will structure the transaction
+  to allocate the purchase price of the business assets in the most tax-effective manner.
+
+  2. Where the contract of sale does not allocate the total purchase price amongst the assets acquired,
+  the purchaser can make that allocation themselves (subject to the values assigned to the various assets
+  being commercially realistic).
+
+  3. Even where the purchase contract allocates values to the assets acquired, the purchaser can change
+  those assigned values if they are incorrect or unreasonable. These changes should be supported by independent
+  evidence and documentation.'
+explanation_text: 'When buying a business, the purchaser may be acquiring the following different asset
+  components:
+
+  Goodwill,
+
+  Trading stock,
+
+  Freehold property, and
+
+  Depreciating assets and intellectual property.
+
+
+  If the sale contract allocates the total purchase price between the asset components acquired, the purchaser
+  takes those values for tax purposes. So, for example, a $1,000,000 sales contract could allocate $500,000
+  to goodwill, $250,000 to depreciating assets and $250,000 to stock. From the purchaser''s point of view,
+  they would prefer larger values for the depreciable purchases and less for the goodwill. The depreciable
+  assets will provide the purchaser with tax deductions for the depreciation expenses in future years.
+  In contrast, there is no write-off for goodwill, as it is a capital asset.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- purchase price allocation
+- business acquisition
+- goodwill
+- depreciating assets
+- trading stock
+- freehold property
+- intellectual property
+- depreciation
+- tax-effective
+- business purchase
+- contract of sale
+- capital asset

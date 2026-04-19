@@ -1,0 +1,55 @@
+strategy_id: CLR-114
+source_ref: STP-114
+name: Share buybacks
+categories:
+- Business
+implementation_text: '1. The shares must be repurchased and cancelled at arms-length values. For example,
+  if the net equity is $200,000 and there are two hundred shares on issue, a $100,000 share buyback would
+  involve buying back one hundred shares at $1,000 each (for $100,000 total).
+
+  2. Calculate whether the share buyback needs to be split between a dividend component and a share buyback
+  component for tax purposes (apply the ATO formula as per PS LA 2007/9).
+
+  3. The share buyback process involves lodging Form 280 (Notification of share buyback details), copies
+  of the shareholder notice of the meeting, and related material with ASIC. This meeting must typically
+  be done 30 days before the shareholder meeting to approve the share buyback.
+
+  4. Once the shareholders have approved the transaction, Form 484 is lodged with ASIC to update the company
+  records.
+
+  5. The company financial statements are updated to account for the share buyback.'
+explanation_text: 'Many businesses find operating through a company structure attractive as the profits
+  are taxed at a flat rate of 25% (if turnover is less than $50m). A company can retain the after-tax
+  profits to fund business expansion. When business owners wish to withdraw some cash from the company,
+  a share buyback is often an attractive option.
+
+
+  When applying a share buyback, the ATO requires the buyback to be split between a capital component
+  and a dividend component, as per PS LA 2007/9. The share buyback proceeds will be treated as a franked
+  dividend (not capital) if the company has minimal paid-up capital.'
+ato_sources:
+- PS LA 2007/9
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- share buyback
+- company
+- franked dividend
+- capital component
+- dividend component
+- asic
+- form 280
+- form 484
+- paid-up capital
+- cash withdrawal
+- business structure
+- ps la 2007/9

@@ -1,0 +1,166 @@
+strategy_id: CLR-515
+source_ref: STP-515
+name: Compliance audit of ATO obligations
+categories:
+- Recommendations
+implementation_text: 'Here are several steps that small businesses can take to ensure compliance with
+  their ATO obligations:
+
+  1. Stay informed: Keep up-to-date with tax laws, rates, and obligations changes by regularly checking
+  the ATO website and subscribing to relevant newsletters or updates.
+
+  2. Professional assistance: Engage a qualified accountant or tax agent familiar with Australian tax
+  laws. They can offer guidance tailored to your business, prepare and review your returns, and advise
+  on tax planning.
+
+  3. Implement reliable accounting software: Invest in good accounting software that suits your business
+  size and nature. Many software options can help with GST calculations, payroll, and other tax-related
+  matters, automating some tasks and reducing errors.
+
+  4. Maintain accurate records: Keep comprehensive, timely, and accurate records of all transactions.
+  This includes invoices, receipts, wage records, and other relevant documentation. Regularly back up
+  electronic records and ensure paper records are stored securely.
+
+  5. Regularly review finances: Periodically check your business''s financial statements. This not only
+  helps with tax compliance but also gives insights into the health of your business.
+
+  6. Educate staff: Make sure that anyone involved in the financial side of your business, such as payroll
+  or invoicing, is well-informed about ATO requirements.
+
+  7. Lodge on time: Always lodge Business Activity Statements (BAS), tax returns, and other required documents
+  before the deadline.
+
+  8. Set aside funds: Regularly set aside funds to cover tax payments when they''re due. This can be especially
+  important for GST and PAYG obligations.
+
+  9. Stay on top of superannuation: Regularly check the current super guarantee percentage and ensure
+  you make the correct superannuation contributions for your employees.
+
+  10. Engage in regular audits: Periodically, conduct internal audits or engage external professionals
+  to ensure you meet all ATO requirements.'
+explanation_text: 'Non-compliance with ATO obligations can lead to various penalties and consequences
+  for businesses, including:
+
+  1. General interest charge (GIC): If you don''t pay a tax amount by the due date, the ATO can apply
+  the general interest charge to the unpaid amount.
+
+  2. Failure to lodge (FTL) penalty: If you don''t lodge a tax return, statement, or other document on
+  time, you may incur a failure to lodge a penalty. The penalty is calculated in units and can accrue
+  for each period (often 28 days) when the document is overdue.
+
+  3. Shortfall penalties: These penalties can apply when an additional amount of tax is payable due to
+  actions like making false or misleading statements, failing to lodge a statement on time, or not taking
+  reasonable care when preparing a tax document.
+
+  4. Administrative penalties: These can be applied for a range of reasons, such as:
+
+  • Not keeping required records.
+
+  • Not retaining those records for the required period.
+
+  • Providing incorrect or misleading information.
+
+  5. Penalties for incorrect statements: The penalty amount can vary depending on the behaviour that led
+  to the shortfall (e.g., failure to take reasonable care, reckless behaviour, or intentional disregard
+  of tax laws).
+
+  6. Director penalties: Company directors can be personally liable for some of the company''s debts in
+  certain circumstances, such as unpaid Pay As You Go (PAYG) withholding amounts or Superannuation Guarantee
+  Charges.
+
+  7. Criminal offences: Severe fraud or tax evasion breaches can lead to criminal charges.
+
+  8. Tax avoidance and evasion: Tax avoidance or evasion schemes can lead to significant penalties and
+  criminal charges.
+
+  9. Debt recovery action: The ATO can take action to recover tax-related debts. This might involve issuing
+  a garnishee notice (requiring someone holding money on your behalf to pay it to the ATO) or initiating
+  court action.
+
+  10. Loss of tax concessions: In some instances, non-compliance may result in the business or individual
+  losing access to tax concessions or benefits.
+
+  11. Cancellation of registration: The ATO can cancel registrations such as GST or ABN for serious non-compliance.
+
+
+  Australian Taxation Office (ATO) obligations and requirements for small businesses include
+
+  1. Business registration: Before starting a business, you must apply for an Australian Business Number
+  (ABN) and register for Goods and Services Tax (GST) if your annual turnover is expected to be $75,000
+  or more.
+
+  2. GST: If your business is registered for GST:
+
+  • You must include GST in the price of taxable sales.
+
+  • Claim GST credits for GST included in the price of your business purchases.
+
+  • Report and pay the net amount of GST to the ATO, usually through a Business Activity Statement (BAS).
+
+  3. Income tax:
+
+  • Small businesses must report their income and deductions to the ATO and then pay income tax on the
+  profit.
+
+  • How you report and pay income tax depends on your business structure (sole trader, partnership, company,
+  or trust).
+
+  4. PAYG withholding: If you have employees, you must withhold an amount from payments you make to them
+  and send these withheld amounts to the ATO.
+
+  5. Superannuation: As an employer, you are typically obligated to provide superannuation support for
+  your employees. This means paying a percentage (as defined by the super guarantee percentage) of their
+  ordinary time earnings to a super fund.
+
+  6. Fringe benefits tax (FBT): If you provide certain fringe benefits to your employees, you may need
+  to pay FBT. This includes benefits like cars, loans, or paying an employee''s expenses.
+
+  7. Record keeping: The ATO mandates that businesses keep electronic or paper transaction records. Proper
+  record keeping makes it easier to complete your tax return, monitor the health of your business, and
+  manage cash flow.
+
+  8. Fuel tax credits: If you use fuel in your business, you can claim fuel tax credits. This means you
+  could get a credit for the fuel tax (excise or customs duty) that''s included in the price of the fuel
+  you use.
+
+  9. State and territory taxes: While the ATO does not administer these, it''s worth noting that businesses
+  may have additional tax obligations at the state and territory level, such as payroll tax and land tax.
+
+  10. Other reporting: This could include reports related to the taxable payments reporting system (for
+  businesses in the building and construction industry, cleaning, and courier services) or the sharing
+  economy.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- building and construction industry
+- cleaning
+- courier services
+financial_impact_type:
+- concession
+keywords:
+- ato compliance
+- small business
+- bas
+- gst
+- payg withholding
+- superannuation guarantee
+- record keeping
+- failure to lodge
+- general interest charge
+- fringe benefits tax
+- abn registration
+- tax obligations
+- director penalties
+- audit
+- tax compliance

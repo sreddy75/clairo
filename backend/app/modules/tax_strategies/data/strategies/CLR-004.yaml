@@ -1,0 +1,66 @@
+strategy_id: CLR-004
+source_ref: STP-004
+name: Transporting heavy or bulky equipment
+categories:
+- Employees
+implementation_text: '1. A letter from the employer documenting that the employee must use their tools
+  and equipment for work purposes and that no secure storage facilities are provided, and
+
+  2. A diary evidencing km travelled from home to work and returned to transport the tools; or a completed
+  logbook and associated receipts.'
+explanation_text: 'Some employees must transport heavy or bulky equipment to and from their work daily
+  to perform their job. This is often the case with engineers, plumbers, electricians, builders, mechanics,
+  defence force members, musicians, medical practitioners, etc. The general rule is that an employee''s
+  travel to and from work is private and non-deductible, even if they need to transport tools to work.
+  An exception to this rule is when a home-to-work trip involves transporting heavy or bulky equipment.
+
+
+  For the employee''s home-to-work travel to be deductible, it must meet three requirements:
+
+
+  • It must be essential to transport the equipment to and from work. It cannot be a matter of personal
+  choice or convenience. The equipment must be transported to work so the employee can carry out their
+  duties on that day and earn their income using the equipment.
+
+  • The equipment must be sufficiently heavy and bulky. This would typically be 20-30kgs.
+
+  • There must be no reasonably secure storage area available at work. An excellent secure storage facility
+  involves lockers with a lockable facility.
+
+
+  An example of this would be Mathew, the electrician. His employer does not supply a secure storage area
+  at his workplace for his tools, so Mathew must transport his bulky electrical tools to and from work
+  every day. Mathew can claim a deduction for his expenses to carry the electrical tools between his home
+  and work.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- engineers
+- plumbers
+- electricians
+- builders
+- mechanics
+- musicians
+financial_impact_type:
+- deduction
+keywords:
+- heavy equipment
+- bulky tools
+- home to work travel
+- travel deduction
+- work-related travel
+- employee deductions
+- transport tools
+- secure storage
+- logbook
+- tradespeople
+- work expenses
+- car expenses
+- kilometres

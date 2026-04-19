@@ -1,0 +1,64 @@
+strategy_id: CLR-151
+source_ref: STP-151
+name: Tax incentives for early stage investors
+categories:
+- Investors_retirees
+implementation_text: '1. The company should apply for a Private Ruling with the ATO to ensure investors
+  can access the ESIC tax concessions.
+
+  2. Non-sophisticated investors must invest less than $50,000 per income year - or they lose access to
+  the tax offset.
+
+  3. The investor and the innovation company must be non-affiliates, and the investor owns less than 30%
+  of the company.
+
+  4. Early Stage Innovation Companies (ESICs) must report information about their investors to the Commissioner
+  so that the ATO can assess whether these investors may qualify for the tax offset and modified CGT treatment.'
+explanation_text: 'An early-stage innovation company (ESIC) is a company that has high growth potential,
+  can scale, addresses a broader than the local market, and has competitive advantages. ESIC companies
+  can provide investors with the following tax incentives:
+
+  A 20% non-refundable tax offset on investments, capped at $200,000 per investor per year.
+
+  A capital gains tax exemption provides investments held for at least one year and less than ten years.
+
+  The tax incentives will only be available for investments in companies that:
+
+  Satisfy a 100-point innovation test or are companies that are genuinely focussed on developing for commercialisation
+  new or improved products, processes, services or methods and can demonstrate that specific requirements
+  about the commercialisation of the innovation are satisfied (for example, that the business related
+  to the innovation has a high growth potential, and the company has the potential to scale its activities
+  to take advantage of the growth potential). Were incorporated during the last three income years.
+
+  They are not listed on any stock exchange.
+
+  Have expenditure of less than $1 million in the previous income year.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- offset
+- exemption
+- concession
+keywords:
+- esic
+- early stage innovation company
+- tax offset
+- cgt exemption
+- non-refundable offset
+- startup investment
+- 100-point innovation test
+- non-sophisticated investor
+- private ruling
+- capital gains tax
+- investor concessions
+- innovation company

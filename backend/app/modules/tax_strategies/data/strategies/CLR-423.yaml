@@ -1,0 +1,42 @@
+strategy_id: CLR-423
+source_ref: STP-423
+name: Secret trust
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Drafted by solicitor in will.'
+explanation_text: 'A secret trust is a trust that arises when the property is left to a person under a
+  will on the understanding that they will hold the property as trustee for the benefit of beneficiaries
+  who aren''t named in the will. Secret trusts arise when a testator wishes to keep hidden an object within
+  the will, such as bestowing a benefit to a political cause or granting trust to relatives that may be
+  unknown to the broader family.
+
+
+  Secret trusts generally operate outside of the will. As such, all the requirements for producing a valid
+  express trust must still be met. Ultimately, a person relying on a secret trust must demonstrate that
+  the secret trust is absolute and must meet the usual civil standard (of a balance of probabilities)
+  to benefit the trust property.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- secret trust
+- will
+- testator
+- trustee
+- beneficiaries
+- estate planning
+- express trust
+- trust property
+- solicitor
+- succession

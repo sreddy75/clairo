@@ -1,0 +1,54 @@
+strategy_id: CLR-049
+source_ref: STP-049
+name: Temporary absence rule
+categories:
+- Rental_properties
+implementation_text: '1. Document the basis and time periods for claiming the temporary absence rule.
+
+  2. The temporary absence rule can apply to main residences both in Australia and overseas.'
+explanation_text: 'The temporary absence rule allows a taxpayer renting out their principal residence
+  for a period to treat the property as their primary residence while they are away and claim the main
+  residence capital gains tax (CGT) exemption. Taxpayers may rent out their primary home for various reasons,
+  including moving away for work purposes, taking an extended overseas holiday, or studying overseas.
+  Under the capital gains tax rules, if you:
+
+
+  • Use your vacated home to produce income; you can treat that home as your primary residence for up
+  to six years.
+
+  • Do not use the vacated home to produce income; you can treat it as your primary residence for an unlimited
+  period after you cease living there. This will apply where the house is left empty or let rent-free
+  to relatives.
+
+
+  Suppose you apply the temporary absence rule to treat that home as your primary residence. In that case,
+  you cannot nominate any other dwelling as your primary residence during your absence, even if you live
+  in another place, i.e. you are not entitled to claim two main residence exemptions simultaneously. Once
+  the six-year period of renting out the primary home has expired, the taxpayer can move back into the
+  primary residence for a period. Then, a new six-year period starts if they choose to move out and start
+  renting the main home again. The temporary absence rule applies to taxpayers'' primary residences that
+  are located both in Australia and overseas.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- temporary absence rule
+- main residence exemption
+- cgt exemption
+- principal residence
+- rental property
+- six year rule
+- capital gains tax
+- primary residence
+- renting out home
+- overseas absence
+- income producing property

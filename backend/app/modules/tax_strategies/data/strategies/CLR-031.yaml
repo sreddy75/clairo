@@ -1,0 +1,52 @@
+strategy_id: CLR-031
+source_ref: STP-031
+name: Sunglasses, sunscreens and cosmetics
+categories:
+- Employees
+implementation_text: '1. Keep receipts to substantiate the expense.
+
+  2. If the sun protection items are used for private purposes, then the expenses must be apportioned.
+  So, for example, if $300 sunglasses are used 50% for personal purposes, then the deduction is $150.
+
+  3. Cosmetics containing sun protection will not be deductible if the employee''s work duties do not
+  require them to work outside in the sun.'
+explanation_text: 'If an employee''s work requires them to be out in the sun for a large part of their
+  workday, they can claim a deduction for sun protection costs (as this protects them from harm or skin
+  cancer while doing their job). This does not mean that an office worker who collects the mail during
+  work hours and is in the sun for 15 minutes daily will be allowed a tax deduction for sunglasses and
+  sunscreens. Typical sun protection deductions include:
+
+  Sunglasses,
+
+  Prescription sunglasses (which are photo-chromatic glasses that have filtering and glare-reducing qualities
+  similar to sunglasses),
+
+  Hats,
+
+  Sunscreen lotions
+
+  Cosmetics containing sun protection (if the makeup is worn at specific times when the employee''s work
+  requires them to perform duties in the sun).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- sunglasses
+- sunscreen
+- cosmetics
+- sun protection
+- employee deductions
+- outdoor workers
+- work-related expenses
+- apportionment
+- hats
+- skin cancer protection

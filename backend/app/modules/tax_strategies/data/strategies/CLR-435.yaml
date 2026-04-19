@@ -1,0 +1,64 @@
+strategy_id: CLR-435
+source_ref: STP-435
+name: Bucket companies
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. A low-risk spouse or family trust should own the investment ''bucket company'' shares.
+
+  2. The income distributed to the company beneficiary for tax purposes must be physically transferred
+  to the company before the date the company lodges its tax return with the ATO.'
+explanation_text: 'Discretionary trusts are attractive business structures as they can provide the following
+  benefits:
+
+  Flexibility with yearly income distributions (income can be allocated in different amounts and to various
+  beneficiaries).
+
+  Asset protection.
+
+  50% general CGT discount.
+
+
+  Suppose a discretionary trust has a significant taxable income. In that case, they may not want to distribute
+  all the taxable income to individual taxpayers because the individuals may end up paying tax on this
+  income at up to 47%. Distributing income to a ''bucket company'' eliminates this problem. The tax advantage
+  of this strategy is that the company will only be taxed at 25% on this income. An additional benefit
+  of this strategy is risk management, as investments are accumulated in an entity separate from the business
+  structure (i.e. trust).
+
+
+  Once the company receives the trust distribution, it can pay 25% of the tax liability and invest 75%
+  in term deposits, shares, or property. Problems arise with this strategy when the trust doesn''t physically
+  have the cash available to pay the company beneficiary. Division 7A loan issues result, which can increase
+  the tax payable.'
+ato_sources:
+- Division 7A
+case_refs: []
+entity_types:
+- trust
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+- concession
+keywords:
+- bucket company
+- discretionary trust
+- family trust
+- trust distribution
+- corporate beneficiary
+- tax rate
+- 25% company tax
+- division 7a
+- asset protection
+- cgt discount
+- income splitting
+- trust income
+- tax planning

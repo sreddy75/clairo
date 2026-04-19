@@ -1,0 +1,71 @@
+strategy_id: CLR-057
+source_ref: STP-057
+name: Share trader 'v' share investor
+categories:
+- Investors_retirees
+implementation_text: '1. Review the facts of the case to determine whether the investor is a share trader
+  or a share investor.
+
+  2. Determine the optimum structure (and establish structure if appropriate).
+
+  3. Each item of the share trader''s closing stock can be valued at a lower cost or market value.
+
+  4. The share trader''s closing stock valuation minimises taxable income as the unrealised share gains
+  are not included in profit (until realised), but the unrealised share losses immediately reduce profit.'
+explanation_text: 'Whether a taxpayer is a share trader or a share investor depends on the specific facts
+  of each case. The main factors are whether the taxpayer has a profit-making intention; the repetition,
+  regularity and volume of buying and selling shares; the amount of capital invested and turnover involved;
+  whether the taxpayer is undertaking the activities in a business-like manner; the existence of a written
+  business plan, and whether engaged full-time or part-time.
+
+
+  The tax treatment of a share trader is as follows:
+
+  They operate a business, and the sale proceeds are assessable as ordinary income.
+
+  Shares acquired are regarded as trading stock and are an allowable deduction.
+
+  Any change in the value of the stock on hand at year-end (compared with opening stock on hand) is considered
+  when calculating the year''s profit or loss.
+
+  Dividends are assessable income.
+
+
+  The tax treatment of a share investor is as follows:
+
+  Not operating a business and dealt with under the capital gains tax rules.
+
+  The cost of shares acquired is not deductible and instead is included in the cost base for calculating
+  the capital gain or loss when the shares are sold.
+
+  Dividends are assessable income.
+
+  Interest on a loan used to buy shares is generally deductible. (If the shares acquired pay dividends
+  or are expected to pay dividends in the future).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- share trader
+- share investor
+- trading stock
+- capital gains tax
+- cgt
+- dividends
+- ordinary income
+- closing stock valuation
+- unrealised losses
+- profit-making intention
+- shares
+- cost base
+- assessable income
+- business-like manner

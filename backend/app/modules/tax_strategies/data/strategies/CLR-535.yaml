@@ -1,0 +1,111 @@
+strategy_id: CLR-535
+source_ref: STP-535
+name: Long service leave
+categories:
+- Recommendations
+implementation_text: 'Ensuring compliance with Long Service Leave (LSL) obligations is vital for businesses
+  of all sizes. Here are some steps businesses can take to ensure they meet their LSL obligations:
+
+  1. Understand the legislation: Each state and territory in Australia has its legislation governing LSL.
+
+  2. Regularly review awards and agreements: Apart from statutory obligations, LSL entitlements might
+  also be outlined in industrial awards, enterprise agreements, or individual employment contracts.
+
+  3. Maintain accurate employee records: Keeping detailed and up-to-date records of all employees, including
+  their start dates, periods of leave, and any changes in employment status, will help track LSL accruals
+  accurately.
+
+  4. Implement an HR management system: Investing in an HR management system or software can automate
+  the tracking of LSL accruals, making it easier to manage and less prone to errors.
+
+  5. Provide regular updates: Ensure employees are regularly informed about their LSL accruals. This transparency
+  can reduce misunderstandings and disputes.
+
+  6. Seek professional advice: Consider consulting with HR professionals or employment law experts, especially
+  when making significant business decisions that might impact LSL entitlements (e.g., business sales,
+  restructuring, or changing employment arrangements).
+
+  7. Regular training: Train managerial and HR staff about LSL obligations to ensure consistent and correct
+  application across the business.
+
+  8. Join a business association: Many industry or business associations offer resources, training, and
+  advice on employment obligations, including LSL. Being a member can provide access to valuable guidance.
+
+  9. Stay updated on changes: Legislation, awards, and agreements can change. Regularly check for updates
+  from relevant government websites, industry associations, or through legal advisories.
+
+  10. Plan financially: Ensure you''re prepared to meet LSL obligations when they come due. This might
+  involve setting aside funds regularly or ensuring that your financial forecasting includes LSL payouts.'
+explanation_text: 'Long service leave (LSL) provides employees with an extended leave period after a long
+  service period with the same employer. This entitlement recognises and rewards employees for their long-term
+  commitment and dedication to a single employer.
+
+
+  The specifics of long service leave entitlements vary by state and territory in Australia, but generally,
+  the key features are:
+
+  1. Duration of Service: Typically, employees become eligible for LSL after ten years of continuous service
+  with the same employer. After the initial ten years, employees may be entitled to additional LSL pro-rata.
+
+  2. Amount of Leave: The amount granted also varies by state, but a common entitlement is 8.67 weeks
+  of leave after ten years of continuous service.
+
+  3. Portability: In certain sectors, like building and construction, work might involve working with
+  multiple employers over a period. Some states have provisions to ensure LSL benefits are portable between
+  employers within the same industry.
+
+  4. Payout on Termination: If an employee''s service is terminated (for reasons other than serious misconduct)
+  after a certain period but before taking their LSL, they might be entitled to a pro-rata payout for
+  their accumulated LSL.
+
+  5. Usage: LSL must usually be taken as a continuous block of leave.
+
+  6. Legislation: Each state and territory in Australia has its legislation governing LSL. This means
+  the rules, eligibility criteria, and specifics can vary.
+
+  7. Agreements: While the statutory provisions set out minimum LSL entitlements, employers and employees
+  can negotiate more generous terms in employment or enterprise bargaining agreements.
+
+
+  Non-compliance with Long Service Leave (LSL) entitlements can lead to the following penalties and consequences
+  for employers:
+
+  - Monetary penalties.
+
+  - Back-pay orders.
+
+  - Interest payments
+
+  - Legal costs
+
+  - Audits
+
+  - Reputation damage
+
+  - Prosecution.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- building and construction
+financial_impact_type: []
+keywords:
+- long service leave
+- lsl
+- employee entitlements
+- compliance
+- employment law
+- leave accrual
+- hr management
+- termination payout
+- enterprise agreement
+- state legislation
+- continuous service
+- employer obligations
+- workforce planning

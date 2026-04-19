@@ -1,0 +1,138 @@
+strategy_id: CLR-516
+source_ref: STP-516
+name: Consumer protection
+categories:
+- Recommendations
+implementation_text: 'The following strategies will ensure compliance with consumer protection obligations
+  in Australia:
+
+  1. Stay informed:
+
+  - Keep updated with the latest in Australian Consumer Law (ACL) and any changes or additions.
+
+  - Regularly check the websites of regulatory bodies, such as the Australian Competition and Consumer
+  Commission (ACCC) and state-based consumer affairs or fair trading agencies.
+
+  2. Training and education:
+
+  - Regularly train employees on consumer rights and business obligations under the ACL, especially those
+  in customer-facing roles.
+
+  - Make resources about consumer protection available to staff, like brochures or internal guidelines.
+
+  3. Develop clear policies:
+
+  - Establish clear internal policies and procedures that align with consumer protection laws.
+
+  - Implement a robust product and service review process to ensure they meet safety and quality standards.
+
+  4. Honest marketing and advertising:
+
+  - Ensure that all marketing, advertising, and product descriptions are accurate and not misleading.
+
+  - Regularly review promotional materials and campaigns to ensure they comply.
+
+  5. Transparency:
+
+  - Be clear and upfront about terms and conditions, especially warranties, returns, and refunds.
+
+  - Provide consumers with detailed product or service information to help them make informed decisions.
+
+  6. Feedback and complaints mechanism:
+
+  - Set up a robust system for receiving and addressing consumer feedback and complaints.
+
+  - Regularly review and act upon complaints to identify potential non-compliance areas and improve the
+  business''s practices.
+
+  7. Engage with regulatory bodies:
+
+  - Proactively seek guidance from regulatory bodies if unsure about specific practices or products.
+
+  - Cooperate fully with regulators during investigations or audits.
+
+  8. Product safety:
+
+  - Regularly test and review products to ensure they meet safety standards.
+
+  - Stay updated with product recalls or safety alerts and take prompt action when needed.
+
+  9. Review contracts and agreements:
+
+  - Ensure that business contracts, especially those with consumers, are free from unfair terms.
+
+  - Periodically review contracts with legal counsel to ensure they align with the latest consumer protection
+  guidelines.
+
+  10. Engage with industry groups:
+
+  - Join industry associations or groups that often provide guidance, updates, and resources related to
+  consumer protection in the specific industry.
+
+  12. Seek legal advice:
+
+  - Engage with legal experts to review business practices, policies, and products regularly.
+
+  - Seeking legal advice before launching new products or services can help identify potential issues.'
+explanation_text: 'Consumer protection is the laws, regulations, and organizations designed to ensure
+  the rights of consumers are upheld and to prevent businesses from engaging in fraudulent or misleading
+  practices.
+
+
+  Critical components of consumer protection in Australia include:
+
+
+  1. Australian consumer law (ACL): Introduced in 2011, the ACL covers general standards for business
+  conduct, protections against unfair contract terms, and specific protections against harmful or misleading
+  practices.
+
+  2. Consumer guarantees: Under the ACL, consumers have the right to goods and services of acceptable
+  quality, fit for any disclosed purpose, and match descriptions or samples.
+
+  3. False or misleading claims: Businesses are prohibited from making false or misleading representations
+  about goods or services. This includes claims about the nature, manufacturing process, performance,
+  and benefits of products.
+
+  4. Unconscionable conduct: The ACL prohibits actions that are overly harsh or grossly deviate from accepted
+  standards of commercial behaviour.
+
+  5. Product safety: There are national safety standards and bans for specific goods. Businesses must
+  comply with these standards to ensure the safety of consumers.
+
+  6. Regulatory bodies: The Australian Competition and Consumer Commission (ACCC) is the leading national
+  regulatory authority responsible for ensuring compliance with the ACL. Local consumer affairs or fair
+  trading agencies play a similar role at the state and territory levels.
+
+  7. Redress mechanisms: If consumers feel their rights have been violated, they can lodge a complaint
+  with the ACCC or their local consumer protection agency. In some situations, they may also take legal
+  action.
+
+  8. Education and advocacy: Consumer protection also involves educating the public about their rights
+  and the responsibilities of businesses. Various government and non-government organizations work towards
+  this by providing information, resources, and consumer support.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- consumer protection
+- australian consumer law
+- acl
+- accc
+- consumer guarantees
+- misleading conduct
+- product safety
+- unfair contract terms
+- compliance
+- unconscionable conduct
+- regulatory bodies
+- fair trading
+- consumer rights
+- business obligations

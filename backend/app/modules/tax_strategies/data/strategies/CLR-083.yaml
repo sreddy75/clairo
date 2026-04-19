@@ -1,0 +1,105 @@
+strategy_id: CLR-083
+source_ref: STP-083
+name: 30th June trust distribution minutes
+categories:
+- ATO_obligations
+implementation_text: 'Here''s a general process for preparing trust distribution minutes:
+
+  1. Review the Trust Deed: The first step is to review the trust deed to determine the powers and obligations
+  of the trustee concerning distributions. Some trust deeds may have specific clauses or requirements
+  concerning distributions.
+
+  2. Determine the Trust''s Income: Before any distributions can be made, the trustee must ascertain the
+  trust''s income for the year.
+
+  3. Consider Beneficiary Needs & Tax Positions: The trustee should consider the needs and circumstances
+  of beneficiaries, and often their tax positions, to determine the most appropriate distribution strategy.
+
+  4. Draft the Minutes: Once decisions about distributions have been made, these must be documented in
+  minutes. The minutes should include:
+
+  The date and place of the meeting.
+
+  The attendees (usually the trustee or trustees).
+
+  A statement confirming the trust''s income for the year.
+
+  Details of each distribution, specifying the amount or percentage of income and the beneficiary receiving
+  the distribution.
+
+  If applicable, specific streaming of capital gains or franked dividends to particular beneficiaries.
+
+  Any other relevant details or considerations that influenced the trustee''s decisions.
+
+  5. Signature: The trustee, or trustees, must sign and date the minutes. For trust compliance and tax
+  purposes, the minutes should be signed and dated before 30th June to ensure distributions are effective
+  for that financial year.
+
+  6. Filing and Record Keeping: Once signed, the minutes should be filed and kept with the trust''s other
+  essential records. It''s crucial to record all resolutions for potential future reference, especially
+  if questioned by the Australian Taxation Office (ATO).
+
+  7. Lodge Necessary Tax Documents: Post 30th June, after the end of the financial year, the trust''s
+  tax return will need to reflect the distributions made. Beneficiaries must also be informed of their
+  distributions as it will affect their tax returns.
+
+  8. Regular Review: Trusts are ongoing entities, so this process needs to be undertaken each year. Regularly
+  reviewing the trust''s operations and the needs of beneficiaries will ensure the trust remains compliant
+  and effective.'
+explanation_text: 'Discretionary trusts (often referred to as family trusts) must ensure that by 30th
+  June of each financial year, the trust income is appropriately distributed to beneficiaries for taxation
+  purposes.
+
+
+  Here''s why it''s important:
+
+
+  1. Taxation: Trusts themselves typically don''t pay tax on their income. Instead, the trust''s beneficiaries
+  are taxed on the income they are entitled to from the trust. To ensure this happens in the relevant
+  financial year, the trust must decide how its income will be distributed before the end of the financial
+  year.
+
+  2. Streaming of Capital Gains and Franked Dividends: Tax legislation allows for the specific streaming
+  of capital gains and franked dividends to beneficiaries. This means that rather than blending all the
+  trust''s income and distributing it as a singular amount, the trust can direct specific types of income
+  (like capital gains or franked dividends) to specific beneficiaries. The trust''s decision (or "resolution")
+  must be made by 30th June to ensure the correct beneficiaries are taxed on these amounts.
+
+  3. Default Clause: Many trust deeds have a default beneficiary or default distribution clause. If no
+  effective distribution resolution is made by 30th June, the trust''s income may be automatically distributed
+  according to this default clause, which may not be the desired outcome.
+
+  4. Tax Liability: If no effective distribution resolution is made by 30th June, the trust may become
+  liable to pay tax on its undistributed income at the highest marginal rate.
+
+  5. Documentation and Proof: Having trust distribution minutes or resolutions signed and dated before
+  30th June provides clear evidence that the trustee decided in the relevant financial year. This is important
+  if the Australian Taxation Office (ATO) ever reviews or audits the trust''s distributions.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+keywords:
+- trust distribution
+- family trust
+- discretionary trust
+- 30th june
+- trust minutes
+- trust resolution
+- beneficiary distribution
+- capital gains streaming
+- franked dividends
+- trust deed
+- trustee
+- tax compliance
+- undistributed income
+- highest marginal rate

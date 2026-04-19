@@ -1,0 +1,79 @@
+strategy_id: CLR-284
+source_ref: STP-284
+name: Land tax
+categories:
+- ATO_obligations
+implementation_text: "Here's a step-by-step guide to ensure compliance with your land tax obligations\
+  \ in Australia:\n1. Understand the rules:\n   • Each state and territory in Australia has its regulations\
+  \ regarding land tax.\n   • Determine if you qualify for any exemptions or concessions, such as for\
+  \ primary residences, land used for farming, or charitable purposes.\n2. Maintain accurate records:\n\
+  \   • Keep detailed and up-to-date records of all your property transactions, including purchase dates,\
+  \ costs, sales, and any property improvements.\n   • Store documentation that could be relevant to determining\
+  \ the value or use of your property, like rental income statements or proof of primary residence.\n\
+  3. Regularly update valuations:\n   • Property valuations often form the basis for land tax calculations.\
+  \ Regularly review and, if necessary, contest property valuations to ensure they reflect the actual\
+  \ value of your land.\n   • Stay informed about the valuation methodology used in your state or territory.\n\
+  4. Declare all properties:\n   • Ensure you declare all the properties you own. Failure to do so can\
+  \ result in penalties.\n   • Regularly check and update your property holdings, especially after buying\
+  \ or selling properties.\n5. Check for foreign ownership surcharges:\n   • If you are a foreign owner,\
+  \ be aware of any surcharges or additional rates applied to foreign-owned properties.\n6. Regularly\
+  \ review and update information:\n   • Ensure that your contact details, property details, and other\
+  \ pertinent information are current with the relevant state or territory's revenue office.\n   • Regularly\
+  \ review your assessments to ensure that they reflect your current property holdings and any eligible\
+  \ exemptions.\n7. Engage in regular compliance checks:\n   • Periodically review your compliance to\
+  \ ensure you're meeting all obligations. This could involve internal reviews or engaging external auditors."
+explanation_text: 'Land tax is levied by state and territory governments on land owners. The specifics
+  of the tax, including rates and exemptions, differ across each state and territory. Here''s a general
+  overview of the land tax in Australia:
+
+  1. Purpose: The revenue generated from land tax is used to fund various state and territory services
+  and infrastructure.
+
+  2. Taxable entities: Levied on land owners, including individuals, companies, trusts, and other entities.
+  It doesn''t typically apply to the primary residence (owner-occupied home) but to investment properties,
+  commercial land, vacant land, and other land types.
+
+  3. Valuation: Land tax is typically based on the unimproved or site value of land. Each state and territory
+  has its own method for determining this value.
+
+  4. Exemptions and concessions: Most states offer exemptions or concessions on the primary residence
+  (your main home).
+
+  5. Thresholds and rates: Each state and territory has different thresholds and rates for land tax. Some
+  states have a tax-free threshold below which no land tax is payable.
+
+  6. Payment: Landowners are typically required to pay land tax annually.
+
+  7. Foreign ownership: Some states have introduced surcharges or higher land tax rates for foreign owners
+  of residential property.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+- exemption
+keywords:
+- land tax
+- state tax
+- property tax
+- land valuation
+- primary residence exemption
+- investment property
+- foreign ownership surcharge
+- compliance
+- land owner
+- vacant land
+- commercial land
+- tax-free threshold
+- state revenue
+- property holdings

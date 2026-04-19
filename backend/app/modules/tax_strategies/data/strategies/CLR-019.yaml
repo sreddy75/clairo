@@ -1,0 +1,52 @@
+strategy_id: CLR-019
+source_ref: STP-019
+name: Double the deductible super contributions limit
+categories:
+- Employees
+- Business
+implementation_text: '1. Review the super fund trust deed to ensure that it allows contributions reserving.
+  It may need to be updated.
+
+  2. The extra $30,000 super contribution must be made in June of the financial year when the double super
+  deduction is claimed.
+
+  3. The extra $30,000 super contributions are allocated to the contributions reserving account in the
+  super fund financial statements.
+
+  4. By the 28th of July, the extra $30,000 super contribution is allocated to a member''s account as
+  a concessional contribution.
+
+  5. When preparing the super fund tax return, $60,000 should be allocated to the member''s account as
+  concessional contributions and the 15% tax paid.
+
+  6. The ATO will then issue a letter advising breach of the excess contribution rules, which the accountant
+  must dispute by providing evidence of the contribution reserving strategy.'
+explanation_text: This strategy allows taxpayers to claim two deductible superannuation contribution limits
+  in one year by bringing forward the following year's limit. So, for example, a self-employed accountant
+  can claim $60,000 of deductible superannuation contributions in their 2025 tax return instead of only
+  $30,000 (but none in their 2026 tax return). This contributions strategy appeals to taxpayers with an
+  abnormally high income in one year, are retiring in the following year, or expect lower income in the
+  coming year.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- superannuation
+- concessional contributions
+- contributions reserving
+- deductible super
+- contribution cap
+- self-employed
+- super fund
+- trust deed
+- retiring
+- high income year

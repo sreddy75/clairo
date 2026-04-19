@@ -1,0 +1,61 @@
+strategy_id: CLR-037
+source_ref: STP-037
+name: Donations
+categories:
+- Employees
+- Business
+implementation_text: '1. For large donations, check that the charity is an actuatable Gift Recipient.
+
+  2. Keep receipts for all donations.
+
+  3. Donations must be in money or property for $2 or more.
+
+  4. Donations cannot give rise to or increase a tax loss.
+
+  5. The taxpayer donating cannot get a benefit in return for the donation. So, for example, donating
+  $20 to a DGR, and receiving pens or a raffle ticket in return, will make the donation non-deductible.'
+explanation_text: 'Taxpayers are entitled to claim donations and gifts made to Deductible Gift Recipients
+  (DGR), including various funds, authorities and institutions listed or described in Division 30. Donations
+  may be deductible for the following:
+
+  Public or non-profit hospitals.
+
+  Public benevolent institutions.
+
+  Approved scientific research institutes.
+
+  Particular famine and natural disaster appeals.
+
+  Public funds provide money for buildings used as semi-government or private non-profit schools or colleges.
+
+  Public libraries, museums and art galleries.
+
+  Public authorities or institutions engaged in researching the causes, prevention or cure of disease
+  in human beings, animals or plants.
+
+
+  A deduction cannot be claimed if a particular recipient is not a DGR.'
+ato_sources:
+- Division 30
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- donations
+- gifts
+- deductible gift recipient
+- dgr
+- charity
+- division 30
+- non-profit
+- receipts
+- tax deduction
+- charitable giving

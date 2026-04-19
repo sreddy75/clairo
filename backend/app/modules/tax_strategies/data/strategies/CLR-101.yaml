@@ -1,0 +1,51 @@
+strategy_id: CLR-101
+source_ref: STP-101
+name: Reducing super guarantee payments
+categories:
+- Business
+implementation_text: '1. The business should only contract with contractors operating through an entity
+  (partnership, company or trust).
+
+  2. Ensure each contractor operates as an independent contractor under a written, signed independent
+  contractor agreement (which can be purchased from an online legal provider).
+
+  3. Make contract payments to the entity.'
+explanation_text: 'The superannuation guarantee legislation requires employers to make quarterly superannuation
+  contributions for employees at 11.5% of ''ordinary times'' earnings. Section 12 of the Superannuation
+  Guarantee (Administration) Act 1992 extends the definition of an employee to include contractors engaged
+  under a contract wholly or principally for their labour, directors, artists, musicians, sportspeople,
+  and members of Parliament. This definition means a business making $100,000 of payments to an independent
+  individual contractor (who is only supplying their labour) will also need to pay $11,500 superannuation
+  guarantee payments.
+
+
+  To avoid super guarantee obligations, businesses should only contract with contractors operating through
+  an entity (a partnership, company or trust). The contractor will not be a common-law employee if this
+  arrangement is genuine (so no super guarantee obligations would arise).'
+ato_sources:
+- Section 12 of the Superannuation Guarantee (Administration) Act 1992
+case_refs: []
+entity_types:
+- company
+- partnership
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+keywords:
+- superannuation guarantee
+- contractor
+- independent contractor
+- sgc
+- super obligations
+- labour hire
+- partnership
+- company
+- trust
+- employer obligations

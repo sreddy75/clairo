@@ -1,0 +1,43 @@
+strategy_id: CLR-005
+source_ref: STP-005
+name: Jointly owned motor vehicle
+categories:
+- Employees
+- Business
+implementation_text: 1. A diary evidencing business or work related kms travelled on each motor vehicle.
+explanation_text: 'The ATO has confirmed that even when a vehicle is only registered in their spouse''s
+  name, a taxpayer is still considered the joint owner or lessee of the motor vehicle and eligible to
+  claim expenses. As such, when a husband and wife jointly own a motor vehicle, and they both use that
+  vehicle separately for an income-producing purpose (work or business), each taxpayer will be entitled
+  to a deduction using the cents per kilometre method (up to 5,000 work or business kilometres). This
+  deduction assumes they each did travel 5,000 work or business kilometres.
+
+
+  Additional tax deductions are available if a husband and wife jointly own two motor vehicles. If both
+  spouses used each car to travel 5,000 work or business-related kilometres, then each spouse would claim
+  a deduction for 10,000 kilometres. That is, claiming 20,000 business kilometres between the two spouses
+  (assuming they did travel 20,000 work or business kilometres). For 2024/25, the ATO allows a deduction
+  of $0.88 per kilometre travelled, so for 20,000 kilometres, the total deduction would be $17,600.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- motor vehicle
+- jointly owned
+- cents per kilometre
+- spouse
+- work related travel
+- business kilometres
+- car deduction
+- husband and wife
+- vehicle expenses
+- income producing

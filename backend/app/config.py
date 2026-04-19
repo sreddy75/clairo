@@ -662,6 +662,27 @@ class ATOSettings(BaseSettings):
     )
 
 
+class TaxStrategiesSettings(BaseSettings):
+    """Tax strategies knowledge base configuration (Spec 060)."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="TAX_STRATEGIES_",
+        env_file=(".env", ".env.local"),
+        extra="ignore",
+    )
+
+    vector_write_enabled: bool = Field(
+        default=False,
+        description=(
+            "Gate for writes to the shared tax_strategies Pinecone namespace. "
+            "Must be true ONLY in the designated source-of-truth environment "
+            "(production). Publish jobs running where the flag is false fail "
+            "with `vector_write_disabled_in_this_environment` — the strategy "
+            "remains in `approved` status per spec 060 FR-011."
+        ),
+    )
+
+
 class CorsSettings(BaseSettings):
     """CORS (Cross-Origin Resource Sharing) configuration."""
 
@@ -758,6 +779,7 @@ class Settings(BaseSettings):
     sentry: SentrySettings = Field(default_factory=SentrySettings)
     posthog: PostHogSettings = Field(default_factory=PostHogSettings)
     ato: ATOSettings = Field(default_factory=ATOSettings)
+    tax_strategies: TaxStrategiesSettings = Field(default_factory=TaxStrategiesSettings)
 
     # Frontend URL for redirects
     frontend_url: str = Field(

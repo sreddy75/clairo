@@ -1,0 +1,42 @@
+strategy_id: CLR-264
+source_ref: STP-264
+name: Electric vehicle home charging expenses
+categories:
+- Employees
+- Business
+implementation_text: '1. Charging at a commercial charging station is ignored.
+
+  2. No deduction for employer provided cars.'
+explanation_text: 'The ATO has introduced a 4.20 cents per km rate for charging electric vehicles (EV)
+  at home. The rate is multiplied by the total number of business or work kilometres travelled by the
+  electric car during the year.
+
+
+  As the compliance costs involved in calculating the EV electricity consumption vs the household private
+  electricity use is high, the ''Practical Compliance Guideline PCG 2023/D1'' provides welcome relief
+  to taxpayers. The guideline applies to zero-emission vehicles that use electric motors (fuelled by a
+  battery, hydrogen fuel cell, electric generator, or off-vehicle electrical power source).'
+ato_sources:
+- PCG 2023/D1
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- electric vehicle
+- ev charging
+- home charging
+- cents per km
+- work kilometres
+- zero emission vehicle
+- electricity expenses
+- car deduction
+- practical compliance guideline
+- employee deduction

@@ -1,0 +1,41 @@
+strategy_id: CLR-197
+source_ref: STP-197
+name: Long service awards
+categories:
+- Business
+implementation_text: '1. Ensure the long service leave awards paid don''t exceed the relevant maximum
+  amount.
+
+  2. The employer pays the long service leave award to the employee and claims a tax deduction for the
+  payment.'
+explanation_text: 'Long service awards granted in recognition of 15 years or more service are tax-deductible
+  to the employer, non-taxable to the employee, and FBT exempt, provided the value of the award doesn''t
+  exceed the following specified amounts:
+
+  $1,000 for 15 years of service.
+
+  Plus, $100 per additional year of service.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- long service award
+- employee recognition
+- fbt exempt
+- tax deductible
+- non-taxable
+- employer deduction
+- long service leave
+- fringe benefits tax
+- 15 years service
+- staff award

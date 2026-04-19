@@ -1,0 +1,66 @@
+strategy_id: CLR-213
+source_ref: STP-213
+name: Boats and yachts
+categories:
+- Business
+implementation_text: '1. Individual owns the boat or yacht.
+
+  2. Individual leases the boat to the business entity exclusively for an annual lease fee.
+
+  3. The annual lease fee equals the boat''s operating costs (including maintenance, pen hire fees, memberships,
+  and boat depreciation). This strategy allows individuals to break even from their ''boat hire business''
+  for tax purposes.
+
+  4. The business entity uses the boat for entertaining clients, suppliers, business meetings, and staff
+  recreation and rewards.
+
+  5. Business uses the 50-50 split method for entertainment facility leasing costs incurred by the employer.
+  Under the 50 - 50 split method, 50% of the expenses are non-deductable. The other 50% is deductible
+  but subject to FBT.'
+explanation_text: 'This strategy involves using the entertainment facility leasing provisions of the FBT
+  Act to make owning and operating a boat or yacht as tax-effective as possible. Under this option, the
+  after-tax cost of $30,000 on entertainment leasing expenses is $36,226. In contrast, an individual taxpayer
+  in the 47% tax bracket would cost $56,604.
+
+
+  Example of $30,000 incurred on hiring a boat or yacht for the year:
+
+
+  The cost of boat or yacht hire is $30,000
+
+  GST refunded (50% @ $30,000 @ 1/11) (1364)
+
+  Tax saving on $13,636 expense at 25% (3,409)
+
+  FBT payable ($15,000 @ 2.0802 @ 47%) 14,665
+
+  Tax saving on FBT paid ($14,665 @ 25%) (3,666)
+
+  Total after-tax cost $36,226'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- boats
+- yachts
+- entertainment facility leasing
+- fbt
+- 50-50 split method
+- fringe benefits tax
+- client entertainment
+- boat hire
+- lease
+- after-tax cost
+- staff recreation
+- business entertainment
+- gst refund

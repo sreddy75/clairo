@@ -237,6 +237,20 @@ export interface CitationVerificationItem {
   matched_by?: string;
 }
 
+// Spec 060 T031 — per-citation strategy verification. `status` is the
+// three-state classification the StrategyChip renders (green/amber/red).
+export type StrategyCitationStatus =
+  | 'verified'
+  | 'partially_verified'
+  | 'unverified';
+
+export interface StrategyCitationItem {
+  strategy_id: string;
+  cited_name: string;
+  status: StrategyCitationStatus;
+  name_drift: number;
+}
+
 export interface CitationVerification {
   total_citations: number;
   verified_count: number;
@@ -245,6 +259,7 @@ export interface CitationVerification {
   status: VerificationStatus;
   confidence_score?: number;
   citations?: CitationVerificationItem[];
+  strategy_citations?: StrategyCitationItem[];
 }
 
 export interface ChatAttachment {

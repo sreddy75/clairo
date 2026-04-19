@@ -1,0 +1,69 @@
+strategy_id: CLR-209
+source_ref: STP-209
+name: Excess concessional super contributions
+categories:
+- Business
+implementation_text: '1. Arrange for employees with large employment income to salary sacrifice part of
+  their wages into excess concessional super contributions.
+
+  2. Claim a tax deduction for the total super contributions made at the employer level.
+
+  3. Include the excess super contributions in the employee''s assessable income and apply marginal tax
+  rates.
+
+  4. Apply the 15% ECC tax offset to which the individual is entitled.
+
+  5. Account for the super fund being taxed at 15% on the employer contributions received.
+
+  6. Ensure the super fund utilises any tax losses from negative gearing to offset tax otherwise payable
+  on the employer super contributions, targeting a saving of 15% tax.'
+explanation_text: 'This strategy involves employees with large employment income salary sacrificing part
+  of their wages into excess concessional super contributions. The tax consequences of this are:
+
+
+  The employer receives a tax deduction for the total super contributions made.
+
+  The excess super contributions are included in the employee''s assessable income and taxed at marginal
+  rates. The individual is entitled to a 15% ECC tax offset.
+
+  The super fund is taxed 15% on the employer contributions.
+
+
+  The advantages of this strategy are:
+
+
+  Enables high income earning employees to pump extra funds into their super fund.
+
+  Tax savings result when the super fund has tax losses due to negative gearing. These tax losses can
+  result in the fund paying no tax on the employer super contributions received so saving 15% tax.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- offset
+- concession
+keywords:
+- excess concessional contributions
+- salary sacrifice
+- super contributions
+- ecc tax offset
+- negative gearing
+- smsf
+- high income
+- employer contributions
+- marginal tax rate
+- superannuation
+- tax offset
+- concessional cap
+tenant_id: platform
+version: 1

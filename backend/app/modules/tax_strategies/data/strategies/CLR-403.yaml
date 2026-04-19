@@ -1,0 +1,56 @@
+strategy_id: CLR-403
+source_ref: STP-403
+name: Deregistered company
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. The process to deregister a company varies depending on whether the company is solvent or insolvent.
+
+  2. Solvent companies can be voluntarily deregistered by lodging form 6010 with ASIC.
+
+  3. Insolvent companies require the appointment of a liquidator.'
+explanation_text: 'A company will be deregistered after it is closed down (e.g. voluntary deregistration),
+  liquidated (by the members, court or creditors) or struck off the register of companies by ASIC (e.g.
+  for outstanding annual review fees).
+
+
+  Once a company is deregistered:
+
+  - it ceases to exist as a legal entity and can no longer do anything in its own right
+
+  - property the company owned (other than trust property) vests in ASIC
+
+  - property held by the company on trust vests in the Commonwealth (represented by ASIC)
+
+  - the former officeholders no longer have the right to deal with property registered in the company''s
+  name
+
+  - any legal proceedings in which the company is a party cannot be continued (in so far as they relate
+  to the deregistered company)
+
+  - you cannot start legal proceedings against the company.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- deregistered company
+- company closure
+- voluntary deregistration
+- liquidation
+- asic
+- insolvent
+- solvent
+- winding up
+- company struck off
+- legal entity
+- form 6010

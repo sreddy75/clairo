@@ -1,0 +1,49 @@
+strategy_id: CLR-115
+source_ref: STP-115
+name: Small business CGT rollover
+categories:
+- Business
+implementation_text: 1. If the rollover is applied, keep adequate records to ensure that in two-year's
+  time, you can determine if acceptable replacement active assets have been purchased, or an amount needs
+  to be included in the taxpayer's return as income.
+explanation_text: 'The small business CGT rollover allows taxpayers to defer all or part of a capital
+  gain made on an active asset for at least two years. An active asset, such as goodwill, commercial premises,
+  licences, and patents, is used in small businesses. If the rollover is applied, the taxpayer is not
+  required to acquire a replacement asset within two years or even have the intention to purchase a replacement
+  asset.
+
+
+  As such, taxpayers can use this concession when selling their business, retiring, or leaving the country.
+  Applying the rollover allows the taxpayer to defer the capital gain and tax liability for two years.
+  After the two-year period expires, the capital gain will be included in the taxpayer''s tax return as
+  income (CGT event J5).If, within two years, the taxpayer buys replacement active assets equal to the
+  capital gain rolled over, then no capital gain will be assessable at that time (until the acquired active
+  assets are subsequently sold). The difference will be a taxable capital gain if the acquired replacement
+  assets are less than the rollover value applied (CGT event).'
+ato_sources:
+- CGT event J5
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- small business
+- cgt rollover
+- capital gain
+- active asset
+- deferral
+- goodwill
+- commercial premises
+- licences
+- patents
+- replacement asset
+- business sale
+- retirement
+- cgt concession
+- two year rollover

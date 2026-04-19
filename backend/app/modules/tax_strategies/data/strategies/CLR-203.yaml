@@ -1,0 +1,49 @@
+strategy_id: CLR-203
+source_ref: STP-203
+name: Granny flats
+categories:
+- Investors_retirees
+- Rental_properties
+implementation_text: '1. It is possible to secure a lifelong right of residence in a property (say, the
+  granny flat) in exchange for assets or money.
+
+  2. Another option is to transfer the ownership of your house via sale or gift in exchange for a lifelong
+  right of residence.'
+explanation_text: 'A granny flat is a self-contained secondary dwelling built on a residential property.
+  Granny flats must be self-contained with a kitchen, bathroom, and living space. Building a granny flat
+  ranges from $60,000 to $150,000, with $100,000 an approximate average. Granny flats are perfect for
+  older parents, university students, children moving out of home for the first time, and single people,
+  as they provide a balance of company and independence at an affordable price.
+
+
+  The tax deductions applicable to granny flats include:
+
+  - Interest. On loans used to finance the building costs.
+
+  - Depreciation. According to BMT Tax Depreciation, depreciation deductions for granny flats average
+  $5,300 in the first year and increase to $23,800 over the next five years.
+
+  - Repairs and maintenance.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- granny flat
+- secondary dwelling
+- rental property
+- depreciation
+- interest deduction
+- repairs
+- maintenance
+- residential property
+- right of residence
+- property investment

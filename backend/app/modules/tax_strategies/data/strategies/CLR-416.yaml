@@ -1,0 +1,78 @@
+strategy_id: CLR-416
+source_ref: STP-416
+name: Partnerships
+categories:
+- Business_structures
+implementation_text: 'Prepare a written partnership agreement - Ideally drafted by a solicitor or online
+  legal provider.
+
+
+  As a minimum, partnership agreements should include the following details:
+
+  1. Business objectives.
+
+  2. Percentage of ownership.
+
+  3. Division of profit and loss.
+
+  4. Length of the partnership.
+
+  5. Decision-making process
+
+  6. Method for resolving disputes.
+
+  7. Partner authority.
+
+  8. What happens when the partnership dissolves or on the death of a partner'
+explanation_text: 'A partnership involves two or more partners (people or entities) carrying on a business
+  together to profit. Partnerships are governed by the Partnership Act of the state or territory where
+  the organisation was formed and are limited to a maximum of 20 partners.
+
+
+  Partnerships have the following advantages:
+
+  - It''s relatively easy and inexpensive to set up.
+
+  - Each partner has shared control and management of the business.
+
+  - Partners jointly contribute their labour, capital and skills to build the business. This increases
+  the business''s chance of survival/success. (as compared to sole traders).
+
+  - The ability for income splitting.
+
+  - Easy to dissolve.
+
+  - Limited external regulation and partners'' business affairs are private.
+
+
+  The disadvantages of partnerships are:
+
+  - Each partner is jointly liable for all partnership debts (unlimited liability).
+
+  - Each partner is an agent of the partnership and is accountable for the actions of other partners.
+
+  - There is the risk of disagreements and conflict between partners.'
+ato_sources: []
+case_refs: []
+entity_types:
+- partnership
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+keywords:
+- partnership
+- business structure
+- income splitting
+- partnership agreement
+- unlimited liability
+- joint business
+- partners
+- profit sharing
+- business setup
+- partnership act

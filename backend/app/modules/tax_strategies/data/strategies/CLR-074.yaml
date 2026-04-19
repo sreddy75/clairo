@@ -1,0 +1,79 @@
+strategy_id: CLR-074
+source_ref: STP-074
+name: Digital games tax offset
+categories:
+- Business
+implementation_text: 'A digital game is not eligible if it is:
+
+  - A gambling service (within the meaning of the Interactive Gambling Act 2001) or substantially comprises
+  gambling or gambling-like practices; or
+
+  - A game containing elements likely to lead to the game being refused classic? cation under the Classification
+  (Publications, Films and Computer Games) Act 1995; or
+
+  - a game that is primarily developed for industrial, corporate, or institutional purposes; or
+
+  - a game developed mainly to advertise or promote a product, entity, or service.'
+explanation_text: 'The Digital Games Tax Offset (DGTO) provides eligible game developers a 30% refundable
+  tax offset for qualifying Australian development expenditures from 1 July 2022.
+
+
+  It will be available for completion, ongoing development, or porting of digital games, subject to the
+  following:
+
+  - eligibility criteria set out in Division 378 of the Income Tax Assessment Act 1997, including certification
+  by the Arts Minister
+
+  - at least $500,000 of qualifying expenditure.
+
+
+  Only eligible expenditure in developing an eligible digital game or games can be claimed towards the
+  offset. An eligible digital game is primarily developed to be made available to the general public for
+  educational or entertainment purposes and must be:
+
+  - made available for use over the Internet; or
+
+  - mainly played through the Internet; or
+
+  - only operate when a player is connected to the Internet.
+
+  - Can only eligible expenditure in developing an eligible digital game or games be claimed towards the
+  offset.
+
+
+  The offset is capped at $20 million per company (or group of related or affiliated companies) per income
+  year. Reaching this cap would require approximately $66.7 million in eligible expenditure.
+
+
+  Applicants must be companies that are either:
+
+  - Australian tax residents, or
+
+  - foreign tax residents with a permanent establishment in Australia.'
+ato_sources:
+- Division 378 of the Income Tax Assessment Act 1997
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- offset
+keywords:
+- digital games
+- tax offset
+- dgto
+- refundable offset
+- game developer
+- qualifying expenditure
+- development expenditure
+- entertainment
+- educational
+- internet
+- company
+- arts minister certification

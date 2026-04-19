@@ -1,0 +1,121 @@
+strategy_id: CLR-266
+source_ref: STP-266
+name: Record keeping - ATO
+categories:
+- ATO_obligations
+implementation_text: "Here are recommended processes to help small businesses keep their records in order:\n\
+  1. Choose a record-keeping system:\n   • Digital accounting software: Tools like Xero, MYOB, or QuickBooks\
+  \ can simplify record-keeping, especially as they often integrate with bank accounts and other systems.\
+  \ They automatically update, categorize, and store transactions.\n2. Regularly update records:\n   •\
+  \ Set aside dedicated time weekly or monthly to update and review your records.\n   • Regularly reconcile\
+  \ your records with bank statements.\n3. Document all sales and income:\n   • Issue receipts or invoices\
+  \ for all transactions.\n   • Use a dedicated business bank account to make tracking easier.\n4. Keep\
+  \ expense receipts:\n   • Store physical receipts in a dedicated folder or box, categorized by month\
+  \ or type.\n   • Consider using apps or software that can scan and digitally store receipts.\n5. Manage\
+  \ payroll records:\n   • Maintain detailed employee records, including wage details, tax declarations,\
+  \ superannuation, and other benefits.\n   • Use payroll software to automate the process and ensure\
+  \ compliance.\n6. Regularly conduct stocktakes:\n   • If you have inventory, schedule regular stocktakes.\n\
+  \   • Record discrepancies and investigate if necessary.\n7. Track business assets:\n   • Record details\
+  \ of all business assets.\n   • Calculate and record depreciation.\n8. Maintain a business logbook:\n\
+  \   • If you use a vehicle for business, maintain a logbook for at least 12 consecutive weeks to determine\
+  \ the business-use percentage.\n   • Record other business travel details, including dates, locations,\
+  \ and purposes.\n9. Backup and secure data:\n   • Regularly back up digital records to prevent data\
+  \ loss.\n   • Use password protection and consider encryption for sensitive data.\n   • Store physical\
+  \ records in a safe location.\n10. Stay updated with tax obligations:\n    • Regularly check the ATO\
+  \ website or subscribe to updates.\n    • Attend workshops or webinars catered to small businesses.\n\
+  11. Retain records:\n    • Keep records for at least five years from when they are prepared or completed,\
+  \ whichever occurs later.\n    • For certain records, such as those related to capital gains tax, you\
+  \ might need to retain them longer.\n12. Review and audit:\n    • Consider an annual review of your\
+  \ record-keeping processes.\n    • Hiring an external auditor or accountant can provide an objective\
+  \ assessment."
+explanation_text: 'The Australian Taxation Office (ATO) requires businesses in Australia to maintain detailed
+  records to ensure they pay the correct amount of tax and superannuation. The ATO expects businesses
+  to keep the following records:
+
+  1. Income and sales records: Income/sales invoices, credit card statements, and records of cash sales.
+
+  2. Expense and purchase records: Including bills, invoices, and statements of expenses. This could also
+  include digital transaction records such as electronic funds transfers.
+
+  3. Year-end records: This covers profit and loss statements, balance sheets, and other financial statements.
+
+  4. Bank records: Maintain all bank account and credit card statements, deposit records, and loan documents.
+
+  5. Asset purchase and depreciation records: Keep records of assets you buy and sell, the date and cost
+  of the purchase/sale, and any depreciation calculations.
+
+  6. Vehicle and travel expenses: Logbooks, fuel receipts, and records of trips. Similarly, maintain records
+  of other travel expenses.
+
+  7. Employee and wage records: Wages, allowances, superannuation, tax deducted, employment contracts,
+  and other staff-related expenses.
+
+  8. GST records: If registered for GST, you must keep records showing your sales, fees, expenses, and
+  any GST credits claimed.
+
+  9. Records related to stock: Keep inventories, stocktake sheets, and other related documents.
+
+  10. Foreign income, deductions, and credits: You must keep relevant records.
+
+  11. Other records: This might include records of private expenses, home-based business expenses, and
+  any other records relevant to claiming deductions or credits.
+
+
+  Failing to keep adequate records can result in the following consequences:
+
+  1. Penalties and fines: The ATO can impose penalties for not keeping the necessary records or for not
+  keeping them for the required duration.
+
+  2. Difficulty in accurate reporting: Without adequate records, businesses may have difficulty accurately
+  reporting income, expenses, and other necessary details in their tax returns. This can lead to mistakes
+  and inaccuracies.
+
+  3. Increased risk of audit: More likely to come under scrutiny and face an audit by the ATO.
+
+  4. Liability disputes: If the ATO disputes your claims or calculations and you don''t have the necessary
+  records to support your position, you might be charged additional taxes, penalties, and interest.
+
+  5. Loss of deductions: If you can''t substantiate business expenses due to inadequate records, you might
+  lose the ability to claim these expenses as deductions.
+
+  6. Higher professional costs: If you need an accountant or other professional to help you reconstruct
+  records or handle disputes with the ATO, this can lead to additional costs.
+
+  7. Complications with capital gains tax (CGT): Difficult to accurately calculate and report capital
+  gains or losses. This can lead to potential overpayments or penalties.
+
+  8. Issues with superannuation compliance: Inaccurate record-keeping can also affect superannuation guarantee
+  contributions for employees, potentially leading to further penalties.
+
+  9. Potential legal issues: Contracts, agreements, or other documents might be necessary in disputes
+  or negotiations, and not having them could put a business at a disadvantage.
+
+  10. Operational challenges: This can affect decision-making, budgeting, forecasting, and other critical
+  business activities.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- record keeping
+- ato obligations
+- small business
+- tax records
+- bookkeeping
+- gst records
+- payroll records
+- depreciation
+- logbook
+- substantiation
+- audit risk
+- five year retention
+- capital gains tax records
+- superannuation compliance
+- digital accounting

@@ -1,0 +1,55 @@
+strategy_id: CLR-075
+source_ref: STP-075
+name: Property depreciation reports
+categories:
+- Rental_properties
+implementation_text: 1. Ensure each rental property investment has a property depreciation report.
+explanation_text: 'A property depreciation report (a depreciation schedule) sets out the tax depreciation
+  and building write-off claims for new or existing investment properties or business premises. The depreciation
+  on plant and equipment refers to depreciating items within the building, such as stoves, dishwashers,
+  air-conditioners, hot water systems, etc. ''Building write-off claims'' are the annual deduction allowed
+  on the original actual building costs. Preparing a property depreciation report involves a quantity
+  surveyor visiting the property to note down and photograph all depreciable items before providing the
+  ATO-compliant tax depreciation schedules. The property depreciation reports only need to be prepared
+  once for each property. The quantity surveyor fees are 100% tax-deductible.
+
+
+  The advantages of using a qualified quantity survey report include the following:
+
+
+  • Maximum entitlements – This ensures you can claim the total depreciation deductions.
+
+  • ATO approved.
+
+  • Accurate estimates – Quality surveyors are fully qualified to estimate the depreciation on your building
+  and contents accurately.
+
+
+  From 1st July 2017, plant & equipment depreciation deductions will be limited to outlays incurred by
+  investors in residential real estate properties. Investors who purchase plant and equipment for their
+  residential investment property after 9th May 2017 can claim a deduction over the asset''s productive
+  life. However, subsequent property owners cannot claim deductions for plants and equipment purchased
+  by the previous owner.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- property depreciation
+- depreciation schedule
+- quantity surveyor
+- rental property
+- plant and equipment
+- building write-off
+- investment property
+- tax deductible
+- residential real estate
+- depreciating assets

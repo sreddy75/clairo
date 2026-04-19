@@ -1,0 +1,48 @@
+strategy_id: CLR-210
+source_ref: STP-210
+name: Phone and internet
+categories:
+- Employees
+- Investors_retirees
+- Business
+implementation_text: '1. If the deduction is more than $50, you must keep records for a four-week representative
+  period (i.e. diary entries, electronic documents and bills).
+
+  2. Letter from the employer confirming that you are required to use your phones and internet for work
+  purposes.
+
+  3. Where usage is itemised on your bills, you must determine your work use percentage over four weeks
+  based on the number of work calls made, time spent on work calls or data downloaded for work purposes.
+
+  4. Where usage is not itemised on your bills, you calculate your work use percentage by keeping a record
+  of all work-related calls over four weeks.
+
+  5. Where phone and internet services are bundled, and you are claiming deductions for work-related use
+  of one or more services, the costs must be apportioned based on the work use for each service.'
+explanation_text: Using your phone or internet for work purposes is deductible if you have paid for these
+  costs (i.e. they are not reimbursed) and have records to support the claim (i.e. receipts and diary
+  of usage). If the phone or internet is for both work and private use, you need to determine the percentage
+  that reasonably relates to your work use.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- phone
+- internet
+- work-related
+- deduction
+- apportionment
+- diary
+- records
+- bundled services
+- work use percentage
+- reimbursement

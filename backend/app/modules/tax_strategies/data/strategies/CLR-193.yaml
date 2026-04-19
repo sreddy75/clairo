@@ -1,0 +1,66 @@
+strategy_id: CLR-193
+source_ref: STP-193
+name: Purchase a farm in your SMSF
+categories:
+- Business
+- SMSF
+implementation_text: '1. Establish SMSF
+
+  2. Roll in family members'' superannuation balances.
+
+  3. Sign a purchase contract to purchase the farm in SMSF.
+
+  4. Arrange finance for the purchase (if necessary).
+
+  5. Settle on the farm purchase.
+
+  6. Sign an arms-length rental agreement between the SMSF and the taxpayer (or associated entity) operating
+  the farming business.'
+explanation_text: 'This strategy involves using your SMSF to purchase a farm (or hobby farm) and then
+  leasing it back to the taxpayer (or associated entity) to operate a farming business. This strategy
+  has the following attractions:
+
+  Ability to combine the superannuation fund balances of up to 6 family members to purchase the farm.
+
+  The superannuation fund can finance the purchase of the farm.
+
+  The arms-length lease rental income payable to the SMSF is taxed at 15% (or nil if in the pension phase).
+
+  The taxpayer (or associated entity) operates the farming business and can access all the primary production-related
+  tax concessions, including immediate write off for fencing and water facilities.
+
+  The taxpayer operating the farming business receives a tax deduction for the farm rental payments.
+
+  The member can live on the farm rent-free (without breaching any SIS Act provisions).'
+ato_sources:
+- SIS Act
+case_refs: []
+entity_types:
+- smsf
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- farmers
+financial_impact_type:
+- deduction
+- concession
+- structure
+keywords:
+- smsf
+- farm
+- primary production
+- leaseback
+- superannuation
+- farming business
+- pension phase
+- arms-length rental
+- family members
+- fencing
+- water facilities
+- tax concessions
+- hobby farm

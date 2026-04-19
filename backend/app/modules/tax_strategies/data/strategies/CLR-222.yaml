@@ -1,0 +1,85 @@
+strategy_id: CLR-222
+source_ref: STP-222
+name: Christmas party
+categories:
+- Business
+implementation_text: '1. Host the Christmas party on business premises during work hours to achieve the
+  most tax-effective outcome.
+
+  2. Ensure the meal excludes alcohol and does not rise to the level of lavish entertainment, such as
+  a 10-course degustation.
+
+  3. Claim a tax deduction for the cost of a light meal and drink when the party is held on business premises,
+  noting no FBT liability will be incurred.
+
+  4. If holding the party at a restaurant, keep the cost of food, drinks and alcohol to less than $300
+  per employee to avoid FBT.
+
+  5. Note that no tax deduction or GST credit can be claimed for a restaurant Christmas party, even where
+  the per-employee cost is below $300.
+
+  6. Provide employees with non-entertainment gifts valued at less than $300 to ensure the gifts are tax-deductible
+  to the employer.
+
+  7. Select gifts from the list of approved tax-deductible items, such as a coffee machine, books, flowers,
+  chocolates, hampers, wine, spirits, perfume, retail vouchers, watches, handbags, or wallets.'
+explanation_text: 'A Christmas party on business premises during work hours is the most tax-effective
+  option for businesses. The cost of a light meal and drink will be tax-deductible to the employer with
+  no FBT liability incurred. The meal can be several courses and include a variety of foods, but it must
+  exclude alcohol. In addition, the food must not be so lavish, such as a 10-course degustation, that
+  it turns into entertainment.
+
+
+  Most Christmas parties are not held on business premises but at a restaurant. If the cost of food, drinks
+  and alcohol is kept to less than $300 per employee, no FBT is payable by the employer. Unfortunately,
+  the employer cannot claim a tax deduction or GST credit for the cost.
+
+
+  A non-entertainment gift valued at less than $300 given to an employee will be tax-deductible to the
+  employer. Tax deductible gifts include:
+
+  A coffee machine.
+
+  Books or novels.
+
+  Flowers or chocolates.
+
+  Christmas or gift hamper.
+
+  Bottle of wine, spirits or liqueur.
+
+  A bottle of perfume or aftershave.
+
+  Vouchers for retailers, e.g. David Jones, Myers, Jack London, etc. Watch.
+
+  Handbags or wallets.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- christmas party
+- fbt
+- fringe benefits tax
+- entertainment
+- staff gifts
+- non-entertainment gift
+- tax deductible
+- business premises
+- employee benefits
+- gst credit
+- minor benefit
+- meal
+- alcohol
+- employer deduction
+- staff party
+tenant_id: platform
+version: 1

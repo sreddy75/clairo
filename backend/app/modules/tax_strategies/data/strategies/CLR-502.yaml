@@ -1,0 +1,98 @@
+strategy_id: CLR-502
+source_ref: STP-502
+name: Binding death benefit nominations
+categories:
+- Recommendations
+implementation_text: 'Enacting a binding death benefit nomination (BDBN) involves the following steps:
+
+  1. Check fund''s rules: Review the rules and policies of your superannuation fund, as different funds
+  have specific requirements for BDBNs.
+
+  2. Complete the form: Superannuation funds provide a specific form for making a BDBN. You can obtain
+  this form from your fund''s website or by contacting customer service. Complete the form accurately
+  and provide all necessary information.
+
+  3. Nominate beneficiaries: On the form, clearly specify who will receive your superannuation death benefits
+  in the event of your passing. You can nominate individuals (e.g., family members, dependents) or legal
+  entities (e.g., your estate or a trust).
+
+  4. Specify allocation: If nominating multiple beneficiaries, specify the percentage or dollar amount
+  each beneficiary should receive.
+
+  5. Witnesses and legal requirements: Depending on your fund''s rules, your BDBN form may need to be
+  witnessed by two adult witnesses who are not beneficiaries.
+
+  6. Submit the form: Submit the completed and witnessed BDBN form to your superannuation fund. Keep a
+  copy of the form for your records.
+
+  7. Confirmation: After you submit the BDBN form, the fund should acknowledge receipt and confirm that
+  the nomination is binding. Be sure to keep this confirmation safe.
+
+  8. Review and update: Periodically review and update your BDBN, mainly if significant life events occur,
+  such as marriage, divorce, the birth of children, or changes in beneficiaries'' circumstances.'
+explanation_text: 'A ''death benefit nomination'' is a legal document that allows a superannuation fund
+  member to specify who should receive their superannuation benefits in the event of their death. When
+  a superannuation fund member passes away, their superannuation account balance, along with any associated
+  life insurance benefits, becomes part of their estate. A death benefit nomination is used to specify
+  the beneficiaries who should receive the proceeds to ensure that these benefits are distributed according
+  to their wishes.
+
+
+  There are two main types of death benefit nominations:
+
+  1. Binding death benefit nomination: This nomination is legally binding on the superannuation fund trustee,
+  who must follow these instructions. It specifies the individuals or entities (such as family members
+  or a legal representative) who should receive the death benefits upon the member''s death.
+
+  2. Non-binding death benefit nomination: This nomination guides the trustee about the member''s preferences
+  for distributing death benefits, but it is not legally binding. The trustee has the discretion to consider
+  the nomination but can also consider other factors, such as the member''s financial dependents and other
+  relevant circumstances.
+
+
+  Without a binding death benefit nomination, the following problems can arise:
+
+  1. Uncertainty in beneficiary designation: Without a BDBN, the superannuation fund trustee can determine
+  how the death benefits will be distributed among the member''s potential beneficiaries. This can lead
+  to uncertainty about who will receive the funds and may result in disputes among family members or other
+  potential claimants.
+
+  2. Delays in distribution: The absence of a BDBN could lead to delays in distributing the death benefits
+  to the intended beneficiaries. The trustee may need to investigate the member''s family and financial
+  circumstances to determine the appropriate beneficiaries, which can take time and may cause financial
+  strain on the surviving family members.
+
+  3. Legal disputes: Without clear instructions from the member, conflicts may arise among family members
+  or other parties claiming a right to death benefits. This can result in costly legal proceedings, further
+  delaying the funds'' distribution and potentially strain family relationships.
+
+  4. Tax implications: The tax treatment of death benefits can vary based on the relationship between
+  the deceased member and the beneficiary.
+
+  5. Inequality: If there are specific individuals or dependents the member wants to provide for, such
+  as a surviving spouse, children, or other dependents, a BDBN can ensure that their financial needs are
+  addressed. Without a BDBN, the trustee might not consider these preferences when distributing the benefits.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- binding death benefit nomination
+- bdbn
+- superannuation
+- death benefits
+- beneficiary
+- estate planning
+- trustee
+- superannuation fund
+- non-binding nomination
+- life insurance
+- dependents
+- succession planning

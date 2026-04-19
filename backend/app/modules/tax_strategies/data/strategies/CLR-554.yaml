@@ -1,0 +1,85 @@
+strategy_id: CLR-554
+source_ref: STP-554
+name: 'Solvency resolutions: companies'
+categories:
+- Recommendations
+implementation_text: 'The process generally involves the following steps:
+
+  1. Board meeting: Convene a meeting of the company''s board of directors. This should involve a proper
+  meeting notice, and an agenda should be circulated in advance.
+
+  2. Financial review: Before the meeting, directors should review the company''s financial statements,
+  cash flow projections, budgets, and other relevant financial information to form a solvency opinion.
+  They might also consult with the company''s financial advisors or accountants.
+
+  3. Discussion: During the board meeting, directors should discuss the company''s financial position,
+  consider all relevant information, and ensure that they have a clear understanding of the financial
+  health of the company.
+
+  4. Draft the resolution: Draft a resolution stating the directors'' opinion about the company''s solvency.
+  An example wording might be:
+
+  "The directors declare that, in their opinion, there are reasonable grounds to believe that the company
+  will be able to pay its debts as and when they become due and payable."
+
+  5. Vote: Directors should vote on the resolution. For the resolution to pass, it typically needs the
+  approval of a majority of the directors. The vote outcome (i.e., which directors voted for or against
+  the resolution) should be recorded in the meeting minutes.
+
+  6. Document the resolution: Once passed, the resolution should be documented in the board meeting minutes.
+  It''s essential to keep a formal record of the resolution, considerations, and discussions that led
+  to it.
+
+  7. Include in financial reports: If required (e.g., under Section 295 of the Australian Corporations
+  Act 2001), the solvency resolution or declaration should be included with the company''s annual financial
+  reports.
+
+  8. Regular review: Given that a company''s financial position can change over time, directors should
+  regularly review the solvency of the company and make new resolutions as necessary.'
+explanation_text: 'Under section 295(4)(d) of the Corporations Act 2001, directors are required to declare
+  that, in their opinion, there are reasonable grounds to believe that the company will be able to pay
+  its debts as and when they become due and payable.
+
+
+  The consequences if directors fail to make this solvency resolution are:
+
+  1. Breach of the Corporations Act: Failure to make the required solvency declaration under s295(4)(d)
+  is a breach of the Corporations Act. The Act imposes various obligations on directors, and any contravention
+  may attract penalties.
+
+  2. Potential for ASIC action: Directors who fail to comply with their obligations, including making
+  necessary declarations under s295(4)(d), may face regulatory action from ASIC.
+
+  3. Personal liability: Directors must prevent insolvent trading under s588G of the Corporations Act.
+  If the company trades while insolvent, directors may be personally liable for the company''s debts.
+  Not making a solvency declaration might be used as evidence in proceedings relating to insolvent trading,
+  although the absence of such a declaration is not definitive proof of insolvency. Negative solvency
+  resolution - passed when directors believe that the company will not be able to pay its debts when they
+  are due. The company must notify us if the directors pass a negative resolution.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- solvency resolution
+- company directors
+- corporations act
+- insolvent trading
+- board meeting
+- solvency declaration
+- asic
+- director obligations
+- financial statements
+- s295
+- s588g
+- annual financial reports
+- negative solvency resolution
+- corporate governance

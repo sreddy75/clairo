@@ -1,0 +1,60 @@
+strategy_id: CLR-267
+source_ref: STP-267
+name: Superannuation and SMSFs
+categories:
+- Employees
+- Investors_retirees
+- Business
+- SMSF
+implementation_text: ''
+explanation_text: 'As superannuation is subject to tax rates of 0%, 10% or 15%, it provides many opportunities
+  to save. Then once the flexibility of SMSFs is included, the possibilities expand even further.
+
+
+  Ten superannuation strategies that save tax:
+
+  Concessional super contributions.
+
+  5-year catch-up super contributions.
+
+  Start a pension in an SMSF.
+
+  Transfer personal investments into super.
+
+  Using an SMSF to undertake property development.
+
+  Transferring business premises into an SMSF.
+
+  SMSF borrowings.
+
+  SMSFs investing in non-controlled entities.
+
+  Super contributions from downsizing.
+
+  Life insurance is held through super.'
+ato_sources: []
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- superannuation
+- smsf
+- concessional contributions
+- catch-up contributions
+- pension
+- property development
+- business premises
+- smsf borrowings
+- downsizing
+- life insurance
+- tax savings
+- retirement planning
+- super contributions

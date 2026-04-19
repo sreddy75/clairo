@@ -1,0 +1,62 @@
+strategy_id: CLR-069
+source_ref: STP-069
+name: Life insurance held through superannuation
+categories:
+- Employees
+- SMSF
+implementation_text: '1. Check with the insurance company that a new life insurance policy can be started
+  in the individual''s super fund. This may not be possible or cost-effective for members with existing
+  health-related issues.
+
+  2. Commence a ''new'' life insurance policy in the super fund - the policy needs to be registered in
+  the name of the superannuation fund.
+
+  3. Ensure the policy is only for life insurance and doesn''t include sickness and accident insurance,
+  as this will breach the SIS Act.
+
+  4. Cancel the ''old'' policy.'
+explanation_text: 'A taxpayer''s superannuation fund should own its life insurance policy, which enables
+  the fund to gain a tax deduction for life insurance policy costs. In contrast, life insurance policy
+  costs paid by an individual are non-deductible. Both an SMSF and a public offer super fund can own the
+  life insurance policy. The public offer superannuation account can be structured, so the super contributions
+  create an investment balance (i.e. member''s asset that builds up over time) plus pay their life insurance
+  premiums. Alternatively, the super contributions can be reduced to only cover the life insurance premium
+  costs (so the super investment balance is always nil).
+
+
+  The life insurance policy proceeds are paid directly to the superannuation fund (as the policy owner)
+  upon death. The amount is allocated to the member''s account as a taxable component. The idea is to
+  pay the death benefit to a death benefit dependent as a tax-free lump sum. A deceased person has the
+  following death benefit dependents; a spouse, child under 18, a financially dependent person, e.g.,
+  grandchildren/adult children, or a person with whom the deceased had an ''interdependent relationship''
+  (e.g. close friends sharing a house). If the death benefit is paid to adult children, the lump sum is
+  taxed at 17%.'
+ato_sources:
+- SIS Act
+case_refs: []
+entity_types:
+- individual
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- life insurance
+- superannuation
+- smsf
+- death benefit
+- tax deduction
+- insurance premiums
+- dependents
+- lump sum
+- taxable component
+- non-deductible
+- public offer fund
+- death benefit dependent
+- interdependent relationship

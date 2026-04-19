@@ -1,0 +1,63 @@
+strategy_id: CLR-539
+source_ref: STP-539
+name: Notifiable data breaches scheme
+categories:
+- Recommendations
+implementation_text: '1. Prepare a data breach response plan - this framework sets out the roles and responsibilities
+  of managing a data breach. It also describes an entity''s steps if a data breach occurs.
+
+  2. Entities that suspect an eligible data breach may have occurred must undertake a reasonable and expeditious
+  assessment to determine if the data breach is likely to seriously harm any individual affected.
+
+  3. Any time a data breach involves an individual''s TFN or bank details, the breach is severe and needs
+  to be reported to the Commission and the individuals concerned.'
+explanation_text: 'The Notifiable Data Breaches (NDB) scheme establishes the requirements for entities
+  to respond to data breaches.
+
+
+  The NDB scheme applies to:
+
+  TFN recipients (which will include all Registered Tax Agents, financial planners, and finance brokers).
+
+  Organisations with an annual turnover of $3 million or more.
+
+  Australian Government agencies.
+
+  Credit reporting bodies.
+
+  Health service providers.
+
+
+  Entities have data breach notification obligations when a data breach is likely to seriously harm any
+  individuals whose personal information is involved in the violation. Both the Australian Information
+  Commissioner (Commissioner) and the individuals concerned must be informed of the following information:
+
+  The identity and contact details of the organisation.
+
+  A description of the data breach.
+
+  The kinds of information involved.
+
+  Recommendations about the steps individuals should take in response to the data breach.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- notifiable data breaches
+- NDB scheme
+- data breach
+- privacy
+- TFN
+- personal information
+- australian information commissioner
+- data security
+- compliance
+- notification obligations

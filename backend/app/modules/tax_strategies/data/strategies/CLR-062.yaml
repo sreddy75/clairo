@@ -1,0 +1,45 @@
+strategy_id: CLR-062
+source_ref: STP-062
+name: Crystallise capital losses
+categories:
+- Investors_retirees
+implementation_text: '1. Sell shares with unrealised capital losses before 30th June to realise the losses
+  and offset them against capital gains made.
+
+  2. Consider re-buying the shares later - This share sale and repurchase are often made to reduce their
+  market exposure, clear their mind, reduce risk, and allow time to reconsider whether the investment
+  is worth holding.'
+explanation_text: 'This strategy is valuable for taxpayers who have sold shares or property and made a
+  capital gain. Under this strategy, a taxpayer with realised gains would sell some of their shares with
+  unrealised losses to make those losses realised. These realised losses will then be available to be
+  offset against the capital gains, so the taxpayer''s capital gains tax liability is reduced or eliminated.
+
+
+  If the taxpayer wants to regain ownership of the shares they sold to realise the capital losses, they
+  can purchase the shares back again. The net effect of this transaction is they have crystallised their
+  capital losses and still have ownership of the loss-making shares. Taxpayers must ensure they don''t
+  fall foul of the ATO legislation on ''wash sales'' when implementing this strategy. Wash sales occur
+  when a taxpayer sells their shares in a company and repurchases them the same day, and the only purpose
+  of the transactions is to crystallise capital losses.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- capital gains tax
+- capital losses
+- shares
+- wash sales
+- cgt
+- unrealised losses
+- realised losses
+- offset
+- end of year
+- tax planning

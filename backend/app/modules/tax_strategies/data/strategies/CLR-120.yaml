@@ -1,0 +1,52 @@
+strategy_id: CLR-120
+source_ref: STP-120
+name: Accrued directors' fees
+categories:
+- Business
+implementation_text: '1. The director''s fees must be in writing and approved by shareholders (via a shareholders
+  meeting or resolution) before June 30th.
+
+  2. The director''s fees are included in the director''s tax returns in the next financial year.'
+explanation_text: 'Accruing directors'' fees is a tax deferral strategy, as the company receives a tax
+  deduction in one financial year. Still, the related party (directors) are not taxed on the income till
+  the following financial year. A company can claim a deduction in one financial year, say 2023, for directors''
+  fees if it is committed to paying those directors'' fees on 30th June 2023. A properly written authorised
+  shareholders resolution will evidence this commitment.
+
+
+  The directors receiving the director''s fees are not taxed on them until they are received, which will
+  be the following financial year (2024 in this example). Directors'' fees are typically paid by making
+  a payment from the company bank account as per regular employee wages or crediting the directors'' loan
+  account. Crediting the directors'' loan account creates a liability for the company and allows the directors
+  to draw down this money tax-free at a later time convenient to them. Irrespective of whether the directors''
+  fees are paid in cash from the company bank account or credited to the directors'' loan account, both
+  payments will be subject to the standard employee PAYG withholdings and superannuation guarantee requirements.
+  The ATO has advised that directors'' fees accrued in one financial year will only be deductible in that
+  financial year if they are paid out and assessed to the directors in the following financial year. That
+  is, directors'' fees are not deductible if indefinitely accrued and never paid.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- timing
+keywords:
+- directors fees
+- accrued fees
+- tax deferral
+- shareholders resolution
+- company deduction
+- payg withholding
+- superannuation guarantee
+- directors loan account
+- income deferral
+- june 30

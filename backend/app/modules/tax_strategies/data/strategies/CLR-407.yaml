@@ -1,0 +1,51 @@
+strategy_id: CLR-407
+source_ref: STP-407
+name: Employee remuneration trusts
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Consult a solicitor to establish the Employee Remuneration Trust.'
+explanation_text: 'An employee remuneration trust (ERT) arrangement involves establishing a trust to provide
+  payments and other benefits to an employer''s employees. The trustees offer benefits at the direction
+  of the employer.
+
+
+  A contribution is deductible to an employer where:
+
+
+  • It is a permanent payment of cash.
+
+  • The employer reasonably expects their business to benefit from the contribution via an improvement
+  in employee performance, morale, efficiency or loyalty, and
+
+  • The contribution is to be entirely spent on remunerating business employees within a relatively short
+  period (less than five years).
+
+
+  This strategy helps retain and reward employees, which is critical to success.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- employee remuneration trust
+- ert
+- employer deduction
+- employee benefits
+- trust structure
+- staff retention
+- reward employees
+- deductible contributions
+- business trust
+- remuneration planning

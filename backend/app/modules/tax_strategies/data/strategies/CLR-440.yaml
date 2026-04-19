@@ -1,0 +1,55 @@
+strategy_id: CLR-440
+source_ref: STP-440
+name: Deceased estates taxed under s99
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Notifying the beneficiaries.
+
+  2. We are securing and valuing the assets.
+
+  3. Obtaining authority to administer the estate (through the Supreme Court) is known as getting a ''probate
+  of the Will'').
+
+  4. Completing income tax returns.
+
+  5. Paying all debts.
+
+  6. Dividing the estate.'
+explanation_text: 'A deceased estate is the property of a person who has died. It includes property owned
+  by the deceased in their name (e.g., houses, land, businesses, cash, shares, etc.) but excludes property
+  owned by related trusts and companies. When a person dies, the executor administers the estate. For
+  large deceased estates, this process can take several years.
+
+
+  Where the administration of a deceased estate is still in progress (that is, assets being realised and
+  liabilities paid), the estate executor is taxed on any trust income. Under section 99, the ATO allows
+  the executor to be taxed on this trust income for up to 3 years at the individual tax rates, including
+  benefiting from the $18,200 tax-free threshold. This means that the deceased estate could generate up
+  to $18,200 in income for three years and pay no tax. If this income were distributed to beneficiaries
+  instead, most likely, there would be tax payable.'
+ato_sources:
+- section 99
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- deceased estate
+- section 99
+- executor
+- trust income
+- tax-free threshold
+- probate
+- beneficiaries
+- estate administration
+- individual tax rates
+- will

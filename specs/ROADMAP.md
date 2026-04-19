@@ -25,6 +25,11 @@
 │                                                                 │
 │  STRATEGY: ATOtrack next for post-lodgement intelligence        │
 │                                                                 │
+│  IN FLIGHT: Spec 060 Tax Strategies KB (Phase 1 infra) —        │
+│    reviewer-approved tax strategy corpus + `[CLR-XXX: Name]`    │
+│    citation chips. Phase 2 = author the 415-row catalogue       │
+│    through the pipeline with paid reviewer sign-off.            │
+│                                                                 │
 │  ROADMAP UPDATE v5.6:                                           │
 │  ├── Phase E: Data Intelligence (Specs 023-025) ✅ COMPLETE      │
 │  │   └── Xero Reports, Credit Notes, Payments, Journals, Assets │

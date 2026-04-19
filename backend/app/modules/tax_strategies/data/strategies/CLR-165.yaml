@@ -1,0 +1,44 @@
+strategy_id: CLR-165
+source_ref: STP-165
+name: Union fees, licences, registrations and subscriptions
+categories:
+- Employees
+- Business
+implementation_text: 1. Review the subscriptions to determine how they are relevant to the taxpayer earning
+  their income.
+explanation_text: 'Subscriptions are deductible where they are incidental and relevant to the derivation
+  of the taxpayer''s assessable income (whether as an employee or business owner). For example, taxpayers
+  practising in a particular profession can claim a deduction for periodic subscriptions to professional
+  associations related to the taxpayer''s occupation (i.e. an accountant paying CPA Australia subscriptions).
+  A tyre manufacturer/retailer who paid an annual membership fee to a company whose policy and activities
+  were directed towards encouraging road construction, maintenance and use was allowed a deduction because
+  increased road usage would increase demand for the taxpayer''s products.
+
+
+  In contrast, periodic subscription expenses are not deductible where the purpose of the payments is
+  to secure and retain jobs or the nexus between the subscriptions and the earning of assessable income
+  is too remote. For example, an accountant failed to claim subscriptions to a yacht club and art body
+  based on picking up new clients.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- union fees
+- subscriptions
+- professional associations
+- licences
+- registrations
+- deductible expenses
+- employee deductions
+- business deductions
+- CPA
+- membership fees

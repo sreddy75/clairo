@@ -1,0 +1,92 @@
+strategy_id: CLR-500
+source_ref: STP-500
+name: Asset protection
+categories:
+- Recommendations
+implementation_text: 'The steps to create an asset protection plan are as follows:
+
+  1. Assess your current financial situation: Take stock of your assets, liabilities, income, and expenses.
+  Understand your risks, including potential legal claims, creditor issues, and other threats.
+
+  2. Set clear goals: Define your asset protection goals. Are you primarily concerned with protecting
+  your assets, shielding your business assets, or both? Do you have specific concerns, such as potential
+  lawsuits?
+
+  3. Understand legal structures: Familiarize yourself with asset protection tools, such as trusts, companies,
+  superannuation, and more.
+
+  4. Select appropriate strategies: Work with your advisors to select the asset protection strategies
+  that align with your goals. These might include creating trusts, establishing companies, obtaining the
+  right insurance coverage, and considering international structures, if applicable.
+
+  5. Implement the plan: This may involve setting up legal entities, transferring assets to trusts, adjusting
+  insurance policies, or changing your estate plan.
+
+  6. Regularly review and update: It''s essential to periodically review and update your plan as your
+  financial situation evolves or new risks emerge. Changes in laws or personal circumstances may necessitate
+  adjustments.
+
+  7. Stay compliant and transparent: Ensure your asset protection plan is legally sound.'
+explanation_text: 'Asset protection refers to the strategies used to safeguard wealth and assets from
+  potential risks, such as lawsuits, creditors, and financial downturns. Asset protection aims to create
+  a barrier between your assets and possible threats, minimizing the chances of losing those assets in
+  a legal dispute or economic crisis.
+
+
+  Common threats to assets include:
+
+  1. Legal claims and lawsuits: Includes personal injury claims, contract disputes, employment-related
+  issues, or professional liability.
+
+  2. Creditor claims: Creditors, banks, lenders, and suppliers may seek to recover debts by targeting
+  your assets.
+
+  3. Economic downturns: Financial crises, market crashes, or economic recessions can impact the value
+  of investments and assets.
+
+  4. Divorce: During divorce proceedings, assets will be subject to division between spouses, leading
+  to a loss of some of those assets.
+
+  5. Business risks: Includes product liability, regulatory fines, intellectual property disputes, and
+  market competition.
+
+  6. Tax liabilities: Mismanagement of tax obligations can result in tax liens or other tax-related claims
+  on your assets.
+
+  7. Personal debts: Accumulating personal obligations, such as credit card debt or medical bills, can
+  result in creditors seeking repayment through asset seizure or legal action.
+
+  8. Cybersecurity threats: Cybersecurity breaches can expose sensitive information, potentially leading
+  to financial loss or identity theft.
+
+  9. Natural disasters: Physical assets, such as property, vehicles, and inventory, can be damaged or
+  destroyed by natural disasters like hurricanes, earthquakes, or fires.
+
+  10. Inadequate insurance: If you''re underinsured or lack appropriate coverage, you may face significant
+  financial loss when unexpected events occur.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- asset protection
+- creditors
+- lawsuits
+- trusts
+- companies
+- superannuation
+- insurance
+- estate planning
+- wealth protection
+- risk management
+- legal structures
+- divorce
+- cybersecurity
+- tax liabilities

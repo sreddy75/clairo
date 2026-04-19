@@ -1,0 +1,64 @@
+strategy_id: CLR-518
+source_ref: STP-518
+name: Director penalty notices
+categories:
+- Recommendations
+implementation_text: '1. To avoid director penalties, directors must ensure their company meets all PAYG,
+  GST and SGC reporting and payment obligations on time.
+
+  2. If the company faces financial difficulties, seeking timely advice from financial and legal experts
+  is essential'
+explanation_text: 'A director penalty notice (DPN) is issued by the Australian Taxation Office (ATO) to
+  company directors, making them liable for certain unpaid tax liabilities. The critical aspects of director
+  penalty notices are:
+
+  1. Director penalty notices can be issued for unpaid pay-as-you-go (PAYG) withholding amounts, goods
+  & services tax (GST), and superannuation guarantee charges (SGC) that the company owes.
+
+  2. Two types of DPNs:
+
+  • Non-locked down liability DPN: For these, directors can avoid personal liability by ensuring one of
+  the following actions within 21 days of receiving the notice: paying the debt, appointing an administrator,
+  or beginning the company''s liquidation.
+
+  • Locked-down liability DPN: These are issued when a company hasn''t reported its PAYG or SGC within
+  three months of the due date. The director cannot avoid personal liability by placing the company into
+  administration or liquidation.
+
+  3. If the company hasn''t met its PAYG and SGC reporting obligations on time, directors can automatically
+  become personally liable for the amounts unpaid. New directors can also become responsible if they don''t
+  rectify the company''s past debts within 30 days of their appointment.
+
+  4. The limited defences available to directors against a DPN are illness, mismanagement by other directors,
+  or lack of knowledge.
+
+  5. The ATO can commence legal proceedings against all the directors to recover the outstanding taxes
+  owed. This means the ATO can take the director''s home, investments, motor vehicles, etc.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- director penalty notice
+- dpn
+- payg
+- gst
+- superannuation guarantee charge
+- sgc
+- personal liability
+- company director
+- locked-down
+- non-locked down
+- ato
+- unpaid tax
+- administration
+- liquidation
+- compliance

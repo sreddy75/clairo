@@ -1,0 +1,116 @@
+strategy_id: CLR-524
+source_ref: STP-524
+name: Financial planner advise
+categories:
+- Recommendations
+implementation_text: 'Finding a financial planner that aligns with your needs and requirements requires
+  careful research and due diligence. Here''s a step-by-step guide to help you in your search:
+
+  1. Determine your needs: Are you seeking comprehensive financial planning or advice on retirement or
+  investment? This will dictate the type of adviser you''re seeking.
+
+  2. Ask for referrals: Start with friends, family, and colleagues. Personal recommendations can offer
+  insights into an adviser''s professionalism, demeanour, and reliability.
+
+  3. Professional associations: For example, the Financial Planning Association (FPA) has a search tool
+  to find accredited members in Australia.
+
+  4. Check qualifications: Ensure the financial planner has the necessary qualifications.
+
+  5. Experience matters: Consider how long they''ve been in the profession and their expertise in the
+  areas you''re interested in.
+
+  6. Understand the fee structure: Financial planners can be compensated in various ways, including fee-only,
+  fee-based, commission-based, or a combination. Ensure the fee structure is transparent and aligns with
+  your comfort level. Fee-only planners charge a flat rate or a percentage of assets under management
+  and don''t earn commissions from selling financial products. Commission-based planners earn money when
+  they sell certain financial products. Fee-based planners combine both fees and commissions.
+
+  7. Fiduciary duty: Ideally, you want an adviser who acts as a fiduciary, meaning they commit to work
+  in your best interest.
+
+  8. Check for disciplinary history: Ensure the planner has a clean record and hasn''t been involved in
+  unethical or questionable practices.
+
+  9. Interview prospective planners: Once you''ve shortlisted a few candidates, set up interviews. Prepare
+  a list of questions. This meeting will give you a sense of their approach, philosophy, and whether you
+  feel comfortable with them.
+
+  10. Review the services offered: Some planners might provide comprehensive services, while others may
+  specialize in retirement planning, tax planning, or estate planning.
+
+  11. Ask for references: A reputable planner shouldn''t hesitate to provide references. Speaking to current
+  or former clients can offer insights into their experiences and satisfaction levels.
+
+  12. Written agreement: Once you decide on a planner, ensure all terms, services, and fees are provided
+  in a written contract. This document will protect your interests and clarify the scope of the engagement.
+
+  Lastly, trust your instincts. You''ll be sharing personal and sensitive information with this individual,
+  so it''s crucial to feel comfortable and confident in your choice.'
+explanation_text: 'Financial planners help individuals make informed decisions about managing their finances,
+  investments, insurance, tax, and estate planning. The Australian Securities and Investments Commission
+  (ASIC) regulates the financial planning industry in Australia to ensure consumer protection.
+
+
+  The primary advantages of using a financial planner include:
+
+  1. Expertise: Financial planners have the training and knowledge to understand the complexities of the
+  financial market and various financial products. They can help navigate complex financial decisions
+  and suggest strategies an average person might not know.
+
+  2. Personalized strategies: A financial planner can tailor advice to your needs and goals, considering
+  your risk tolerance, life situation, and financial aspirations.
+
+  3. Time-saving: You offload the research, analysis, and management aspects, allowing you to focus on
+  other things.
+
+  4. Accountability: Regular check-ins and reviews can motivate you to stick to your financial plan and
+  reach your goals.
+
+  5. Comprehensive approach: Financial planners look at all aspects of your financial life – from savings
+  and investments to insurance and estate planning – and ensure that all these components work harmoniously.
+
+  6. Peace of mind: Knowing that professionals guide financial decisions can reduce stress, especially
+  during volatile market conditions.
+
+  7. Tax optimization: Financial planners can advise on tax-efficient strategies for investments, inheritance,
+  and income, potentially saving you money.
+
+  8. Better financial outcomes: Over time, the cumulative effect of professional advice can lead to better
+  financial consequences in terms of investment returns, risk management, and financial goal achievement.
+
+  9. Avoiding common mistakes: A financial planner can help you avoid common pitfalls and financial mistakes,
+  such as overly concentrated on one investment or not having a diversified portfolio.
+
+  10. Estate planning: They can assist in ensuring that your assets are transferred to beneficiaries in
+  a manner consistent with your wishes and tax-efficient way.
+
+  11. Education: A good financial planner will advise and educate you about financial concepts, helping
+  you make informed decisions in the future.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- financial planner
+- financial planning
+- adviser
+- investment advice
+- retirement planning
+- estate planning
+- tax optimisation
+- asic
+- fpa
+- fiduciary
+- fee structure
+- wealth management
+- insurance
+- diversification
+- financial goals

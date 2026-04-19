@@ -1,0 +1,58 @@
+strategy_id: CLR-021
+source_ref: STP-021
+name: Employee share schemes
+categories:
+- Business
+implementation_text: '1. Have solicitor draft employee share scheme.
+
+  2. Tax concessions only apply if the ESC meets all the legislation requirements. For example, they offered
+  75% of all fulltime employees, etc.
+
+  3. Issue $1,000 of shares to each employee per annum.
+
+  4. The employer will need to lodge the ESC report with the ATO annually.'
+explanation_text: 'Employee share schemes (ESS) give employees shares in the company they work for or
+  the opportunity to buy shares in the company. Employees generally pay for the shares through a loan
+  from their employer, salary sacrifice, an upfront payment, employee bonuses, or using the dividends
+  received. An employee share plan trust is the most common entity to establish an ESS.
+
+
+  Employee share schemes can be very tax effective for both employers and employees. For example, if an
+  employee share scheme were structured so that each full-time employee received $1,000 of free shares
+  each year, it would have the following tax benefits:
+
+
+  The employer receives a tax deduction for the market value of the shares issued to employees (i.e. $1,000
+  deduction for each employee).
+
+  The employee receives the first $1,000 of employee shares per annum tax-free. When the employee sells
+  the free shares, they are only taxed on the capital proceeds that exceed $1,000.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+- exemption
+keywords:
+- employee share scheme
+- ess
+- shares
+- tax-free
+- employer deduction
+- salary sacrifice
+- share plan trust
+- full-time employees
+- capital proceeds
+- esc report
+- free shares
+- tax concession
+- market value

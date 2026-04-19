@@ -1,0 +1,35 @@
+strategy_id: CLR-251
+source_ref: STP-251
+name: Safety award
+categories:
+- Business
+implementation_text: '1. Ensure any safety awards paid are limited to $200 per employee annually.
+
+  2. Document the reasons why the award was given.'
+explanation_text: The grant of an award genuinely related to occupational health or occupational safety
+  achievements to an employee is exempt from FBT tax if its value doesn't exceed $200. The award payment
+  is also tax-deductible to the employer and tax-free to the employee.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- safety award
+- fbt exempt
+- occupational health
+- occupational safety
+- employee award
+- fringe benefits tax
+- tax-deductible
+- tax-free employee
+- workplace safety
+- $200 limit

@@ -1,0 +1,46 @@
+strategy_id: CLR-178
+source_ref: STP-178
+name: Auto-reversionary pension
+categories:
+- Investors_retirees
+- SMSF
+implementation_text: 1. The SMSF deed and pension documentation should ensure the reversionary pension
+  is automatic (and that the trustees have no discretion).
+explanation_text: 'A reversionary pension is a pension paid to a member and, on the member''s death, continues
+  to be paid to an eligible dependent (their spouse or child under 18).
+
+
+  The advantages of an automatic reversionary pension are:
+
+
+  • Removes the need for trustees to cash out (payout) the deceased member''s benefits. Without a reversionary
+  pension, the SMSF trustees must cash the deceased member''s benefits ''as soon as practicable'' after
+  death. This cash-out requirement can result in the fund selling substantial illiquid assets like property.
+
+  • Provides the deceased with certainty that their entitlements will continue as a pension to their nominated
+  beneficiaries.
+
+  • Allows the streaming of various superannuation interests with different tax attributes to other beneficiaries.'
+ato_sources: []
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- auto-reversionary pension
+- smsf
+- death benefit
+- pension continuation
+- dependent beneficiary
+- spouse pension
+- illiquid assets
+- superannuation interests
+- estate planning
+- trustee discretion

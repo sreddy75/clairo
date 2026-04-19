@@ -360,13 +360,30 @@ class ClerkClient:
                 options=options,
             )
 
-            # Map Clerk claims to our payload model
+            # Map Clerk claims to our payload model. Role + tenant_id can
+            # live in several places depending on JWT template shape — check
+            # every reasonable key so admin endpoints work across templates.
+            # Order: top-level → metadata.* → public_metadata.* → pub_metadata.*.
+            def _first(*keys: str) -> Any:
+                for key in keys:
+                    val = claims.get(key)
+                    if val:
+                        return val
+                for container in ("metadata", "public_metadata", "publicMetadata", "pub_metadata"):
+                    nested = claims.get(container) or {}
+                    if isinstance(nested, dict):
+                        for key in keys:
+                            val = nested.get(key)
+                            if val:
+                                return val
+                return None
+
             return ClerkTokenPayload(
                 sub=claims["sub"],
                 email=claims.get("email"),
                 email_verified=claims.get("email_verified", False),
-                tenant_id=claims.get("tenant_id") or claims.get("metadata", {}).get("tenant_id"),
-                role=claims.get("role") or claims.get("metadata", {}).get("role"),
+                tenant_id=_first("tenant_id"),
+                role=_first("role"),
                 exp=claims["exp"],
                 iat=claims["iat"],
                 nbf=claims.get("nbf"),

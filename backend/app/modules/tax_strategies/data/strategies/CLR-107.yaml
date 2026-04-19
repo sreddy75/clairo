@@ -1,0 +1,66 @@
+strategy_id: CLR-107
+source_ref: STP-107
+name: Accelerated depreciation for farmers
+categories:
+- Business
+implementation_text: '1. Immediately deduct the cost of fencing and water facilities such as dams, tanks,
+  bores, irrigation channels, pumps, water towers and windmills.
+
+  2. Immediately deduct the cost of fodder storage assets such as silos and tanks used to store grain
+  and other animal feed.
+
+  3. Determine whether the primary producer meets the definition of a small business entity and is otherwise
+  eligible to use the instant asset write-off rules.
+
+  4. For each depreciating asset, choose to apply either the accelerated depreciation for primary producers
+  or the accelerated depreciation for small businesses.
+
+  5. Identify typical fodder storage assets — including silos, liquid feed supplement storage tanks, bins
+  for storing dried grain, hay sheds, grain storage sheds, and above-ground bunkers — and confirm their
+  eligibility for an immediate deduction.'
+explanation_text: 'Accelerated depreciation that applies to primary producers includes:
+
+
+  Immediately deduct the cost of fencing and water facilities such as dams, tanks, bores, irrigation channels,
+  pumps, water towers and windmills.
+
+  Immediately deduct the cost of fodder storage assets such as silos and tanks used to store grain and
+  other animal feed.
+
+
+  Primary producers who are small businesses may also be able to deduct depreciating assets under the
+  instant assets write-off rules. As such, primary producers who meet the definition of a small business
+  entity and are otherwise eligible may choose to use the accelerated depreciation for primary producers
+  or the accelerated depreciation for small businesses for each depreciating asset.
+
+
+  For example, Tom is a chicken farmer who invests $40,000 in constructing a new dam, $30,000 in new fencing,
+  and $19,000 in a grain storage silo. The $40,000 dam, $30,000 fencing and $19,000 silo are now an immediate
+  deduction. Typical fodder storage assets include silos, liquid feed supplement storage tanks, bins for
+  storing dried grain, hay sheds and grain storage sheds, and above-ground bunkers.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- farmers
+financial_impact_type:
+- deduction
+keywords:
+- accelerated depreciation
+- primary producer
+- fencing
+- water facilities
+- fodder storage
+- instant asset write-off
+- small business entity
+- dam
+- silo
+- farming
+tenant_id: platform
+version: 1

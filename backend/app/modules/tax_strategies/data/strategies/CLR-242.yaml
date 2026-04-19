@@ -1,0 +1,60 @@
+strategy_id: CLR-242
+source_ref: STP-242
+name: Home based businesses
+categories:
+- Business
+implementation_text: '1. Work out the business use floor area as a percentage of the total floor area.
+  The space used exclusively for operating a business can include the home office, shed or workshop, yard
+  used to store vehicles or equipment, and garage space used to house business vehicles.
+
+  2. Calculate the total occupancy costs.
+
+  3. Multiply the business use percentage by the total occupancy costs.'
+explanation_text: 'Home-based businesses are small businesses that operate from the owner''s home. The
+  attractions of starting and running a business from home include:
+
+  Tax savings from making some of the home occupancies costs tax-deductible.
+
+  Reduction in overhead costs.
+
+  More work time as no time is lost commuting in traffic.
+
+  It may improve work/life balance.
+
+
+  A home-based business will be entitled to deduct a portion of their home occupancy costs, including
+  home mortgage interest, 2.5% building write-off, rates, rent, insurance, and maintenance. The amount
+  claimed is calculated as a percentage of the floor area (in metres squared) of the house, garage, and
+  land used exclusively for business purposes. For home-based businesses, this averages 10-25% of the
+  total.
+
+
+  Although operating a home-based business will subject the primary residence to capital gains tax on
+  the sale, applying the small business CGT concessions can reduce this liability to nil.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+keywords:
+- home based business
+- home office
+- occupancy costs
+- floor area
+- mortgage interest
+- building write-off
+- rates
+- rent
+- insurance
+- maintenance
+- small business cgt
+- capital gains tax
+- home business deduction

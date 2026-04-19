@@ -1,0 +1,72 @@
+strategy_id: CLR-076
+source_ref: STP-076
+name: Self-managed super fund borrowings
+categories:
+- Rental_properties
+- SMSF
+implementation_text: '1. Establish the self-managed super fund.
+
+  2. Rollover members'' super balances held with public offer funds to the new fund and make additional
+  super contributions (as necessary).
+
+  3. Consider whether the fund will have sufficient income (from investment earnings or employer/member
+  contributions) to meet the loan repayments and expenses on the borrowings.
+
+  4. Make the purchase offer for the property or shares subject to finance. Generally, the banks require
+  super funds to fund a deposit of at least 30% of the asset''s value.
+
+  5. Arrange the super fund financing with the taxpayer''s bank.
+
+  6. The bank will either establish the bare trust to hold the newly financed investment (or require the
+  taxpayer to establish it). If the taxpayer is required to establish the bare trust, they can use an
+  online legal provider. The trustee of the bare trust must be different from the super fund''s trustee.
+  The best practice is that the super fund trustees and the bare trust are separate companies.
+
+  7. Settle on the property purchase.'
+explanation_text: 'The general rule is that self-managed super funds are prohibited from having any borrowings.
+  As an exception to that rule, since 2007, super funds can finance investments with limited recourse
+  borrowing arrangements if they comply with section 67A of the SISA. Limited recourse borrowing arrangements
+  must comply with the following:
+
+
+  The borrowing is permitted over a single asset or a collection of identical assets with the same market
+  value, e.g. one property or one parcel of BHP shares.
+
+  The lender''s recourse against the super fund on default is limited to the single asset financed under
+  the limited recourse loan. This limited recourse means that all the super fund''s other assets are protected.
+
+  The super fund cannot borrow to improve an asset.
+
+
+  The advantage of borrowing in a super fund is that the capital gains can be maximised, and also, the
+  super fund benefits from negative gearing (so it saves tax). The ultimate aim with self-managed super
+  funds is to build a portfolio of investment-earning assets (a mix of term deposits, shares and property)
+  so that on retirement, when the fund is in the pension phase, 100% of the fund earnings will be tax-free.'
+ato_sources:
+- section 67A of the SISA
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- smsf
+- borrowings
+- limited recourse
+- bare trust
+- negative gearing
+- capital gains
+- superannuation
+- property
+- pension phase
+- tax-free
+- lrba
+- investment
+- super fund
+- shares

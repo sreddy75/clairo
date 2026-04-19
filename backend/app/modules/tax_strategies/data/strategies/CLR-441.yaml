@@ -1,0 +1,59 @@
+strategy_id: CLR-441
+source_ref: STP-441
+name: Establish a not-for-profit company
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Establish a not-for-profit public company limited by guarantee.
+
+  2. Check that the family trust deed allows distributions to not-for-profit, tax-exempt organisations.
+
+  3. Confirm that the not-for-profit organisation is tax-exempt (as not all are).
+
+  4. Written trust distribution minutes are prepared and signed before June 30th, distributing the trust
+  income to the various beneficiaries (including the non-profit organisation).
+
+  5. Within two months of the end of the financial year, the non-profit organisation is physically paid
+  their trust distribution or notified in writing of the trust distribution.
+
+  6. Under the pay or notify anti-avoidance rule, if a tax-exempt beneficiary is not made aware of their
+  present entitlement to trust income within two months of the end of the income year, the trustee will
+  generally be taxed on an equal share of the trust''s net income.
+
+  7. Register the not-for-profit company as an FBT Rebatable Employer.'
+explanation_text: 'This strategy allows passionate community-minded taxpayers to establish and manage
+  their own not-for-profit company, which benefits the community and saves them taxes. To achieve this,
+  they form a not-for-profit company and have their discretionary trust make pretax trust distributions
+  to it. If the not-for-profit company is structured so that it''s tax-exempt, then no income tax will
+  be paid on that trust income. The not-for-profit beneficiary does not need to be able to receive tax-deductible
+  donations (i.e., be a deductible gift recipient).
+
+
+  The tax savings result from pretax dollars flowing to a tax-exempt entity. To give $10,000 to a not-for-profit
+  organisation without a deductible gift receipt, you must earn approximately $15,000 and pay $5,000 tax.
+  In contrast, if a discretionary trust gave a $10,000 gift, the not-for-profit would receive $10,000.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- not-for-profit
+- discretionary trust
+- trust distribution
+- tax-exempt
+- company limited by guarantee
+- fbt rebatable employer
+- anti-avoidance
+- community
+- pretax distributions
+- income splitting

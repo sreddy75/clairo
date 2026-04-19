@@ -30,6 +30,7 @@ from app.modules.onboarding import (
 from app.modules.portal import models as portal_models  # noqa: F401
 from app.modules.quality import models as quality_models  # noqa: F401
 from app.modules.tax_planning import models as tax_planning_models  # noqa: F401
+from app.modules.tax_strategies import models as tax_strategies_models  # noqa: F401
 from app.modules.triggers import models as trigger_models  # noqa: F401
 
 # Import task modules to register them with Celery
@@ -41,6 +42,7 @@ from app.tasks import (
     quality,  # noqa: F401
     scheduler,  # noqa: F401
     tax_planning,  # noqa: F401  Multi-agent tax planning pipeline
+    tax_strategy_authoring,  # noqa: F401  Tax strategies authoring (Spec 060)
     triggers,  # noqa: F401  Automated trigger execution
     xero,  # noqa: F401
     xero_writeback,  # noqa: F401  Xero tax code write-back (Spec 049)

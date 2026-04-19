@@ -1,0 +1,62 @@
+strategy_id: CLR-174
+source_ref: STP-174
+name: Salary packaging for FBT rebatable employees
+categories:
+- Employees
+implementation_text: 1. If the employer is FBT-rebatable, organise a salary-sacrificing arrangement with
+  the employer up to the two FBT capping thresholds. Each capping threshold applies separately.
+explanation_text: 'Rebatable employers are entitled to an FBT rebate equal to a percentage of the gross
+  FBT payable, subject to a capping threshold. Organisations that may qualify for the FBT rebate include:
+
+  Registered charities endorsed as charitable institutions for these purposes,
+
+  Specific educational, scientific or public educational institutions,
+
+  Trade unions and employer associations,
+
+  Non-profit organisations established to encourage music, art, literature or science,
+
+  Non-profit organisations established to encourage or promote a game, sport or animal race,
+
+  Non-profit organisations established for community service purposes,
+
+  Non-profit organisations established to promote the development of aviation and tourism,
+
+  Non-profit organisations established to promote the development of Australian information and communications
+  technology resources,
+
+  Non-profit organisations established to promote the development of agricultural, pastoral, horticultural,
+  viticultural, aquaculture, fishing, manufacturing or industrial resources in Australia, and
+
+  Other non-profit organisations.
+
+
+  For the year ended 31/03/23, the FBT rebate is an entitlement to a rebate equal to 47% of the gross
+  FBT payable, subject to two capping thresholds as follows:
+
+  1. General capping threshold - $30,000
+
+  2. Salary sacrificed meal entertainment & entertainment facility leasing expenses capping limit - $5,000'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- rebate
+keywords:
+- salary packaging
+- salary sacrifice
+- fbt rebate
+- fringe benefits tax
+- rebatable employer
+- non-profit
+- charity
+- capping threshold
+- meal entertainment
+- employee benefits

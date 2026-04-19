@@ -1,0 +1,66 @@
+strategy_id: CLR-003
+source_ref: STP-003
+name: Novated motor vehicle leases
+categories:
+- Employees
+- Business
+implementation_text: '1. This strategy requires the employer''s approval, so may or may not be possible
+  depending on the employer''s flexibility. It is ideal for employees and the self-employed operating
+  through a company or trust.
+
+  2. A novated motor vehicle lease agreement involves three parties, the employer (the lessee), the employee,
+  and the financier (the lessor).
+
+  3. The employer provides the motor vehicle to the employee as a fringe benefit as part of the employee''s
+  overall salary package.
+
+  4. The employer pays the motor vehicle lease and operating expenses.
+
+  5. The employer claims back the GST on vehicle cost and expenses.
+
+  6. The employer ensures the employee''s overall salary package doesn''t increase by reducing the employee''s
+  cash salary paid, to cover the motor vehicle and fringe benefits tax costs.'
+explanation_text: 'A novated lease is a type of motor vehicle lease that allows a business to lease a
+  motor vehicle on behalf of an employee, with the responsibility for the contract lying with the employee
+  and the lease payments paid from the employee''s pre-tax income. Novated leases of motor vehicles enable
+  employers to provide employees with significant tax savings at no extra cost to the employer. The employee
+  saves approximately $3,000 per year in income tax and also the GST on the motor vehicle purchase and
+  on-going motor vehicle operating costs.
+
+
+  Under a novated lease arrangement, the employer takes over the lessee''s rights and obligations under
+  the lease agreement (per the deed of novation between the employer, finance company, and lessee). The
+  lessee is usually the employee or an associate of the employee. Under standard novated leases, the lease
+  obligations are transferred back to the lessee when the employee ceases employment with the employer
+  or the contract terminates. This lease contract enables employees changing jobs to take their novated
+  lease (including the vehicle) to their new employer. The ''old'' employer is left with no obligations
+  and commitments when the employee leaves their employment (for whatever reason). With a novated lease,
+  the employee salary sacrifices part of their salary in return for the benefit of a motor vehicle equal
+  to that amount. The novated lease payments, motor vehicle operating costs and Fringe Benefits Tax payable
+  are deducted from the employee''s pre-tax earnings, and PAYG tax is calculated on the reduced salary.'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- novated lease
+- motor vehicle
+- salary sacrifice
+- fringe benefits tax
+- fbt
+- gst
+- pre-tax income
+- employee benefit
+- payg
+- deed of novation

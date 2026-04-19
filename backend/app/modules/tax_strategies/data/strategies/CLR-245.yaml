@@ -1,0 +1,43 @@
+strategy_id: CLR-245
+source_ref: STP-245
+name: Handbags, briefcases and satchels
+categories:
+- Employees
+implementation_text: '1. Keep receipts to substantiate the expense.
+
+  2. Where using the bag for private and work purposes, the deduction will need to be apportioned based
+  on the time the bag is used for work purposes (i.e. keep a 4-week diary).
+
+  3. Where the bag costs more than $300, it should be depreciated over its productive life.'
+explanation_text: 'Handbags, briefcases, and satchels purchased to carry items for work purposes (such
+  as laptops, tablets, work papers or diaries) may be deductible. The deductibility of the bag will depend
+  on the following:
+
+  Cost - It''s easier to justify to the ATO that a $300 bag is for work purposes than a $10,000 Prada
+  bag.
+
+  Type of bag - Large bags carrying work items will more likely be deductible (than small handbags that
+  only fit keys and lipstick). What sort of use - Having a bag exclusively for work will maximise deductions.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- handbag
+- briefcase
+- satchel
+- work bag
+- employee deduction
+- depreciation
+- apportionment
+- work expenses
+- receipts
+- laptop bag

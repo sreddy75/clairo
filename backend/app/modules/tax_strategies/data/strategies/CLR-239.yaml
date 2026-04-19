@@ -1,0 +1,48 @@
+strategy_id: CLR-239
+source_ref: STP-239
+name: Pay wages to directors or trustees
+categories:
+- Business
+implementation_text: 1. Pay the wages and ensure the appropriate PAYG withholding tax is deducted and
+  the 11% super is paid.
+explanation_text: 'This strategy involves a business operating through a company or trust structure paying
+  the director''s or trustees'' wages. With a 25% company tax rate, it generally makes sense to limit
+  the salaries paid to a director or trustee to a level that ensures their total taxable income doesn''t
+  exceed $87,000 (so they deliver an effective tax rate of 25% or less).
+
+
+  The advantages of this strategy include the following:
+
+
+  • Saves tax.
+
+  • Provides cash to directors and trustees to fund their living expenses without borrowing from the business
+  entities (which creates Div 7A loan problems).'
+ato_sources:
+- Div 7A
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- wages
+- directors
+- trustees
+- company
+- trust
+- payg withholding
+- superannuation
+- div 7a
+- salary
+- tax rate
+- living expenses
+- business structure

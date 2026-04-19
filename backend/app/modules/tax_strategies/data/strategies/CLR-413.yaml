@@ -1,0 +1,61 @@
+strategy_id: CLR-413
+source_ref: STP-413
+name: Incorporated association
+categories:
+- Business_structures
+implementation_text: 'Several conditions must be met by an organisation wishing to incorporate. These
+  will differ depending on the state or territory the organisation seeks to become incorporated.
+
+
+  The significant steps for applying for incorporation are:
+
+  1. Choose a name and check its availability.
+
+  2. Adopt a set of rules which comply with the requirements of the Act. An association can choose to
+  prepare its own rules or adopt the prescribed model rules and
+
+  3. Apply for incorporation with the required accompanying documentation.'
+explanation_text: 'An incorporated association is a formal legal structure adopted by various non-profit
+  organisations. Its name includes the word ''incorporated'' or the abbreviation ''Inc''. Incorporated
+  associations are subject to state or territory incorporation laws and are administered by a government
+  body within the relevant state and territory. This means that their operations tend to be restricted
+  to their home state.
+
+
+  Incorporated associations have the following advantages:
+
+  - Suitable for community-based groups.
+
+  - It has an identity distinct from the founders and members.
+
+  - It is inexpensive to give associations a legal identity that continues despite any membership changes.
+
+  - It can operate regardless of changes to its membership.
+
+  - Can accept gifts and donations.
+
+  - Can enter into contracts.
+
+  - Can apply for government grants.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- incorporated association
+- non-profit
+- incorporation
+- legal structure
+- community organisation
+- state territory law
+- membership
+- government grants
+- donations
+- not-for-profit

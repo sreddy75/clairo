@@ -1,0 +1,55 @@
+strategy_id: CLR-402
+source_ref: STP-402
+name: Clubs, societies and other associations
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Ensure that the club or group will have an ongoing need (i.e., the organisation''s aims).
+
+  2. Make sure there is a base for the activities.
+
+  3. Draft a constitution.
+
+  4. Decide whether to become incorporated.
+
+  5. Design an effective registration system.
+
+  6. Draw up a budget.
+
+  7. Make copies of the constitution and budget.
+
+  8. Call the prospective members together to examine the constitution and budget and get agreement on
+  the objectives.
+
+  9. Ask members to consider standing for office.
+
+  10. A second meeting may be necessary to agree on the constitution and costs, enrol members (after payment
+  of a nominal fee), and elect office-bearers.'
+explanation_text: Clubs, societies, and other associations involve two or more people united by a common
+  goal or interest. These groups include charities, hobbies, sports, social activities, etc.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- clubs
+- societies
+- associations
+- incorporated
+- constitution
+- not-for-profit
+- charities
+- sports
+- hobbies
+- membership
+- community groups
+- registration
+- office-bearers

@@ -1,0 +1,120 @@
+strategy_id: CLR-534
+source_ref: STP-534
+name: Liquidate company
+categories:
+- Recommendations
+implementation_text: 'In Australia, when directors determine that their company is insolvent or likely
+  to become insolvent, they can initiate a process to appoint a liquidator voluntarily. This process is
+  known as a creditors'' voluntary liquidation (CVL). Here''s a step-by-step overview of the process:
+
+  1. Seek professional advice: Directors should consult an insolvency professional or lawyer before acting.
+  They can advise on the company''s financial position, the implications of liquidation, and whether other
+  options are available.
+
+  2. Directors'' meeting: The directors should convene a meeting to resolve that formally:
+
+  - The company is insolvent or likely to become insolvent.
+
+  - It''s in the best interests of the company''s creditors to appoint a liquidator.
+
+  - A general meeting of the company''s shareholders (members) should be held to consider a resolution
+  to wind up the company and appoint a nominated liquidator.
+
+  3. Notice of meeting: Once the directors have made these resolutions, they should notify all company
+  members of the general meeting. The notice should outline the purpose of the meeting, which is to consider
+  winding up the company and appointing a liquidator.
+
+  4. Members'' meeting: At the general meeting of members:
+
+  - Members will consider and vote on the resolution to wind up the company.
+
+  - If the resolution is passed, members will appoint a liquidator. Typically, the liquidator nominated
+  by the directors will be formally established, but members can choose another liquidator if they prefer.
+
+  5. Notification to ASIC: Once the liquidator is appointed, they must notify the Australian Securities
+  & Investments Commission (ASIC) of their appointment within specific time frames.
+
+  6. Creditors'' meeting: The liquidator will then convene a meeting of the company''s creditors. Creditors
+  will be informed about the company''s financial position, and they can also confirm the appointment
+  of the liquidator or choose to appoint a different liquidator.
+
+  7. Liquidation process: With the liquidator in place, they will:
+
+  - Take control of the company''s assets.
+
+  - Investigate the company''s affairs and the reasons for its failure.
+
+  - Realise the company''s assets.
+
+  - Distribute the proceeds to creditors per the Corporations Act priority regime.
+
+  - Investigate and report to ASIC on any possible director offences or misconduct.
+
+  8. Finalisation: Once all assets have been realised and all funds distributed, the liquidator will prepare
+  final reports for creditors and ASIC. Following this, the company will typically be deregistered, marking
+  its formal end as a legal entity.'
+explanation_text: 'A liquidator is appointed to a company to manage the process of winding up the company''s
+  affairs and ensure that its assets are distributed fairly amongst its creditors. The appointment of
+  a liquidator typically occurs when a company is insolvent or when the company''s shareholders or directors
+  decide to wind up the company''s affairs voluntarily.
+
+
+  Directors should appoint a liquidator to an insolvent company for the following reasons:
+
+  1. Director''s duty to prevent insolvent trading: Under the Australian Corporations Act 2001 (Cth),
+  directors must prevent their company from trading while insolvent. If they breach this duty, they could
+  be personally liable for debts incurred by the company during insolvency. By appointing a liquidator,
+  directors can mitigate the risk of insolvent trading claims.
+
+  2. Protection from personal liability: Besides the risks associated with insolvent trading, directors
+  might also face personal guarantees they''ve given to creditors. By initiating voluntary liquidation,
+  directors might be better positioned to negotiate with creditors and avoid or minimize personal financial
+  consequences.
+
+  3. Orderly wind-up of the business: A liquidator ensures an organized and fair distribution of the company''s
+  assets to its creditors. This structured process can prevent disputes and ad-hoc asset sales that might
+  not yield the best value.
+
+  4. Potential for safe harbour: Under certain conditions, Australian law provides directors with a "safe
+  harbour" from personal liability for debts incurred by a financially distressed company. Directors may
+  seek professional advice and develop a turnaround plan. If the plan is unsuccessful, the timely appointment
+  of a liquidator can be evidence of the directors'' proactive approach and commitment to fulfilling their
+  duties.
+
+  5. Stakeholder relations: Can maintain trust and goodwill with stakeholders, including creditors, employees,
+  and suppliers. It indicates that the directors are addressing the situation transparently and responsibly.
+
+  6. Moral responsibility: Directors might feel responsible for ensuring that employees, suppliers, and
+  other stakeholders are treated fairly. Liquidation provides a structured and regulated process toward
+  that end.
+
+  7. Chance of a better outcome for creditors: An early appointment of a liquidator might result in better
+  returns for creditors if the company''s assets are dealt with promptly rather than letting debts mount
+  further.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- liquidation
+- insolvency
+- creditors voluntary liquidation
+- cvl
+- winding up
+- directors duty
+- insolvent trading
+- safe harbour
+- asic
+- company deregistration
+- personal liability
+- liquidator appointment
+- corporations act
+- asset distribution

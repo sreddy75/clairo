@@ -1,0 +1,62 @@
+strategy_id: CLR-030
+source_ref: STP-030
+name: Overseas conferences, courses and study tours
+categories:
+- Employees
+- Business
+implementation_text: '1. Employer letter detailing how the overseas course or conference improves the
+  income-earning capability of the employee to do their current job.
+
+  2. Detailed travel diary.
+
+  3. Calculate the work/business percentage of the trip - If the trip were for the dominant purpose of
+  attending the course or conference, 100% of the airfare would be deductible. This would be the case
+  even if a private holiday were added to the end of the conference. Accommodation and meal expenses will
+  only be deductible for the days that relate to the conference.
+
+  4. Receipts for all travel expenses.'
+explanation_text: 'Travel expenses for overseas conferences, courses and study tours will generally be
+  deductible if:
+
+  - They enable a taxpayer to become more proficient in carrying out their current income-earning activities,
+  and
+
+  - This will likely lead to an increase in the taxpayer''s income from their everyday work-related activities.
+
+
+  In contrast, non-deductible conferences, courses and study tours will involve private activities (sightseeing,
+  golfing, etc.) and new employment or income activities. The expenses often must be apportioned between
+  the tax-deductible overseas conference costs and the non-deductible holiday or sightseeing portion.
+  Allocating accommodation, meals and incidental travel expenses between the deductible and non-deductible
+  amount is straightforward and done on a factual basis. The deductibility of airfare costs is more complicated
+  with three possible scenarios: (1) The ATO advises that if a self-education activity''s primary purpose
+  is income-producing purposes, then 100% of the airfare is deductible. (2) If the income-earning activity
+  is incidental and the primary purpose is private, then no deduction is allowed for airfare costs. (3)
+  If the self-education activity is 50/50 for income–earning and private, then claim 50% of the airfare
+  as a deduction.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- overseas conference
+- study tour
+- self-education
+- travel expenses
+- airfare deduction
+- travel diary
+- work-related travel
+- apportionment
+- conference deduction
+- employee expenses
+- income-earning activities
+- accommodation deduction
+- business travel

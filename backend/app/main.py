@@ -439,6 +439,23 @@ def register_routes(app: FastAPI) -> None:
     except Exception as e:
         logger.warning("Client chat router registration skipped", error=str(e))
 
+    # Spec 060: Tax strategies knowledge base
+    try:
+        from app.modules.tax_strategies.router import (
+            public_router as tax_strategies_public_router,
+            router as tax_strategies_admin_router,
+        )
+
+        app.include_router(tax_strategies_admin_router, tags=["tax-strategies-admin"])
+        app.include_router(tax_strategies_public_router, tags=["tax-strategies"])
+        logger.info(
+            "Tax strategies routers registered: "
+            "/api/v1/admin/tax-strategies (admin), "
+            "/api/v1/tax-strategies (public)"
+        )
+    except Exception as e:
+        logger.warning("Tax strategies routers registration skipped", error=str(e))
+
     try:
         from app.modules.agents.router import router as agents_router
 

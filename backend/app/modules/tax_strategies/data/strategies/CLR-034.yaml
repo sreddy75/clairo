@@ -1,0 +1,68 @@
+strategy_id: CLR-034
+source_ref: STP-034
+name: Retraining and Reskilling Staff
+categories:
+- Business
+implementation_text: '1. Identify redundant or soon-to-be redundant employees who will undertake education
+  or training funded by the employer.
+
+  2. Confirm that the education or training is primarily intended to enable the employee to produce salary
+  or wages.
+
+  3. Ensure the employer has complied with any obligation under the Fair Work Act 2009.
+
+  4. Note that eligible expenditure can include course fees, seminar costs, travel, accommodation, textbooks,
+  internal training sessions, and external training courses.
+
+  5. Confirm that the education or training does not need to have any connection to the employee''s current
+  income-earning employment.
+
+  6. Exclude from the FBT exemption any benefits provided under a salary packaging arrangement or to certain
+  related employees and their relatives.'
+explanation_text: 'Employer expenditure on retraining and reskilling redundant (or soon-to-be redundant)
+  employees is exempt from FBT. The education or training is not required to have any connection to the
+  employee''s current income-earning employment. The expenditure can include course fees, seminar costs,
+  travel, accommodation, textbooks, internal training sessions, external training courses, etc.
+
+
+  The FBT exemption applies if:
+
+
+  An employee of an employer undertakes the education or training.
+
+  The employee is redundant.
+
+  The employer has complied with any obligation under the Fair Work Act 2009.
+
+  The primary purpose of education or training is to enable the employee to produce salary or wages.
+
+
+  Benefits provided under a salary packaging arrangement or to certain related employees (and their relatives)
+  are not eligible for the FBT exemption.'
+ato_sources:
+- Fair Work Act 2009
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- fbt
+- fringe benefits tax
+- retraining
+- reskilling
+- redundancy
+- employees
+- education
+- training
+- exemption
+- salary packaging
+- course fees
+tenant_id: platform
+version: 1

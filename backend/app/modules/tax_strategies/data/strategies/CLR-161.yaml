@@ -1,0 +1,65 @@
+strategy_id: CLR-161
+source_ref: STP-161
+name: Gifts to clients, suppliers and contractors
+categories:
+- Business
+implementation_text: '1. Keep the receipts and record the business reasons for the client gifts.
+
+  2. Ensure the client gift are not entertainment.'
+explanation_text: 'A taxpayer who carries on a business or is an employee receiving commission income
+  is entitled to a deduction for gifts to clients, suppliers and contractors. This deduction will apply
+  where the gift is to a former or current client. The objective of the gift must be to produce future
+  assessable income, i.e. gaining client referrals or generating additional sales. Real estate agents
+  typically give a bottle of champagne to the vendor and purchaser of a property they sell. Why? As this
+  goodwill gesture creates future referrals and sales commissions.
+
+
+  The gift will not be deductible if it is of a capital nature, is made for private or personal reasons,
+  relates to the gaining of exempt income or non-assessable income, or another provision of the income
+  tax law prevents it from being deductible (i.e. the gift is entertainment or a bribe of foreign or public
+  officials). For example, if a business owner gives their brother or spouse a bottle of champagne, that
+  will be for private purposes and non-deductible.
+
+
+  Tax-deductible gifts include:
+
+  A coffee machine.
+
+  Books or novels.
+
+  Flowers or chocolates.
+
+  Christmas or gift hamper.
+
+  Bottle of wine, spirits or liqueur.
+
+  A bottle of perfume or aftershave.
+
+  Vouchers for retailers, e.g. David Jones, Myers, Jack London, etc. Watch.
+
+  Ipad, phones, tablet computers, etc.
+
+  Handbags or wallets.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- client gifts
+- business gifts
+- tax deductible gifts
+- entertainment
+- assessable income
+- referrals
+- suppliers
+- contractors
+- commission income
+- non-deductible

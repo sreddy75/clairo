@@ -1,0 +1,66 @@
+strategy_id: CLR-287
+source_ref: STP-287
+name: Income tax
+categories:
+- ATO_obligations
+- Recommendations
+implementation_text: '1. Determine your business structure (sole trader, partnership, trust, or company)
+  to establish how income is reported and tax is paid.
+
+  2. Report business income in your individual tax return if operating as a sole trader.
+
+  3. Lodge a partnership return showing how the partners'' income was distributed, and ensure each partner
+  reports their share of the partnership income in their own tax return.
+
+  4. Lodge a trust tax return and distribute trust income to beneficiaries so they can report it in their
+  tax returns.
+
+  5. Lodge a company tax return and pay tax on the company''s taxable income if operating as a company.'
+explanation_text: 'Businesses have specific income tax obligations that they must meet. The nature and
+  extent of these obligations can vary depending on the structure of the business (e.g., sole trader,
+  partnership, trust, or company) and other factors. Here''s a broad overview:
+
+
+  1. Determine business structure: The structure of your business (sole trader, partnership, trust, or
+  company) will determine how income is reported and tax is paid.
+
+  2. Lodging income tax returns: Based on the business structure:
+
+  • Sole traders report business income in their tax returns.
+
+  • Partnerships don''t pay tax on the partnership''s income. Instead, they lodge a partnership return
+  showing how the partners'' income was distributed. Each partner then reports their share of the partnership
+  income in their tax return.
+
+  • Trusts distribute their income to beneficiaries, who report it in their tax returns. The trust itself
+  must lodge a trust tax return.
+
+  • Companies must lodge a company tax return and pay tax on their taxable income.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- trust
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- income tax
+- business structure
+- sole trader
+- partnership
+- trust
+- company
+- tax return
+- tax obligations
+- lodgment
+- taxable income
+tenant_id: platform
+version: 1

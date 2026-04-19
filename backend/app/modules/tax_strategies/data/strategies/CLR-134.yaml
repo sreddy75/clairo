@@ -1,0 +1,69 @@
+strategy_id: CLR-134
+source_ref: STP-134
+name: Passing the non commercial loss rules
+categories:
+- Business
+implementation_text: '1. Review which of the four non-commercial tests, or the exception, can be passed
+  to access the non-commercial losses.
+
+  2. The non-commercial loss tests can be passed by increasing the investment in depreciable business
+  assets past the $100,000 threshold. The real property test is passed if $500,000 of real property (land
+  or commercial premises) is used in the business continuously, and it can be either owned or leased.
+  The $20,000 assessable income test will be passed for new companies operating for less than 12 months
+  if it is reasonable to assume, based on sales achieved for the part-year, that they would make $20,000
+  in sales over a full 12-month period.
+
+  3. Apply to the ATO for the commissioner''s discretion - this will only be successful where the activity
+  was affected by exceptional circumstances outside the taxpayer''s control, e.g. natural disaster.'
+explanation_text: 'Sole traders and partnerships operating a business at a loss will only be able to offset
+  that loss against other income when they pass the income requirement and one of the four non-commercial
+  loss tests. The taxpayer''s taxable income must be less than $250,000 to meet the income requirement.
+  The payment is calculated as the taxable income (ignoring any business losses), total reportable fringe
+  benefits amounts, reportable superannuation contributions, and total net investment losses. The four
+  non-commercial loss tests are:
+
+
+  The profit test - Requires a business profit in three of the last five years, including the current
+  year.
+
+  The assessable income test - Requires a minimum of $20,000 revenue or sales pa from the business.
+
+  The real property test - Requires real property used in the business of more than $500,000.
+
+  The other asset test - Requires depreciable assets (excluding cars) of $100,000 used in the business.
+
+
+  As an exception, the non-commercial loss rules do not apply to primary production or professional arts
+  businesses if the taxpayer''s other income is less than $40,000.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- primary production
+- professional arts
+financial_impact_type:
+- deduction
+keywords:
+- non-commercial loss
+- business loss
+- sole trader
+- partnership
+- profit test
+- assessable income test
+- real property test
+- other asset test
+- commissioner's discretion
+- loss offset
+- depreciable assets
+- primary production
+- professional arts
+- taxable income
+- exceptional circumstances

@@ -1,0 +1,51 @@
+strategy_id: CLR-417
+source_ref: STP-417
+name: Pedigree trust
+categories:
+- Business_structures
+implementation_text: 'Process:
+
+  1. Establish a company as trustee (best practice)
+
+  2. Decide who the capital and income beneficiaries of the trust will be.
+
+  3. Establish pedigree trust.'
+explanation_text: 'A pedigree trust (a linear descendant''s discretionary trust) is established to ensure
+  that the trust''s property will remain within a particular family (usually defined by a direct blood
+  relationship to one specific individual).
+
+
+  Pedigree trusts are used:
+
+  • To protect the trust assets in the case of marriage breakdown from the Family Court''s reach;
+
+  • to ensure that the property of the trust will remain only with the "blood relatives" of the initially
+  nominated trust beneficiary;
+
+  • to maximise the chances that assets will provide for the education and upbringing of children or grandchildren;'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- pedigree trust
+- discretionary trust
+- linear descendant
+- family trust
+- asset protection
+- blood relatives
+- trustee company
+- marriage breakdown
+- family court
+- estate planning
+- beneficiaries
+- wealth succession

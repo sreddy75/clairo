@@ -1,0 +1,38 @@
+strategy_id: CLR-167
+source_ref: STP-167
+name: In-house recreation facilities
+categories:
+- Business
+implementation_text: 1. If the employer is a company, the recreational facility may be on the premises
+  of a related company.
+explanation_text: The cost of providing in-house recreation facilities to employees is deductible if located
+  on the employer's premises. Examples of in-house recreational facilities are a tennis court, a swimming
+  pool, a gymnasium or a games room provided on an employer's premises for staff use on workdays. The
+  employer can claim a deduction for the expenses incurred and the benefits provided to the employees
+  as exempt from FBT.
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- in-house recreation
+- employee benefits
+- fbt exempt
+- fringe benefits tax
+- gymnasium
+- swimming pool
+- tennis court
+- employer premises
+- staff facilities
+- deductible expenses
+- employer deduction

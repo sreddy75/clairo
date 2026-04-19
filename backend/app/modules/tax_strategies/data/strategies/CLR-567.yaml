@@ -1,0 +1,90 @@
+strategy_id: CLR-567
+source_ref: STP-567
+name: Workplace health safety (WHS) laws
+categories:
+- Recommendations
+implementation_text: '1. Provide a safe work environment, safe systems of work, safe machinery and structures,
+  and ensure the safe use, handling, and storage of equipment, substances, or facilities.
+
+  2. Ensure company directors exercise due diligence by understanding hazards and risks, providing appropriate
+  resources and processes, and verifying their implementation.
+
+  3. Consult workers on safety procedures when identifying hazards and assessing risks.
+
+  4. Identify hazards, assess the risks they pose, implement control measures, and regularly review those
+  measures to ensure they remain effective.
+
+  5. Provide necessary training, knowledge, instruction, and supervision to ensure workers can perform
+  their tasks safely.
+
+  6. Establish emergency plans that detail the actions to be taken during various emergencies.
+
+  7. Immediately report fatalities, serious injuries, or illnesses to the relevant state or territory
+  WHS regulator.
+
+  8. Maintain records of work-related injuries and illnesses and monitor workers'' health and workplace
+  conditions.'
+explanation_text: 'In 2011, model workplace health and safety (WHS) laws were introduced as a template
+  for states and territories to adopt in their jurisdictions. While the model WHS laws aim for consistency
+  across the country, the actual laws and regulations can vary between states and territories.
+
+
+  The essential OHS/WHS legal obligations are:
+
+
+  1. Primary duty of care: Employers or business owners are responsible for ensuring workers'' health
+  and safety. This includes providing a safe work environment, safe systems of work, safe machinery and
+  structures, and ensuring the safe use, handling, and storage of equipment, substances, or facilities.
+
+  2. Duties of company directors: Directors must exercise due diligence to ensure the employer complies
+  with its responsibilities and obligations. This involves understanding hazards and risks, providing
+  appropriate resources and processes, and verifying the use and implementation of these resources.
+
+  3. Duties of workers: Workers must take reasonable care of their health and safety, ensure their actions
+  do not adversely affect others, and comply with any proper instructions, policies, or procedures the
+  employer sets.
+
+  4. Consultation: Employers must consult workers on safety procedures when identifying hazards and assessing
+  risks.
+
+  5. Risk management: Employers must identify hazards, assess the risks they pose, and implement control
+  measures. They must then regularly review these control measures to ensure they remain effective.
+
+  6. Training and information: Employers must provide necessary training, knowledge, instruction, and
+  supervision to ensure workers can perform their tasks safely.
+
+  7. Emergency plans: Employers are required to have emergency plans in place which detail the actions
+  to be taken during various emergencies.
+
+  8. Notification: Fatalities, serious injuries, or illnesses must be immediately reported to the relevant
+  state or territory WHS regulator.
+
+  9. Record keeping: Employers must maintain records of work-related injuries and illnesses and monitor
+  workers'' health and workplace conditions.
+
+  10. Licensing and registrations: Certain types of work, such as asbestos removal or high-risk work,
+  require specific licenses or permits.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- workplace health safety
+- whs
+- ohs
+- employer obligations
+- duty of care
+- risk management
+- workers compensation
+- compliance
+- workplace safety
+- record keeping
+tenant_id: platform
+version: 1

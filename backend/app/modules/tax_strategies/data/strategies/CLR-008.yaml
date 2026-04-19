@@ -1,0 +1,57 @@
+strategy_id: CLR-008
+source_ref: STP-008
+name: Overtime meal expenses
+categories:
+- Employees
+- Business
+implementation_text: '1. Confirm that the meal allowance was received under an industrial award - It cannot
+  just be a meal allowance paid by an employer.
+
+  2. Claim a deduction of $37.65 per overtime meal - Assuming that amount was incurred.
+
+  3. Keep some overtime meal receipts to evidence that $37.65 was expenditure per meal - This will be
+  critical during an ATO audit.
+
+  4. If the employee wants to claim more than the Commissioner''s reasonable $37.65 per meal, they must
+  substantiate the full deduction amount with receipts.'
+explanation_text: 'Generally, meals, snacks and drinks bought and consumed while working are considered
+  private and non-deductible. An exception to this rule applies where an employee is paid an overtime
+  meal allowance under an industrial award. In this situation, the employee is taxed on the overtime meal
+  allowance received and allowed a deduction for the expenses incurred (subject to written receipts).
+
+
+  If an overtime meal allowance is received (and not folded into regular salary), then an overtime meal
+  deduction can be claimed without substantiation, subject to the following:
+
+
+  The amount claimed per meal does not exceed the Commissioner''s reasonable $37.65 for the 2024/25 income
+  year.
+
+  The employee expended the amount claimed per meal. So, for example, if the employee only spent $5 on
+  some noodles, they should only be claiming $5 as a deduction for the meal.
+
+  In an audit, the taxpayer will still need to show the basis of their claim and provide some evidence
+  (usually some receipts or credit card statements) to demonstrate that the expenses were incurred.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- overtime meal
+- meal allowance
+- industrial award
+- employee deduction
+- meal expenses
+- substantiation
+- reasonable amount
+- work meals
+- overtime
+- 2024/25

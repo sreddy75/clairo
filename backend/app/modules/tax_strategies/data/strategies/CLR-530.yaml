@@ -1,0 +1,101 @@
+strategy_id: CLR-530
+source_ref: STP-530
+name: Internal controls
+categories:
+- Recommendations
+implementation_text: 'Here''s a step-by-step guide on how to set up internal controls for a small business:
+
+  1. Assessment and identification: Start with a risk assessment. Identify areas where your business might
+  be vulnerable. This could be in financial reporting, operations, or areas of regulatory compliance.
+  Understand the business environment.
+
+  2. Define and document policies and procedures: Document each process in your business. Specify the
+  expected sequence of operations, who is responsible for each step, and any related documentation.
+
+  3. Segregation of duties: Ensure no single individual controls all aspects of any critical transaction.
+  For instance, the person handling cash should not be the same person reconciling the accounts.
+
+  4. Physical controls: Implement safeguards for physical assets. These could include locks on doors,
+  safes for cash, computer password protections, and secure areas for inventory or valuable equipment.
+
+  5. Access controls: Only authorized individuals can access your business''s information systems. Update
+  passwords regularly and consider multi-factor authentication where possible.
+
+  6. Reconciliation and reviews: Regularly reconcile accounts and review financial statements for anomalies.
+
+  7. Employee training and communication: Train employees about the importance of internal controls.
+
+  8. Monitor and adjust: Review and test the controls periodically to ensure they''re working as intended.
+  As the business grows and changes, adapt and update controls accordingly.
+
+  9. Establish a whistleblower policy: Create a system where employees can report suspicious activities
+  without fear of retaliation.
+
+  10. Use technology and software: Utilize accounting and business management software.
+
+  11. External audits and reviews: Even if not mandated, consider getting an external audit or review.
+  This checks the efficacy of your internal controls and assures stakeholders.
+
+  12. Continual improvement: Seek feedback, monitor performance, and adjust as necessary.'
+explanation_text: 'Internal controls are the procedures, policies, and mechanisms an organisation implements
+  to ensure the integrity of financial and accounting information, promote accountability, and prevent
+  fraud.
+
+
+  Internal controls are essential for businesses:
+
+  1. Financial accuracy and reliability are crucial for management to make informed decisions and for
+  investors and creditors to have confidence in the company''s financial statements.
+
+  2. Safeguarding assets: Controls protect a company''s assets from theft, misuse, and waste. Whether
+  physical assets like inventory or intangible ones like intellectual property, controls help ensure these
+  assets are only used for legitimate business purposes.
+
+  3. Fraud prevention and detection: Establish checks and balances to reduce opportunities for fraud.
+  These can deter potential fraudulent activities and detect any irregularities that may occur.
+
+  4. Operational efficiency: Help streamline processes, reducing redundancies and inefficiencies.
+
+  5. Compliance with laws and Regulations: Help businesses comply with applicable laws, regulations, and
+  standards, thus avoiding legal penalties and reputational damage.
+
+  6. Supporting planning and performance measurement: Provide managers with a feedback mechanism to adjust
+  strategies, realign processes, or identify areas that need attention.
+
+  7. Ensuring accountability and responsibility: A well-defined system makes it easier to pinpoint where
+  errors or omissions occurred and who is responsible, promoting a culture of accountability.
+
+  8. Reducing risk: Internal controls help identify, assess, and manage these risks, ensuring they remain
+  within acceptable thresholds.
+
+  9. Promoting a culture of integrity and ethical behaviour: A well-defined and communicated internal
+  control environment emphasises the importance of integrity and ethical behaviour.
+
+  10. Facilitating decision-making: With reliable information from a sound internal control system, managers
+  and leaders can make more informed decisions.
+
+  11. Cost savings: Businesses can reduce unnecessary expenditures by preventing fraud, waste, and inefficiencies.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- internal controls
+- fraud prevention
+- segregation of duties
+- risk assessment
+- financial accuracy
+- compliance
+- whistleblower policy
+- access controls
+- reconciliation
+- small business
+- operational efficiency
+- accountability

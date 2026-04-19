@@ -1,0 +1,96 @@
+strategy_id: CLR-285
+source_ref: STP-285
+name: Taxable payments reporting
+categories:
+- ATO_obligations
+implementation_text: 'The TPRS now includes the following industries:
+
+  1. Building and construction services: Includes a broad range of activities related to residential and
+  non-residential construction, including alterations, repairs, and renovations.
+
+  2. Cleaning services: Includes building cleaning, road sweeping, swimming pool cleaning, and event cleaning
+  services.
+
+  3. Courier services: Includes courier or delivery services, excluding postal services.
+
+  4. Road freight services: Includes the transport of goods, cargo, and freight by road.
+
+  5. Information technology (IT) services: Includes software design, computer system design, and internet
+  and web design services.
+
+  6. Security, investigation, or surveillance services: Includes security guards, alarm monitoring, locksmiths,
+  and private investigative services.
+
+  7. Forestry operations: Includes felling, cutting, and transporting logs and trees.
+
+  8. Waste collection, treatment and disposal services: Includes the collection, treatment, disposal,
+  and recycling of waste.
+
+  9. Freight transport by water: Includes water transport services for freight.'
+explanation_text: 'The Taxable Payments Reporting System (TPRS) requires businesses in specific industries
+  to report to the Australian Taxation Office (ATO) about their payments to contractors for services.
+  The main aim of this system is to ensure that contractors report their income correctly and to identify
+  those who don''t.
+
+
+  Here are the critical points about taxable payments reporting:
+
+  1. Reportable payments: These are the payments made to contractors for services. If materials are a
+  part of the service, they are also reported.
+
+  2. Industries: Initially, the TPRS was applied to the building and construction industry but has now
+  expanded to cleaning, courier, road freight, IT, etc.
+
+  3. Annual report: Businesses in the industries under TPRS must complete and submit the Taxable Payments
+  Annual Report (TPAR) each year. This report details the payments made to every contractor for the respective
+  reporting period.
+
+  4. Details to be reported: For each contractor, businesses should report:
+
+  • ABN (Australian Business Number)
+
+  • Name and address
+
+  • The total amount paid or credited during the financial year (including GST)
+
+  5. Deadline: The TPAR must be submitted by 28th August each year for payments made in the previous financial
+  year.
+
+  6. Electronic lodgment: Businesses can lodge the report online using ATO''s business services or software
+  supporting this functionality.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- building and construction
+- cleaning
+- courier
+- road freight
+- information technology
+- security
+- forestry
+- waste collection
+- freight transport by water
+financial_impact_type: []
+keywords:
+- taxable payments reporting system
+- tprs
+- tpar
+- taxable payments annual report
+- contractors
+- building and construction
+- cleaning services
+- courier services
+- road freight
+- it services
+- security services
+- forestry
+- waste collection
+- ato reporting
+- contractor income

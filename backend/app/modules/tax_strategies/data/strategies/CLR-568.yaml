@@ -1,0 +1,118 @@
+strategy_id: CLR-568
+source_ref: STP-568
+name: Shareholder agreements
+categories:
+- Recommendations
+implementation_text: 'Here''s a step-by-step guide to help you understand the process:
+
+  1. Initial discussion among shareholders: Discuss each shareholder''s primary concerns, objectives,
+  and expectations. Identify potential areas of disagreement or contention to address in the agreement.
+
+  2. Engage a legal professional: Getting an experienced solicitor to assist with the drafting is essential.
+
+  3. Determine key provisions:
+
+  • Share issuance and transfers: Define how shares can be transferred, existing shareholders'' right
+  of first refusal, and valuation methods.
+
+  • Management and decision-making: Outline the roles of directors, decision-making processes, and voting
+  rights.
+
+  • Dividend policy: Determine how and when dividends will be distributed.
+
+  • Financing and capital contributions: Describe how the company will be financed and if shareholders
+  will be required to provide additional capital.
+
+  • Protection of minority shareholders: Establish clauses that protect minority shareholders from potential
+  misuse by majority shareholders.
+
+  • Dispute resolution: Set out mechanisms like mediation or arbitration to resolve disputes.
+
+  • Exit strategy: Define procedures for a shareholder''s exit, including the valuation of shares.
+
+  • Death or incapacity: Detail the process for what happens if a shareholder dies or becomes incapacitated.
+
+  • Non-compete, confidentiality, and non-solicitation: Protect the company''s interests by restricting
+  shareholders from specific actions.
+
+  • Other provisions: Depending on your company, other clauses might be necessary, such as those regarding
+  the employment of shareholders, restrictions on external financing, and more.
+
+  4. Draft the agreement: The legal professional will draft a preliminary shareholders agreement with
+  the decided provisions.
+
+  5. Review and revise: The lawyer will make necessary revisions once feedback is gathered.
+
+  6. Finalize the agreement: Once all shareholders are satisfied, finalize the draft.
+
+  7. Sign the agreement: Ideally, every shareholder will sign the agreement in the presence of witnesses.
+  Depending on jurisdiction and content, notarization may also be required.
+
+  8. Review and update regularly: As the business evolves, it''s a good practice to periodically revisit
+  the shareholder agreement to ensure it remains relevant and practical.
+
+  9. Safe storage: The original agreement should be kept secure, such as in the company''s official records
+  or at a law firm.'
+explanation_text: 'A shareholder agreement is a legal contract that outlines each shareholder''s rights,
+  responsibilities, obligations, and protections. The primary purpose of this agreement is to establish
+  a fair relationship between shareholders and to set out how the company will be operated.
+
+
+  A shareholders agreement offers numerous advantages for both the company and its shareholders, including:
+
+  1. Clarification of rights and responsibilities: This provides clarity and prevents future misunderstandings.
+
+  2. Conflict resolution: The agreement contains provisions to help manage and resolve conflicts more
+  efficiently.
+
+  3. Protection of minority shareholders: The agreement can offer protections for them, ensuring they
+  are treated fairly and are not unduly disadvantaged by decisions made by majority shareholders.
+
+  4. Maintaining business continuity: By detailing procedures for handling a shareholder''s death, incapacity,
+  or desire to sell, the agreement can prevent interruptions to the business and provide clarity on how
+  such situations should be handled.
+
+  5. Facilitates decision-making: The agreement can outline decision-making processes, helping to ensure
+  that significant decisions are made efficiently.
+
+  6. Non-compete and confidentiality provisions Protect the company by preventing shareholders from competing
+  directly with it or disclosing sensitive information.
+
+  7. Establishing a dividend policy can determine how and when dividends will be distributed, providing
+  clarity and stability for shareholders.
+
+  8. Exit strategies: Can detail a shareholder''s exit process, ensuring a pre-agreed mechanism for valuing
+  shares, finding buyers, and avoiding potential disputes or undervaluation.
+
+  9. Control over transfers: The agreement can prevent unwanted third parties from becoming shareholders
+  and ensure that existing shareholders have the right to purchase shares before they''re sold externally.
+
+  10. Customization for specific needs: Unlike company by-laws or Articles of Association, which may be
+  more generic, a shareholders agreement can be tailored to the particular needs and desires of the company''s
+  shareholders.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- shareholder agreement
+- shareholders
+- share transfer
+- minority shareholder
+- dividend policy
+- exit strategy
+- dispute resolution
+- non-compete
+- confidentiality
+- business continuity
+- company governance
+- voting rights
+- share valuation

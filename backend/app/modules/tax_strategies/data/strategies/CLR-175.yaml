@@ -1,0 +1,53 @@
+strategy_id: CLR-175
+source_ref: STP-175
+name: Employees of religious institutions
+categories:
+- Employees
+implementation_text: '1. A "registered" religious institution means one that is a registered charity and
+  is registered with the Australian Charities and Not-For-Profits Commission (ACNC) as an entity with
+  a purpose of the advancement of religion. A body is a religious institution if it is instituted for
+  religious purposes, i.e. its objects and activities must reflect its character as a body established
+  for the promotion of some religious object, and the beliefs and practices of the members of that body
+  must constitute a religion.
+
+  2. Salary sacrifice all income above the tax-free threshold to FBT exempt benefits.'
+explanation_text: 'Benefits provided to employees of religious institutions regarding pastoral duties
+  or activities directly related to the practice, study, teaching or propagation of religious beliefs
+  are exempt from FBT. The FBT exemption applies where the following:
+
+  A religious practitioner is an employee of a registered religious institution.
+
+  A benefit is provided to the practitioner, spouse, or child.
+
+  The benefit is provided principally regarding the employee''s pastoral duties or their practice, study,
+  teaching or propagation of religious beliefs.
+
+
+  Where the FBT exemption applies to a religious institution employee, they can eliminate their tax liability
+  by reducing their taxable wages to less than the tax-free threshold and having the employer provide
+  the balance as FBT-exempt benefits (i.e. the motor vehicle, accommodation, and use of employer credit
+  card).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- religious institution
+- fbt exemption
+- salary sacrifice
+- pastoral duties
+- acnc
+- registered charity
+- fringe benefits tax
+- tax-free threshold
+- religious practitioner
+- accommodation
+- motor vehicle

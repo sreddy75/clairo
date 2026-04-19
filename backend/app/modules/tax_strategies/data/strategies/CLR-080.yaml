@@ -1,0 +1,84 @@
+strategy_id: CLR-080
+source_ref: STP-080
+name: Negatively geared rental property
+categories:
+- Recommendations
+- Rental_properties
+implementation_text: '1. Calculate the estimated tax refund, cash flow, and return on the proposed investment
+  (over a 1, 5 and 10-year period).
+
+  2. Consider the income risk if the taxpayer loses their job or income source and cannot fund the taxable
+  loss.
+
+  3. Stress test the cash flow to ensure it can cover interest rates rising 2-4%.
+
+  4. If buying a property investment, consider buying a newer property to take advantage of the extra
+  depreciation deduction.
+
+  5. Do your research on the proposed investment, or consider using an expert.
+
+  6. Consider prepaying 12 months of interest to bring forward the deduction into the current year.'
+explanation_text: 'A negatively geared rental property is where borrowed funds are invested in property,
+  and the income generated (at least in the short term) is less than the tax-deductible expenses. The
+  taxable loss from the investment may be offset against the taxpayer''s other income (typically salary
+  and wage). This results in the salary and wage earner receiving a tax refund of part of the PAYG withholding
+  tax they have had deducted from their paychecks over the year. This is a profitable strategy if the
+  investment grows in value (capital appreciation) each year by an amount more significant than the net
+  cash out-flow (the taxable loss less the tax refund received, less the building write-off claimed).
+  The strategy works best when the purchased investments produce stable income and yearly capital appreciation.
+
+
+  The risks involved when borrowing to invest include:
+
+
+  Income risk - The taxpayer loses their job or income source and cannot fund the taxable loss.
+
+  Capital risk - The investments purchased fall in value or stay constant.
+
+  Investment income risk - The investment doesn''t produce the expected investment income, i.e. the rental
+  property becomes vacant, or the dividend-paying shares stop paying dividends.
+
+  Interest rate risk – Interest rates on loans could rise.
+
+
+  The typical rental loss is $21,825 and is calculated as follows:
+
+  Rent (4.5% rental yield on average property cost of $750,000) - $33,750 pa
+
+  Interest - (6.2% interest on $600,000 property loan) - $37,200
+
+  Property management fees - $3,000
+
+  Council and water rates - $3,000
+
+  Insurance - $1,000
+
+  Building write-off - $10,000
+
+  Repairs and maintenance - $1,375'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- negative gearing
+- rental property
+- investment property
+- taxable loss
+- interest deduction
+- depreciation
+- building write-off
+- capital appreciation
+- PAYG withholding
+- tax refund
+- cash flow
+- prepaid interest
+- property investment

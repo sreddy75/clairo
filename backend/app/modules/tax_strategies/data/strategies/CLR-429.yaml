@@ -1,0 +1,50 @@
+strategy_id: CLR-429
+source_ref: STP-429
+name: Special disability trust
+categories:
+- Business_structures
+implementation_text: 'The process:
+
+  1. Before a Special Disability Trust is established, the prospective trust beneficiary must be assessed
+  as severely disabled under the legislation for this type of trust.
+
+  2. Consult a specialist solicitor to establish the Special Disability Trust and ensure that it includes
+  the compulsory clauses of the Model Trust Deed as set down in legislation.'
+explanation_text: 'A Special Disability Trust is a trust established primarily for succession planning
+  by parents and immediate family members for the current and future care and accommodation needs of a
+  person with a severe disability or medical condition. The income from the trust will then provide for
+  the disabled person''s future care and housing. The trustee of the disability trust will be taxed annually
+  on the trust income at individual marginal tax rates.
+
+
+  Once a disability trust is established, family members can transfer property, shares and cash to the
+  trust. A capital gains tax exemption (CGT) applies to CGT assets transferred into the disability trust
+  for no consideration. This allows family members to provide for the disabled person by transferring
+  CGT assets without personally incurring capital gains tax liabilities. Also, if the Special Disability
+  Trust acquires a residence for the trust beneficiary, the capital gains tax principal residence exemption
+  will apply.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- structure
+keywords:
+- special disability trust
+- succession planning
+- severe disability
+- cgt exemption
+- principal residence exemption
+- family trust
+- disability care
+- trust deed
+- capital gains tax
+- accommodation needs

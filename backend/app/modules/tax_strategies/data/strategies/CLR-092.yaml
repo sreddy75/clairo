@@ -1,0 +1,47 @@
+strategy_id: CLR-092
+source_ref: STP-092
+name: 8 ways to put more money into super
+categories:
+- SMSF
+implementation_text: ''
+explanation_text: 'Eight ways to get more money into super:
+
+  1. Annual concessional contributions cap - $30,000 pa
+
+  2. Annual non concessional contributions cap - $120,000
+
+  3. Downsizer contributions - Up to $300,000.
+
+  4. Non-concessional super contributions ''bring forward'' arrangement - $360,000.
+
+  5. Five year catch up concessional contributions.
+
+  6. Small business CGT cap - $1,705,000
+
+  7. Spouse super contribution offset.
+
+  8. Government co-contribution'
+ato_sources: []
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- superannuation
+- concessional contributions
+- non-concessional contributions
+- downsizer
+- bring forward
+- catch up contributions
+- small business cgt cap
+- spouse contribution
+- government co-contribution
+- smsf
+- super cap

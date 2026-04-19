@@ -172,6 +172,36 @@ NAMESPACES: dict[str, NamespaceConfig] = {
         filterable_fields=["client_id", "tenant_id"],
         shared=False,
     ),
+    # Spec 060: Tax strategies knowledge base. Shared across all envs; vector
+    # writes gated on TAX_STRATEGIES_VECTOR_WRITE_ENABLED. ~415 entries at
+    # full coverage × 2 chunks each = ~830 vectors.
+    "tax_strategies": NamespaceConfig(
+        name="tax_strategies",
+        description=(
+            "Clairo-authored Australian tax planning strategies. "
+            "415 entries across 8 categories. Platform-baseline; "
+            "private overlays filtered via metadata tenant_id."
+        ),
+        filterable_fields=[
+            "tenant_id",
+            "strategy_id",
+            "categories",
+            "chunk_section",
+            "entity_types",
+            "industry_triggers",
+            "income_band_min",
+            "income_band_max",
+            "turnover_band_min",
+            "turnover_band_max",
+            "age_min",
+            "age_max",
+            "financial_impact_type",
+            "fy_applicable_from",
+            "fy_applicable_to",
+            "is_superseded",
+        ],
+        shared=True,
+    ),
 }
 
 

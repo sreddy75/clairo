@@ -1,0 +1,60 @@
+strategy_id: CLR-007
+source_ref: STP-007
+name: Double dip for employees claiming motor vehicle expenses reimbursed by their employer
+categories:
+- Employees
+- Business
+implementation_text: '1. Motor vehicle expenses incurred by the employee and receipts kept.
+
+  2. The employee keeps a logbook to calculate the motor vehicle business use percentage.
+
+  3. The employer reimburses the employee the business use percentage of motor vehicle expenses.
+
+  4. Employee claims a personal tax deduction for motor vehicle expenses - using the set rate per km method
+  for 5,000 business km.'
+explanation_text: 'Employees can have their work-related motor vehicle expenses paid or reimbursed by
+  their employer and claim a deduction under the ''cents per kilometre'' method (without that deduction
+  being reduced because their employer has paid or reimbursed those expenses). This ''double-dipping''
+  is very unusual as section 51AH of the ITAA 1936 usually prevents a deduction from being claimed for
+  reimbursed expenses. This is logical and prevents double deductions from being claimed for one payment.
+
+
+  However, in this case, an extra deduction (or double-dip) is possible under subdivision 28-C of the
+  ITAA 1997 using the cents per kilometre method. The deduction allowed under these provisions is not
+  an actual loss or outgoing incurred by the taxpayer but a deemed motor vehicle expense deduction. Below
+  is an example of the savings in practice.
+
+
+  Example: Jack is a sales consultant who uses his motor vehicle for visiting clients. He keeps a valid
+  logbook showing 60% work use for his motor vehicle and his expenses, including depreciation, fuel, insurance,
+  registration, and repairs, totalling $8,000 for the year. Jack''s employer reimburses him $4,800 for
+  his work-related motor vehicle expenses. This strategy allows Jack to also ''double-dip'' and claim
+  a tax deduction of $4,400 in his tax return. Jack''s belief is calculated by multiplying 5,000 business
+  kilometres travelled for the year by the ATO allowed cents per kilometre deduction rate of $0.88 (for
+  2024/25). (This calculation is based on Jack doing at least 5,000 business km in his motor vehicle during
+  the year.)'
+ato_sources:
+- section 51AH of the ITAA 1936
+- subdivision 28-C of the ITAA 1997
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- motor vehicle
+- cents per kilometre
+- employee
+- reimbursement
+- double dip
+- logbook
+- work-related
+- car expenses
+- employer reimbursement
+- deemed deduction

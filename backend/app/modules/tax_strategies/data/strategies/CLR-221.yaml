@@ -1,0 +1,81 @@
+strategy_id: CLR-221
+source_ref: STP-221
+name: Cryptocurrencies
+categories:
+- Investors_retirees
+implementation_text: '1. To avoid paying tax on any increases in the value of cryptocurrency, it should
+  only be purchased to acquire goods or services for private use. If the original purchase cost of the
+  cryptocurrency was less than $10,000, any capital gain or loss is non-taxable.
+
+  2. SMSFs can invest in cryptocurrency subject to compliance with the fund''s investment strategy. Trustees
+  may struggle to have the cryptocurrency registered in the fund''s name, which will breach the SIS Act.'
+explanation_text: 'Wikipedia defines a cryptocurrency (also known as crypto-currency or crypto) as a digital
+  currency designed to work as a medium of exchange through a computer network that is not reliant on
+  any central authority, such as a government or bank, to uphold or maintain it.
+
+
+  Bitcoin was created in 2009 by Satoshi Nakamoto as the world''s first cryptocurrency and is the biggest.
+  People and businesses produce Bitcoins running computers worldwide, using software that solves mathematical
+  problems. This process is known as Bitcoin mining.
+
+
+  As of July 2023, the cryptocurrency had the following statistics:
+
+  There are over 23,000 different cryptocurrencies
+
+  4.6 million Australians own cryptocurrencies
+
+  The total market cap of all cryptocurrencies is $1.1 trillion
+
+  Over $100 billion of cryptocurrencies trade every day.
+
+  Bitcoin has the highest current market cap at over $590 billion - more than double its closest rival,
+  Ethereum
+
+  Four of the top 20 cryptocurrencies are directly pegged to USD value - Tether, USD Coin, Binance USD
+
+  21% of the US population has traded or used cryptocurrency
+
+  As a continent, Asia has over 4x more cryptocurrency users than any other continent
+
+
+  The tax consequences of using cryptocurrency are as follows:
+
+  Trading cryptocurrency for profit-making will result in any profits being assessable income.
+
+  Cryptocurrency is an asset for capital gains tax (CGT) purposes. The cryptocurrency held for 12 months
+  may access the 50% CGT discount.
+
+  Transacting with cryptocurrency is akin to a barter arrangement, with similar tax consequences. When
+  receiving cryptocurrency for the sale of goods or services, a business may be charged GST on that cryptocurrency.
+
+  The buying, selling or using cryptocurrency as a payment is not subject to GST (if not carrying on a
+  business).'
+ato_sources:
+- SIS Act
+case_refs: []
+entity_types:
+- smsf
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- cryptocurrency
+- bitcoin
+- capital gains tax
+- cgt discount
+- smsf
+- digital currency
+- crypto
+- gst
+- private use
+- barter
+- assessable income
+- investment
+- blockchain

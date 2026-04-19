@@ -1,0 +1,55 @@
+strategy_id: CLR-047
+source_ref: STP-047
+name: Refinancing the family home
+categories:
+- Recommendations
+- Rental_properties
+implementation_text: '1. One spouse sells 50% of the ''old'' family home to the other spouse at market
+  value. The sale must be registered through the State Titles Office, and stamp duty paid.
+
+  2. As stamp duty is payable, this strategy is only viable if the property is to be kept for a long-term
+  investment.'
+explanation_text: 'Often when taxpayers have paid off the mortgage on their family home, they decide to
+  get a loan to purchase a new one (and move into it) and then rent out their ''old'' family home. From
+  a tax perspective, this results in the rental income on the ''old'' family home being taxable but with
+  no interest deduction against that income. There is no interest deduction on the rental property as
+  it does not have a loan used to purchase it (it originally had a loan, but it has since been paid out).
+  Unfortunately, the new family home has a mortgage, and the interest on that loan is non-deductible (as
+  the loan was used to purchase the family home). This applies irrespective of which of the two houses
+  is used as security for the new family home loan.
+
+
+  Two strategies to make interest on the refinancing of the ''old'' family home tax deductible include:
+
+
+  Sell the ''old'' family home and then use the sale proceeds to buy the new family home with no mortgage.
+  Then get a loan to purchase a rental property. This results in all the interest for the rental property
+  being deductible but involves paying stamp duty and selling costs.
+
+  One spouse sells their 50% interest in the ''old'' family home to the other spouse. The spouse buying
+  the extra 50% interest in the ''old'' family home gets a loan to do this, and the interest on that loan
+  would then be deductible against the rental income. The spouse that sold their 50% interest in the ''old''
+  house uses that money to pay for 50% of the new family house.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- refinancing
+- family home
+- rental property
+- interest deduction
+- spouse transfer
+- stamp duty
+- mortgage
+- investment property
+- rental income
+- property strategy

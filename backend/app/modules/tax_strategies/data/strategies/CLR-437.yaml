@@ -1,0 +1,66 @@
+strategy_id: CLR-437
+source_ref: STP-437
+name: PSI entity
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  • Establish the company.
+
+  • Ensure the contract for services is with the compatible company, issue invoices, and deposit income
+  into the company bank account.'
+explanation_text: 'Personal services income (PSI) comes mainly from an individual''s skills or efforts.
+  Typically, more than 50% of the revenue from a contract is for an individual''s skills, knowledge, expertise,
+  or initiatives. This income has the characteristics of employment income. PSI income generated through
+  an entity (company or trust) will still be the PSI income of the individual creating the revenue, and
+  they will be taxed on that income.
+
+
+  But irrespective of that fact, receiving PSI income through an entity still has the following advantages:
+
+  • Reduced risk protects the individual''s assets, as contracts are with an entity instead of directly
+  with the individual.
+
+  • The entity will deduct regular business expenses, including advertising, rent, accountant''s fees,
+  telephone expenses, wages to non-related parties, travel expenses, and training.
+
+  • The entity can claim a deduction for operating several motor vehicles, but only one car can have private
+  use %.
+
+  • Superannuation is deductible for the principal up to the deductible contributions limit.
+
+  • It can provide the individual with concessional taxed fringe benefits such as a living away-from-home
+  allowance or relocation-based benefits.
+
+  • Deduction for exempt benefits such as laptop computers, tools of trade and phones provided to the
+  individual.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- structure
+- concession
+keywords:
+- personal services income
+- psi
+- psi entity
+- company
+- trust
+- contractor
+- business structure
+- fringe benefits
+- superannuation deduction
+- asset protection
+- motor vehicle
+- exempt benefits

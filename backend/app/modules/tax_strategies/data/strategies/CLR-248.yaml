@@ -1,0 +1,75 @@
+strategy_id: CLR-248
+source_ref: STP-248
+name: Negatively geared share portfolio
+categories:
+- Investors_retirees
+- Recommendations
+implementation_text: '1. Establish a margin lending account.
+
+  2. Transfer your existing shares, managed funds or cash as collateral.
+
+  3. The margin lending company calculates the lending value and determines how much you can borrow.
+
+  4. You use the available funds to invest (shares and managed funds).
+
+  5. You can buy, sell transfer cash within your loan''s approved limits.
+
+  6. Consider prepaying 12 months of interest to bring the deduction into the current year.'
+explanation_text: 'A negatively geared share portfolio is where borrowed funds invest in shares or managed
+  funds, and the income generated (at least in the short term) is less than the tax-deductible expenses.
+  The taxable loss from the investment is offset against the taxpayer''s other income (typically salary
+  and wage). The salary and wage earners receive a tax refund of part of the PAYG withholding tax they
+  deducted from their paychecks over the year. Negative gearing is profitable if the investment grows
+  in value (capital appreciation) yearly by greater than the net cash out-flow (the taxable loss less
+  the tax refund received). The strategy worked best when the investments purchased produced stable income
+  and steady capital appreciation each year.
+
+
+  The risks involved with a negatively geared share portfolio include the following:
+
+  Income risk - The taxpayer loses their job or income source and cannot fund the taxable loss.
+
+  Market movements - The investments purchased fall in value or stay constant.
+
+  Investment income risk - The investment doesn''t produce the expected investment income, i.e. the dividend-paying
+  shares stop paying dividends.
+
+  Interest rate movements – Interest rates on loans could rise.
+
+  Reduced lending ratios - If the lender minimises the lending ratio for a stock you have purchased, this
+  may trigger a margin call.
+
+
+  The typical share portfolio loss is $27,000 pa and is calculated as follows:
+
+  Dividends (2.6% dividend yield on average share portfolio of $500,000) - $13,000 pa
+
+  Interest - (10% interest on $400,000 loan) - $40,000
+
+  Equity contributed - $100,000'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- negative gearing
+- shares
+- margin lending
+- managed funds
+- investment loss
+- borrowed funds
+- interest deduction
+- capital appreciation
+- dividends
+- payg withholding
+- salary and wages
+- prepaid interest
+- margin call

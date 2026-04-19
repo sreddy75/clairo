@@ -1,0 +1,43 @@
+strategy_id: CLR-295
+source_ref: STP-295
+name: On the 1st July 2024 individual tax rates are reduced
+categories:
+- Employees
+- Business
+implementation_text: '1. Move taxable income from the 2023/24 income year to the 2024/25 income year to
+  take advantage of reduced individual tax rates.
+
+  2. Prepay eligible expenses before 30 June 2024 to reduce taxable income in the 2023/24 income year.
+
+  3. Defer income that would otherwise be received in 2023/24 into the 2024/25 income year.'
+explanation_text: 'On the 1st of July 2024, individual tax rates are reduced. Consequently, tax can be
+  saved by moving taxable income from 2023/24 to 2024/25. This can be achieved by:
+
+  • Prepaying expenses in 2023/24.
+
+  • Deferring income from 2023/24 to 2024/25.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- timing
+keywords:
+- individual tax rates
+- tax rate reduction
+- 2024 tax cuts
+- prepay expenses
+- defer income
+- taxable income
+- income timing
+- 2023-24
+- 2024-25
+- stage 3 tax cuts
+tenant_id: platform
+version: 1

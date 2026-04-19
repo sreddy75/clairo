@@ -1,0 +1,62 @@
+strategy_id: CLR-085
+source_ref: STP-085
+name: $20,000 instant asset write-off
+categories:
+- Business
+implementation_text: '1. Confirm that the business has an annual turnover of less than $10 million before
+  claiming an immediate deduction for depreciable assets.
+
+  2. Claim an immediate deduction for depreciable assets costing less than $20,000 that are started to
+  be used or installed ready for use between 01/07/23 and 30/06/25.
+
+  3. For the period 06/10/20 to 30/06/23, claim an uncapped immediate write-off for new assets or improvements
+  to an existing asset, provided annual turnover is less than $5 billion.
+
+  4. Where asset purchases exceed the applicable thresholds, deduct them over time using the general small
+  business pool rather than claiming an immediate deduction.
+
+  5. Apply a deduction of 15 per cent of the cost in the first income year for assets placed into the
+  general small business pool.
+
+  6. Apply a diminishing value rate of 30 per cent on the opening pool balance for each income year after
+  the first.'
+explanation_text: 'Businesses with an annual turnover of less than $10 million can claim an immediate
+  deduction for depreciable assets they start to use – or have installed ready for use on the following
+  basis:
+
+
+  01/07/23 to 30/06/25 - assets costing less than $20,000.
+
+  06/10/20 to 30/06/23 - uncapped immediate write-off for NEW assets or an improvement to an existing
+  asset. Applies to businesses with an annual turnover of less than $5 billion.
+
+
+  Purchases that exceed the thresholds can''t be immediately deducted but are deducted over time using
+  the general small business pool. Under the pooling mechanism, a deduction of 15 per cent of the cost
+  is allowed in the first income year with a diminishing value rate of 30 per cent deduction on the opening
+  pool balance allowed for each income year after.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: 10000000
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- instant asset write-off
+- depreciable assets
+- small business
+- immediate deduction
+- asset pooling
+- diminishing value
+- general small business pool
+- capital expenditure
+- equipment purchase
+- tax deduction
+tenant_id: platform
+version: 1

@@ -35,10 +35,21 @@ celery_app = Celery(
     backend=celery_settings.result_backend,
 )
 
+# Task routes — pin named tasks to dedicated queues for workload isolation.
+# Add new entries here when a module wants its own queue.
+TASK_ROUTES: dict[str, dict[str, str]] = {
+    # Spec 060 — Tax Strategies authoring pipeline
+    "tax_strategies.research": {"queue": "tax_strategies"},
+    "tax_strategies.draft": {"queue": "tax_strategies"},
+    "tax_strategies.enrich": {"queue": "tax_strategies"},
+    "tax_strategies.publish": {"queue": "tax_strategies"},
+}
+
 # Configure Celery
 celery_app.conf.update(
     # Task settings
     task_default_queue=celery_settings.task_default_queue,
+    task_routes=TASK_ROUTES,
     task_time_limit=celery_settings.task_time_limit,
     task_soft_time_limit=celery_settings.task_soft_time_limit,
     task_acks_late=True,  # Acknowledge after task completes

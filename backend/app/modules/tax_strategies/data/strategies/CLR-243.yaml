@@ -1,0 +1,92 @@
+strategy_id: CLR-243
+source_ref: STP-243
+name: Small businesses top 20 tax compliance issues
+categories:
+- ATO_obligations
+implementation_text: ''
+explanation_text: 'In Australia, small businesses face their own unique set of tax compliance issues.
+  Here are 20 of the top tax compliance challenges and considerations:
+
+  1. Goods and Services Tax (GST): Deciding whether to register and ensure correct reporting and remittance
+  once registered.
+
+  2. Cash Flow Management: Having adequate cash flow to meet tax obligations when they fall due.
+
+  3. Business vs. Personal Expenses: Ensuring clear separation and correct claim of business-related expenses.
+
+  4. Capital Gains Tax (CGT): Understanding the implications of selling or transferring business assets.
+
+  5. Superannuation Guarantee: Ensure employees'' mandatory superannuation contributions are correctly
+  calculated and promptly paid.
+
+  6. Small Business CGT Concessions: When and how to claim these concessions upon selling or transferring
+  business assets.
+
+  7. Record Keeping: Maintaining accurate and comprehensive records to substantiate all claims and provide
+  a clear picture of the business''s financial situation.
+
+  8. PAYG Withholding: Ensuring appropriate amounts are withheld from employee wages and remitted to the
+  ATO.
+
+  9. Changing Business Structure: Understanding tax implications when transitioning from a sole trader
+  to a partnership or company, or vice versa.
+
+  10. Losses: Understanding how to carry forward and offset business losses.
+
+  11. Fringe Benefits Tax (FBT): Ensuring any fringe benefits provided to employees are correctly evaluated
+  and reported.
+
+  12. Payroll Tax: While this is a state tax, businesses must be aware of their obligations if their total
+  wages exceed the exemption threshold.
+
+  13. Business Activity Statements (BAS): Accurately completing and submitting BAS on time.
+
+  14. Tax Planning: Structuring affairs to legally minimise tax while ensuring compliance.
+
+  15. Trust Issues: If operating through a trust, ensure distributions are correctly made, and beneficiaries
+  report their income.
+
+  16. Employee vs. Contractor: Determining the correct classification and understanding each tax obligation.
+
+  17. Depreciating Assets: Knowing how to claim depreciation and understanding the instant asset write-off
+  provisions.
+
+  18. Division 7A - Private Company Benefits: Ensuring loans or payments from a private company to shareholders
+  or associates are treated correctly.
+
+  19. Tax Payments: Ensuring all tax payments like GST, PAYG, and income tax are made on time to avoid
+  penalties.
+
+  20. Research & Development (R&D) Tax Incentives: For those small businesses engaged in innovation, ensuring
+  they meet the criteria and claim correctly.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- small business
+- tax compliance
+- gst
+- payg withholding
+- superannuation guarantee
+- fringe benefits tax
+- division 7a
+- cgt concessions
+- bas
+- record keeping
+- payroll tax
+- depreciation
+- instant asset write-off
+- r&d tax incentives
+- business losses

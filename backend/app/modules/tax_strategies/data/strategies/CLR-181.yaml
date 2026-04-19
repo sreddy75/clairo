@@ -1,0 +1,64 @@
+strategy_id: CLR-181
+source_ref: STP-181
+name: Start a pension in a SMSF (or zero tax retirement)
+categories:
+- SMSF
+implementation_text: '1. Get advice from an appropriately licenced accountant or financial planner regarding
+  starting a pension in the SMSF.
+
+  2. Complete the pension-pack documentation to start the pension, including all the necessary applications,
+  minutes, notifications and a Product Disclosure Statement.
+
+  3. Calculate the amount of the minimum annual pension payment.
+
+  4. Ensure the minimum annual pension payments are paid - Otherwise, the funds revert to the accumulation
+  phase.'
+explanation_text: 'This strategy involves starting a pension in the SMSF so that the income the complying
+  SMSF earns from assets held to provide for super income stream benefits is exempt from income tax. This
+  exempts current pension income (ECPI). This tax concession means that capital gains accrued on superannuation
+  assets during the fund''s accumulation phase will be exempt if the assets are sold after the fund has
+  moved to the pension phase. An SMSF can only start paying a member a pension if it has met one of the
+  eleven conditions of release. The two most common conditions of release applied are:
+
+
+  Reaching age 65 - No restrictions apply.
+
+  Retirement - For a member who has reached their preservation age (at least 60 years old) and never expects
+  to work more than 10 hours per week.
+
+
+  A member can now only have a maximum of $1.9m superannuation in the pension phase. Limited recourse
+  borrowing arrangements will be included in a member''s total superannuation balance and transfer cap.
+  Members'' balances above this threshold are transferred to the accumulation phase, with earnings subject
+  to a 15% tax. Failure to comply with pension rules and the payment standards in the SIS Regulations
+  means a superannuation income stream ceases for income tax purposes.'
+ato_sources:
+- SIS Regulations
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- concession
+keywords:
+- smsf
+- pension
+- retirement
+- ecpi
+- exempt current pension income
+- accumulation phase
+- pension phase
+- conditions of release
+- transfer balance cap
+- superannuation income stream
+- capital gains
+- limited recourse borrowing
+- preservation age
+- minimum pension payment

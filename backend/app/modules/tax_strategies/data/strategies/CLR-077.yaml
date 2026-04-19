@@ -1,0 +1,49 @@
+strategy_id: CLR-077
+source_ref: STP-077
+name: Change from employee to contractor
+categories:
+- Employees
+- Business
+implementation_text: '1. Establish the PSI entity.
+
+  2. Have a written, signed, independent contractor agreement (prepared by a solicitor or online legal
+  provider).
+
+  3. The PSI Entity contracts the employee''s services.
+
+  4. The PSI Entity should own a company car and pay the employment/business-related expenses.'
+explanation_text: 'Changing from employee to contractor (business) has the benefit of making some personal
+  expenses tax-deductible. Expenses such as a motor vehicle, home office, travel, etc., may become tax
+  deductible. Utilising the PSI Entity strategy maximises the contractor''s total income as it makes private
+  motor vehicle expenses and living away from home accommodation and meals deductible.
+
+
+  The employer may save payroll tax and superannuation costs when changing the employee''s status to a
+  contractor operating through their PSI entity. These extra savings should ideally result in the employee
+  being paid 10-15% higher gross income (at no additional cost to the employer).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- employee
+- contractor
+- psi
+- personal services income
+- motor vehicle
+- home office
+- travel
+- payroll tax
+- superannuation
+- deductible expenses
+- independent contractor
+- living away from home

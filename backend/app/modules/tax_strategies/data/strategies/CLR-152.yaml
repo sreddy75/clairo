@@ -1,0 +1,60 @@
+strategy_id: CLR-152
+source_ref: STP-152
+name: Superannuation guarantee
+categories:
+- ATO_obligations
+- Recommendations
+implementation_text: 'The SG basics are:
+
+  You pay the amount regardless of how much they are paid – their earnings amount is irrelevant.
+
+  Employee age – You pay it regardless of hours worked for employees 18 or older. For employees under
+  18, you only pay it if they work more than 30 hours per week.
+
+  The super guarantee rate is 11.5%.
+
+  The SG is calculated on the employee''s ordinary time earnings.
+
+  The SG applies to individual contractors providing their labour.'
+explanation_text: 'The Superannuation Guarantee (SG) is a mandatory requirement for employers to provide
+  minimum superannuation contributions for their eligible employees. If an employer fails to pay the required
+  SG contributions on time, they face the following penalties:
+
+  1. Superannuation guarantee charge (SGC): If an employer doesn''t pay the required SG contributions
+  by the due date, they must pay the Superannuation Guarantee Charge. The SGC includes unpaid SG contributions,
+  interest, and an administration fee. The SGC is not tax-deductible.
+
+  2. Interest: Interest is applied to the unpaid SG contributions from the date they were due until they
+  were paid..
+
+  3. Administration fee: An administration fee is included in the Superannuation Guarantee Charge.
+
+  4. Non-deductibility: Unpaid SG contributions and the associated SGC amount are not tax-deductible for
+  the employer.
+
+  5. Audits and penalties: Penalties can vary depending on the severity and duration of the non-compliance.
+
+  6. Director penalties: Company directors can become personally liable for the outstanding amount.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- superannuation guarantee
+- sg
+- sgc
+- employer obligations
+- super contributions
+- ordinary time earnings
+- superannuation guarantee charge
+- director penalties
+- contractors
+- compliance

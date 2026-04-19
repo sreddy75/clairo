@@ -1,0 +1,113 @@
+strategy_id: CLR-547
+source_ref: STP-547
+name: Protect intellectual property
+categories:
+- Recommendations
+implementation_text: 'In Australia, intellectual property (IP) is protected through legislation, registration
+  systems, and common law. Here''s an overview of how different types of IP are protected:
+
+  1. Patents: The protection of inventions in Australia is governed by the Patents Act 1990. If you have
+  an invention, you can apply for a patent with IP Australia. Once granted, a standard patent lasts up
+  to 20 years, while an innovation patent (a type of patent for incremental innovations) lasts up to 8
+  years.
+
+  2. Trademarks: Under the Trade Marks Act 1995, trademarks are protected in Australia. To protect a trademark,
+  you need to apply for registration with IP Australia. Once registered, the initial protection lasts
+  for ten years and can be renewed indefinitely in 10-year intervals, as long as the fees are paid and
+  the mark is used.
+
+  3. Copyright: Copyright protection in Australia is automatic and does not require registration. The
+  Copyright Act of 1968 protects literary, musical, dramatic, and artistic works, films, sound recordings,
+  broadcasts, and published editions. The duration of copyright protection varies depending on the type
+  of work. Still, it generally lasts for the creator''s life plus 70 years for literary, dramatic, musical,
+  and artistic works.
+
+  4. Designs: If you''ve created a new and distinctive shape, configuration, pattern, or ornamentation
+  that gives a product a unique appearance, you can register it with IP Australia under the Designs Act
+  2003. Once registered, the maximum protection period is ten years.
+
+  5. Plant Breeder''s Rights (PBR): If you''ve developed a new, distinct, uniform, and stable plant variety,
+  you can protect it through PBR. The protection is governed by the Plant Breeder''s Rights Act 1994 and
+  is administered by IP Australia. Depending on the type of plant, protection can last up to 20 or 25
+  years.
+
+  6. Trade secrets and confidential information: This type of IP doesn''t have a formal registration system
+  in Australia. Instead, protection typically arises from the standard law duty of confidence. To maintain
+  security, it''s essential to ensure that any disclosures of confidential information are done under
+  strict confidentiality agreements.
+
+  7. Geographical indications: This protection is primarily relevant for wine products in Australia, where
+  a wine''s geographical indication (its production region) can be registered and protected under the
+  Wine Australia Act 2013 and the Wine Australia Regulations 2018.'
+explanation_text: 'Intellectual property (IP) refers to inventions, literary and artistic works, designs,
+  symbols, names, and images used in commerce. IP rights protect creators and innovators against unauthorised
+  use or reproduction of their creations, thus incentivising creativity and innovation.
+
+
+  Small businesses expose themselves to risks if they don''t protect their intellectual property (IP).
+  Here''s a rundown of potential threats:
+
+  1. Loss of competitive advantage: IP often gives a business its unique edge in the market. Competitors
+  can easily replicate products, services, or processes if unprotected, eroding the original business''s
+  distinctiveness and competitive advantage.
+
+  2. Revenue loss: Without IP protection, others can freely use, produce, or sell a business''s products
+  or services. This can divert sales away from the original company, reducing potential revenue.
+
+  3. Increased costs: If a business finds itself in a situation where its IP is being used without permission,
+  the costs of legal action to try to stop the infringement can be substantial.
+
+  4. Loss of business value: IP can significantly affect a business''s valuation, especially if it is
+  being considered for sale or acquisition.
+
+  5. Difficulty securing investments: A lack of protected IP can make a business less attractive to potential
+  investors.
+
+  6. Potential legal liabilities: If a business does not ensure its original products or services, it
+  might inadvertently infringe on someone else''s intellectual property, resulting in costly lawsuits.
+
+  7. Reputation damage: If competitors replicate a business''s products, which are of lesser quality,
+  it could harm the reputation of the original company, even if they were not responsible for producing
+  the substandard goods.
+
+  8. Loss of IP after disclosure: Public disclosure without prior IP protection (like a patent application)
+  can cause information to become part of the public domain, especially for inventions or trade secrets.
+  Once this happens, protection is impossible.
+
+  9. Difficulty in expanding internationally: If a small business considers international expansion and
+  has not secured its IP rights in foreign markets, it may find that its IP has already been registered
+  or used by others.
+
+  10. Compromised business relationships: Without clear IP agreements, collaborations, partnerships, or
+  employment relationships can turn sour if there''s ambiguity about who owns which IP. For instance,
+  a contractor might claim rights over something they developed while working with the business.
+
+  11. Limitation on licensing opportunities: A business with protected IP can license it to others, generating
+  additional revenue. Without protection, these lucrative opportunities might be missed.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- intellectual property
+- patents
+- trademarks
+- copyright
+- designs
+- trade secrets
+- plant breeder's rights
+- ip protection
+- small business
+- ip registration
+- licensing
+- confidentiality
+- geographical indications
+- ip australia
+- competitive advantage

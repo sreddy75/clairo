@@ -1,0 +1,124 @@
+strategy_id: CLR-512
+source_ref: STP-512
+name: Cash flow statement
+categories:
+- Recommendations
+implementation_text: 'Preparing a cash flow statement involves gathering relevant financial data from
+  various sources and categorising cash inflows and outflows into the appropriate sections. Here''s a
+  step-by-step guide to help you prepare a cash flow statement:
+
+  1. Gather financial data: Collect financial information for the specific period for which you are preparing
+  the cash flow statement. This data includes information from the income statement, balance sheet, and
+  additional transaction records.
+
+  2. Choose a format: Two standard cash flow statement formats are the Direct and Indirect Methods. The
+  Indirect Method is more widely used because it reconciles net income from the income statement to net
+  cash flow from operating activities.
+
+  3. Prepare operating activities: This section categorises cash flows related to the core business operations.
+  Start with the indirect method:
+
+  Begin with net income from the income statement.
+
+  Adjust for non-cash items, such as depreciation and amortisation.
+
+  Include changes in working capital items:
+
+  Increased current assets (e.g., accounts receivable, inventory) is a cash outflow.
+
+  A decrease in current assets is a cash inflow.
+
+  Increased current liabilities (e.g., accounts payable, accrued expenses) are a cash inflow.
+
+  A decrease in current liabilities is a cash outflow.
+
+  4. Prepare investing activities: Identify cash flows related to asset investments. Include cash flows
+  from buying and selling assets like property, equipment, and investments. For example:
+
+  Cash inflows from selling assets are categorised as positive cash flows.
+
+  Cash outflows from purchasing assets are categorised as negative cash flows.
+
+  5. Prepare financing activities: This section involves cash flows for obtaining and repaying capital
+  from investors and creditors. Include items like:
+
+  Issuing or repurchasing stock.
+
+  Borrowing or repaying loans.
+
+  Payment of dividends.
+
+  6. Calculate net cash flow: Sum up the cash flows from operating, investing, and financing activities
+  to calculate the net increase or decrease in cash for the period.
+
+  7. Opening and closing cash balance: Start with the opening cash balance from the previous period''s
+  cash flow statement. Add the net cash flow calculated in the last step to get the closing cash balance
+  for the current period.
+
+  8. Cross-check with the balance sheet: Ensure that the closing cash balance matches the cash and cash
+  equivalents reported on the balance sheet.
+
+  9. Presentation and disclosure: Present the cash flow statement, indicating the three main sections
+  (Operating activities, Investing activities, and Financing activities), and provide relevant details
+  and explanations for significant transactions.'
+explanation_text: 'A cash flow statement provides insight into a company''s ability to create positive
+  cash flow from its operations, its capacity to invest in new assets or ventures, and its reliance on
+  external sources of financing.
+
+
+  Preparing cash flow statements offers several benefits to businesses. Here are some key advantages:
+
+  1. Insight into cash position: Helping businesses understand how much cash they have. This is crucial
+  for managing day-to-day operations, paying bills, and meeting short-term financial obligations.
+
+  2. Forecasting: Businesses can develop more accurate forecasts of future cash flows by analysing historical
+  patterns.
+
+  3. Identifying cash flow trends: Allows businesses to identify trends in cash flows over time.
+
+  4. Liquidity assessment: A healthy cash flow can cover immediate financial needs without relying heavily
+  on external financing.
+
+  5. Investment and expansion: Businesses can use cash flow statements to evaluate their ability to fund
+  investments, expansion projects, and new ventures. A positive cash flow can indicate a company''s self-sufficiency
+  in financing growth initiatives.
+
+  6. Debt management: For companies with debt obligations, cash flow statements help monitor the ability
+  to meet debt repayment schedules. Lenders often use cash flow information to evaluate a borrower''s
+  creditworthiness.
+
+  7. Internal control: Preparing cash flow statements can help identify irregularities, errors, or potential
+  fraud, promoting better internal controls.
+
+  8. Investor and creditor relations: Cash flow statements are essential for communicating a company''s
+  financial health to investors and creditors.
+
+  9. Strategic decision-making: Pricing strategies, capital expenditures, and dividend distribution can
+  be informed by analysing cash flow patterns and projections.
+
+  10. Comparative analysis: Businesses can compare their cash flow statements with competitors or industry
+  peers to gain insights into relative financial performance and cash management practices.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- cash flow statement
+- operating activities
+- investing activities
+- financing activities
+- liquidity
+- forecasting
+- working capital
+- indirect method
+- direct method
+- financial reporting
+- debt management
+- internal controls

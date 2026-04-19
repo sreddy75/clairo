@@ -1,0 +1,44 @@
+strategy_id: CLR-246
+source_ref: STP-246
+name: Fitness expenses
+categories:
+- Employees
+implementation_text: '1. Determine whether the employee requires above normal (extreme) levels of fitness
+  to perform their job
+
+  2. Document the reasons why.
+
+  3. Keep receipts for any fitness expenses incurred - Gym fees, training, and fitness equipment.
+
+  4. Generally, a deduction will not be available for conventional clothing items such as tracksuits,
+  running shoes, t-shirts, and shorts.
+
+  5. Supplements (e.g. vitamins, minerals and concentrated protein) are not deductible.'
+explanation_text: Fitness expenses will be deductible if employees need an abnormal fitness level to perform
+  their job. Typically, this will be limited to only professional sportspeople, physical training instructors
+  with the Defence Force & Police Force, firefighters, and special forces personnel.
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- fitness expenses
+- gym fees
+- deductible fitness
+- employee deductions
+- professional sportspeople
+- defence force
+- police force
+- firefighters
+- special forces
+- abnormal fitness
+- work-related expenses
+- physical training

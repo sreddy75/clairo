@@ -1,0 +1,292 @@
+openapi: 3.1.0
+info:
+  title: Clairo Admin — Tax Strategies API (Phase 1)
+  version: 0.1.0
+  description: |
+    Super-admin surface for the tax strategies knowledge base.
+    All endpoints require Clerk JWT with `role=super_admin`.
+    Returns `403` otherwise.
+servers:
+  - url: /api/v1/admin
+paths:
+  /tax-strategies:
+    get:
+      operationId: listTaxStrategies
+      summary: List strategies with filters and pagination.
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [stub, researching, drafted, enriched, in_review, approved, published, superseded, archived]
+        - in: query
+          name: category
+          schema:
+            type: string
+            enum: [Business, Recommendations, Employees, ATO_obligations, Rental_properties, Investors_retirees, Business_structures, SMSF]
+        - in: query
+          name: tenant_id
+          schema:
+            type: string
+            default: platform
+        - in: query
+          name: q
+          schema: { type: string }
+          description: Free-text match against name + strategy_id.
+        - in: query
+          name: page
+          schema: { type: integer, default: 1, minimum: 1 }
+        - in: query
+          name: page_size
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+      responses:
+        "200":
+          description: Paginated list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxStrategyListResponse"
+  /tax-strategies/{strategy_id}:
+    get:
+      operationId: getTaxStrategyDetail
+      summary: Full detail view including version history and authoring job log.
+      parameters:
+        - $ref: "#/components/parameters/StrategyId"
+      responses:
+        "200":
+          description: Strategy detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxStrategyDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /tax-strategies/{strategy_id}/research:
+    post:
+      operationId: triggerResearch
+      summary: Queue research task. Allowed only when status = stub.
+      parameters: [{ $ref: "#/components/parameters/StrategyId" }]
+      responses:
+        "202": { $ref: "#/components/responses/JobQueued" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+  /tax-strategies/{strategy_id}/draft:
+    post:
+      operationId: triggerDraft
+      summary: Queue draft task. Allowed when status in {researching, enriched}.
+      parameters: [{ $ref: "#/components/parameters/StrategyId" }]
+      responses:
+        "202": { $ref: "#/components/responses/JobQueued" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+  /tax-strategies/{strategy_id}/enrich:
+    post:
+      operationId: triggerEnrich
+      summary: Queue enrichment task. Allowed when status = drafted.
+      parameters: [{ $ref: "#/components/parameters/StrategyId" }]
+      responses:
+        "202": { $ref: "#/components/responses/JobQueued" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+  /tax-strategies/{strategy_id}/submit:
+    post:
+      operationId: submitForReview
+      summary: Transition enriched → in_review.
+      parameters: [{ $ref: "#/components/parameters/StrategyId" }]
+      responses:
+        "200": { $ref: "#/components/responses/StatusChanged" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+  /tax-strategies/{strategy_id}/approve:
+    post:
+      operationId: approveAndPublish
+      summary: |
+        Transition in_review → approved and queue publish.
+        Captures reviewer identity from the request JWT.
+        Publish may fail with `vector_write_disabled_in_this_environment`
+        if `TAX_STRATEGIES_VECTOR_WRITE_ENABLED` is not set;
+        the strategy stays at `approved` with a failed job row.
+      parameters: [{ $ref: "#/components/parameters/StrategyId" }]
+      responses:
+        "202": { $ref: "#/components/responses/JobQueued" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+  /tax-strategies/{strategy_id}/reject:
+    post:
+      operationId: rejectToDraft
+      summary: Return in_review → drafted with reviewer notes.
+      parameters: [{ $ref: "#/components/parameters/StrategyId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reviewer_notes: { type: string, minLength: 1, maxLength: 2000 }
+              required: [reviewer_notes]
+      responses:
+        "200": { $ref: "#/components/responses/StatusChanged" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+  /tax-strategies/{strategy_id}/supersede:
+    post:
+      operationId: supersedeStrategy
+      summary: Create a new version (version+1) and mark this row superseded_by.
+      parameters: [{ $ref: "#/components/parameters/StrategyId" }]
+      responses:
+        "201":
+          description: New version created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  new_strategy_row_id: { type: string, format: uuid }
+                  new_version: { type: integer }
+  /tax-strategies/seed-from-csv:
+    post:
+      operationId: seedFromCsv
+      summary: |
+        Idempotent bulk seed from the committed CSV fixture.
+        Creates stub rows for any `strategy_id` not already present.
+        Emits `tax_strategy.seed_executed` and per-row `tax_strategy.created`.
+      responses:
+        "200":
+          description: Seed summary.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created: { type: integer }
+                  skipped: { type: integer }
+                  errors: { type: array, items: { type: string } }
+  /tax-strategies/pipeline-stats:
+    get:
+      operationId: getPipelineStats
+      summary: Counts per lifecycle status for the kanban dashboard.
+      responses:
+        "200":
+          description: Status counts.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: integer }
+                example:
+                  stub: 314
+                  researching: 4
+                  drafted: 12
+                  enriched: 8
+                  in_review: 9
+                  approved: 2
+                  published: 66
+                  superseded: 0
+                  archived: 0
+components:
+  parameters:
+    StrategyId:
+      in: path
+      name: strategy_id
+      required: true
+      schema:
+        type: string
+        pattern: "^CLR-\\d{3,5}$"
+  responses:
+    NotFound:
+      description: Strategy not found.
+    InvalidTransition:
+      description: Action not allowed in current status.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    JobQueued:
+      description: Celery task queued; returns the authoring job row.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthoringJob"
+    StatusChanged:
+      description: Strategy status updated.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TaxStrategyDetail"
+  schemas:
+    Category:
+      type: string
+      enum: [Business, Recommendations, Employees, ATO_obligations, Rental_properties, Investors_retirees, Business_structures, SMSF]
+    Status:
+      type: string
+      enum: [stub, researching, drafted, enriched, in_review, approved, published, superseded, archived]
+    TaxStrategyListItem:
+      type: object
+      properties:
+        strategy_id: { type: string }
+        name: { type: string }
+        categories: { type: array, items: { $ref: "#/components/schemas/Category" } }
+        status: { $ref: "#/components/schemas/Status" }
+        tenant_id: { type: string }
+        version: { type: integer }
+        last_reviewed_at: { type: string, format: date-time, nullable: true }
+        reviewer_display_name: { type: string, nullable: true }
+        updated_at: { type: string, format: date-time }
+      required: [strategy_id, name, categories, status, tenant_id, version, updated_at]
+    TaxStrategyListResponse:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: "#/components/schemas/TaxStrategyListItem" } }
+        meta:
+          type: object
+          properties:
+            page: { type: integer }
+            page_size: { type: integer }
+            total: { type: integer }
+    TaxStrategyDetail:
+      allOf:
+        - $ref: "#/components/schemas/TaxStrategyListItem"
+        - type: object
+          properties:
+            implementation_text: { type: string }
+            explanation_text: { type: string }
+            entity_types: { type: array, items: { type: string } }
+            income_band_min: { type: integer, nullable: true }
+            income_band_max: { type: integer, nullable: true }
+            turnover_band_min: { type: integer, nullable: true }
+            turnover_band_max: { type: integer, nullable: true }
+            age_min: { type: integer, nullable: true }
+            age_max: { type: integer, nullable: true }
+            industry_triggers: { type: array, items: { type: string } }
+            financial_impact_type: { type: array, items: { type: string } }
+            keywords: { type: array, items: { type: string } }
+            ato_sources: { type: array, items: { type: string } }
+            case_refs: { type: array, items: { type: string } }
+            fy_applicable_from: { type: string, format: date, nullable: true }
+            fy_applicable_to: { type: string, format: date, nullable: true }
+            superseded_by_strategy_id: { type: string, nullable: true }
+            source_ref:
+              type: string
+              nullable: true
+              description: Visible only on admin endpoints; never returned by public hydration.
+            authoring_jobs:
+              type: array
+              items: { $ref: "#/components/schemas/AuthoringJob" }
+            version_history:
+              type: array
+              items: { $ref: "#/components/schemas/TaxStrategyListItem" }
+    AuthoringJob:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        strategy_id: { type: string }
+        stage: { type: string, enum: [research, draft, enrich, publish] }
+        status: { type: string, enum: [pending, running, succeeded, failed] }
+        started_at: { type: string, format: date-time, nullable: true }
+        completed_at: { type: string, format: date-time, nullable: true }
+        input_payload: { type: object }
+        output_payload: { type: object, nullable: true }
+        error: { type: string, nullable: true }
+        triggered_by: { type: string }
+        created_at: { type: string, format: date-time }
+    ErrorResponse:
+      type: object
+      properties:
+        error: { type: string }
+        code: { type: string }
+        details: { type: object }

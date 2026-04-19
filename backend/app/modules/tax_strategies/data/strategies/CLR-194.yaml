@@ -1,0 +1,82 @@
+strategy_id: CLR-194
+source_ref: STP-194
+name: Corporate box
+categories:
+- Business
+implementation_text: '1. Ensure the entertainment facility leasing expenses are incurred by the employer
+  (and not reimbursing the employee).
+
+  2. Allocate the fixed price sponsorship package between the value of the signage and advertising rights
+  and entertainment.
+
+  3. If the benefit is provided to an employee as part of their salary package, then the 50-50 split method
+  for entertainment facility leasing costs cannot be used.'
+explanation_text: 'This strategy involves purchasing a corporate box sponsorship package for AFL Football,
+  rugby, horse racing, speedway, etc. For fixed-price sponsorship packages, the business will typically
+  pay one set price for the following benefits:
+
+  Signage and advertising rights (This promotes the business''s name on the ground, signage, uniforms,
+  websites and social media, and club social functions).
+
+  Corporate box facilities (Normally includes food and drink for several guests at given games).
+
+  Tickets to a certain number of games, award nights and other functions.
+
+
+  The business needs to allocate the fixed price sponsorship package between the value of the signage
+  and advertising rights (which is a tax-deductible business expense), and the corporate box facilities,
+  tickets to games and functions (which are entertainment). The allocation should be done on arms-length
+  market values. The Commissioner (ATO) generally treats 95% of the hiring costs of a corporate box at
+  a sporting event as being attributable to entertainment and 5% as deductible advertising. Entertainment
+  facility leasing expenses exclude the portion of the costs related to food or beverages provided or
+  advertising that would be an allowable income tax deduction. This strategy involves using the 50-50
+  split method for entertainment facility leasing costs incurred by the employer. This means that 50%
+  of the expenses are non-deductable. The other 50% is deductible but subject to FBT. Under this option,
+  the after-tax cost of $20,000 on a fixed-price sponsorship package is $23,517. In contrast, for an individual
+  taxpayer in the 47% tax bracket, the cost would be $37,736.
+
+
+  Example of $20,000 incurred on a fixed-price sponsorship package for Fremantle Dockers:
+
+  The cost of the sponsorship package is $20,000
+
+  GST refunded on 5% advertising component (5% @ $20,000 @ 1/11) (91)
+
+  Tax savings on 5% advertising component ($909 @ 25%) (227)
+
+  GST refunded ($19,000 @ 50% @ 1/11) (864)
+
+  Tax savings ($18,136 expense @ 50% @ 25%) (2,267)
+
+  FBT payable ($19,000 @ 50% @ 2.0802 @ 47%) 9,288
+
+  Tax savings on FBT paid ($9,288 @ 25%) (2,322)
+
+  Total after-tax cost $23,517'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- corporate box
+- entertainment facility leasing
+- sponsorship package
+- 50-50 split method
+- fbt
+- fringe benefits tax
+- advertising
+- signage
+- tax deductible
+- entertainment
+- afl
+- sporting event
+- employer
+- business expense

@@ -1,0 +1,45 @@
+strategy_id: CLR-214
+source_ref: STP-214
+name: First Home Super Saver Scheme
+categories:
+- Investors_retirees
+implementation_text: '1. Taxpayers can contribute up to $15,000 per year in voluntary contributions (up
+  to $30,000) that can be withdrawn for a first home deposit.
+
+  2. The individual can withdraw these contributions and associated earnings for a first home deposit.'
+explanation_text: 'Taxpayers can contribute up to $15,000 per year in voluntary contributions (up to $50,000),
+  which can be withdrawn for a first home deposit. The contributions must be made into their superannuation
+  account and be within an individual''s existing contribution caps. The contributions and earnings are
+  taxed in the super fund at 15%. Both couple members can access the scheme and combine savings for a
+  single deposit.
+
+
+  Individuals can withdraw these contributions and associated earnings for a first home deposit. Withdrawals
+  will be taxed at an individual''s marginal tax rate, less a 30% tax offset. If an average wage earner
+  on $80,000 a year uses the scheme over two years, saving $15,000 a year, they will save $5,000 in tax
+  (or $10,000 for a couple).'
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- offset
+- concession
+keywords:
+- first home super saver
+- fhss
+- superannuation
+- voluntary contributions
+- first home deposit
+- marginal tax rate
+- tax offset
+- super fund
+- couple
+- home buyer

@@ -1,0 +1,55 @@
+strategy_id: CLR-166
+source_ref: STP-166
+name: Exempt childcare benefits
+categories:
+- Business
+implementation_text: 'For a childcare benefit to be exempt:
+
+  1. The benefit must involve the care of children of any employees in a childcare facility.
+
+  2. The facility must be on the business premises of the employer. Where the employer is a company, the
+  facility can be on-premises of a related company - The childcare facility is defined in s136(1) FBTAA.Esso
+  Australia v FCT 98 ATC 4953, the Federal Court held that the employer does not have to have exclusive
+  proprietary or occupancy rights regarding the premises and may keep the premises jointly with other
+  employers.
+
+  3. The childcare facility has a person at the facility who receives or is ready to receive two or more
+  children under the age of six (not being associates of that person), the facility gets the children
+  for minding, caring for and educating the children for the day, and the facility does not provide residential
+  care.'
+explanation_text: 'Childcare expenses are not tax-deductible to employees as they are considered private.
+  If provided by an employer, they are subject to FBT unless exempt from childcare benefits.
+
+
+  Childcare benefits an employer provides will be exempt from FBT under section 47(2) FBTAA, where the
+  employer has in-house childcare facilities. Salary packaging these child care benefits effectively allows
+  the employee to deduct their costs (as the employer claims the tax deductions for the expenses and the
+  employee reduces their gross salary to compensate for the benefit received).'
+ato_sources:
+- s136(1) FBTAA
+- section 47(2) FBTAA
+case_refs:
+- Esso Australia v FCT 98 ATC 4953
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- deduction
+keywords:
+- childcare
+- fbt
+- fringe benefits tax
+- exempt benefit
+- salary packaging
+- in-house childcare
+- employer
+- employees
+- childcare facility
+- business premises

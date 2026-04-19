@@ -1,0 +1,44 @@
+strategy_id: CLR-409
+source_ref: STP-409
+name: Farm discretionary trust
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Establish a company as a trustee (best practice).
+
+  2. Establish the farm discretionary trust.'
+explanation_text: 'Farm discretionary trusts are used to acquire land for primary production while providing
+  flexibility so the property can eventually be transferred to other family members. There is a stamp
+  duty exemption available for the transfer of farming land:
+
+  • From one or more individuals who are family members or a company whose shareholders comprise those
+  persons to a discretionary farm trust.
+
+  • From a discretionary farm trust to one or more individuals who are members of the family.'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- structure
+keywords:
+- farm discretionary trust
+- primary production
+- stamp duty exemption
+- farming land
+- family transfer
+- discretionary trust
+- trustee company
+- land acquisition
+- succession planning
+- family members

@@ -1,0 +1,58 @@
+strategy_id: CLR-156
+source_ref: STP-156
+name: Using a SMSF to undertake a property development
+categories:
+- Investors_retirees
+- Rental_properties
+- SMSF
+implementation_text: '1. Review the trust deed to ensure it allows a SMSF to undertake a property development.
+
+  2. Structure the transaction so that it complies with all the SIS Act requirements.'
+explanation_text: 'Undertaking a property development in an SMSF can result in zero tax payable if the
+  fund is in the pension phase (or 15% if the fund is in the accumulation phase).
+
+
+  Extra care must be undertaken to ensure that the super fund complies with the SIS Act, including:
+
+
+  The arm''s length rules under S.109.
+
+  The sole purpose test under S.62.
+
+  Complies with the investment strategy of the fund.
+
+  Any borrowings are for a single acquirable asset and comply with S.67A.
+
+  Purchases are not acquired from related parties and breach S.66.'
+ato_sources:
+- S.109
+- S.62
+- S.67A
+- S.66
+case_refs: []
+entity_types:
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+- exemption
+keywords:
+- smsf
+- property development
+- pension phase
+- accumulation phase
+- sis act
+- arm's length
+- sole purpose test
+- borrowings
+- related party
+- zero tax
+- superannuation
+- trust deed
+- investment strategy

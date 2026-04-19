@@ -1,0 +1,56 @@
+strategy_id: CLR-103
+source_ref: STP-103
+name: X-Box, Foxtel, and pinball machines
+categories:
+- Business
+implementation_text: 1. Each item of equipment that costs less than the instant asset write-off limit
+  is tax deductible upfront.
+explanation_text: 'Having fun in the workplace:
+
+
+  Increases morale and motivation,
+
+  Develops a positive staff culture,
+
+  Increases productivity and performance,
+
+  It makes staff recruitment easier and less expensive,
+
+  Improves teamwork,
+
+  Enhances creativity,
+
+  Resolves conflicts, and
+
+  Improves employee loyalty.
+
+
+  The Australian Taxation Office has acknowledged that Australian workplaces have changed and that entertainment-related
+  items increase employee productivity. An X-box, Foxtel, pinball machines, etc., can be purchased for
+  an office for employees to use during their work breaks. Each item of equipment that costs less than
+  $20,000 will be tax deductible upfront.'
+ato_sources: []
+case_refs: []
+entity_types:
+- business
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- instant asset write-off
+- entertainment equipment
+- workplace morale
+- employee productivity
+- tax deductible
+- small business
+- xbox
+- foxtel
+- pinball
+- office equipment
+- staff culture

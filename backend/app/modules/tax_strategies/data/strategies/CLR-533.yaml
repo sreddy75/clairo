@@ -1,0 +1,77 @@
+strategy_id: CLR-533
+source_ref: STP-533
+name: Life insurance
+categories:
+- Recommendations
+implementation_text: 'The critical aspects of life insurance are:
+
+  1. Death benefit: The beneficiaries can use this payout to cover various expenses, such as funeral costs,
+  mortgage payments, educational expenses, and other financial obligations.
+
+  2. Premiums: The cost of premiums is determined based on factors such as the insured person''s age,
+  health, lifestyle, coverage amount, and type of policy.
+
+  3. Beneficiaries: The individuals or entities designated by the policyholder to receive the death benefit.
+  Beneficiaries can be family members, friends, or organizations.
+
+  4. Types of life insurance: The main types include term life insurance, whole life insurance, universal
+  life insurance, and variable life insurance.
+
+  5. Cash value: Permanent life insurance policies (such as whole life and universal life) often build
+  a cash value component over time.'
+explanation_text: 'Life insurance contracts between an individual (the policyholder) and an insurance
+  company. In exchange for regular premium payments, the insurance company agrees to provide a financial
+  benefit to the designated beneficiaries upon the insured person''s death.
+
+
+  Taking out life insurance serves several important purposes:
+
+  1. Financial protection for loved ones: The death benefit paid out to beneficiaries can help replace
+  lost income, cover funeral expenses, pay off debts (such as mortgages and loans), and maintain the standard
+  of living for your dependents.
+
+  2. Income replacement: Life insurance can ensure your family can continue to meet their financial needs
+  even if you''re no longer there to provide for them.
+
+  3. Debt coverage: If you have outstanding debts, such as a mortgage, car loans, or credit card debt,
+  life insurance can cover these financial obligations.
+
+  4. Estate planning: It can provide liquidity to pay estate taxes, ensure equitable distribution of assets,
+  and help preserve your estate for future generations.
+
+  5. Business continuity: It can buy out a deceased partner''s shares, cover business loans, and provide
+  funds for business succession planning.
+
+  6. Legacy and charitable giving: You can designate beneficiaries or philanthropic organizations to receive
+  the death benefit.
+
+  7. Peace of mind: Having life insurance can provide peace of mind, knowing that your loved ones will
+  be cared for financially, even if the unexpected happens.
+
+  8. Affordability: Term life insurance provides coverage for a specific period (the term) at a lower
+  premium than permanent life insurance.
+
+  9. Locking in insurability: Taking out a policy when younger and healthier can lock in lower premiums,
+  making it more affordable in the long run'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- life insurance
+- death benefit
+- premiums
+- beneficiaries
+- term life insurance
+- whole life insurance
+- estate planning
+- income replacement
+- business continuity
+- financial protection

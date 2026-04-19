@@ -1,0 +1,76 @@
+strategy_id: CLR-135
+source_ref: STP-135
+name: FBT exemptions and reductions
+categories:
+- Business
+implementation_text: '1. Review each FBT exemption and reduction item to determine which ones can be utilised.
+
+  2. Prepare the appropriate substantiation declarations.'
+explanation_text: 'Fringe benefits supplement an employee''s ''money wage'' or salary. They are attractive
+  because they are generally deductible to the employer, not assessable to the employee, and either fully
+  or partially exempt from FBT.
+
+
+  FBT exemptions and reductions apply to:
+
+
+  Electric vehicles - exemptions
+
+  Motor vehicles - reductions.
+
+  Superannuation contributions.
+
+  Employee relocation costs include travel, furniture transport, home sale, and purchase fees.
+
+  Otherwise deductible rule expenses.
+
+  Living away from home allowances (partly exempt). Work-related items, protective clothing, tools, mobile
+  phones, and laptops.
+
+  Safety awards are limited to $200 per employee per FBT year.
+
+  In-house benefits reduction – limited to $1,000 per employee per year.
+
+  Taxi or Uber travel (to or from work).
+
+  Remote area housing. Work-related medical and health counselling and care.
+
+  Migrant language training.
+
+  Fly-in-fly-out arrangements (transport from an employee''s home base to a remote area work site.
+
+  Overseas employment and trips home.
+
+  School fees for employees posted overseas.
+
+  Long service awards - where the benefit provided to an employee is limited to $1,000 plus $100 for each
+  year of service that exceeds 15 years.
+
+  Airport lounge memberships
+
+  Minor benefits less than $300.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- concession
+- deduction
+keywords:
+- fbt
+- fringe benefits tax
+- exemptions
+- reductions
+- electric vehicles
+- living away from home
+- minor benefits
+- salary packaging
+- work-related items
+- employer deduction

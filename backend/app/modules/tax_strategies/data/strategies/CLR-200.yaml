@@ -1,0 +1,41 @@
+strategy_id: CLR-200
+source_ref: STP-200
+name: $1,000 in-house benefits
+categories:
+- Employees
+implementation_text: '1. Employer provides the employee with up to $1,000 free in-house goods per year.
+
+  2. The employee salary sacrifices part of their pre-tax wages to cover the cost of the goods or services.'
+explanation_text: 'This strategy involves employees salary sacrificing $1,000 of wages income (which is
+  taxable) for $1,000 of employer-provided goods or services (which is tax-free). The products or services
+  provided by the employer must be the same ones as they sell to their customers. So a clothing retailer,
+  for example, could provide $1,000 of free clothing to an employee, while Harvey Norman could give a
+  $1,000 TV.
+
+
+  The tax benefit is known as an In-House Benefit, and under the FBT legislation is limited to $1,000
+  per employee per year. Value provided over that limit will be subject to FBT.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- exemption
+keywords:
+- in-house benefits
+- salary sacrifice
+- fbt
+- fringe benefits tax
+- employee benefits
+- tax-free
+- employer provided goods
+- wages
+- clothing retailer
+- concession

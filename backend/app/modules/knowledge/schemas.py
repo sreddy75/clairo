@@ -372,12 +372,43 @@ class TaxDomainResponse(BaseModel):
 
 
 class KnowledgeSearchFilters(BaseModel):
-    """Filters for knowledge search (spec 045)."""
+    """Filters for knowledge search (spec 045; extended for spec 060)."""
 
     entity_types: list[str] | None = Field(None, description="Filter by entity type")
     source_types: list[str] | None = Field(None, description="Filter by source type")
     fy_applicable: str | None = Field(None, description="Financial year filter e.g. '2026'")
     exclude_superseded: bool = Field(default=True, description="Exclude superseded content")
+
+    # Spec 060 — structured eligibility pre-filter for tax_strategies namespace.
+    # All optional; absent = unconstrained on that axis. Applied at Pinecone
+    # metadata layer. Fallback to unfiltered semantic search is triggered in
+    # HybridSearchEngine when the filter would return zero candidates (FR-017).
+    income_band: int | None = Field(
+        None,
+        description=(
+            "Client income in AUD. Strategy included when "
+            "income_band_min <= v <= income_band_max (NULL bounds = unbounded)."
+        ),
+    )
+    turnover_band: int | None = Field(
+        None,
+        description="Client turnover in AUD; same inclusion logic as income_band.",
+    )
+    age: int | None = Field(
+        None, description="Client age; included when age_min <= v <= age_max."
+    )
+    industry_codes: list[str] | None = Field(
+        None,
+        description=(
+            "Client industry codes; matched against strategy industry_triggers via $in."
+        ),
+    )
+    tenant_id: str | None = Field(
+        None,
+        description=(
+            "Tenant context; expands to {'platform', tenant_id} on the filter."
+        ),
+    )
 
 
 class KnowledgeSearchRequest(BaseModel):
@@ -387,6 +418,17 @@ class KnowledgeSearchRequest(BaseModel):
     domain: str | None = Field(None, description="Optional domain slug to scope search")
     filters: KnowledgeSearchFilters | None = None
     limit: int = Field(default=10, ge=1, le=50)
+
+    # Spec 060 — opt-in multi-namespace search. When None, existing callers
+    # behave exactly as before (SC-004). Tax planning passes
+    # ["compliance_knowledge", "tax_strategies"].
+    namespaces: list[str] | None = Field(
+        default=None,
+        description=(
+            "Explicit list of knowledge namespaces to search. "
+            "None defaults to ['compliance_knowledge']."
+        ),
+    )
 
 
 class KnowledgeSearchResultSchema(BaseModel):
@@ -403,6 +445,17 @@ class KnowledgeSearchResultSchema(BaseModel):
     is_superseded: bool = False
     relevance_score: float
     content_type: str | None = None
+
+    # Spec 060 — populated only when result is a tax strategy chunk.
+    tax_strategy_id: str | None = Field(
+        None,
+        description="Clairo identifier (e.g. 'CLR-241') when this is a strategy chunk.",
+    )
+    strategy_name: str | None = None
+    categories: list[str] | None = None
+    chunk_section: str | None = Field(
+        None, description="'implementation' | 'explanation' for strategy chunks."
+    )
 
 
 class KnowledgeSearchResponse(BaseModel):

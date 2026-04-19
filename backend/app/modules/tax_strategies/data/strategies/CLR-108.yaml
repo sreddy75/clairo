@@ -1,0 +1,64 @@
+strategy_id: CLR-108
+source_ref: STP-108
+name: Family trust distributions to adult children
+categories:
+- Business
+implementation_text: '1. Before 30th June, the trustees estimate the year''s taxable income and consider
+  how to distribute that amongst the possible beneficiaries.
+
+  2. Before 30th June, the trustees make a resolution (ideally in writing) on how the trust income will
+  be distributed to the various beneficiaries for that financial year.
+
+  3. If the trust wishes to stream capital gains and franked dividends to specific beneficiaries, the
+  trust distribution minute must be in writing and prepared before 30th June.
+
+  4. Trustees must consider the application of s100A and reimbursements agreements.'
+explanation_text: 'The benefits of a family trust include the following:
+
+  Flexibility on income distributions,
+
+  Ability to operate a business through the family trust,
+
+  Provides asset protection,
+
+  Intergenerational wealth transfers,
+
+  No age limits to access trust funds, and
+
+  Ability to hold personal use assets such as holiday homes, boats, racehorses, etc.
+
+
+  Family trusts are attractive structures to operate businesses or hold investments as there is flexibility
+  in who receives the trust income each year. The trustee decides before the 30th of June each financial
+  year how that year''s trust income will be distributed between various beneficiaries. For the trustee,
+  the overall tax payable on the income distributed to the beneficiaries is a consideration, so generally,
+  income will be distributed to beneficiaries in lower tax brackets. As such, significant tax savings
+  can be achieved by distributing trust income to adult children (aged over 18 years) who are either studying
+  or working part-time and are in low tax brackets. This can help them cover the cost of their university
+  fees, car expenses and living costs.'
+ato_sources:
+- s100A
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- family trust
+- trust distributions
+- adult children
+- income splitting
+- low tax bracket
+- beneficiaries
+- trustee resolution
+- capital gains streaming
+- franked dividends
+- s100A
+- asset protection
+- tax savings

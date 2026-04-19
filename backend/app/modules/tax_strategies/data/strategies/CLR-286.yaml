@@ -1,0 +1,81 @@
+strategy_id: CLR-286
+source_ref: STP-286
+name: GST obligations
+categories:
+- ATO_obligations
+- Recommendations
+implementation_text: '1. Register for GST if your business''s annual turnover (or projected turnover)
+  exceeds $75,000.
+
+  2. Include GST in the price of all taxable sales and provide tax invoices to customers.
+
+  3. Claim credits for the GST included in the price of business purchases.
+
+  4. Keep records explaining all transactions — including sales, expenses, and other acquisitions — for
+  a minimum of five years.
+
+  5. Lodge a Business Activity Statement (BAS) with the ATO on a monthly, quarterly, or annual basis to
+  report GST liabilities and entitlements.
+
+  6. Pay any GST owed to the ATO, or receive a refund if one is due.
+
+  7. Correct any errors identified on a previously lodged BAS.
+
+  8. Cancel your GST registration if your turnover drops below the threshold or the business closes.'
+explanation_text: 'GST (Goods and services tax) is a broad-based tax of 10% on most goods and services
+  sold or consumed in Australia. Businesses collect and report the GST to the Australian Taxation Office
+  (ATO), and it''s included in the price they charge for their goods and services. Businesses can generally
+  claim credits for the GST they have paid on their business-related purchases. The net amount (the GST
+  collected minus the GST credits) is then paid to the ATO.
+
+
+  In Australia, businesses that are registered (or required to register) for GST have the following obligations:
+
+
+  1. Registration: Businesses with an annual turnover (or projected turnover) above $75,000 must register.
+
+  2. Charging GST: If registered, a business must include GST in the price of taxable sales of goods and
+  services. They should provide tax invoices to their customers for these sales.
+
+  3. Claiming GST Credits: Businesses can claim credits for the GST included in the price of their business
+  purchases.
+
+  4. Record keeping: Businesses must keep records that explain all transactions, be it sales, expenses,
+  or other acquisitions. These records must be kept for a minimum of five years.
+
+  5. Lodging activity statements: Businesses must report their GST liabilities and entitlements to the
+  ATO by lodging a Business Activity Statement (BAS). These could be monthly, quarterly, or annually.
+
+  6. Payments and refunds: They must pay the ATO if they owe GST. If they''re due a refund, the ATO will
+  pay this to them.
+
+  7. Correcting mistakes: If a business realizes they''ve made an error on a past BAS, they must fix it.
+
+  8. Cancelling GST registration: If a business no longer needs to be registered for GST (e.g., their
+  turnover drops below the threshold, or they close the business), they should cancel their GST registration.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- gst
+- goods and services tax
+- bas
+- business activity statement
+- gst registration
+- gst credits
+- input tax credits
+- tax invoice
+- turnover threshold
+- ato obligations
+- record keeping
+- gst refund
+tenant_id: platform
+version: 1

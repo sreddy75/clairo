@@ -1,0 +1,64 @@
+strategy_id: CLR-053
+source_ref: STP-053
+name: Rental property repairs
+categories:
+- Rental_properties
+implementation_text: 1. Review each item of expenditure to determine what expenses actually meet the ATO's
+  definition of repairs.
+explanation_text: 'A landlord can claim a deduction for rental property repairs related to defects, damage
+  or deterioration arising from using the property for income-producing purposes. A repair for tax purposes
+  is the replacement or renewal of a worn-out or damaged part of something, but not the whole thing. For
+  example, replacing some iron sheets on the roof is a repair. In contrast, replacing the entire roof
+  is not a repair for tax purposes and is deemed capital. Strategies to maximise the deduction for repairs
+  include:
+
+
+  Separate repairs from improvements.
+
+  Fix a minor portion only.
+
+  Fix damaged areas only.
+
+  Replace less than 50% of a wall, ceiling or floor.
+
+  Repair during occupancy or tenants.
+
+
+  A deduction is unavailable for any part of a repair expense related to defects, damage or deterioration
+  when the property was acquired. These are known as ''initial repairs'' and are considered part of the
+  cost of acquiring the property, so is capital in nature. Where repair expenditure is incurred after
+  a rental property ceases to be used for income-producing purposes (i.e. the property becomes the taxpayer''s
+  principal residence), then the spending may still be deductible if:
+
+
+  The necessity for the repairs relates to a period during which the property was used for income-producing
+  purposes, and
+
+  The expenditure is incurred in a year the property was used for income-producing purposes.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- rental property
+- repairs
+- deduction
+- landlord
+- initial repairs
+- capital
+- improvements
+- income-producing
+- deterioration
+- damage
+- defects
+- principal residence
+- maintenance
+- investment property

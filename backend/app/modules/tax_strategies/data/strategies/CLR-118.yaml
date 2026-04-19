@@ -1,0 +1,57 @@
+strategy_id: CLR-118
+source_ref: STP-118
+name: GST going concern exemption
+categories:
+- Business
+implementation_text: '1. The buyer and seller need to be registered for GST and agree in writing that
+  the sale is a going concern.
+
+  2. The vendor should include a GST adjustment clause in the sale contract. If the ATO determines GST
+  applies to the sale, the vendor can get the GST payable to the purchaser (and forward it to the ATO
+  without being personally out of pocket).'
+explanation_text: 'The sale of a business or commercial property as a going concern is GST-free if all
+  of the following apply:
+
+  Payment is for the supply,
+
+  The purchaser is GST registered,
+
+  The buyer and seller have agreed in writing that the sale is a going concern,
+
+  The supplier supplies all the things necessary for the continued operation of the business, and
+
+  The supplier carries on the business until the day of supply.
+
+
+  If the GST going concern exemption applies to purchasing a business or commercial property, the 10%
+  GST will not be added to the purchase price. So, for example, if the GST going concern exemption applies
+  to the purchase of a $1,000,000 commercial building, then the sale price will be $1,000,000. Without
+  the GST going concern exemption, the purchaser would pay $1,100,000 for the building but receive a GST
+  refund of $100,000, leaving a net cost of $1,000,000. The tax saving with this strategy is that under
+  the GST going concern exemption, stamp duty is payable on the $1,000,000 acquisition price versus $1,100,000
+  where GST applies. As stamp duty rates can be more than 5% of an asset''s purchase price applying the
+  GST going concern exemption would save $5,000 in stamp duty for the purchaser of a $1,000,000 commercial
+  property.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+keywords:
+- gst
+- going concern
+- business sale
+- commercial property
+- gst-free
+- stamp duty
+- gst exemption
+- gst registration
+- business acquisition
+- property purchase

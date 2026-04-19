@@ -1,0 +1,112 @@
+strategy_id: CLR-560
+source_ref: STP-560
+name: Trust closure and vesting
+categories:
+- Recommendations
+implementation_text: 'Here''s a general overview of the steps/processes involved in vesting a trust:
+
+  1. Review the trust deed: Before any decisions are made, it''s essential to review the trust deed to
+  determine:
+
+  - The predetermined vesting date or the event that triggers vesting.
+
+  - The powers, rights, and obligations of the trustee upon vesting.
+
+  - The default beneficiaries or how the trust assets will be distributed once vested.
+
+  2. Seek legal and tax advice: Given the legal complexities and potential tax implications (e.g., Capital
+  Gains Tax), it''s crucial to consult professionals to understand all ramifications of vesting.
+
+  3. Decision to vest: If the vesting date has arrived or the vesting event has occurred, the trust will
+  vest automatically. If considering an early vesting, the trustee (and sometimes beneficiaries) may need
+  to decide based on the trust deed''s provisions.
+
+  4. Notify beneficiaries: Inform the beneficiaries about the impending vesting, especially if it might
+  impact their entitlements.
+
+  5. Distribute trust assets: Upon vesting, the trustee''s discretion ceases, and the trust assets should
+  be distributed according to the fixed entitlements established in the trust deed or as dictated by the
+  vesting provisions.
+
+  6. Taxation considerations:
+
+  - Capital gains tax (CGT): Vesting might trigger a CGT event, as the trust assets are often deemed to
+  be disposed of and re-acquired by the beneficiaries at market value.
+
+  - Income tax: The trust''s income should be appropriately assessed, and any necessary tax paid should
+  be before final distributions.
+
+  - Stamp duty: Depending on the nature of the trust assets and the state or territory, there might be
+  stamp duty implications on the transfer of assets.
+
+  7. Finalise administrative matters:
+
+  - Settle any outstanding liabilities or debts of the trust.
+
+  - Close bank accounts or transfer assets as required.
+
+  - Ensure all documentation, such as minutes or resolutions noting the trust''s vesting, is prepared
+  and stored.
+
+  8. Notify relevant authorities: Inform the Australian Taxation Office (ATO) and other relevant authorities
+  or institutions about the trust''s closure. This might involve final tax returns and other reporting
+  obligations.
+
+  9. Retain records: The ATO requires records related to a trust to be kept for a specific period (typically
+  five years, but this can vary depending on circumstances). This includes financial statements, tax returns,
+  and other essential documents.'
+explanation_text: 'Closing a trust and allowing it to vest has the following potential benefits:
+
+  1. Simplification of structures: Over time, the number of entities (like trusts and companies) an individual
+  or family is involved with can multiply. Closing and vesting unnecessary trusts can simplify financial
+  and legal structures, making them easier to manage.
+
+  2. Certainty for beneficiaries: Vesting provides clear, fixed entitlements to beneficiaries. There''s
+  no more discretion on the trustee''s part, which can give beneficiaries more clarity and certainty about
+  their entitlements.
+
+  3. Ending ongoing costs: Running a trust can involve ongoing costs, including accounting fees, legal
+  fees, and administrative expenses. Closing a trust can eliminate these recurrent expenses.
+
+  4. Tax planning and consolidation: Consolidating assets into fewer entities or the hands of individuals
+  might enable more efficient use of tax concessions or offsets.
+
+  5. Asset protection: In specific scenarios, distributing assets out of a trust and into the hands of
+  beneficiaries can be a strategic move for asset protection. This is particularly relevant if the trust
+  is perceived as a potential target for future creditors.
+
+  6. Avoiding deemed CGT events: If a trust doesn''t vest according to its deed, there can be deemed Capital
+  Gains Tax (CGT) events that trigger tax liabilities. The parties can manage and possibly mitigate these
+  tax implications by proactively closing and vesting the trust.
+
+  7. Facilitation of estate planning: It might be beneficial to close and vest certain trusts to simplify
+  the distribution of their estate upon their death.
+
+  8. Achieving specific goals: The trust might have been set up for a particular purpose (e.g., holding
+  a specific asset or achieving a particular business goal). Closing the trust might be the logical next
+  step once that purpose is fulfilled.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- trust vesting
+- trust closure
+- cgt event
+- trust deed
+- beneficiary entitlements
+- asset protection
+- estate planning
+- stamp duty
+- trust wind-up
+- capital gains tax
+- discretionary trust
+- record keeping

@@ -1,0 +1,58 @@
+strategy_id: CLR-149
+source_ref: STP-149
+name: Bad debts
+categories:
+- Business
+implementation_text: '1. Review 30th June debtors for uncollectable individual debtors that can be written
+  off.
+
+  2. Create a minute of the bad debts to be written off on 30th June, detail collection attempts and reasons
+  why debts are ''bad''.'
+explanation_text: 'A bad debt is a debt that is not collectable and, therefore, worthless to the business
+  entity. This occurs after all attempts are made to collect the debt and usually occurs where the debtor
+  has disappeared, gone bankrupt, gone into liquidation, or the costs of realising the debt outweigh the
+  expected realisation amount. From a tax perspective, bad debts that have previously been brought to
+  account by the taxpayer as assessable income are deductible. Bad debts regarding money lent in the ordinary
+  course of a moneylending business are also allowable.
+
+
+  Tips when writing off bad debts:
+
+  • A deduction is only allowed in the year in which the bad debt is physically written off. So, taxpayers
+  need to review and write off bad debts before 30th June to get the deduction in that financial year.
+
+  • A deduction is only allowed for bad debts written off, not doubtful debts.
+
+  • To write off bad debts in financial statements, they must first be included as income in the financial
+  statements.
+
+  • Accrual taxpayers can claim the GST back from the ATO on bad debts written off.
+
+  • The taxpayer must show they tried to collect the debt but could not. Evidence includes collection
+  letters, phone calls, and legal action.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- bad debts
+- write off
+- debtors
+- uncollectable
+- 30th june
+- assessable income
+- moneylending
+- gst recovery
+- accrual
+- doubtful debts
+- debt collection
+- financial statements
+- tax deduction

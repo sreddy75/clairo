@@ -1,0 +1,72 @@
+strategy_id: CLR-055
+source_ref: STP-055
+name: Property related transactions
+categories:
+- Business
+- Rental_properties
+implementation_text: '1. Determine how the property sale will be taxed.
+
+  2. Where the property asset is already owned, a tax-effective structure can still be established to
+  undertake a joint venture, subdivision, or profit share on the development. These transactions must
+  be arms-length and can still result in large tax savings if done for reasons other than tax.
+
+  3. Establish the most tax-effective structure for the property sale.
+
+  4. Buy the property and do the building in the optimum structure.'
+explanation_text: 'The sale of a property can be taxed in one of three ways:
+
+
+  Carrying on a business – For example, a property developer building and selling apartments. This is
+  taxed as regular business income.
+
+  Mere realisation of a capital asset - An investor sells their rental property after five years. This
+  is taxed as a capital gain, with the 50% general exemption applying if the purchase was owned for more
+  than twelve months.
+
+  Profit-making undertaking – For example, a homeowner is subdividing their backyard and building a unit
+  for sale. This is taxed as a gain or loss on the sale.
+
+
+  The most tax-effective of the three property-related transactions is the mere realisation of the capital
+  asset, as the 50% general exemption applies. Also, if the property was purchased pre-CGT (i.e. before
+  20th September 1985), the gain is tax-free capital gains.
+
+
+  For the mere realisation of a capital asset method to apply, the taxpayer must sell the asset without
+  adding any value. Examples of this include:
+
+
+  A homeowner is subdividing their backyard and selling a vacant block of land.
+
+  A farmer is subdividing part of the farm and selling it off to reduce debt, fund other investments,
+  or reduce work commitments.
+
+  An investor is selling a vacant block of land purchased for long-term gain.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- farmers
+financial_impact_type:
+- exemption
+- concession
+keywords:
+- property sale
+- capital gains
+- cgt
+- mere realisation
+- 50% discount
+- subdivision
+- property developer
+- pre-cgt
+- joint venture
+- profit-making undertaking
+- rental property
+- tax structure
+- land sale

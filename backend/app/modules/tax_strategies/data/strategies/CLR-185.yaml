@@ -1,0 +1,55 @@
+strategy_id: CLR-185
+source_ref: STP-185
+name: Accessing surplus franking accounts
+categories:
+- Investors_retirees
+- Business
+implementation_text: '1. Ensure taxpayers'' taxable incomes are nil or low.
+
+  2. Confirm the company has a franking account surplus.
+
+  3. Pay the fully franked dividends to the shareholders.'
+explanation_text: 'This strategy is ideal for taxpayers who meet two criteria:
+
+  They own a company with a franking account surplus (generally due to profits from operating a business
+  or investments, the company paying tax and retaining those profits).
+
+  The taxpayers (shareholders in the company) currently have nil or low taxable incomes (generally due
+  to retirement, travelling, or receiving tax-free pension income).
+
+
+  A franking account records the tax paid that a franking entity (company or public trading trust) can
+  pass on to its members as a franking credit. This strategy may produce an annual tax refund of $15,000
+  per year for a couple. For example, if a husband and wife had nil taxable incomes (due to receiving
+  tax-free pension income), their company could pay them each a $17,500 dividend (with $7,500 franking
+  credits attached). The ATO would refund them over $6,300 of the franking credits each year ($7,500 if
+  they are entitled to the Senior Tax Offset).'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- rebate
+- offset
+keywords:
+- franking credits
+- franking account surplus
+- fully franked dividends
+- tax refund
+- retirees
+- low income
+- nil taxable income
+- senior tax offset
+- company dividends
+- imputation
+- shareholders
+- pension income
+- franking entity

@@ -1,0 +1,74 @@
+strategy_id: CLR-133
+source_ref: STP-133
+name: Fuel tax credits
+categories:
+- Business
+- ATO_obligations
+implementation_text: '1. Claiming fuel tax credits involves registration with the ATO (basically the same
+  as GST registration).
+
+  2. Calculate the fuel tax credit claim - Being litres of fuel multiplied by the appropriate rate.
+
+  3. The fuel tax credits claimed through the BAS returns will either be refunded or reduce other tax
+  liabilities payable.'
+explanation_text: 'Fuel tax credits provide businesses with a credit for the excise or customs duty included
+  in the price of fuel used in:
+
+  Off-road activities in agriculture, fishing and forestry.
+
+  Off-road activities are operating machinery, plant and equipment—mining, landscaping, electricity generators,
+  manufacturing, and marine transport.
+
+  Heavy vehicles were travelling on public roads. The car must have a minimum of 4.5 tonnes of gross vehicle
+  mass.
+
+
+  The fuel tax credit rates change every six months, but in July 2024 were 19.1 cents per litre for heavy
+  vehicles and 49.6 cents per litre for off-road activities.
+
+
+  Common examples of businesses claiming fuel tax credits include:
+
+  Primary producers,
+
+  Concrete trucks and cranes,
+
+  Trucks with a gross vehicle mass of 4.5 tonnes plus,
+
+  Generators for electricity production,
+
+  Fuel used by lawn-mowing contractors in their lawnmowers, and
+
+  Mining equipment and plants.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers:
+- agriculture
+- fishing
+- forestry
+- mining
+- manufacturing
+- marine transport
+- landscaping
+financial_impact_type: []
+keywords:
+- fuel tax credits
+- excise duty
+- customs duty
+- bas
+- heavy vehicles
+- off-road
+- primary producers
+- mining
+- agriculture
+- fuel claim
+- cents per litre
+- gst registration
+- fuel rebate

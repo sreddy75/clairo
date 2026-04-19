@@ -1,0 +1,62 @@
+strategy_id: CLR-046
+source_ref: STP-046
+name: Business digital adoption
+categories:
+- Business
+implementation_text: '1. Confirm that your business has an annual turnover of less than $50 million to
+  establish eligibility for the bonus deduction.
+
+  2. Identify eligible expenditures on digital enabling items such as hardware, software, systems and
+  services that form and facilitate the use of computer networks.
+
+  3. Include eligible expenditures on digital media and marketing as part of the qualifying spend.
+
+  4. Include eligible expenditures on e-commerce as part of the qualifying spend.
+
+  5. Ensure all eligible expenditures are incurred within the period from 29 March 2022 until 30 June
+  2023.
+
+  6. Cap the bonus deduction claim at $20,000 per year across all eligible expenditures.
+
+  7. Claim the additional 20% bonus deduction on the identified eligible expenditures supporting digital
+  adoption.'
+explanation_text: 'Small businesses can receive a bonus 20% deduction on eligible expenditures supporting
+  digital adoption. Eligible expenditure includes:
+
+
+  Digital enabling items, such as hardware, software, systems and services that, form and facilitate the
+  use of computer networks.
+
+  Digital media and marketing.
+
+  E-commerce.
+
+
+  The tax incentives apply to expenditures incurred from 29 March 2022 until 30 June 2023, and the bonus
+  deduction is capped at $20,000 per year. This additional deduction applies to businesses with an annual
+  turnover of less than $50 million.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: 50000000
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- digital adoption
+- bonus deduction
+- small business
+- technology
+- hardware
+- software
+- e-commerce
+- digital marketing
+- computer networks
+- tax incentive
+tenant_id: platform
+version: 1

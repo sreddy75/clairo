@@ -1,0 +1,67 @@
+strategy_id: CLR-169
+source_ref: STP-169
+name: Salary packaging rental and share investment losses to 'beat' the income test rules
+categories:
+- Investors_retirees
+- Rental_properties
+implementation_text: '1. Have the individual''s employer reimburse them for their rental property and
+  share investment expenses.
+
+  2. The employer reduces the employee''s gross wages to cover the cost (under a salary sacrifice arrangement).'
+explanation_text: 'The total net investment loss (TNIL) is an individual''s taxable losses from rental
+  and share investments. The TNIL is added back to an individual''s taxable income to calculate the tax-related
+  concessions and obligations:
+
+  Medicare levy surcharge.
+
+  15% additional tax on concessional contributions (Division 293).
+
+  Child support payments.
+
+  $1,000 up-front reduction for discounts on employee shares/options.
+
+  Seniors and Pensioners Tax Offset
+
+
+  A TNIL can be reduced where an employee''s salary packages deductible rental property and share investment
+  expenses through their employer. This strategy involves the employer reimbursing the employee for those
+  expenses while reducing the employee''s gross wages to cover the cost. The benefits of this are:
+
+  Employee''s TNIL is diminished.
+
+  Reimbursed expenses aren''t reported on the employee''s payment summary (as not subject to FBT under
+  the ''otherwise deductible rule'').
+
+  The employer does not pay FBT (under the ''otherwise deductible rule'').
+
+  Employee salary packages GST-exclusive cost of expenses, thereby getting the GST refunded on the payments
+  (as the employer can claim the GST input tax credit concerning the expenses reimbursed).'
+ato_sources:
+- Division 293
+case_refs: []
+entity_types:
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+keywords:
+- salary packaging
+- total net investment loss
+- tnil
+- rental property
+- share investment
+- income test
+- fbt
+- otherwise deductible rule
+- salary sacrifice
+- medicare levy surcharge
+- division 293
+- gst input tax credit
+- seniors pensioners tax offset

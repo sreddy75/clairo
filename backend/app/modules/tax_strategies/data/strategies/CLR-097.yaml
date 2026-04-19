@@ -1,0 +1,77 @@
+strategy_id: CLR-097
+source_ref: STP-097
+name: Tax consolidation
+categories:
+- Business
+implementation_text: 1. Determine whether the benefits of tax consolidation exceed the costs (time and
+  money involved).
+explanation_text: 'Australian tax consolidation regime allows a head company and all its wholly-owned
+  companies, partnerships and trusts to be one consolidated entity for tax purposes. Tax consolidation
+  aims to reduce compliance costs for businesses, remove impediments to the most efficient business structures
+  and improve the tax system''s integrity.
+
+
+  Where a wholly-owned group does not choose to consolidate, the income tax system treats each company
+  (and entity) as a separate entity. Taxing member entities separately means that each member must account
+  for all intra-group transactions and debt and equity interests.
+
+
+  The advantages of tax consolidation include the following:
+
+
+  • Only one single tax return for the wholly-owned corporate group.
+
+  • Intra-group transactions between the Head Company and subsidiaries are eliminated for tax purposes.
+
+  • Reducing compliance costs as the group has a single income tax liability, makes consolidated PAYG
+  instalments and maintains only one franking account.
+
+  • Losses, franking credits, and foreign tax credits are pooled and available for the consolidated entity.
+
+
+  Factors to consider before forming a tax consolidation group include:
+
+
+  • Creating a tax consolidation group is voluntary but irrevocable (so once done cannot be cancelled).
+
+  • All subsidiaries must be included if a head company forms a tax consolidation group.
+
+  • The initial consolidation process may be costly (accounting/legal fees, software changes, obtaining
+  information).
+
+
+  The consolidation pathway involves:
+
+  1. Choosing to be consolidated.
+
+  2. Forming a consolidated group
+
+  3. Operating as a consolidated group'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+- partnership
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+keywords:
+- tax consolidation
+- consolidated group
+- head company
+- wholly-owned
+- intra-group transactions
+- franking account
+- PAYG instalments
+- compliance costs
+- losses pooling
+- subsidiaries
+- corporate group
+- irrevocable election

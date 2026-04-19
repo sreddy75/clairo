@@ -1,0 +1,63 @@
+strategy_id: CLR-105
+source_ref: STP-105
+name: Rollover from sole trader to company
+categories:
+- Business
+implementation_text: '1. Establish a company structure.
+
+  2. Prepare a business sale agreement.
+
+  3. Transfer (sell) the sole trader business assets and liabilities to the company in exchange for ordinary
+  shares.
+
+  4. After the transaction is complete, the sole trader must own 100% of the ordinary shares in the company.
+  This share ownership does not prevent the company from issuing additional shares to another party to
+  bring a new investor or ''partner'' into the business.'
+explanation_text: 'The advantages of rolling over a business from a sole trader structure to a company
+  include the following:
+
+  Reduced risk – as companies operate with limited liability.
+
+  Reduced tax – a company has a 25% flat tax rate (if revenue is less than $50m).
+
+  Ability to retain profits – companies can keep profits to fund future growth.
+
+  Can apply tax strategy, Salary Packaging Private Motor Vehicles ($9,000 tax deduction).
+
+  Can use tax strategy, Employee Meal Expenses on Business Premises ($5,000 tax deduction).
+
+
+  The sale of a sole trader business to a company is a capital gains tax event and would typically create
+  a taxable capital gain for the sole trader. Under the replacement asset rollover, the capital gain on
+  the sale of the sole trader business to the company is deferred if the transaction is structured as
+  follows:
+
+  The sole trader transfers the business assets (including any business liabilities) to the company in
+  exchange for ordinary shares.
+
+  After the transaction is complete, the sole trader must own 100% of the ordinary shares in the company.'
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- company
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- sole trader
+- company rollover
+- replacement asset rollover
+- capital gains tax deferral
+- business restructure
+- limited liability
+- ordinary shares
+- 25% tax rate
+- business sale agreement
+- incorporation

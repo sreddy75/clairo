@@ -1,0 +1,55 @@
+strategy_id: CLR-012
+source_ref: STP-012
+name: Concessional superannuation contributions
+categories:
+- Employees
+- Business
+implementation_text: '1. Consider the family''s cash flow and finance constraints.
+
+  2. Consider the taxpayer''s taxable income and marginal tax bracket.
+
+  3. Make annual concessional super contributions of $30,000.
+
+  4. Consider catch-up concessional superannuation contributions - Taxpayers can make up to $137,500 super
+  contributions in one year if their account balance is less than $500,000 and they have unused concessional
+  super caps over the last five years.'
+explanation_text: 'Concessional superannuation contributions include employer contributions (super guarantee
+  contributions and employee salary sacrifice contributions) and personal contributions claimed as a tax
+  deduction by the taxpayer. From 1st July 2025, the concessional superannuation cap is $30,000. Making
+  contributions above the contribution cap is not tax effective as the excess contributions are refunded
+  to the taxpayer and taxed at the taxpayer''s marginal tax rates.
+
+
+  Making $30,000 concessional superannuation contributions annually is tax effective as the super fund
+  is only taxed at 15%. In contrast, the employer or taxpayer may be in a higher tax bracket (up to 47%),
+  so there can be up to a 32% tax saving on the contributions made. Where the taxpayer''s taxable income
+  is more significant than $250,000, the tax payable on the super contributions increases from 15% to
+  30% (so the maximum tax savings on the contributions is reduced to 17%).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- concession
+keywords:
+- concessional contributions
+- superannuation
+- salary sacrifice
+- super cap
+- catch-up contributions
+- tax deduction
+- marginal tax rate
+- super guarantee
+- 15% tax
+- division 293
+- contribution cap
+- super fund
+- tax saving
+- employer contributions

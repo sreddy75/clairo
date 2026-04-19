@@ -1,0 +1,74 @@
+strategy_id: CLR-410
+source_ref: STP-410
+name: Holding companies
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. Determine if holding company structure makes both economic and tax sense.
+
+  2. Determine the most appropriate country to establish a holding company.
+
+  3. Establish a holding company.
+
+  4. When establishing overseas entities, seek specialist advice.'
+explanation_text: 'A holding company is a parent corporation that owns enough voting shares in another
+  company to control its policies and management. The benefits of forming a holding company include:
+
+
+  - The holding company is protected from losses if a subsidiary company fails and is liquidated. The
+  creditors of the subsidy company have no claim against the holding company''s assets.
+
+  - Different subsidiary companies can hold different company assets. For example, one subsidiary may
+  own the brand name and trademarks, another real estate and equipment, and another operates a trading
+  business.
+
+  - Subsidiary companies may operate in a country different from the parent company''s. The subsidiary
+  most likely has its senior management structure, products and clients.
+
+  - Ability to reduce subsidiary costs by having the holding company provide certain centralised services
+  such as finance, administration, marketing, financial systems, etc.
+
+  - Holding companies can raise equity capital and loan funds much more comfortably and cheaper than an
+  individual subsidiary company (as it provides investors and lenders with lower risk than a subsidiary
+  company).
+
+
+  The tax advantages of holding companies include the following:
+
+  - The tax consolidation regime can be applied to wholly-owned subsidiaries so that the losses of one
+  group company are available to the whole consolidated entity. Also, inter-group transactions are eliminated
+  for tax purposes.
+
+  - Holding companies can be based in low-tax countries. Pepsi, for example, is based in Denmark, where
+  holding companies pay no tax.
+
+  - Franked dividends paid to the holding company are effectively tax-free.
+
+  - The holding company can charge the subsidiary companies for services provided and shift profits (subject
+  to arms-length transfer prices being charged).'
+ato_sources: []
+case_refs: []
+entity_types:
+- company
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- holding company
+- subsidiary
+- tax consolidation
+- franked dividends
+- asset protection
+- corporate structure
+- transfer pricing
+- group losses
+- low-tax jurisdiction
+- intercompany
+- parent company
+- wholly-owned

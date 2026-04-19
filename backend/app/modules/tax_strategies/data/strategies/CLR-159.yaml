@@ -1,0 +1,39 @@
+strategy_id: CLR-159
+source_ref: STP-159
+name: Varying partners distributions
+categories:
+- Business
+implementation_text: '1. Prior to 30th June review the individual partner''s contributions and consider
+  whether their partner''s salaries should be revised.
+
+  2. Document any changes in partners'' salaries & the reasons why the changes were made in writing.'
+explanation_text: Both common-law partnerships and written partnership agreements allow the partners of
+  a partnership to vary the amount a partner draws as a 'partner salary'. The agreement must be entered
+  into before the end of that income year to be valid for tax purposes in an income year. The partner's
+  salary should be based on the individual partner's participation and contribution to the partnership
+  business.
+ato_sources: []
+case_refs: []
+entity_types:
+- partnership
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- partnership
+- partner salary
+- distributions
+- income splitting
+- year end
+- 30 june
+- partnership agreement
+- common-law partnership
+- partner contributions
+- tax planning

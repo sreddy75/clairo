@@ -1,0 +1,69 @@
+strategy_id: CLR-446
+source_ref: STP-446
+name: Testamentary trust
+categories:
+- Business_structures
+implementation_text: 'The process:
+
+  1. Determine whether a testamentary trust is beneficial.
+
+  2. Have a solicitor incorporate a testamentary trust into the will of the trustor. This is an optimum
+  structure to allow grandparents to transfer assets on their death to their grandchildren in a tax-effective
+  manner (even if the children are under 18).'
+explanation_text: 'A testamentary trust (sometimes referred to as a will trust or trust under the will)
+  is a trust that arises upon the death of the trustor and is specified in their will. The three parties
+  involved in a testamentary trust are:
+
+
+  The trustor - A person who specifies that the trust is created and contributes property to the trust,
+  usually as a part of their will.
+
+  The trustee – This is the person who administers the will as per the instructions in the will.
+
+  The beneficiary(s) – The person or people benefitting from the trust''s assets.
+
+
+  Effectively, on the date of death, certain deceased assets pass across to a testamentary trust held
+  on behalf of beneficiaries. The advantages of a testamentary trust include the following:
+
+
+  Minor beneficiaries (i.e. under 18 years of age) are not taxed at penalty tax rates on any income distributed
+  to them from the trust. Instead, they are taxed at the adult marginal tax rates, so they benefit from
+  the $18,200 tax-free threshold.
+
+  No CGT when assets pass to beneficiaries.
+
+  Income splitting and income streaming opportunities.
+
+  Protects assets from creditors and vulnerable beneficiaries.'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- structure
+- exemption
+keywords:
+- testamentary trust
+- will trust
+- estate planning
+- minor beneficiaries
+- tax-free threshold
+- income splitting
+- cgt exemption
+- death
+- beneficiaries
+- asset protection
+- grandchildren
+- inheritance
+- marginal tax rates
+- trustee
+- will

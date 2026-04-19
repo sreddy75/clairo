@@ -1,0 +1,50 @@
+strategy_id: CLR-258
+source_ref: STP-258
+name: Prepay accounting fees
+categories:
+- Employees
+- Investors_retirees
+- Business
+implementation_text: '1. Prepay accounting fees before 30th June to bring forward the tax deduction to
+  the current financial year.
+
+  2. Consider this strategy as a tax deferral method, noting that it reduces the current year''s tax liability
+  while increasing the following year''s taxable income.
+
+  3. Assess whether the taxpayer''s income in the following year is expected to be lower than their current
+  income to determine if overall tax savings can be achieved.'
+explanation_text: 'Prepaying accounting fees before 30th June brings forward the tax deduction to the
+  current financial year. The advantages of this strategy include the following:
+
+
+  • Reduces the current year''s tax liability (although the following year''s taxable income will increase),
+  so it''s a tax deferral method.
+
+  • It can create overall tax savings if the taxpayer''s income in the following year is lower than their
+  current income.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- timing
+keywords:
+- prepay
+- accounting fees
+- tax deduction
+- 30 june
+- tax deferral
+- current year
+- taxable income
+- tax savings
+- income reduction
+- year end planning
+tenant_id: platform
+version: 1

@@ -1,0 +1,59 @@
+strategy_id: CLR-059
+source_ref: STP-059
+name: Full commutation of a TRIS
+categories:
+- Investors_retirees
+implementation_text: '1. The strategy may need to be implemented by a licenced financial planner. Seek
+  appropriate advice.
+
+  2. Determine whether the member has met a condition of release under the SIS Act so they can withdraw
+  their super.
+
+  3. Commute the TRIS via an ''internal roll-over'' so the member''s balance returns to the accumulation
+  stage.
+
+  4. Make a lump sum benefit up to the low cap rate of $235,000.'
+explanation_text: 'A transition to retirement income stream (TRIS) is where a super fund member who has
+  reached their preservation age (e.g. age 55 for someone born before 1 July 1963 can generally withdraw
+  some of their superannuation entitlements as a pension without retiring from the workforce. From 1 July
+  2017, the fund earnings under a TRIS are subject to the standard 15% super fund tax rate.
+
+
+  With a TRIS, members must withdraw annual pension payments of 4-10% of their superannuation fund balance.
+  The member is then taxed on the TRIS payments at their marginal tax rate but allowed a 15% tax offset
+  (which results in the TRIS income being taxed at a maximum net rate of 32%).
+
+
+  To avoid this tax liability, the TRIS could be commuted through ''internal roll-over'', whereby the
+  member''s pension account balance is rolled-back into the accumulation phase. Once that is done, the
+  member could pay the taxable component of a lump sum benefit up to the low-rate cap of $235,000 for
+  2023-24, which is tax-free. To use this strategy, the member must meet one of the SIS Act conditions
+  of release for their super, such as retirement, age over 65, etc.'
+ato_sources:
+- SIS Act
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- offset
+keywords:
+- tris
+- transition to retirement
+- commutation
+- internal roll-over
+- accumulation phase
+- preservation age
+- low-rate cap
+- lump sum
+- superannuation
+- pension
+- condition of release
+- tax offset
+- retirement income stream

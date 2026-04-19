@@ -1,0 +1,50 @@
+strategy_id: CLR-241
+source_ref: STP-241
+name: Change PSI to personal services business (PSB)
+categories:
+- Business
+implementation_text: '1. Advertise the business to the general public through websites, newspapers, or
+  online sites.
+
+  2. Ensure at least two unrelated clients, with the largest client accounting for less than 80% of the
+  PSI.'
+explanation_text: "Personal services income (PSI) is mainly from an individual's skills or efforts and\
+  \ has employment income characteristics. The only deductions allowed against PSI income are the expenses\
+  \ an employee would be entitled to deduct. If the personal services business (PSB) tests are passed,\
+  \ then taxpayers gain the following benefits:\n\nThe ability to deduct a more extensive range of business\
+  \ expenses from the income.\nCan employ family members and pay them wages and superannuation.\n\nTo\
+  \ change PSI into PSB, one of the following two tests must be passed:\n\n1. Results test - These three\
+  \ conditions must be met for at least 75% of the PSI.\n   Must be paid to produce a specific result\
+  \ (must not be paid an hourly or fixed rate),\n   Required to provide the equipment or tools,\n   Required\
+  \ to fix mistakes.\n\n2. The 80% rule - Less than 80% of the PSI comes from one client plus one of the\
+  \ three remaining tests are passed:\n   Unrelated clients test - Minimum two clients and advertise to\
+  \ the general public.\n   Employment test - Have staff that complete at least the principal work.\n\
+  \   Business premises test - Operate from business premises."
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- psi
+- personal services income
+- personal services business
+- psb
+- results test
+- 80% rule
+- unrelated clients test
+- employment test
+- business premises test
+- business expenses
+- family wages
+- superannuation
+- contractor
+- sole trader

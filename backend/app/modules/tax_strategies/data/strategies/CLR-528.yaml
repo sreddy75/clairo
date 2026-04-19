@@ -1,0 +1,97 @@
+strategy_id: CLR-528
+source_ref: STP-528
+name: Income protection insurance - benefits
+categories:
+- Recommendations
+implementation_text: 'Deciding whether income protection insurance is worth the cost requires carefully
+  analysing your financial situation, future projections, and risk factors. Here are steps and considerations
+  to help you make an informed decision:
+
+  1. Assess your financial obligations: Calculate your monthly expenses, such as mortgage or rent, bills,
+  loans, and everyday living costs. Determine the length of time you could sustain yourself and any dependents
+  without your regular income.
+
+  2. Evaluate your savings & assets: Do you have an emergency fund? How long would it last if your income
+  stopped today?
+
+  3. Consider alternative income sources. Do you have other potential sources of income, such as passive
+  income from investments, rental income, or a spouse''s income?
+
+  4. Analyse employment benefits: Does your employer offer any form of sick pay or long-term disability
+  benefits?
+
+  5. Look at your health & lifestyle: Are you in a high-risk profession or have hobbies that increase
+  the chance of injury? Do you have any pre-existing health conditions or a family history of specific
+  ailments?
+
+  6. Review policy details carefully. Understand the policy terms, including waiting periods, benefit
+  periods, coverage amounts, and exclusions.
+
+  7. Cost-benefit analysis: Compare the insurance premium against the potential payout. For example, if
+  you pay $1,200 a year for a policy that pays out $4,000 a month and you''re off work for six months,
+  that''s $24,000 – a substantial return on your annual premium.
+
+  8. Inflation and future costs: Ensure that the policy accounts for inflation, especially if considering
+  a long-term policy. Over time, the real value of a fixed benefit might decrease.
+
+  9. Review your needs regularly. As your Financial situation and responsibilities change, reassess whether
+  the coverage is still appropriate. Consider the worst-case scenario and whether you''re prepared without
+  such insurance.'
+explanation_text: 'Income protection insurance provides policyholders a replacement income if they cannot
+  work due to illness or injury.
+
+
+  The benefits of income protection insurance for small businesses include:
+
+  1. Protection of business continuity: If a small business owner can''t work due to illness or injury,
+  it could jeopardize the business''s ongoing operations.
+
+  2. Maintaining cash flow helps by replacing a portion of the business owner''s income, ensuring that
+  money is coming in to cover operational costs and overheads.
+
+  3. Employee retention: An income protection policy can provide the funds needed to continue paying staff
+  salaries, preventing the potential loss of valuable employees.
+
+  4. Loan and debt repayment: This can provide the funds to continue servicing loans, preventing default
+  and potential legal consequences.
+
+  5. Protection of personal assets: Small business owners sometimes use personal assets as collateral
+  for business loans. They risk losing these assets if they cannot generate income due to illness or injury.
+
+  6. Mental peace: Knowing there''s a safety net can alleviate some of the anxieties associated with the
+  potential loss of income.
+
+  7. Tax benefits: The premiums paid for business-related income protection insurance are tax-deductible.
+
+  8. Business expense cover: Some policies might offer an add-on that covers fixed business expenses (such
+  as rent, utilities, and salaries) if the owner cannot work due to illness or injury.
+
+  9. Buy-sell agreement funding: Income protection can be structured to fund buy-sell agreements, allowing
+  remaining owners to buy out the incapacitated owner''s share.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- income protection insurance
+- small business
+- insurance premiums
+- tax deductible
+- business continuity
+- cash flow
+- illness
+- injury
+- buy-sell agreement
+- replacement income
+- waiting period
+- benefit period
+- disability
+- risk management
+- personal assets

@@ -1,0 +1,37 @@
+strategy_id: CLR-191
+source_ref: STP-191
+name: Pets in the workplace
+categories:
+- Business
+implementation_text: 1. Claim a tax deduction for the expenses incurred by workplace pets.
+explanation_text: 'This strategy makes individual pet-owning costs tax-deductible (under certain circumstances).
+  Having pets in the workplace involves the employer acquiring pets for the workplace (whether an office,
+  factory or warehouse). The pets could be the standard, cat, dog, fish, ferret, bird, snake, or any other
+  pet. The business benefits of pets in the workplace include improved employee morale, reduced stress,
+  better employee interactions, higher employee motivation and engagement, and improved culture.
+
+
+  The workplace pet''s food, vet, insurance, grooming and other costs should be tax-deductible.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- pets
+- workplace
+- tax deduction
+- employee morale
+- pet expenses
+- vet costs
+- grooming
+- business expenses
+- employer
+- office pets

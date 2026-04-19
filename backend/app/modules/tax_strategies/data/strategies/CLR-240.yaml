@@ -1,0 +1,76 @@
+strategy_id: CLR-240
+source_ref: STP-240
+name: Home office fixed rate method
+categories:
+- Employees
+implementation_text: '1. Claim 67 cents per hour for each hour worked from home using the fixed rate method
+  to cover energy expenses, phone usage, internet, stationery, and computer consumables.
+
+  2. Ensure no additional deductions are claimed for costs already covered by the fixed rate method.
+
+  3. Claim separately the decline in value of assets used while working from home, such as computers and
+  office furniture.
+
+  4. Claim separately the costs of repairs to assets used while working from home and the costs of cleaning
+  the dedicated office.
+
+  5. Record all hours worked from home for the entire year from 1st March 2023, as the ATO will not accept
+  estimates or a 4-week diary.
+
+  6. Record hours worked from home using a diary, timesheets, rosters, or logs.
+
+  7. Keep records for each expense covered by the fixed rate per hour, including at least one electricity
+  bill and one telephone bill.'
+explanation_text: 'If an employee or investor uses their home office for work or investment-related purposes,
+  they can claim 67 cents per hour under the fixed rate method. The 67 cents per hour covers energy expenses
+  (electricity and gas), phone usage (mobile and home), internet, stationery, and computer consumables.
+  No additional deductions are allowed for costs covered by the set rate method.
+
+
+  In addition, the following expenses can be claimed separately:
+
+
+  The decline in value of assets used while working from home., such as computers and office furniture.
+
+  The repairs of these assets.
+
+  The costs of cleaning the dedicated office.
+
+
+  The record-keeping requirements are:
+
+
+  1. From 1st March 2023, taxpayers must record all the hours they worked from home for the entire year.
+  i.e. the ATO won''t accept estimates or a 4-week diary.
+
+  2. Hours worked can be recorded in a diary, timesheets, rosters or logs.
+
+  3. Records must be kept for each expense taxpayers have incurred, covered by the fixed rate per hour
+  (i.e. taxpayers must keep one electricity bill and one telephone bill).'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- home office
+- fixed rate method
+- 67 cents per hour
+- work from home
+- energy expenses
+- phone usage
+- internet
+- stationery
+- computer consumables
+- record keeping
+- decline in value
+- employee deductions
+tenant_id: platform
+version: 1

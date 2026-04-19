@@ -1,0 +1,43 @@
+strategy_id: CLR-109
+source_ref: STP-109
+name: Retirement exemption - CGT concession for small business
+categories:
+- Business
+implementation_text: 'Suppose you are under 55 years old just before you choose the retirement exemption.
+  In that case, the exempt amount (which is the amount determined to be exempt, so it''s not taxable)
+  must be contributed to a complying superannuation fund. The exempt amount must be contributed to the
+  complying super fund before lodging the tax return that includes the capital gain with the ATO.
+
+  If you are aged 55 or more just before choosing to apply for the retirement exemption, then the exempt
+  proceeds do not need to be paid into a superannuation fund.'
+explanation_text: The small business retirement exemption concession can exempt a capital gain on a business
+  asset up to a lifetime retirement exemption limit of $500,000. An individual's $500,000 limit is reduced
+  by any previous amounts they have chosen to be exempt under the retirement exemption. To qualify for
+  this exemption, the primary conditions that apply to all CGT small business concessions must be met.
+  These include that the taxpayer is either a small business entity (i.e. turnover less than $2 million
+  or has net assets less than $6 million).
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- exemption
+- concession
+keywords:
+- cgt
+- capital gains tax
+- retirement exemption
+- small business
+- small business concession
+- superannuation
+- business asset
+- lifetime limit
+- net assets
+- turnover threshold

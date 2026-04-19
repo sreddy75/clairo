@@ -1,0 +1,52 @@
+strategy_id: CLR-401
+source_ref: STP-401
+name: Charitable trust
+categories:
+- Business_structures
+implementation_text: 'The process is:
+
+  1. A donor establishes these trusts through a deed with a charitable purpose.
+
+  2. They can attain tax-exempt income status as a tax concession charity from the ACNC, but donations
+  are not tax-deductible.
+
+  3. They must fund the charitable purposes specified in the deed.'
+explanation_text: 'Charitable trusts are formed to distribute funds in a considered way and enable other
+  non-profit organisations to achieve their objectives. Charitable trusts generally operate as follows:
+
+  - Often set up through a gift in a will, but do not have to be.
+
+  - The trust is established with an initial corpus of money that may be held in perpetuity.
+
+  - The trustees invest the corpus.
+
+  - A certain percentage of the income generated is granted periodically to particular causes, organisations,
+  winners of scholarships or other grant-seekers'
+ato_sources: []
+case_refs: []
+entity_types:
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- concession
+- exemption
+keywords:
+- charitable trust
+- trust deed
+- tax exempt
+- acnc
+- tax concession charity
+- non-profit
+- corpus
+- philanthropy
+- grants
+- scholarships
+- charitable purpose
+- perpetuity
+- distributions

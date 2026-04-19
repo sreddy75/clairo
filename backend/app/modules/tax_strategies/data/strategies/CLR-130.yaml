@@ -1,0 +1,56 @@
+strategy_id: CLR-130
+source_ref: STP-130
+name: Sponsorship
+categories:
+- Business
+implementation_text: '1. Determine whether any sponsorship is of a capital, private or domestic nature.
+
+  2. In TD 92/162, the ATO advised that the cost of hiring corporate boxes at sporting events is deemed
+  95% entertainment and 5% deductible advertising.'
+explanation_text: 'Sponsorship is an activity''s financial or in-kind support primarily to reach business
+  goals. Sponsorship is not advertising (a quantitative medium) but qualitative, whereby it promotes a
+  company in association with the sponsee. Sponsorship can achieve these three business goals:
+
+  Enhancing image and customer attitudes,
+
+  Increasing sales, and
+
+  Creating positive publicity and heightened visibility.
+
+
+  If a taxpayer provides sponsorship in the belief that the exposure from that sponsorship will benefit
+  the business through advertising and generate future income, then the expenditure should be deductible.
+  This will be the case even if it turns out that the sponsorship didn''t produce any future income. So,
+  for example, if a plumbing company sponsored the local netball team with uniforms and equipment, including
+  advertising on the uniforms and at games, that sponsorship would be deductible.
+
+
+  The exception will be where the sponsorship is deemed capital, private or domestic. This may be where
+  the sponsorship involves sponsoring a related party for their hobby. For example, only part of the sponsorship
+  may be deductible when a plumbing company owner sponsors the yacht. The deductible percentage (0%, 50%
+  or 100%) will depend upon the signage size, the advertising signage''s prominence, attendance, and the
+  types of media coverage.'
+ato_sources:
+- TD 92/162
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- sponsorship
+- advertising
+- deductible
+- entertainment
+- corporate boxes
+- sporting events
+- business promotion
+- signage
+- related party
+- capital expenditure

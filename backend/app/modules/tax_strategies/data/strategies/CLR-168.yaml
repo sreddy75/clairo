@@ -1,0 +1,66 @@
+strategy_id: CLR-168
+source_ref: STP-168
+name: Making holidays deductible
+categories:
+- Business
+implementation_text: '1. The expenses must be apportioned when the business travel is partly for business
+  and private purposes (say, a holiday). The apportionment is typically done on a time basis by working
+  out how many days in the trip are related to business purposes and how many are private.
+
+  2. A travel diary is required; overseas travel is more significant than six nights. Also, a travel diary
+  is necessary for local travel where the trip is not exclusively for business, i.e., private purposes.'
+explanation_text: 'Business travel involves being away from home for at least one night for business purposes.
+  Business travel contrasts with other types of private travel, such as for leisure purposes or regularly
+  commuting between one''s home and workplace. Reasons for business trips include visiting customers or
+  suppliers, meetings at other company locations, professional development, attending seminars, networking,
+  etc.
+
+
+  Business travel days include:
+
+  • Travels days.
+
+  • Weekend days are between two business days.
+
+  • Days where more than 50% of the day was business activities
+
+
+  Strategies to increase travel deductions and add more fun:
+
+  • Hire your spouse. If they are involved in the business, and there is a legitimate business reason
+  for them being on a business trip, their expenses will also be deductible.
+
+  • Attend seminars and conferences interstate and overseas. Hawaii, Las Vegas, London, and California
+  are always famous!
+
+  • Take your business car for family travel. A business trip that involves taking along family members
+  in the vehicle will still be a business trip, and the motor vehicle expenses are 100% deductible.
+
+  • When staying with friends on business trips, pay them an accommodation fee or gift them (both options
+  will be deductible to you).
+
+  • Visit potential clients and business associates to improve your skills, get referrals, and experience
+  new places simultaneously.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- travel deductions
+- business travel
+- holiday deductible
+- travel diary
+- apportionment
+- overseas travel
+- interstate travel
+- spouse employee
+- motor vehicle
+- seminars conferences

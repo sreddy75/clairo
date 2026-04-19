@@ -1,0 +1,53 @@
+strategy_id: CLR-051
+source_ref: STP-051
+name: Overseas super transfer
+categories:
+- Investors_retirees
+- SMSF
+implementation_text: '1. Taxpayers are to contact their overseas superannuation fund to see if they can
+  access their overseas super (may be subject to age-based preservation rules).
+
+  2. Have the overseas super fund advise how much tax (if any) the foreign Taxation Office will deduct
+  on the transfer. The foreign tax deducted from the offshore super may depend on the taxpayer''s age
+  when accessing the super.
+
+  3. Complete superannuation transfer forms to roll over the overseas superannuation into an Australian
+  superannuation fund.
+
+  4. Calculate the tax payable by the Australian super fund on the transfer.'
+explanation_text: Australian tax residents who transfer their overseas superannuation interests to Australia
+  are taxed on the amount that the superannuation investment balance has increased since they became Australian
+  tax residents. For example, when Dan migrated to Australia ten years ago, his UK superannuation was
+  worth $100,000. If the UK super balance has grown to $200,000 and he transfers it to Australia, the
+  $100,000 gain will be taxable. If the overseas super increase (the $100,000) is paid directly to the
+  taxpayer, they will be taxed on the gain at their marginal tax rates (so this could be up to 47% tax).
+  An alternative option to reduce the tax liability is to have the overseas super gain paid into an Australian
+  superannuation fund and taxed at a flat 15%. Taxpayers who transfer overseas super to an Australian-regulated
+  super fund will not be able to access that super until they meet a condition of release.
+ato_sources: []
+case_refs: []
+entity_types:
+- individual
+- smsf
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type: []
+keywords:
+- overseas superannuation
+- super transfer
+- foreign super
+- australian tax resident
+- marginal tax rate
+- flat 15%
+- condition of release
+- superannuation rollover
+- uk superannuation
+- age-based preservation
+- foreign taxation
+- superannuation fund
+- tax liability reduction

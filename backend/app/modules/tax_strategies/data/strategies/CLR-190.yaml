@@ -1,0 +1,60 @@
+strategy_id: CLR-190
+source_ref: STP-190
+name: Utilise business goodwill to pay out your private mortgage
+categories:
+- Business
+implementation_text: '1. For individuals operating the business as sole traders, implementing the strategy
+  involves selling the business at arms-length market values to a company or trust entity. The entity
+  purchasing the business will get a bank loan to fund the purchase (with interest being tax deductible).
+  The individual vendor will use the sale proceeds to pay their non-deductible private mortgage.
+
+  2. Individuals operating the business in partnership have two options. Firstly, have the partnership
+  get a loan to repay the partner''s capital accounts (initially advanced by a partner to fund the business).
+  The interest on this loan will be deductible. Secondly, the partnership sells the business at arms-length
+  market values to a company or trust entity.
+
+  3. Unit trusts operating the business will get a bank loan to fund a unit holder buyback to reduce the
+  unit holder paid-up capital to nil. The unit trust loan interest will be tax deductible, and the unit
+  holders will have the capital they initially invested in the unit trust returned tax-free.
+
+  4. Companies operating the business will get a bank loan to fund a share buyback to reduce the paid-up
+  capital to nil. The company loan interest will be tax deductible, and the shareholders will have the
+  capital they originally invested in the company returned tax-free. Alternatively, a shareholder in the
+  company operating the business sells their share-holding at market values to their spouse or a related
+  entity. The spouse purchases the shares utilising a new bank loan and claims the interest as a deduction
+  (against expected future dividend income).'
+explanation_text: This strategy enables business owners to utilise the value of their business goodwill
+  to pay out their private mortgage and convert a non-deductible mortgage into tax-deductible debt. The
+  average Australian family pays over $25,000 annual interest on their $450,000 home mortgage. Making
+  these interest payments tax deductible will, on average, save them $10,000 tax year one and $150,000
+  over the loan term. The actual process to achieve these tax savings depends on the taxpayer's circumstances
+  and the entity type that operates the business.
+ato_sources: []
+case_refs: []
+entity_types:
+- sole_trader
+- partnership
+- company
+- trust
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+keywords:
+- goodwill
+- private mortgage
+- debt conversion
+- tax deductible interest
+- business sale
+- sole trader
+- partnership
+- unit trust
+- company
+- share buyback
+- home loan
+- debt recycling

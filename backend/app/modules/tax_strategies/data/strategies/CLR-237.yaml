@@ -1,0 +1,58 @@
+strategy_id: CLR-237
+source_ref: STP-237
+name: Debt recycling
+categories:
+- Investors_retirees
+implementation_text: '1. Consolidate debts (credit cards, car loans, etc.) into a home loan.
+
+  2. Use the equity in the family home as security for an investment-purpose loan.
+
+  3. Use the borrowed money to invest in an income-producing asset (shares, property or managed funds).
+
+  4. Use the investment income, plus tax savings from the geared investment, to pay off non-deductible
+  debt on the home loan.
+
+  5. Increase the investment-purpose loan by the same amount as has been paid off the non-deductible debt
+  on the home loan.
+
+  6. Repeat this process each year until the investment-purpose loan replaces the non-deductible loan.'
+explanation_text: 'Debt recycling is a three-tiered financial strategy that aims to generate future wealth,
+  reduce home loans, and minimise taxes. Debt recycling achieves this by using the current home loan equity
+  to invest (in shares, property and managed funds). In the process, it turns non-deductible family home
+  debt into tax-deductible debt.
+
+
+  For debt recycling to be effective, it requires:
+
+  • Stable employment or business income.
+
+  • Tolerance for increased risk and debt levels.
+
+  • Long-term investment focus.'
+ato_sources: []
+case_refs: []
+entity_types: []
+income_band_min: null
+income_band_max: null
+turnover_band_min: null
+turnover_band_max: null
+age_min: null
+age_max: null
+industry_triggers: []
+financial_impact_type:
+- deduction
+- structure
+keywords:
+- debt recycling
+- home loan
+- investment loan
+- non-deductible debt
+- tax-deductible debt
+- equity
+- gearing
+- shares
+- managed funds
+- wealth creation
+- interest deduction
+- home equity
+- investment income
