@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import uuid as uuid_mod
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -141,6 +141,13 @@ class ClassificationService:
 
         if not pending:
             raise NoUnresolvedTransactionsError()
+
+        # Sort pending suggestions by transaction_date DESC (most recent first)
+        pending = sorted(
+            pending,
+            key=lambda s: s.transaction_date or date(1900, 1, 1),
+            reverse=True,
+        )
 
         # 4. Filter to specific transaction IDs if provided
         if transaction_ids:

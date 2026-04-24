@@ -563,7 +563,7 @@ export function TaxCodeResolutionPanel({
           {manual.length > 0 && (
             <AccordionItem value="manual">
               <AccordionTrigger className="text-sm font-medium py-2">
-                Manual Required ({manual.length})
+                Uncoded ({manual.length})
               </AccordionTrigger>
               <AccordionContent>
                 <SuggestionTable suggestions={manual} classifMap={classifMap} onApprove={handleApprove} onOverride={handleOverride} onDismiss={handleDismiss} getToken={getToken} connectionId={connectionId} sessionId={sessionId} completedWritebackJobId={completedWritebackJob?.id} syncMap={syncMap} onSplitsChanged={handleSplitsChanged} onNoteChanged={loadSuggestions} />
@@ -808,7 +808,7 @@ function BankTransactionTable({ transactions }: { transactions: PeriodBankTransa
                 {txn.transaction_date ? formatDate(txn.transaction_date) : '—'}
               </td>
               <td className="px-3 py-1.5 text-right font-medium tabular-nums whitespace-nowrap text-sm">
-                {formatCurrency(txn.total_amount)}
+                {formatCurrency(txn.total_amount, { fractionDigits: 2 })}
               </td>
               <td className="px-3 py-1.5 max-w-[220px]">
                 <span className="truncate block text-xs">{txn.description || '—'}</span>

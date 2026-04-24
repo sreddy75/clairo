@@ -691,7 +691,7 @@ class TaxCodeService:
         tenant_id: UUID,
         user_id: UUID,
     ) -> TaxCodeSuggestion:
-        """Unpark a dismissed suggestion — reset to pending (Manual Required)."""
+        """Unpark a dismissed suggestion — reset to pending (Uncoded)."""
         suggestion = await self.repo.get_suggestion(suggestion_id, tenant_id)
         if not suggestion:
             raise SuggestionNotFoundError(str(suggestion_id))

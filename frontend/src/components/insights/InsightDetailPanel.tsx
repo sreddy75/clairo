@@ -12,12 +12,15 @@ import {
   AlertTriangle,
   Calendar,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Cpu,
   ListPlus,
   Loader2,
   Sparkles,
   X,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   Dialog,
@@ -93,6 +96,8 @@ export function InsightDetailPanel({
   onExpand,
   isExpanding,
 }: InsightDetailPanelProps) {
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
   if (!insight) return null;
 
   const priority = PRIORITY_CONFIG[insight.priority] || PRIORITY_CONFIG.medium;
@@ -193,6 +198,33 @@ export function InsightDetailPanel({
                     Data Source
                   </p>
                   <DataFreshnessIndicator lastSyncDate={insight.data_snapshot.data_freshness} />
+                </div>
+              )}
+
+              {/* How was this calculated? */}
+              {insight.data_snapshot?.calculation_breakdown && insight.data_snapshot.calculation_breakdown.length > 0 && (
+                <div>
+                  <button
+                    onClick={() => setShowBreakdown((v) => !v)}
+                    className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors w-full text-left"
+                  >
+                    {showBreakdown ? (
+                      <ChevronDown className="w-3 h-3" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3" />
+                    )}
+                    How was this calculated?
+                  </button>
+                  {showBreakdown && (
+                    <div className="mt-1.5 rounded-lg bg-muted/50 border border-border divide-y divide-border overflow-hidden">
+                      {insight.data_snapshot.calculation_breakdown.map((row, idx) => (
+                        <div key={idx} className="flex items-center justify-between px-3 py-1.5 text-xs">
+                          <span className="text-muted-foreground">{row.label}</span>
+                          <span className="font-medium tabular-nums">{row.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

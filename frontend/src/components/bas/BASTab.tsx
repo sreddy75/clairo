@@ -57,6 +57,7 @@ import {
   type ExportFormat,
   type LodgementRecordRequest,
   type LodgementUpdateRequest,
+  type ReconciliationStatus,
   type WritebackJobDetailResponse,
   listBASSessions,
   createBASSession,
@@ -68,6 +69,7 @@ import {
   addBASAdjustment,
   deleteBASAdjustment,
   getBASFieldTransactions,
+  getReconciliationStatus,
   recordLodgement,
   updateLodgementDetails,
   getSessionStatusLabel,
@@ -86,9 +88,12 @@ import {
   getXeroBASCrossCheck,
 } from '@/lib/bas';
 
+import { GSTBasisModal } from './GSTBasisModal';
+import { InstalmentSection } from './InstalmentSection';
 import { LodgementBadge } from './LodgementBadge';
 import { LodgementModal } from './LodgementModal';
 import { TaxCodeResolutionPanel } from './TaxCodeResolutionPanel';
+import { UnreconciledWarning } from './UnreconciledWarning';
 import { XeroBASCrossCheck } from './XeroBASCrossCheck';
 
 // =============================================================================
@@ -100,6 +105,10 @@ interface BASTabProps {
   getToken: () => Promise<string | null>;
   selectedQuarter: number;
   selectedFyYear: number;
+  /** Current saved GST reporting basis for this client; null = not yet set */
+  clientGstBasis?: string | null;
+  /** Called after the accountant sets/changes the GST basis */
+  onGstBasisChanged?: (basis: string) => void;
 }
 
 type DetailTab = 'gst' | 'payg' | 'variance' | 'adjustments';
@@ -134,6 +143,8 @@ export function BASTab({
   getToken,
   selectedQuarter,
   selectedFyYear,
+  clientGstBasis,
+  onGstBasisChanged,
 }: BASTabProps) {
   // State
   const [sessions, setSessions] = useState<BASSession[]>([]);
@@ -209,6 +220,14 @@ export function BASTab({
 
   // Tax code suggestion state (Spec 046)
 
+  // GST basis modal state (Spec 062 - US1)
+  const [showGSTBasisModal, setShowGSTBasisModal] = useState(false);
+
+  // Reconciliation warning state (Spec 062 - US11)
+  const [reconciliationStatus, setReconciliationStatus] = useState<ReconciliationStatus | null>(null);
+  const [showUnreconciledWarning, setShowUnreconciledWarning] = useState(false);
+  const [proceededWithUnreconciled, setProceededWithUnreconciled] = useState(false);
+
   // Xero write-back state (Spec 049)
   const [activeWritebackJobId, setActiveWritebackJobId] = useState<string | null>(null);
   const [completedWritebackJob, setCompletedWritebackJob] = useState<WritebackJobDetailResponse | null>(null);
@@ -265,8 +284,38 @@ export function BASTab({
       setShowAdjustmentForm(false);
       setActiveWritebackJobId(null);
       setCompletedWritebackJob(null);
+      setReconciliationStatus(null);
+      setShowUnreconciledWarning(false);
+      setProceededWithUnreconciled(false);
     }
   }, [selectedSession]);
+
+  // Fetch reconciliation status when a session is selected (Spec 062 - US11)
+  useEffect(() => {
+    if (!selectedSession) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token || cancelled) return;
+        const status = await getReconciliationStatus(
+          token,
+          connectionId,
+          selectedSession.start_date,
+          selectedSession.end_date,
+        );
+        if (!cancelled) {
+          setReconciliationStatus(status);
+          if (status.unreconciled_count > 0 && !proceededWithUnreconciled) {
+            setShowUnreconciledWarning(true);
+          }
+        }
+      } catch {
+        // Non-critical — silently ignore reconciliation check failures
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedSession?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ==========================================================================
   // Handlers
@@ -304,6 +353,12 @@ export function BASTab({
 
   const handleCalculate = async () => {
     if (!selectedSession) return;
+
+    // US1: Require GST basis to be set before calculating
+    if (clientGstBasis === null || clientGstBasis === undefined) {
+      setShowGSTBasisModal(true);
+      return;
+    }
 
     try {
       setIsCalculating(true);
@@ -653,14 +708,15 @@ export function BASTab({
     return (
       <div className="bg-status-danger/10 border border-status-danger/20 rounded-2xl p-8 text-center">
         <AlertCircle className="w-10 h-10 text-status-danger mx-auto mb-3" />
-        <p className="text-status-danger font-medium mb-1">Something went wrong</p>
-        <p className="text-status-danger text-sm mb-4">{error}</p>
+        <p className="text-status-danger font-medium mb-1">Unable to load BAS data</p>
+        <p className="text-status-danger text-sm mb-1">{error}</p>
+        <p className="text-status-danger/70 text-xs mb-4">Xero may be unavailable. Check the Xero connection in Settings, then try again.</p>
         <button
           onClick={() => { setError(null); fetchSessions(); }}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-status-danger hover:text-status-danger hover:bg-status-danger/10 rounded-lg transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
-          Try again
+          Retry
         </button>
       </div>
     );
@@ -668,6 +724,40 @@ export function BASTab({
 
   return (
     <div className="min-h-[600px]">
+      {/* GST Basis selection modal (Spec 062 - US1) */}
+      <GSTBasisModal
+        open={showGSTBasisModal}
+        connectionId={connectionId}
+        getToken={getToken}
+        currentBasis={clientGstBasis ?? null}
+        isLodged={selectedSession ? isSessionLodged(selectedSession) : false}
+        onClose={() => setShowGSTBasisModal(false)}
+        onSaved={(basis) => {
+          setShowGSTBasisModal(false);
+          onGstBasisChanged?.(basis);
+          // Trigger calculation after basis is set
+          setTimeout(() => handleCalculate(), 100);
+        }}
+      />
+
+      {/* Unreconciled data warning dialog (Spec 062 - US11) */}
+      {selectedSession && reconciliationStatus && (
+        <UnreconciledWarning
+          open={showUnreconciledWarning}
+          unreconciledCount={reconciliationStatus.unreconciled_count}
+          totalTransactions={reconciliationStatus.total_transactions}
+          asOf={reconciliationStatus.as_of}
+          onProceed={() => {
+            setShowUnreconciledWarning(false);
+            setProceededWithUnreconciled(true);
+          }}
+          onGoBack={() => {
+            setShowUnreconciledWarning(false);
+            setSelectedSession(null);
+          }}
+        />
+      )}
+
       {/* Header - only show Create button when needed */}
       <div className="flex items-center justify-end mb-4">
         {!existingSession && sessions.length > 0 && (
@@ -751,6 +841,16 @@ export function BASTab({
                   </div>
                 </div>
 
+                {/* Unreconciled data persistent banner (Spec 062 - US11) */}
+                {proceededWithUnreconciled && reconciliationStatus && reconciliationStatus.unreconciled_count > 0 && (
+                  <div className="flex items-center gap-3 bg-status-warning/10 border border-status-warning/20 rounded-xl px-4 py-3">
+                    <AlertCircle className="w-4 h-4 text-status-warning shrink-0" />
+                    <p className="text-status-warning text-sm">
+                      Warning: based on unreconciled data as at {reconciliationStatus.as_of ? new Date(reconciliationStatus.as_of).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : 'unknown'}
+                    </p>
+                  </div>
+                )}
+
                 {/* Hero Summary Panel */}
                 <div className={`rounded-2xl p-6 ${
                   calculation?.is_refund
@@ -771,9 +871,29 @@ export function BASTab({
                           {getSessionStatusLabel(selectedSession.status)}
                         </span>
                       </div>
-                      <p className="text-white/50 text-xs mb-4">
+                      <p className="text-white/50 text-xs mb-2">
                         {formatDate(selectedSession.start_date)} – {formatDate(selectedSession.end_date)}
                       </p>
+
+                      {/* Status indicators: coding + GST basis */}
+                      <div className="flex flex-wrap items-center gap-2 mb-4">
+                        {taxCodeSummary && (
+                          taxCodeSummary.unresolved_count > 0 ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-status-warning/30 text-status-warning border border-status-warning/40">
+                              {taxCodeSummary.unresolved_count} uncoded
+                            </span>
+                          ) : taxCodeSummary.resolved_count > 0 ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-status-success/20 text-status-success border border-status-success/30">
+                              All coded ✓
+                            </span>
+                          ) : null
+                        )}
+                        {selectedSession.gst_basis_used && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-white/10 text-white/70 border border-white/20">
+                            GST: {selectedSession.gst_basis_used === 'cash' ? 'Cash basis' : 'Accrual basis'}
+                          </span>
+                        )}
+                      </div>
 
                       {calculation ? (
                         <>
@@ -1259,37 +1379,63 @@ export function BASTab({
 
                           {/* PAYG Tab */}
                           {activeTab === 'payg' && (
-                            <div>
+                            <div className="space-y-4">
                               {parseFloat(calculation.w1_total_wages) > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                  <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
-                                    <p className="text-[10px] font-semibold text-accent-foreground uppercase tracking-wider mb-1">W1 Total Wages</p>
-                                    <p className="text-lg font-bold text-accent-foreground tabular-nums">
-                                      {formatBASCurrency(calculation.w1_total_wages)}
-                                    </p>
+                                <>
+                                  {/* Source label */}
+                                  <p className="text-xs text-muted-foreground">
+                                    {calculation.payg_source_label ||
+                                      `From Xero Payroll — ${formatDate(selectedSession.start_date)} to ${formatDate(selectedSession.end_date)}`}
+                                  </p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
+                                      <p className="text-[10px] font-semibold text-accent-foreground uppercase tracking-wider mb-1">W1 Total Wages</p>
+                                      <p className="text-lg font-bold text-accent-foreground tabular-nums">
+                                        {formatBASCurrency(calculation.w1_total_wages)}
+                                      </p>
+                                    </div>
+                                    <div className="bg-status-warning/10 rounded-xl p-4 border border-status-warning/20">
+                                      <p className="text-[10px] font-semibold text-status-warning uppercase tracking-wider mb-1">W2 Tax Withheld</p>
+                                      <p className="text-lg font-bold text-status-warning tabular-nums">
+                                        {formatBASCurrency(calculation.w2_amount_withheld)}
+                                      </p>
+                                    </div>
+                                    <div className="bg-muted rounded-xl p-4">
+                                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pay Runs</p>
+                                      <p className="text-lg font-bold text-foreground tabular-nums">
+                                        {calculation.pay_run_count}
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div className="bg-status-warning/10 rounded-xl p-4 border border-status-warning/20">
-                                    <p className="text-[10px] font-semibold text-status-warning uppercase tracking-wider mb-1">W2 Tax Withheld</p>
-                                    <p className="text-lg font-bold text-status-warning tabular-nums">
-                                      {formatBASCurrency(calculation.w2_amount_withheld)}
-                                    </p>
-                                  </div>
-                                  <div className="bg-muted rounded-xl p-4">
-                                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pay Runs</p>
-                                    <p className="text-lg font-bold text-foreground tabular-nums">
-                                      {calculation.pay_run_count}
-                                    </p>
-                                  </div>
-                                </div>
+                                  {/* Draft pay run caveat */}
+                                  {(calculation.draft_pay_run_count ?? 0) > 0 && (
+                                    <div className="flex items-center gap-2 text-xs text-status-warning bg-status-warning/10 rounded-lg px-3 py-2 border border-status-warning/20">
+                                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                      {calculation.draft_pay_run_count} draft pay run{(calculation.draft_pay_run_count ?? 0) !== 1 ? 's' : ''} not included — finalise in Xero to include in W1/W2.
+                                    </div>
+                                  )}
+                                </>
                               ) : (
                                 <div className="text-center py-8">
                                   <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-3">
                                     <FileText className="w-6 h-6 text-muted-foreground" />
                                   </div>
-                                  <p className="text-muted-foreground font-medium">No PAYG data</p>
-                                  <p className="text-muted-foreground text-sm">No wages or withholding for this period</p>
+                                  <p className="text-muted-foreground font-medium">No payroll data found</p>
+                                  <p className="text-muted-foreground text-sm">Enter manually if wages were paid this period</p>
                                 </div>
                               )}
+
+                              {/* PAYG Instalment (T1/T2) — always visible */}
+                              <InstalmentSection
+                                calculation={calculation}
+                                getToken={getToken}
+                                onUpdated={(updated) => {
+                                  queryClient.setQueryData(
+                                    basQueryKeys.calculation(connectionId, sessionId!),
+                                    updated,
+                                  );
+                                }}
+                              />
                             </div>
                           )}
 

@@ -131,6 +131,8 @@ class BASSessionResponse(BaseModel):
     can_record_lodgement: bool = False
     # Xero write-back tracking (Spec 049)
     approved_unsynced_count: int = 0
+    # GST basis snapshot (Spec 062)
+    gst_basis_used: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -178,6 +180,9 @@ class PAYGBreakdown(BaseModel):
     w2_amount_withheld: Decimal = Field(default=Decimal("0"), description="PAYG withheld")
     pay_run_count: int = 0
     has_payroll: bool = False
+    # PAYGW source metadata (Spec 062)
+    source_label: str = ""
+    draft_pay_run_count: int = 0
 
 
 class BASCalculationResponse(BaseModel):
@@ -199,6 +204,11 @@ class BASCalculationResponse(BaseModel):
     w1_total_wages: Decimal
     w2_amount_withheld: Decimal
 
+    # PAYG Instalment fields (Spec 062)
+    t1_instalment_income: Decimal | None = None
+    t2_instalment_rate: Decimal | None = None
+    t_instalment_payable: Decimal = Decimal("0")
+
     # Summary
     gst_payable: Decimal
     total_payable: Decimal
@@ -212,6 +222,13 @@ class BASCalculationResponse(BaseModel):
     pay_run_count: int
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="after")
+    def compute_instalment_payable(self) -> Self:
+        """Compute T1 x T2 instalment payable."""
+        if self.t1_instalment_income is not None and self.t2_instalment_rate is not None:
+            self.t_instalment_payable = self.t1_instalment_income * self.t2_instalment_rate
+        return self
 
 
 class BASCalculateTriggerResponse(BaseModel):
@@ -396,6 +413,10 @@ class LodgementRecordRequest(BaseModel):
         None, max_length=50, description="ATO lodgement reference number"
     )
     lodgement_notes: str | None = Field(None, description="Additional notes about the lodgement")
+    # FR-021: optionally include insights summary in lodgement confirmation email
+    include_insights: bool = Field(
+        False, description="Include top insights in the lodgement confirmation email"
+    )
 
     @model_validator(mode="after")
     def validate_other_method(self) -> Self:

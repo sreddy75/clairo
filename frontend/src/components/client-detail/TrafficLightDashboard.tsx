@@ -73,6 +73,8 @@ interface TrafficLightDashboardProps {
   onRefreshData: () => void;
   isRefreshing?: boolean;
   clientId: string;
+  selectedQuarter?: number | null;
+  selectedFyYear?: number | null;
 }
 
 // =============================================================================
@@ -306,6 +308,8 @@ export function TrafficLightDashboard({
   onRefreshData,
   isRefreshing,
   clientId,
+  selectedQuarter,
+  selectedFyYear,
 }: TrafficLightDashboardProps) {
   // Calculate statuses
   const gstStatus = getGSTStatus(client.net_gst, client.critical_issues);
@@ -483,7 +487,9 @@ export function TrafficLightDashboard({
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
             <FileText className="w-3 h-3" />
-            {client.quarter_label} Summary
+            {selectedQuarter && selectedFyYear
+              ? `Q${selectedQuarter} FY${String(selectedFyYear).slice(-2)}`
+              : client.quarter_label} Summary
           </span>
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">

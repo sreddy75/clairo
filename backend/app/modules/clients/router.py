@@ -40,6 +40,7 @@ from app.modules.clients.schemas import (
     PracticeClientCreate,
     PracticeClientNotesUpdate,
     PracticeClientResponse,
+    PracticeClientUpdate,
     TransactionListResponse,
 )
 from app.modules.clients.service import ClientsService, PracticeClientService
@@ -206,6 +207,32 @@ async def reverse_exclusion(
         )
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Exclusion not found")
+
+
+@router.patch(
+    "/{client_id}/gst-basis",
+    response_model=PracticeClientResponse,
+    summary="Set GST reporting basis for a client",
+)
+async def update_gst_basis(
+    client_id: UUID,
+    request: PracticeClientUpdate,
+    current_user: PracticeUser = Depends(require_permission(Permission.INTEGRATION_MANAGE)),
+    db: AsyncSession = Depends(get_db),
+) -> PracticeClientResponse:
+    """Set or change the GST reporting basis (cash / accrual) for a client."""
+    if request.gst_reporting_basis is None:
+        raise HTTPException(status_code=422, detail="gst_reporting_basis is required")
+    service = PracticeClientService(db, actor_id=current_user.id, tenant_id=current_user.tenant_id)
+    try:
+        return await service.set_gst_basis(
+            client_id=client_id,
+            basis=request.gst_reporting_basis,
+            actor_id=current_user.id,
+            tenant_id=current_user.tenant_id,
+        )
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Client not found")
 
 
 @router.patch(

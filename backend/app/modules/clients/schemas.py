@@ -105,6 +105,17 @@ class PracticeClientUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=255)
     abn: str | None = Field(None, max_length=11)
     assigned_user_id: UUID | None = None
+    gst_reporting_basis: str | None = Field(
+        None,
+        description="GST reporting basis: 'cash' or 'accrual'",
+    )
+
+    @field_validator("gst_reporting_basis")
+    @classmethod
+    def validate_gst_basis(cls, v: str | None) -> str | None:
+        if v is not None and v not in {"cash", "accrual"}:
+            raise ValueError("gst_reporting_basis must be 'cash' or 'accrual'")
+        return v
 
 
 class PracticeClientResponse(BaseModel):
@@ -126,6 +137,10 @@ class PracticeClientResponse(BaseModel):
     notes_updated_at: datetime | None = None
     notes_updated_by_name: str | None = None
     manual_status: str | None = None
+    # GST basis (Spec 062)
+    gst_reporting_basis: str | None = None
+    gst_basis_updated_at: datetime | None = None
+    gst_basis_updated_by: UUID | None = None
     created_at: datetime
 
 

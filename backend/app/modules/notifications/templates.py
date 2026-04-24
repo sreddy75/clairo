@@ -326,10 +326,18 @@ www.clairo.com.au | support@clairo.com.au
         lodgement_date: str,
         reference_number: str,
         dashboard_url: str,
+        insights_section: str | None = None,
+        insights_section_text: str | None = None,
     ) -> EmailTemplate:
-        """Generate BAS lodgement confirmation email."""
+        """Generate BAS lodgement confirmation email.
+
+        Args:
+            insights_section: Optional HTML block for "This Quarter in Numbers" (FR-021).
+            insights_section_text: Matching plain-text block for the same section.
+        """
         subject = f"BAS Lodged: {client_name} - {period}"
 
+        insights_html = insights_section or ""
         content = f"""
 <h1 style="color: {cls.TEXT_COLOR}; font-size: 24px; margin: 0 0 16px 0;">BAS Successfully Lodged</h1>
 <p style="color: {cls.TEXT_COLOR}; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
@@ -349,12 +357,14 @@ www.clairo.com.au | support@clairo.com.au
         </td>
     </tr>
 </table>
+{insights_html}
 {cls._button("View Lodgement Details", dashboard_url)}
 <p style="color: {cls.SECONDARY_TEXT}; font-size: 14px; line-height: 1.6; margin: 16px 0 0 0;">
     A copy of this lodgement has been saved to your records.
 </p>
 """
 
+        insights_text = f"\n{insights_section_text}\n" if insights_section_text else ""
         text = f"""BAS Successfully Lodged
 
 Hi {user_name},
@@ -364,7 +374,7 @@ The BAS for {client_name} for the period {period} has been successfully lodged.
 Lodgement Details:
 - Reference: {reference_number}
 - Date: {lodgement_date}
-
+{insights_text}
 View Lodgement Details: {dashboard_url}
 
 A copy of this lodgement has been saved to your records.
