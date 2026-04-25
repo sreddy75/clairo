@@ -75,9 +75,7 @@ def test_to_public_tags_platform_flag_correctly() -> None:
 
 def test_visible_to_caller_requires_published_and_live() -> None:
     live = _FakeStrategy(status="published", superseded_by_strategy_id=None)
-    superseded = _FakeStrategy(
-        status="published", superseded_by_strategy_id="CLR-999"
-    )
+    superseded = _FakeStrategy(status="published", superseded_by_strategy_id="CLR-999")
     draft = _FakeStrategy(status="drafted")
     in_review = _FakeStrategy(status="in_review")
     archived = _FakeStrategy(status="archived")

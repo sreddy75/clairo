@@ -345,7 +345,9 @@ class TaxPlanningAgent:
             )
 
         # Build impact data
-        tax_saving = round(base_position["total_tax_payable"] - modified_position["total_tax_payable"], 2)
+        tax_saving = round(
+            base_position["total_tax_payable"] - modified_position["total_tax_payable"], 2
+        )
         taxable_income_change = round(
             modified_position["taxable_income"] - base_position["taxable_income"], 2
         )
@@ -377,7 +379,9 @@ class TaxPlanningAgent:
                     "net_benefit": tax_saving,
                 },
             },
-            "risk_rating": tool_input.get("risk_rating", "moderate") if tool_input.get("risk_rating") in {"conservative", "moderate", "aggressive"} else "moderate",
+            "risk_rating": tool_input.get("risk_rating", "moderate")
+            if tool_input.get("risk_rating") in {"conservative", "moderate", "aggressive"}
+            else "moderate",
             "compliance_notes": tool_input.get("compliance_notes", ""),
             "cash_flow_impact": cash_flow_impact,
             "strategy_category": category.value,

@@ -120,9 +120,7 @@ async def sync_payroll_with_timeout(
     helper stays unaware of Celery so it can be tested in isolation.
     """
     try:
-        result = await asyncio.wait_for(
-            syncer.sync_payroll(connection_id), timeout=timeout_s
-        )
+        result = await asyncio.wait_for(syncer.sync_payroll(connection_id), timeout=timeout_s)
         return "ready", result
     except TimeoutError:
         logger.info(

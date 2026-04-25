@@ -607,9 +607,7 @@ async def get_analysis(
         plan_for_financials = await service.get_plan(plan_id, current_user.tenant_id)
         financials_data_payload = plan_for_financials.financials_data or None
         projection_metadata = (
-            financials_data_payload.get("projection_metadata")
-            if financials_data_payload
-            else None
+            financials_data_payload.get("projection_metadata") if financials_data_payload else None
         )
 
         return {

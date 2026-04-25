@@ -1431,7 +1431,9 @@ async def xero_bas_crosscheck(
     session_id: UUID,
     session: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[PracticeUser, Depends(get_current_practice_user)],
-    force_refresh: bool = Query(default=False, description="Bypass cache and fetch fresh data from Xero"),
+    force_refresh: bool = Query(
+        default=False, description="Bypass cache and fetch fresh data from Xero"
+    ),
 ) -> XeroBASCrossCheckResponse:
     """Fetch BAS report from Xero and compare key figures with Clairo's calculation.
 

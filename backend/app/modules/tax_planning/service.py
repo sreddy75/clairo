@@ -1306,9 +1306,7 @@ class TaxPlanningService:
         compliance_count = 0
         strategy_count = 0
         try:
-            result = await self._retrieve_tax_knowledge_impl(
-                query, entity_type, financials_data
-            )
+            result = await self._retrieve_tax_knowledge_impl(query, entity_type, financials_data)
             _, _, retrieved_strategies = result
             strategy_count = len(retrieved_strategies)
             # Compliance results live in chunks[] — count entries without a
@@ -1427,8 +1425,7 @@ class TaxPlanningService:
                     sid = result["tax_strategy_id"]
                     existing = best_strategy_by_id.get(sid)
                     if existing is None or (
-                        result.get("relevance_score", 0.0)
-                        > existing.get("relevance_score", 0.0)
+                        result.get("relevance_score", 0.0) > existing.get("relevance_score", 0.0)
                     ):
                         best_strategy_by_id[sid] = result
                 else:
@@ -1615,9 +1612,7 @@ class TaxPlanningService:
         # don't carry it.
         citations_out: list[dict] = []
         for citation in result.citations:
-            matched_by = citation.get("matched_by") or _infer_matched_by(
-                citation, retrieved_chunks
-            )
+            matched_by = citation.get("matched_by") or _infer_matched_by(citation, retrieved_chunks)
             citations_out.append(
                 {
                     "identifier": citation.get("section_ref") or str(citation.get("number")),
@@ -1735,9 +1730,7 @@ class TaxPlanningService:
         # identifier does resolve to a retrieved strategy.
         from app.modules.tax_strategies.markup import normalise_strategy_citations
 
-        normalised_content = normalise_strategy_citations(
-            response.content, retrieved_strategies
-        )
+        normalised_content = normalise_strategy_citations(response.content, retrieved_strategies)
         if normalised_content != response.content:
             response.content = normalised_content
 
@@ -2039,9 +2032,7 @@ class TaxPlanningService:
                     normalise_strategy_citations,
                 )
 
-                full_content = normalise_strategy_citations(
-                    full_content, retrieved_strategies
-                )
+                full_content = normalise_strategy_citations(full_content, retrieved_strategies)
 
                 citation_verification = self._build_citation_verification(
                     full_content,

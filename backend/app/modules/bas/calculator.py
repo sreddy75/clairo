@@ -540,14 +540,16 @@ class PAYGCalculator:
             return PAYGResult(has_payroll=False)
 
         # Get finalised (posted) and draft pay runs separately
-        pay_runs = await self._get_pay_runs(connection_id, start_date, end_date, finalised_only=True)
-        draft_runs = await self._get_pay_runs(connection_id, start_date, end_date, finalised_only=False)
+        pay_runs = await self._get_pay_runs(
+            connection_id, start_date, end_date, finalised_only=True
+        )
+        draft_runs = await self._get_pay_runs(
+            connection_id, start_date, end_date, finalised_only=False
+        )
         draft_pay_run_count = max(0, len(draft_runs) - len(pay_runs))
 
         if not pay_runs:
-            source_label = (
-                f"From Xero Payroll — {start_date.strftime('%-d %b %Y')} to {end_date.strftime('%-d %b %Y')}"
-            )
+            source_label = f"From Xero Payroll — {start_date.strftime('%-d %b %Y')} to {end_date.strftime('%-d %b %Y')}"
             return PAYGResult(
                 has_payroll=True,
                 source_label=source_label,
@@ -562,9 +564,7 @@ class PAYGCalculator:
             w1_total += Decimal(str(pay_run.total_wages or 0))
             w2_total += Decimal(str(pay_run.total_tax or 0))
 
-        source_label = (
-            f"From Xero Payroll — {start_date.strftime('%-d %b %Y')} to {end_date.strftime('%-d %b %Y')}"
-        )
+        source_label = f"From Xero Payroll — {start_date.strftime('%-d %b %Y')} to {end_date.strftime('%-d %b %Y')}"
 
         result = PAYGResult(
             w1_total_wages=w1_total,

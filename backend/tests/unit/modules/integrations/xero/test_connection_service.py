@@ -71,9 +71,7 @@ def _make_service():
     settings = MagicMock()
     settings.redis.url = "redis://localhost:6379"
 
-    with patch(
-        "app.modules.integrations.xero.connection_service.TokenEncryption"
-    ) as mock_enc_cls:
+    with patch("app.modules.integrations.xero.connection_service.TokenEncryption") as mock_enc_cls:
         mock_enc_cls.return_value = MagicMock()
         svc = XeroConnectionService(AsyncMock(), settings)
 
@@ -87,8 +85,9 @@ def _make_service():
 AIOREDIS_PATCH = "app.modules.integrations.xero.connection_service.aioredis"
 
 
-def _make_redis_mock(*, from_url_side_effect=None, lock_acquire_side_effect=None,
-                     lock_acquire_return=True):
+def _make_redis_mock(
+    *, from_url_side_effect=None, lock_acquire_side_effect=None, lock_acquire_return=True
+):
     """Build a fake aioredis module to patch connection_service.aioredis."""
     mock_redis_module = MagicMock()
 
@@ -190,14 +189,19 @@ class TestConcurrentRefreshLockBehavior:
             connection_id=conn_id, tenant_id=tenant_id, token_expires_at=EXPIRED_AT
         )
         conn_refreshed = _make_connection(
-            connection_id=conn_id, tenant_id=tenant_id,
-            token_expires_at=FRESH_AT, needs_refresh=False
+            connection_id=conn_id,
+            tenant_id=tenant_id,
+            token_expires_at=FRESH_AT,
+            needs_refresh=False,
         )
 
         svc = _make_service()
         # 4 get_by_id calls: initial, lock-key lookup, post-lock re-read, refresh_tokens read
         svc.connection_repo.get_by_id.side_effect = [
-            conn_expired, conn_expired, conn_expired, conn_expired
+            conn_expired,
+            conn_expired,
+            conn_expired,
+            conn_expired,
         ]
         svc.connection_repo.list_by_tenant.return_value = [conn_expired]
         svc.connection_repo.update.return_value = conn_refreshed
@@ -228,8 +232,10 @@ class TestRedisUnavailable:
         tenant_id = uuid4()
         conn_expired = _make_connection(connection_id=conn_id, tenant_id=tenant_id)
         conn_refreshed = _make_connection(
-            connection_id=conn_id, tenant_id=tenant_id,
-            token_expires_at=FRESH_AT, needs_refresh=False
+            connection_id=conn_id,
+            tenant_id=tenant_id,
+            token_expires_at=FRESH_AT,
+            needs_refresh=False,
         )
 
         svc = _make_service()
@@ -260,8 +266,10 @@ class TestRedisUnavailable:
         tenant_id = uuid4()
         conn_expired = _make_connection(connection_id=conn_id, tenant_id=tenant_id)
         conn_refreshed = _make_connection(
-            connection_id=conn_id, tenant_id=tenant_id,
-            token_expires_at=FRESH_AT, needs_refresh=False
+            connection_id=conn_id,
+            tenant_id=tenant_id,
+            token_expires_at=FRESH_AT,
+            needs_refresh=False,
         )
 
         svc = _make_service()
@@ -305,8 +313,10 @@ class TestRetryBeforeReauth:
         conn_expired = _make_connection(connection_id=conn_id, tenant_id=tenant_id)
         # Sibling propagated: same connection now has fresh tokens
         conn_fresh = _make_connection(
-            connection_id=conn_id, tenant_id=tenant_id,
-            token_expires_at=FRESH_AT, needs_refresh=False
+            connection_id=conn_id,
+            tenant_id=tenant_id,
+            token_expires_at=FRESH_AT,
+            needs_refresh=False,
         )
 
         svc = _make_service()
@@ -319,9 +329,7 @@ class TestRetryBeforeReauth:
             refresh_side_effect=Exception("invalid_grant")
         )
 
-        with patch(
-            "app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls
-        ):
+        with patch("app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls):
             # refresh_tokens is called directly (not via lock — tested separately)
             result = await svc.refresh_tokens(conn_id)
 
@@ -347,13 +355,9 @@ class TestRetryBeforeReauth:
         svc.connection_repo.get_by_id.return_value = conn_expired
         svc.connection_repo.update.return_value = conn_expired
 
-        mock_client_cls, _ = _make_xero_client_patch(
-            refresh_side_effect=Exception("invalid_grant")
-        )
+        mock_client_cls, _ = _make_xero_client_patch(refresh_side_effect=Exception("invalid_grant"))
 
-        with patch(
-            "app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls
-        ):
+        with patch("app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls):
             with pytest.raises(Exception, match="invalid_grant"):
                 await svc.refresh_tokens(conn_id)
 
@@ -393,8 +397,10 @@ class TestSiblingPropagation:
             connection_id=sibling2_id, tenant_id=tenant_id, organization_name="Sibling Two"
         )
         conn_refreshed = _make_connection(
-            connection_id=conn_main_id, tenant_id=tenant_id,
-            token_expires_at=FRESH_AT, needs_refresh=False
+            connection_id=conn_main_id,
+            tenant_id=tenant_id,
+            token_expires_at=FRESH_AT,
+            needs_refresh=False,
         )
 
         svc = _make_service()
@@ -404,9 +410,7 @@ class TestSiblingPropagation:
 
         mock_client_cls, _ = _make_xero_client_patch()
 
-        with patch(
-            "app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls
-        ):
+        with patch("app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls):
             await svc.refresh_tokens(conn_main_id)
 
         updated_ids = {call.args[0] for call in svc.connection_repo.update.call_args_list}
@@ -428,8 +432,10 @@ class TestSiblingPropagation:
             organization_name="Reauth Sibling",
         )
         conn_refreshed = _make_connection(
-            connection_id=conn_main_id, tenant_id=tenant_id,
-            token_expires_at=FRESH_AT, needs_refresh=False
+            connection_id=conn_main_id,
+            tenant_id=tenant_id,
+            token_expires_at=FRESH_AT,
+            needs_refresh=False,
         )
 
         svc = _make_service()
@@ -439,14 +445,13 @@ class TestSiblingPropagation:
 
         mock_client_cls, _ = _make_xero_client_patch()
 
-        with patch(
-            "app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls
-        ):
+        with patch("app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls):
             await svc.refresh_tokens(conn_main_id)
 
         # Find the update call for the needs_reauth sibling
         sibling_calls = [
-            call for call in svc.connection_repo.update.call_args_list
+            call
+            for call in svc.connection_repo.update.call_args_list
             if call.args[0] == sibling_reauth_id
         ]
         assert sibling_calls, "needs_reauth sibling must receive a token update"
@@ -468,12 +473,15 @@ class TestSiblingPropagation:
             connection_id=conn_main_id, tenant_id=tenant_id, auth_event_id="evt_A"
         )
         conn_unrelated = _make_connection(
-            connection_id=unrelated_id, tenant_id=tenant_id,
+            connection_id=unrelated_id,
+            tenant_id=tenant_id,
             auth_event_id="evt_B",  # Different grant
         )
         conn_refreshed = _make_connection(
-            connection_id=conn_main_id, tenant_id=tenant_id,
-            token_expires_at=FRESH_AT, needs_refresh=False
+            connection_id=conn_main_id,
+            tenant_id=tenant_id,
+            token_expires_at=FRESH_AT,
+            needs_refresh=False,
         )
 
         svc = _make_service()
@@ -483,9 +491,7 @@ class TestSiblingPropagation:
 
         mock_client_cls, _ = _make_xero_client_patch()
 
-        with patch(
-            "app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls
-        ):
+        with patch("app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls):
             await svc.refresh_tokens(conn_main_id)
 
         updated_ids = {call.args[0] for call in svc.connection_repo.update.call_args_list}
@@ -508,9 +514,7 @@ class TestSiblingPropagation:
 
         mock_client_cls, mock_xero = _make_xero_client_patch()
 
-        with patch(
-            "app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls
-        ):
+        with patch("app.modules.integrations.xero.connection_service.XeroClient", mock_client_cls):
             result = await svc.refresh_tokens(conn_id)
 
         # No sibling query should be made
@@ -529,7 +533,9 @@ class TestEnsureValidTokenGuards:
     @pytest.mark.asyncio
     async def test_returns_decrypted_token_when_still_valid(self) -> None:
         conn_id = uuid4()
-        conn = _make_connection(connection_id=conn_id, token_expires_at=FRESH_AT, needs_refresh=False)
+        conn = _make_connection(
+            connection_id=conn_id, token_expires_at=FRESH_AT, needs_refresh=False
+        )
 
         svc = _make_service()
         svc.connection_repo.get_by_id.return_value = conn

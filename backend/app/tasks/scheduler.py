@@ -415,9 +415,7 @@ def keepalive_xero_tokens(self) -> dict:
             failed = 0
             errors: list[str] = []
 
-            logger.info(
-                "Token keepalive: checking %d active connections", len(connections)
-            )
+            logger.info("Token keepalive: checking %d active connections", len(connections))
 
             for conn in connections:
                 try:

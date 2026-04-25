@@ -99,9 +99,7 @@ def test_long_explanation_splits_at_paragraph_boundary() -> None:
 
     chunker = StrategyChunker()
     chunks = chunker.chunk_strategy(_clr_012_input(explanation_text=explanation))
-    explanation_chunks = [
-        c for c in chunks if c.metadata["chunk_section"] == "explanation"
-    ]
+    explanation_chunks = [c for c in chunks if c.metadata["chunk_section"] == "explanation"]
     assert len(explanation_chunks) >= 2, (
         f"Expected ≥2 explanation chunks for long input, got {len(explanation_chunks)}"
     )

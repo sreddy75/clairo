@@ -502,9 +502,7 @@ class CitationVerifier:
     # -----------------------------------------------------------------
 
     # Single canonical citation form per spec 060 FR-020 clarification.
-    _CLR_PATTERN: re.Pattern[str] = re.compile(
-        r"\[CLR-(?P<num>\d{3,5}):\s*(?P<name>[^\]]+)\]"
-    )
+    _CLR_PATTERN: re.Pattern[str] = re.compile(r"\[CLR-(?P<num>\d{3,5}):\s*(?P<name>[^\]]+)\]")
 
     # Name drift threshold per spec 060 clarification. Normalised Levenshtein
     # distance (length-adjusted) ≥ this value flips a citation from verified

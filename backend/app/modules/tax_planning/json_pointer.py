@@ -52,9 +52,7 @@ def resolve(root: Any, pointer: str) -> Any:
             try:
                 idx = int(token)
             except ValueError as e:
-                raise KeyError(
-                    f"Expected numeric index at {token!r} in pointer {pointer!r}"
-                ) from e
+                raise KeyError(f"Expected numeric index at {token!r} in pointer {pointer!r}") from e
             if idx < 0 or idx >= len(node):
                 raise KeyError(f"Index {idx} out of range in pointer {pointer!r}")
             node = node[idx]
@@ -63,9 +61,7 @@ def resolve(root: Any, pointer: str) -> Any:
                 raise KeyError(f"Missing key {token!r} in pointer {pointer!r}")
             node = node[token]
         else:
-            raise KeyError(
-                f"Cannot traverse into {type(node).__name__} at pointer {pointer!r}"
-            )
+            raise KeyError(f"Cannot traverse into {type(node).__name__} at pointer {pointer!r}")
     return node
 
 
@@ -94,16 +90,12 @@ def set_at(root: Any, pointer: str, value: Any) -> Any:
                 raise KeyError(f"Missing key {token!r} in pointer {pointer!r}")
             node = node[token]
         else:
-            raise KeyError(
-                f"Cannot traverse into {type(node).__name__} at pointer {pointer!r}"
-            )
+            raise KeyError(f"Cannot traverse into {type(node).__name__} at pointer {pointer!r}")
     last = tokens[-1]
     if isinstance(node, list):
         node[int(last)] = value
     elif isinstance(node, dict):
         node[last] = value
     else:
-        raise KeyError(
-            f"Cannot write into {type(node).__name__} at pointer {pointer!r}"
-        )
+        raise KeyError(f"Cannot write into {type(node).__name__} at pointer {pointer!r}")
     return new_root

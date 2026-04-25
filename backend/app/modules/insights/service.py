@@ -373,7 +373,7 @@ class InsightService:
         # HTML section
         rows_html = "\n".join(
             f'<li style="margin: 0 0 6px 0; font-size: 14px; color: #374151;">'
-            f'<strong>{i.title}</strong> — {i.summary}</li>'
+            f"<strong>{i.title}</strong> — {i.summary}</li>"
             for i in insights
         )
         html = (

@@ -64,9 +64,7 @@ class StrategyChunker(BaseStructuredChunker):
 
     # BaseStructuredChunker requires chunk(raw_content, metadata) — we
     # satisfy the signature but the real entry point is chunk_strategy().
-    def chunk(
-        self, raw_content: str, metadata: dict | None = None
-    ) -> list[ChunkResult]:
+    def chunk(self, raw_content: str, metadata: dict | None = None) -> list[ChunkResult]:
         raise NotImplementedError(
             "Use StrategyChunker.chunk_strategy(StrategyChunkerInput) — "
             "tax strategies have structured input that doesn't fit the "
@@ -125,9 +123,7 @@ class StrategyChunker(BaseStructuredChunker):
         return results
 
     @staticmethod
-    def _format_context_header(
-        strategy_id: str, name: str, primary_category: str
-    ) -> str:
+    def _format_context_header(strategy_id: str, name: str, primary_category: str) -> str:
         """Produce `[CLR-XXX: Name — Category: Y]` per architecture §7.2."""
         return f"[{strategy_id}: {name} — Category: {primary_category}]"
 

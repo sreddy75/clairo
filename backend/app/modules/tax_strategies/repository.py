@@ -123,9 +123,7 @@ class TaxStrategyRepository:
 
     async def count_by_status(self) -> dict[str, int]:
         """Pipeline dashboard aggregation."""
-        stmt = select(TaxStrategy.status, func.count(TaxStrategy.id)).group_by(
-            TaxStrategy.status
-        )
+        stmt = select(TaxStrategy.status, func.count(TaxStrategy.id)).group_by(TaxStrategy.status)
         result = await self.session.execute(stmt)
         return {row[0]: int(row[1]) for row in result.all()}
 
@@ -177,9 +175,7 @@ class TaxStrategyRepository:
     async def get_job(self, job_id: UUID) -> TaxStrategyAuthoringJob | None:
         return await self.session.get(TaxStrategyAuthoringJob, job_id)
 
-    async def list_jobs_for_strategy(
-        self, strategy_id: str
-    ) -> list[TaxStrategyAuthoringJob]:
+    async def list_jobs_for_strategy(self, strategy_id: str) -> list[TaxStrategyAuthoringJob]:
         stmt = (
             select(TaxStrategyAuthoringJob)
             .where(TaxStrategyAuthoringJob.strategy_id == strategy_id)

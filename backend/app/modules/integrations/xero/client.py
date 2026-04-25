@@ -271,7 +271,9 @@ class XeroClient:
                 with contextlib.suppress(Exception):
                     detail = response.json().get("Detail", "")
             if detail == "AuthenticationUnsuccessful":
-                raise XeroAuthError("AuthenticationUnsuccessful — Xero connection must be reconnected", 403)
+                raise XeroAuthError(
+                    "AuthenticationUnsuccessful — Xero connection must be reconnected", 403
+                )
 
         if response.status_code == 429:
             retry_after = int(response.headers.get("Retry-After", "60"))

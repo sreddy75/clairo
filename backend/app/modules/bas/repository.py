@@ -489,9 +489,7 @@ class BASRepository:
 
         # Index by (fy_year, quarter) for lookup
         index: dict[tuple[int, int], BASSession] = {
-            (s.period.fy_year, s.period.quarter): s
-            for s in sessions
-            if s.period
+            (s.period.fy_year, s.period.quarter): s for s in sessions if s.period
         }
 
         return {
@@ -1006,9 +1004,7 @@ class BASRepository:
         await self.session.refresh(suggestion)
         return suggestion
 
-    async def backfill_suggestion_tax_types_from_classifications(
-        self, request_id: UUID
-    ) -> int:
+    async def backfill_suggestion_tax_types_from_classifications(self, request_id: UUID) -> int:
         """One-time backfill: for already-mapped classifications whose linked
         TaxCodeSuggestion still has suggested_tax_type=NULL, copy the
         ai_suggested_tax_type across.  Safe to call repeatedly — skips rows
@@ -1060,9 +1056,7 @@ class BASRepository:
             values["confidence_score"] = _Decimal(str(confidence_score))
 
         await self.session.execute(
-            update(TaxCodeSuggestion)
-            .where(TaxCodeSuggestion.id == suggestion_id)
-            .values(**values)
+            update(TaxCodeSuggestion).where(TaxCodeSuggestion.id == suggestion_id).values(**values)
         )
         await self.session.flush()
 

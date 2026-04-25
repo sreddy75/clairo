@@ -578,6 +578,7 @@ class BASService:
             from sqlalchemy import select as _select
 
             from app.modules.clients.models import PracticeClient
+
             _result = await self.session.execute(
                 _select(PracticeClient).where(
                     PracticeClient.xero_connection_id == period.connection_id
@@ -587,6 +588,7 @@ class BASService:
             if practice_client is not None:
                 if practice_client.gst_reporting_basis is None:
                     from app.core.exceptions import ValidationError
+
                     raise ValidationError(
                         "GST reporting basis has not been set for this client. "
                         "Please select Cash or Accrual basis before calculating BAS."
@@ -595,6 +597,7 @@ class BASService:
         except Exception as exc:
             # Re-raise domain validation errors; swallow unexpected lookup failures
             from app.core.exceptions import ValidationError
+
             if isinstance(exc, ValidationError):
                 raise
             logger.warning(f"Could not resolve GST basis for session {session_id}: {exc}")
@@ -661,6 +664,7 @@ class BASService:
         # Invalidate the cross-check cache so the next load fetches fresh Xero data
         try:
             from app.core.cache import cache_delete
+
             await cache_delete(f"xero_bas_crosscheck:{period.connection_id}:{session_id}")
         except Exception:
             pass  # Non-fatal — cache will expire naturally
@@ -807,8 +811,12 @@ class BASService:
                     "t2_instalment_rate": str(old_t2) if old_t2 is not None else None,
                 },
                 new_values={
-                    "t1_instalment_income": str(t1_instalment_income) if t1_instalment_income is not None else None,
-                    "t2_instalment_rate": str(t2_instalment_rate) if t2_instalment_rate is not None else None,
+                    "t1_instalment_income": str(t1_instalment_income)
+                    if t1_instalment_income is not None
+                    else None,
+                    "t2_instalment_rate": str(t2_instalment_rate)
+                    if t2_instalment_rate is not None
+                    else None,
                 },
             )
         except Exception:
@@ -1617,7 +1625,6 @@ class BASService:
             transaction_count=len(transactions),
             transactions=transactions,
         )
-
 
     async def get_reconciliation_status(
         self,

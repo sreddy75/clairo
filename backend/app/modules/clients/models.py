@@ -368,7 +368,9 @@ class ClientQuarterExclusion(Base, TenantMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<ClientQuarterExclusion(client_id={self.client_id}, Q{self.quarter} {self.fy_year})>"
+        return (
+            f"<ClientQuarterExclusion(client_id={self.client_id}, Q{self.quarter} {self.fy_year})>"
+        )
 
 
 # =============================================================================
@@ -438,9 +440,7 @@ class ClientNoteHistory(Base, TenantMixin):
     )
 
     # Indexes
-    __table_args__ = (
-        Index("ix_note_history_client_date", "client_id", text("edited_at DESC")),
-    )
+    __table_args__ = (Index("ix_note_history_client_date", "client_id", text("edited_at DESC")),)
 
     def __repr__(self) -> str:
         return f"<ClientNoteHistory(client_id={self.client_id}, edited_at={self.edited_at})>"

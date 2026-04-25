@@ -177,6 +177,7 @@ class InsightGenerator:
 
         # T045: Confidence threshold routing — downgrade high-priority low-confidence insights
         from app.modules.insights.models import InsightPriority  # noqa: PLC0415 (lazy import ok)
+
         for ic in all_insight_creates:
             if ic.priority == InsightPriority.HIGH and ic.confidence < URGENT_CONFIDENCE_THRESHOLD:
                 ic.priority = InsightPriority.MEDIUM

@@ -382,10 +382,12 @@ class DashboardRepository:
         filters.append(
             or_(
                 PracticeClient.xero_connection_id.is_(None),
-                XeroConnection.status.in_([
-                    XeroConnectionStatus.ACTIVE,
-                    XeroConnectionStatus.NEEDS_REAUTH,
-                ]),
+                XeroConnection.status.in_(
+                    [
+                        XeroConnectionStatus.ACTIVE,
+                        XeroConnectionStatus.NEEDS_REAUTH,
+                    ]
+                ),
             )
         )
 
@@ -496,7 +498,9 @@ class DashboardRepository:
 
             # Notes preview
             notes_text = row.notes or ""
-            notes_preview = (notes_text[:100] + "...") if len(notes_text) > 100 else (notes_text or None)
+            notes_preview = (
+                (notes_text[:100] + "...") if len(notes_text) > 100 else (notes_text or None)
+            )
 
             client_dict: dict[str, Any] = {
                 "id": row.id,
@@ -505,7 +509,9 @@ class DashboardRepository:
                 "assigned_user_name": assigned_name,
                 "accounting_software": row.accounting_software,
                 "has_xero_connection": has_xero,
-                "xero_connection_id": str(row.xero_connection_id) if row.xero_connection_id else None,
+                "xero_connection_id": str(row.xero_connection_id)
+                if row.xero_connection_id
+                else None,
                 "notes_preview": notes_preview if notes_preview else None,
                 "unreconciled_count": unreconciled_count,
                 "manual_status": row.manual_status,

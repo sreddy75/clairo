@@ -149,9 +149,7 @@ class PracticeClientAssignRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    assigned_user_id: UUID | None = Field(
-        ..., description="Team member ID, or null to unassign"
-    )
+    assigned_user_id: UUID | None = Field(..., description="Team member ID, or null to unassign")
 
 
 class PracticeClientBulkAssignRequest(BaseModel):

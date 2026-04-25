@@ -526,7 +526,15 @@ Remember to respond with ONLY valid JSON."""
             InsightCreate or None if parsing fails.
         """
         # Strip first-person AI chat language from summary/detail
-        _FIRST_PERSON_PREFIXES = ("I ", "I've ", "I've ", "I notice", "I see", "I can ", "It appears")
+        _FIRST_PERSON_PREFIXES = (
+            "I ",
+            "I've ",
+            "I've ",
+            "I notice",
+            "I see",
+            "I can ",
+            "It appears",
+        )
 
         def _strip_first_person(text: str | None) -> str | None:
             if not text:
