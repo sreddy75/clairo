@@ -769,6 +769,10 @@ class ClassificationService:
                     ai_confidence=Decimal("0.95"),
                     ai_mapped_at=now,
                 )
+                if c.suggestion_id:
+                    await self.repo.update_suggestion_tax_type(
+                        c.suggestion_id, "BASEXCLUDED", Decimal("0.95")
+                    )
                 mapped_count += 1
                 continue
 
@@ -827,6 +831,11 @@ class ClassificationService:
                     ai_confidence=confidence,
                     ai_mapped_at=now,
                 )
+                # Write back to TaxCodeSuggestion so the Approve button becomes visible
+                if suggested and c.suggestion_id:
+                    await self.repo.update_suggestion_tax_type(
+                        c.suggestion_id, suggested, confidence
+                    )
                 mapped_count += 1
 
         # Audit event
@@ -869,6 +878,10 @@ class ClassificationService:
         unprocessed = await self.repo.get_unprocessed_classifications(request.id)
         if unprocessed:
             await self.map_client_classifications(request.id, tenant_id)
+        else:
+            # Backfill: write ai_suggested_tax_type back to suggestions that
+            # were mapped before this fix (suggested_tax_type still null on the suggestion)
+            await self.repo.backfill_suggestion_tax_types_from_classifications(request.id)
 
         # Update status
         if request.status == ClassificationRequestStatus.SUBMITTED:

@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Integer, Text, func, select
+from sqlalchemy import Integer, Text, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -1005,6 +1005,66 @@ class BASRepository:
         await self.session.flush()
         await self.session.refresh(suggestion)
         return suggestion
+
+    async def backfill_suggestion_tax_types_from_classifications(
+        self, request_id: UUID
+    ) -> int:
+        """One-time backfill: for already-mapped classifications whose linked
+        TaxCodeSuggestion still has suggested_tax_type=NULL, copy the
+        ai_suggested_tax_type across.  Safe to call repeatedly — skips rows
+        that already have a value.  Returns the number of rows updated.
+        """
+        from app.modules.bas.classification_models import ClientClassification
+
+        # Fetch mapped classifications that link to a suggestion
+        result = await self.session.execute(
+            select(ClientClassification).where(
+                ClientClassification.request_id == request_id,
+                ClientClassification.ai_suggested_tax_type.isnot(None),
+                ClientClassification.suggestion_id.isnot(None),
+            )
+        )
+        classifications = result.scalars().all()
+
+        updated = 0
+        for c in classifications:
+            await self.session.execute(
+                update(TaxCodeSuggestion)
+                .where(
+                    TaxCodeSuggestion.id == c.suggestion_id,
+                    TaxCodeSuggestion.suggested_tax_type.is_(None),
+                )
+                .values(suggested_tax_type=c.ai_suggested_tax_type)
+            )
+            updated += 1
+
+        if updated:
+            await self.session.flush()
+        return updated
+
+    async def update_suggestion_tax_type(
+        self,
+        suggestion_id: UUID,
+        suggested_tax_type: str,
+        confidence_score: "Decimal | None" = None,
+    ) -> None:
+        """Write back AI-mapped tax type to a TaxCodeSuggestion row.
+
+        Used when client-review AI mapping resolves a previously unclassified
+        suggestion so that the Approve button becomes available in the UI.
+        """
+        from decimal import Decimal as _Decimal
+
+        values: dict = {"suggested_tax_type": suggested_tax_type}
+        if confidence_score is not None:
+            values["confidence_score"] = _Decimal(str(confidence_score))
+
+        await self.session.execute(
+            update(TaxCodeSuggestion)
+            .where(TaxCodeSuggestion.id == suggestion_id)
+            .values(**values)
+        )
+        await self.session.flush()
 
     async def get_pending_suggestions_for_bulk(
         self,

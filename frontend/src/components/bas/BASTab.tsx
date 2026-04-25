@@ -222,6 +222,9 @@ export function BASTab({
 
   // GST basis modal state (Spec 062 - US1)
   const [showGSTBasisModal, setShowGSTBasisModal] = useState(false);
+  // Optimistic local copy — updated immediately on save so handleCalculate doesn't
+  // re-open the modal before the parent's fetchClient() round-trip completes
+  const [localGstBasis, setLocalGstBasis] = useState<string | null>(clientGstBasis ?? null);
 
   // Reconciliation warning state (Spec 062 - US11)
   const [reconciliationStatus, setReconciliationStatus] = useState<ReconciliationStatus | null>(null);
@@ -231,6 +234,11 @@ export function BASTab({
   // Xero write-back state (Spec 049)
   const [activeWritebackJobId, setActiveWritebackJobId] = useState<string | null>(null);
   const [completedWritebackJob, setCompletedWritebackJob] = useState<WritebackJobDetailResponse | null>(null);
+
+  // Keep localGstBasis in sync when the parent prop updates after fetchClient()
+  useEffect(() => {
+    setLocalGstBasis(clientGstBasis ?? null);
+  }, [clientGstBasis]);
 
   // ==========================================================================
   // Data Fetching
@@ -351,11 +359,12 @@ export function BASTab({
     }
   };
 
-  const handleCalculate = async () => {
+  const handleCalculate = async (effectiveBasis?: string) => {
     if (!selectedSession) return;
 
     // US1: Require GST basis to be set before calculating
-    if (clientGstBasis === null || clientGstBasis === undefined) {
+    const basisToUse = effectiveBasis ?? localGstBasis;
+    if (basisToUse === null || basisToUse === undefined) {
       setShowGSTBasisModal(true);
       return;
     }
@@ -734,9 +743,10 @@ export function BASTab({
         onClose={() => setShowGSTBasisModal(false)}
         onSaved={(basis) => {
           setShowGSTBasisModal(false);
+          setLocalGstBasis(basis);
           onGstBasisChanged?.(basis);
-          // Trigger calculation after basis is set
-          setTimeout(() => handleCalculate(), 100);
+          // Pass basis directly to avoid stale closure on localGstBasis
+          setTimeout(() => handleCalculate(basis), 100);
         }}
       />
 
@@ -942,7 +952,7 @@ export function BASTab({
                     {/* Actions */}
                     <div className="flex flex-col sm:items-end gap-2">
                       <button
-                        onClick={handleCalculate}
+                        onClick={() => handleCalculate()}
                         disabled={isCalculating}
                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-foreground text-sm font-semibold rounded-xl hover:bg-white/90 disabled:opacity-50 transition-all shadow-lg"
                       >

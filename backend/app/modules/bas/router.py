@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_current_practice_user, get_db
 from app.modules.auth.models import PracticeUser
 from app.modules.bas.classification_schemas import (
+    AgentNoteCreate,
     ClassificationBulkApprove,
     ClassificationBulkApproveResponse,
     ClassificationRequestCreate,
@@ -22,6 +23,7 @@ from app.modules.bas.classification_schemas import (
     ClassificationResolve,
     ClassificationResolveResponse,
     ClassificationReviewResponse,
+    SendBackRequest,
 )
 from app.modules.bas.classification_service import ClassificationService
 from app.modules.bas.exceptions import (
@@ -1105,6 +1107,35 @@ async def get_workboard_summary(
     service = WorkboardService(session)
 
     return await service.get_workboard_summary(tenant_id=user.tenant_id)
+
+
+@workboard_router.patch(
+    "/calculations/{calculation_id}/instalments",
+    response_model=BASCalculationResponse,
+    summary="Update PAYG instalment T1/T2 (by calculation ID)",
+    description="Flat route used by the frontend. Accepts calculation UUID directly.",
+)
+async def update_instalment_by_calc_id(
+    calculation_id: UUID,
+    request: InstalmentUpdateRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> BASCalculationResponse:
+    """Update PAYG instalment T1/T2 by calculation UUID."""
+    bas_service = BASService(session)
+    calc = await bas_service.repo.get_calculation_by_id(calculation_id)
+    if calc is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Calculation not found",
+        )
+    return await bas_service.update_instalment(
+        calculation_id=calc.id,
+        tenant_id=user.tenant_id,
+        actor_id=user.id,
+        t1_instalment_income=request.t1_instalment_income,
+        t2_instalment_rate=request.t2_instalment_rate,
+    )
 
 
 # =============================================================================
@@ -2233,8 +2264,8 @@ async def delete_split_override(
 # =============================================================================
 
 
-@router.get(
-    "/bas/clients/{client_id}/reconciliation-status",
+@workboard_router.get(
+    "/clients/{client_id}/reconciliation-status",
     summary="Get Xero reconciliation status for a period",
     description="Returns count of unreconciled transactions before loading BAS figures.",
 )
