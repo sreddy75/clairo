@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import logging
+from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from pydantic import BaseModel as _RouterBaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_practice_user, get_db
 from app.modules.auth.models import PracticeUser
 from app.modules.bas.classification_schemas import (
+    AgentNoteCreate,
     ClassificationBulkApprove,
     ClassificationBulkApproveResponse,
     ClassificationRequestCreate,
@@ -20,6 +23,7 @@ from app.modules.bas.classification_schemas import (
     ClassificationResolve,
     ClassificationResolveResponse,
     ClassificationReviewResponse,
+    SendBackRequest,
 )
 from app.modules.bas.classification_service import ClassificationService
 from app.modules.bas.exceptions import (
@@ -488,6 +492,51 @@ async def get_calculation(
         )
 
     return result
+
+
+# =============================================================================
+# Instalment Endpoints (Spec 062)
+# =============================================================================
+
+
+class InstalmentUpdateRequest(_RouterBaseModel):
+    """Request to update PAYG instalment T1/T2 fields."""
+
+    t1_instalment_income: Decimal | None = None
+    t2_instalment_rate: Decimal | None = None
+
+
+@router.patch(
+    "/{connection_id}/bas/sessions/{session_id}/calculation/instalments",
+    response_model=BASCalculationResponse,
+    summary="Update PAYG instalment T1/T2",
+    description="Manually set instalment income (T1) and rate (T2) for quarterly BAS filers.",
+)
+async def update_instalment(
+    connection_id: UUID,
+    session_id: UUID,
+    request: InstalmentUpdateRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> BASCalculationResponse:
+    """Update PAYG instalment T1/T2 for a BAS calculation."""
+    await verify_connection_access(connection_id, session, user)
+
+    bas_service = BASService(session)
+    calc = await bas_service.repo.get_calculation(session_id)
+    if calc is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No calculation found for this session",
+        )
+
+    return await bas_service.update_instalment(
+        calculation_id=calc.id,
+        tenant_id=user.tenant_id,
+        actor_id=user.id,
+        t1_instalment_income=request.t1_instalment_income,
+        t2_instalment_rate=request.t2_instalment_rate,
+    )
 
 
 # =============================================================================
@@ -1060,6 +1109,35 @@ async def get_workboard_summary(
     return await service.get_workboard_summary(tenant_id=user.tenant_id)
 
 
+@workboard_router.patch(
+    "/calculations/{calculation_id}/instalments",
+    response_model=BASCalculationResponse,
+    summary="Update PAYG instalment T1/T2 (by calculation ID)",
+    description="Flat route used by the frontend. Accepts calculation UUID directly.",
+)
+async def update_instalment_by_calc_id(
+    calculation_id: UUID,
+    request: InstalmentUpdateRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> BASCalculationResponse:
+    """Update PAYG instalment T1/T2 by calculation UUID."""
+    bas_service = BASService(session)
+    calc = await bas_service.repo.get_calculation_by_id(calculation_id)
+    if calc is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Calculation not found",
+        )
+    return await bas_service.update_instalment(
+        calculation_id=calc.id,
+        tenant_id=user.tenant_id,
+        actor_id=user.id,
+        t1_instalment_income=request.t1_instalment_income,
+        t2_instalment_rate=request.t2_instalment_rate,
+    )
+
+
 # =============================================================================
 # Tax Code Suggestion Endpoints (Spec 046)
 # =============================================================================
@@ -1274,7 +1352,7 @@ async def dismiss_suggestion(
 @router.post(
     "/{connection_id}/bas/sessions/{session_id}/tax-code-suggestions/{suggestion_id}/unpark",
     response_model=SuggestionResolutionResponse,
-    summary="Unpark — return suggestion to Manual Required",
+    summary="Unpark — return suggestion to Uncoded",
 )
 async def unpark_suggestion(
     connection_id: UUID,
@@ -2179,3 +2257,38 @@ async def delete_split_override(
                 "actual_total": str(exc.actual_total),
             },
         ) from exc
+
+
+# =============================================================================
+# Reconciliation Status Endpoint (Spec 062)
+# =============================================================================
+
+
+@workboard_router.get(
+    "/clients/{client_id}/reconciliation-status",
+    summary="Get Xero reconciliation status for a period",
+    description="Returns count of unreconciled transactions before loading BAS figures.",
+)
+async def get_reconciliation_status(
+    client_id: UUID,
+    start_date: str = Query(..., description="Period start YYYY-MM-DD"),
+    end_date: str = Query(..., description="Period end YYYY-MM-DD"),
+    session: Annotated[AsyncSession, Depends(get_db)] = None,
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)] = None,
+) -> dict:
+    """Return unreconciled transaction count for a client period."""
+    from datetime import date as date_type
+
+    try:
+        start = date_type.fromisoformat(start_date)
+        end = date_type.fromisoformat(end_date)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid date format. Use YYYY-MM-DD")
+
+    bas_service = BASService(session)
+    return await bas_service.get_reconciliation_status(
+        client_id=client_id,
+        start_date=start,
+        end_date=end,
+        tenant_id=user.tenant_id,
+    )

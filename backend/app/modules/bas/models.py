@@ -454,6 +454,13 @@ class BASSession(Base, TimestampMixin):
         comment="Version for optimistic locking",
     )
 
+    # GST basis snapshot (Spec 062) — immutable after lodgement
+    gst_basis_used: Mapped[str | None] = mapped_column(
+        String(10),
+        nullable=True,
+        comment="Snapshot of GST basis used at calculation time ('cash' or 'accrual')",
+    )
+
     # Relationships
     period: Mapped["BASPeriod"] = relationship(
         "BASPeriod",
@@ -637,6 +644,18 @@ class BASCalculation(Base, TimestampMixin):
         default=Decimal("0"),
         server_default="0",
         comment="PAYG tax withheld (BAS W2)",
+    )
+
+    # PAYG Instalment fields (Spec 062) — manual entry for quarterly BAS filers
+    t1_instalment_income: Mapped[Decimal | None] = mapped_column(
+        Numeric(15, 2),
+        nullable=True,
+        comment="Instalment income (T1) — manual entry",
+    )
+    t2_instalment_rate: Mapped[Decimal | None] = mapped_column(
+        Numeric(8, 5),
+        nullable=True,
+        comment="Instalment rate (T2) — manual entry (e.g. 0.04 = 4%)",
     )
 
     # Summary fields

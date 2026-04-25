@@ -1,8 +1,10 @@
 """Service for BAS lodgement operations.
 
 Spec 011: Interim Lodgement
+Spec 062 FR-021: Optional insights summary in lodgement confirmation email.
 """
 
+import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -31,6 +33,8 @@ from app.modules.bas.schemas import (
     LodgementUpdateRequest,
 )
 from app.modules.bas.service import _get_user_display_name
+
+logger = logging.getLogger(__name__)
 
 
 class LodgementService:
@@ -131,7 +135,70 @@ class LodgementService:
             await self.session.rollback()
             raise ConcurrentModificationError() from None
 
+        # FR-021: Send lodgement confirmation email with optional insights summary.
+        if request.include_insights and lodged_by_user and bas_session.period:
+            await self._send_confirmation_with_insights(
+                bas_session=bas_session,
+                lodged_by_user=lodged_by_user,
+                tenant_id=tenant_id,
+                request=request,
+            )
+
         return self._build_session_response(bas_session)
+
+    async def _send_confirmation_with_insights(
+        self,
+        bas_session: BASSession,
+        lodged_by_user: PracticeUser,
+        tenant_id: UUID,
+        request: LodgementRecordRequest,
+    ) -> None:
+        """Fetch top insights and send lodgement confirmation email (FR-021).
+
+        Failures are logged but do not abort the lodgement transaction.
+        """
+        try:
+            from app.config import get_settings
+            from app.modules.insights.service import InsightService
+            from app.modules.integrations.xero.models import XeroConnection
+            from app.modules.notifications.email_service import EmailService
+
+            period = bas_session.period
+            connection_id = period.connection_id
+
+            # Get client (organisation) name
+            conn_result = await self.session.execute(
+                select(XeroConnection).where(XeroConnection.id == connection_id)
+            )
+            xero_conn = conn_result.scalar_one_or_none()
+            client_name = xero_conn.organization_name if xero_conn else "Unknown Client"
+
+            # Fetch top insights for this client
+            insight_service = InsightService(self.session)
+            insights_html, insights_text = await insight_service.get_insights_summary(
+                tenant_id=tenant_id,
+                client_id=connection_id,
+            )
+
+            settings = get_settings()
+            dashboard_url = f"{settings.frontend_url}/clients/{connection_id}"
+            lodgement_date_str = request.lodgement_date.strftime("%-d %b %Y")
+            period_name = period.display_name if period else ""
+
+            email_service = EmailService()
+            await email_service.send_lodgement_confirmation(
+                to=lodged_by_user.email,
+                user_name=_get_user_display_name(lodged_by_user) or lodged_by_user.email,
+                client_name=client_name,
+                period=period_name,
+                lodgement_date=lodgement_date_str,
+                reference_number=request.ato_reference_number or "N/A",
+                dashboard_url=dashboard_url,
+                insights_section=insights_html or None,
+                insights_section_text=insights_text or None,
+            )
+        except Exception:
+            logger.exception("Failed to send lodgement confirmation email (FR-021)")
 
     async def update_lodgement_details(
         self,

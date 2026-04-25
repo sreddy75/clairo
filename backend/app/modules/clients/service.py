@@ -602,6 +602,9 @@ class PracticeClientService:
             notes_updated_at=client.notes_updated_at,
             notes_updated_by_name=notes_editor_name,
             manual_status=client.manual_status,
+            gst_reporting_basis=client.gst_reporting_basis,
+            gst_basis_updated_at=client.gst_basis_updated_at,
+            gst_basis_updated_by=client.gst_basis_updated_by,
             created_at=client.created_at,
         )
 
@@ -808,3 +811,75 @@ class PracticeClientService:
         if client is None:
             raise NotFoundError(resource_type="PracticeClient", message="Client not found")
         return self._to_response(client)
+
+    async def set_gst_basis(
+        self,
+        client_id: UUID,
+        basis: str,
+        actor_id: UUID,
+        tenant_id: UUID,
+    ) -> PracticeClientResponse:
+        """Set or update the GST reporting basis for a client (Spec 062).
+
+        Emits BAS_GST_BASIS_SET on first save, BAS_GST_BASIS_CHANGED on subsequent
+        changes. If a lodged BAS session exists for this client, also emits
+        BAS_GST_BASIS_CHANGED_POST_LODGEMENT.
+        """
+        from app.modules.bas.audit_events import (
+            BAS_GST_BASIS_CHANGED,
+            BAS_GST_BASIS_CHANGED_POST_LODGEMENT,
+            BAS_GST_BASIS_SET,
+        )
+
+        client = await self.client_repo.get_by_id(client_id, tenant_id)
+        if client is None:
+            raise NotFoundError(resource_type="PracticeClient", message="Client not found")
+
+        old_basis = client.gst_reporting_basis
+        event_type = BAS_GST_BASIS_SET if old_basis is None else BAS_GST_BASIS_CHANGED
+
+        updated = await self.client_repo.update_gst_basis(
+            client_id=client_id,
+            tenant_id=tenant_id,
+            basis=basis,
+            updated_by=actor_id,
+        )
+        if updated is None:
+            raise NotFoundError(resource_type="PracticeClient", message="Client not found")
+
+        await self._audit(
+            event_type,
+            client_id,
+            old_values={"gst_reporting_basis": old_basis},
+            new_values={"gst_reporting_basis": basis},
+        )
+
+        # Check for lodged BAS sessions — emit post-lodgement event if any exist
+        if old_basis is not None and old_basis != basis:
+            try:
+                from sqlalchemy import select
+
+                from app.modules.bas.models import BASPeriod, BASSession
+
+                # Find lodged sessions for this client's Xero connection
+                if updated.xero_connection_id:
+                    result = await self.db.execute(
+                        select(BASSession)
+                        .join(BASPeriod, BASSession.period_id == BASPeriod.id)
+                        .where(
+                            BASPeriod.connection_id == updated.xero_connection_id,
+                            BASSession.lodged_at.isnot(None),
+                        )
+                        .limit(1)
+                    )
+                    if result.scalar_one_or_none() is not None:
+                        await self._audit(
+                            BAS_GST_BASIS_CHANGED_POST_LODGEMENT,
+                            client_id,
+                            old_values={"gst_reporting_basis": old_basis},
+                            new_values={"gst_reporting_basis": basis},
+                        )
+            except Exception:
+                pass  # Non-blocking
+
+        return self._to_response(updated)

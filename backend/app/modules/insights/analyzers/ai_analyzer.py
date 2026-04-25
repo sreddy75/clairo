@@ -428,6 +428,8 @@ Your task is to analyze the financial data provided and identify insights that:
 CRITICAL RULES:
 - Only generate insights if you see actual issues or opportunities in the data
 - Each insight MUST be specific and actionable
+- Write in third-person declarative style: "Revenue declined 12%" not "I notice revenue declined 12%"
+- NEVER begin summary or detail text with "I ", "I've ", "It appears", "I notice", "I can see" or any first-person language
 - Include specific numbers and percentages where relevant
 - If a deadline applies, include it as an ISO date string
 - Be conservative - only flag issues with at least medium confidence
@@ -523,6 +525,19 @@ Remember to respond with ONLY valid JSON."""
         Returns:
             InsightCreate or None if parsing fails.
         """
+        # Strip first-person AI chat language from summary/detail
+        _FIRST_PERSON_PREFIXES = ("I ", "I've ", "I've ", "I notice", "I see", "I can ", "It appears")
+
+        def _strip_first_person(text: str | None) -> str | None:
+            if not text:
+                return text
+            stripped = text.strip()
+            for prefix in _FIRST_PERSON_PREFIXES:
+                if stripped.startswith(prefix):
+                    # Return None so the insight is discarded rather than mangled
+                    return None
+            return text
+
         try:
             # Map category string to enum
             category_map = {
@@ -577,13 +592,19 @@ Remember to respond with ONLY valid JSON."""
             else:
                 expires_at = datetime.now(UTC) + timedelta(days=30)
 
+            summary = _strip_first_person(data.get("summary", ""))
+            if summary is None:
+                logger.debug("Discarded AI insight with first-person summary language")
+                return None
+            detail = _strip_first_person(data.get("detail"))
+
             return InsightCreate(
                 category=category,
                 insight_type=data.get("insight_type", "ai_generated"),
                 priority=priority,
                 title=data.get("title", "AI-Generated Insight")[:255],
-                summary=data.get("summary", ""),
-                detail=data.get("detail"),
+                summary=summary,
+                detail=detail,
                 suggested_actions=actions,
                 related_url=f"/clients/{client.id}",
                 expires_at=expires_at,

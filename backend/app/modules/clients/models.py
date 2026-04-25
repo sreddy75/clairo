@@ -24,7 +24,7 @@ from sqlalchemy import (
     Text,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base, TenantMixin, TimestampMixin
@@ -164,6 +164,24 @@ class PracticeClient(Base, TenantMixin, TimestampMixin):
         String(20),
         nullable=True,
         comment="BAS status for non-Xero clients: not_started, in_progress, completed, lodged",
+    )
+
+    # GST reporting basis preference (Spec 062)
+    gst_reporting_basis: Mapped[str | None] = mapped_column(
+        String(10),
+        nullable=True,
+        comment="'cash' or 'accrual'; NULL = not yet confirmed by accountant",
+    )
+    gst_basis_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When the GST reporting basis was last changed",
+    )
+    gst_basis_updated_by: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("practice_users.id", ondelete="SET NULL"),
+        nullable=True,
+        comment="Which accountant last changed the GST reporting basis",
     )
 
     # Relationships

@@ -276,6 +276,8 @@ class EmailService:
         lodgement_date: str,
         reference_number: str,
         dashboard_url: str,
+        insights_section: str | None = None,
+        insights_section_text: str | None = None,
     ) -> str | None:
         """Send BAS lodgement confirmation email.
 
@@ -287,6 +289,8 @@ class EmailService:
             lodgement_date: Date the BAS was lodged.
             reference_number: ATO reference number.
             dashboard_url: URL to view the lodgement details.
+            insights_section: Optional HTML insights block (FR-021).
+            insights_section_text: Matching plain-text insights block (FR-021).
 
         Returns:
             Email ID if sent successfully.
@@ -298,6 +302,8 @@ class EmailService:
             lodgement_date=lodgement_date,
             reference_number=reference_number,
             dashboard_url=dashboard_url,
+            insights_section=insights_section,
+            insights_section_text=insights_section_text,
         )
 
         return await self.send_email(

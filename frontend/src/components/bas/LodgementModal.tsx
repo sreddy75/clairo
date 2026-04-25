@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   ExternalLink,
   FileText,
+  Lightbulb,
   Loader2,
   X,
 } from 'lucide-react';
@@ -61,6 +62,7 @@ export function LodgementModal({
     session.ato_reference_number || ''
   );
   const [notes, setNotes] = useState(session.lodgement_notes || '');
+  const [includeInsights, setIncludeInsights] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,6 +90,7 @@ export function LodgementModal({
           lodgement_method_description: methodDescription || undefined,
           ato_reference_number: atoReference || undefined,
           lodgement_notes: notes || undefined,
+          include_insights: includeInsights,
         } as LodgementRecordRequest;
       }
 
@@ -273,6 +276,32 @@ export function LodgementModal({
               className="w-full px-3 py-2.5 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none"
             />
           </div>
+
+          {/* Insights toggle — only for new lodgements */}
+          {!isUpdate && (
+            <label className="flex items-start gap-3 cursor-pointer select-none rounded-xl border border-border p-4 hover:bg-muted/30 transition-colors">
+              {/* Custom toggle */}
+              <div className="mt-0.5 relative flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={includeInsights}
+                  onChange={(e) => setIncludeInsights(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-10 h-5 rounded-full border-2 border-border bg-muted transition-colors peer-checked:bg-emerald-600 peer-checked:border-emerald-600" />
+                <div className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                  <span className="text-sm font-semibold text-foreground">Include Insights summary in client email</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Adds a &ldquo;This Quarter in Numbers&rdquo; section to the lodgement confirmation email.
+                </p>
+              </div>
+            </label>
+          )}
 
           {/* Error */}
           {error && (

@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Text, func, select
+from sqlalchemy import Integer, Text, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -292,6 +292,38 @@ class BASRepository:
             select(BASCalculation).where(BASCalculation.session_id == session_id)
         )
         return result.scalar_one_or_none()
+
+    async def get_calculation_by_id(
+        self,
+        calculation_id: UUID,
+        tenant_id: UUID,
+    ) -> BASCalculation | None:
+        """Get a calculation by its own ID."""
+        result = await self.session.execute(
+            select(BASCalculation).where(
+                BASCalculation.id == calculation_id,
+                BASCalculation.tenant_id == tenant_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def update_instalment(
+        self,
+        calculation_id: UUID,
+        tenant_id: UUID,
+        t1_instalment_income: Decimal | None,
+        t2_instalment_rate: Decimal | None,
+    ) -> BASCalculation | None:
+        """Update T1/T2 instalment fields on a calculation (Spec 062)."""
+        calculation = await self.get_calculation_by_id(calculation_id, tenant_id)
+        if calculation is None:
+            return None
+        calculation.t1_instalment_income = t1_instalment_income
+        calculation.t2_instalment_rate = t2_instalment_rate
+        calculation.updated_at = datetime.now(UTC)
+        await self.session.flush()
+        await self.session.refresh(calculation)
+        return calculation
 
     # =========================================================================
     # Adjustment Operations
@@ -707,6 +739,7 @@ class BASRepository:
             query = query.where(TaxCodeSuggestion.confidence_score >= min_confidence)
 
         query = query.order_by(
+            TaxCodeSuggestion.transaction_date.desc().nulls_last(),
             TaxCodeSuggestion.confidence_score.desc().nulls_last(),
             TaxCodeSuggestion.line_amount.desc().nulls_last(),
         )
@@ -972,6 +1005,66 @@ class BASRepository:
         await self.session.flush()
         await self.session.refresh(suggestion)
         return suggestion
+
+    async def backfill_suggestion_tax_types_from_classifications(
+        self, request_id: UUID
+    ) -> int:
+        """One-time backfill: for already-mapped classifications whose linked
+        TaxCodeSuggestion still has suggested_tax_type=NULL, copy the
+        ai_suggested_tax_type across.  Safe to call repeatedly — skips rows
+        that already have a value.  Returns the number of rows updated.
+        """
+        from app.modules.bas.classification_models import ClientClassification
+
+        # Fetch mapped classifications that link to a suggestion
+        result = await self.session.execute(
+            select(ClientClassification).where(
+                ClientClassification.request_id == request_id,
+                ClientClassification.ai_suggested_tax_type.isnot(None),
+                ClientClassification.suggestion_id.isnot(None),
+            )
+        )
+        classifications = result.scalars().all()
+
+        updated = 0
+        for c in classifications:
+            await self.session.execute(
+                update(TaxCodeSuggestion)
+                .where(
+                    TaxCodeSuggestion.id == c.suggestion_id,
+                    TaxCodeSuggestion.suggested_tax_type.is_(None),
+                )
+                .values(suggested_tax_type=c.ai_suggested_tax_type)
+            )
+            updated += 1
+
+        if updated:
+            await self.session.flush()
+        return updated
+
+    async def update_suggestion_tax_type(
+        self,
+        suggestion_id: UUID,
+        suggested_tax_type: str,
+        confidence_score: "Decimal | None" = None,
+    ) -> None:
+        """Write back AI-mapped tax type to a TaxCodeSuggestion row.
+
+        Used when client-review AI mapping resolves a previously unclassified
+        suggestion so that the Approve button becomes available in the UI.
+        """
+        from decimal import Decimal as _Decimal
+
+        values: dict = {"suggested_tax_type": suggested_tax_type}
+        if confidence_score is not None:
+            values["confidence_score"] = _Decimal(str(confidence_score))
+
+        await self.session.execute(
+            update(TaxCodeSuggestion)
+            .where(TaxCodeSuggestion.id == suggestion_id)
+            .values(**values)
+        )
+        await self.session.flush()
 
     async def get_pending_suggestions_for_bulk(
         self,
@@ -1341,3 +1434,40 @@ class BASRepository:
             .order_by(ClientClassificationRound.round_number.asc())
         )
         return list(result.scalars().all())
+
+    async def get_reconciliation_status(
+        self,
+        connection_id: UUID,
+        start_date: date,
+        end_date: date,
+        tenant_id: UUID,
+    ) -> dict[str, int]:
+        """Return count of unreconciled vs total bank transactions for the period (Spec 062).
+
+        Uses XeroBankTransaction.is_reconciled to determine reconciliation state.
+        Must include tenant_id to preserve multi-tenancy isolation.
+        """
+        from app.modules.integrations.xero.models import XeroBankTransaction
+
+        result = await self.session.execute(
+            select(
+                func.count().label("total"),
+                func.sum(
+                    func.cast(
+                        ~XeroBankTransaction.is_reconciled,
+                        Integer,
+                    )
+                ).label("unreconciled"),
+            ).where(
+                XeroBankTransaction.tenant_id == tenant_id,
+                XeroBankTransaction.connection_id == connection_id,
+                XeroBankTransaction.transaction_date >= start_date,
+                XeroBankTransaction.transaction_date <= end_date,
+                XeroBankTransaction.status == "AUTHORISED",
+            )
+        )
+        row = result.one()
+        return {
+            "total_transactions": int(row.total or 0),
+            "unreconciled_count": int(row.unreconciled or 0),
+        }

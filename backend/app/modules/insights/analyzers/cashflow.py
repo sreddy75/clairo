@@ -11,12 +11,13 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.insights.analyzers.base import BaseAnalyzer
 from app.modules.insights.models import InsightCategory, InsightPriority
 from app.modules.insights.schemas import InsightCreate, SuggestedAction
+from app.modules.integrations.xero.models import XeroInvoice, XeroInvoiceStatus, XeroInvoiceType
 from app.modules.knowledge.aggregation_models import (
     ClientAPAgingSummary,
     ClientARAgingSummary,
@@ -117,43 +118,31 @@ class CashFlowAnalyzer(BaseAnalyzer):
         return list(result.scalars().all())
 
     async def _check_ar_aging(self, client_id: UUID) -> InsightCreate | None:
-        """Check for problematic AR aging."""
-        ar = await self._get_ar_aging(client_id)
-        if not ar:
-            return None
+        """Check for overdue AR by querying XeroInvoice directly."""
+        today = datetime.now(UTC).date()
 
-        # Use total_outstanding from the model or calculate from parts
-        total_ar = ar.total_outstanding or Decimal(0)
-
-        if total_ar <= 0:
-            return None
-
-        # Calculate overdue amount (>30 days)
-        overdue = (
-            (ar.days_31_60 or Decimal(0))
-            + (ar.days_61_90 or Decimal(0))
-            + (ar.over_90_days or Decimal(0))
+        # Sum total_amount for ACCREC (sales) invoices that are past due and unpaid
+        stmt = select(func.coalesce(func.sum(XeroInvoice.total_amount), 0)).where(
+            XeroInvoice.connection_id == client_id,
+            XeroInvoice.invoice_type == XeroInvoiceType.ACCREC,
+            XeroInvoice.status.not_in([XeroInvoiceStatus.PAID, XeroInvoiceStatus.VOIDED]),
+            XeroInvoice.due_date < datetime.combine(today, datetime.min.time()).replace(tzinfo=UTC),
         )
+        result = await self.db.execute(stmt)
+        overdue = Decimal(str(result.scalar() or 0))
 
-        overdue_percent = (overdue / total_ar * 100) if total_ar > 0 else 0
-
-        if overdue_percent < AR_OVERDUE_WARNING_PERCENT:
+        if overdue <= 0:
             return None
 
-        if overdue_percent >= AR_OVERDUE_CRITICAL_PERCENT:
+        # Determine priority: critical if >$10k, otherwise medium
+        if overdue >= Decimal("10000"):
             priority = InsightPriority.HIGH
-            title = "Critical: High Overdue Receivables"
-            summary = (
-                f"${overdue:,.0f} ({overdue_percent:.0f}%) of receivables overdue >30 days — "
-                f"exceeds the {AR_OVERDUE_CRITICAL_PERCENT}% critical threshold."
-            )
+            title = "Overdue Receivables Require Action"
         else:
             priority = InsightPriority.MEDIUM
-            title = "Overdue Receivables Rising"
-            summary = (
-                f"${overdue:,.0f} ({overdue_percent:.0f}%) of receivables overdue >30 days — "
-                f"exceeds the {AR_OVERDUE_WARNING_PERCENT}% warning threshold."
-            )
+            title = "Overdue Receivables"
+
+        summary = f"${overdue:,.2f} in sales invoices are past their due date and unpaid."
 
         return InsightCreate(
             category=InsightCategory.CASH_FLOW,
@@ -161,7 +150,6 @@ class CashFlowAnalyzer(BaseAnalyzer):
             priority=priority,
             title=title,
             summary=summary,
-            detail=self._ar_detail(ar, total_ar, overdue, overdue_percent),
             suggested_actions=[
                 SuggestedAction(
                     label="Review Receivables", url=f"/clients/{client_id}/receivables"
@@ -171,12 +159,12 @@ class CashFlowAnalyzer(BaseAnalyzer):
             related_url=f"/clients/{client_id}/receivables",
             confidence=0.90,
             data_snapshot={
-                "total_ar": float(total_ar),
                 "overdue_amount": float(overdue),
-                "overdue_percent": float(overdue_percent),
-                "days_over_90": float(ar.over_90_days or 0),
-                "threshold_warning_pct": AR_OVERDUE_WARNING_PERCENT,
-                "threshold_critical_pct": AR_OVERDUE_CRITICAL_PERCENT,
+                "as_of_date": today.isoformat(),
+                "calculation_breakdown": [
+                    {"label": "Overdue invoices total", "value": f"${overdue:,.2f}"},
+                    {"label": "As of", "value": today.strftime("%d %b %Y")},
+                ],
             },
         )
 

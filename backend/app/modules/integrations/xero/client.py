@@ -8,6 +8,7 @@ Provides async HTTP client for Xero API:
 - Data sync endpoints (contacts, invoices, transactions, accounts)
 """
 
+import contextlib
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -261,6 +262,16 @@ class XeroClient:
 
         if response.status_code == 401:
             raise XeroAuthError("Invalid or expired access token", 401)
+
+        # 403 AuthenticationUnsuccessful means the access token is invalid/revoked —
+        # treat identically to 401 so callers can trigger a re-auth flow.
+        if response.status_code == 403:
+            detail = ""
+            if response.content:
+                with contextlib.suppress(Exception):
+                    detail = response.json().get("Detail", "")
+            if detail == "AuthenticationUnsuccessful":
+                raise XeroAuthError("AuthenticationUnsuccessful — Xero connection must be reconnected", 403)
 
         if response.status_code == 429:
             retry_after = int(response.headers.get("Retry-After", "60"))

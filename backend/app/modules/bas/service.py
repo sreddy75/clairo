@@ -572,12 +572,44 @@ class BASService:
 
         period = session.period
 
-        # Calculate GST
+        # Resolve GST basis from client preference (Spec 062)
+        gst_basis: str = "accrual"  # safe default if no client record found
+        try:
+            from sqlalchemy import select as _select
+
+            from app.modules.clients.models import PracticeClient
+            _result = await self.session.execute(
+                _select(PracticeClient).where(
+                    PracticeClient.xero_connection_id == period.connection_id
+                )
+            )
+            practice_client = _result.scalar_one_or_none()
+            if practice_client is not None:
+                if practice_client.gst_reporting_basis is None:
+                    from app.core.exceptions import ValidationError
+                    raise ValidationError(
+                        "GST reporting basis has not been set for this client. "
+                        "Please select Cash or Accrual basis before calculating BAS."
+                    )
+                gst_basis = practice_client.gst_reporting_basis
+        except Exception as exc:
+            # Re-raise domain validation errors; swallow unexpected lookup failures
+            from app.core.exceptions import ValidationError
+            if isinstance(exc, ValidationError):
+                raise
+            logger.warning(f"Could not resolve GST basis for session {session_id}: {exc}")
+
+        # Snapshot basis on the session (immutable after lodgement)
+        if session.gst_basis_used != gst_basis:
+            await self.repo.update_session(session, gst_basis_used=gst_basis)
+
+        # Calculate GST (basis-aware)
         gst_calculator = GSTCalculator(self.session)
         gst_result = await gst_calculator.calculate(
             connection_id=period.connection_id,
             start_date=period.start_date,
             end_date=period.end_date,
+            gst_basis=gst_basis,
         )
 
         # Calculate PAYG
@@ -684,6 +716,8 @@ class BASService:
                 w2_amount_withheld=payg_result.w2_amount_withheld,
                 pay_run_count=payg_result.pay_run_count,
                 has_payroll=payg_result.has_payroll,
+                source_label=payg_result.source_label,
+                draft_pay_run_count=payg_result.draft_pay_run_count,
             ),
             total_payable=total_payable,
             is_refund=total_payable < 0,
@@ -700,6 +734,10 @@ class BASService:
         if not calculation:
             return None
 
+        return self._calculation_to_response(calculation)
+
+    def _calculation_to_response(self, calculation: "BASCalculation") -> BASCalculationResponse:
+        """Convert a BASCalculation model to a response schema."""
         return BASCalculationResponse(
             id=calculation.id,
             session_id=calculation.session_id,
@@ -712,6 +750,8 @@ class BASService:
             field_1b_gst_on_purchases=calculation.field_1b_gst_on_purchases,
             w1_total_wages=calculation.w1_total_wages,
             w2_amount_withheld=calculation.w2_amount_withheld,
+            t1_instalment_income=calculation.t1_instalment_income,
+            t2_instalment_rate=calculation.t2_instalment_rate,
             gst_payable=calculation.gst_payable,
             total_payable=calculation.total_payable,
             is_refund=calculation.is_refund,
@@ -721,6 +761,61 @@ class BASService:
             invoice_count=calculation.invoice_count,
             pay_run_count=calculation.pay_run_count,
         )
+
+    async def update_instalment(
+        self,
+        calculation_id: UUID,
+        tenant_id: UUID,
+        actor_id: UUID,
+        t1_instalment_income: Decimal | None,
+        t2_instalment_rate: Decimal | None,
+    ) -> BASCalculationResponse:
+        """Update PAYG instalment T1/T2 on a calculation (Spec 062)."""
+        from app.core.exceptions import NotFoundError
+        from app.modules.bas.audit_events import BAS_INSTALMENT_ENTERED
+
+        calc = await self.repo.get_calculation_by_id(calculation_id, tenant_id)
+        if calc is None:
+            raise NotFoundError(resource_type="BASCalculation", message="Calculation not found")
+
+        old_t1 = calc.t1_instalment_income
+        old_t2 = calc.t2_instalment_rate
+
+        updated = await self.repo.update_instalment(
+            calculation_id=calculation_id,
+            tenant_id=tenant_id,
+            t1_instalment_income=t1_instalment_income,
+            t2_instalment_rate=t2_instalment_rate,
+        )
+        if updated is None:
+            raise NotFoundError(resource_type="BASCalculation", message="Calculation not found")
+
+        # Emit audit event
+        try:
+            audit_service = AuditService(self.session)
+            await audit_service.log_event(
+                event_type=BAS_INSTALMENT_ENTERED,
+                event_category="data_modification",
+                resource_type="bas_calculation",
+                resource_id=calculation_id,
+                action="update",
+                outcome="success",
+                tenant_id=tenant_id,
+                actor_id=actor_id,
+                old_values={
+                    "t1_instalment_income": str(old_t1) if old_t1 is not None else None,
+                    "t2_instalment_rate": str(old_t2) if old_t2 is not None else None,
+                },
+                new_values={
+                    "t1_instalment_income": str(t1_instalment_income) if t1_instalment_income is not None else None,
+                    "t2_instalment_rate": str(t2_instalment_rate) if t2_instalment_rate is not None else None,
+                },
+            )
+        except Exception:
+            pass  # Non-blocking
+
+        await self.session.commit()
+        return self._calculation_to_response(updated)
 
     # =========================================================================
     # Adjustment Operations
@@ -1522,3 +1617,42 @@ class BASService:
             transaction_count=len(transactions),
             transactions=transactions,
         )
+
+
+    async def get_reconciliation_status(
+        self,
+        client_id: UUID,
+        start_date: "date",
+        end_date: "date",
+        tenant_id: UUID,
+    ) -> dict:
+        """Return reconciliation status for a client period (Spec 062).
+
+        Looks up the client's Xero connection, then queries XeroBankTransaction
+        for unreconciled transactions in the given date range.
+        """
+        from sqlalchemy import select as _select
+
+        from app.modules.clients.models import PracticeClient
+
+        practice_client = None
+        result = await self.session.execute(
+            _select(PracticeClient).where(
+                PracticeClient.id == client_id,
+                PracticeClient.tenant_id == tenant_id,
+            )
+        )
+        practice_client = result.scalar_one_or_none()
+
+        if practice_client is None or practice_client.xero_connection_id is None:
+            return {"unreconciled_count": 0, "total_transactions": 0}
+
+        from datetime import UTC
+
+        counts = await self.repo.get_reconciliation_status(
+            connection_id=practice_client.xero_connection_id,
+            start_date=start_date,
+            end_date=end_date,
+            tenant_id=tenant_id,
+        )
+        return {**counts, "as_of": datetime.now(UTC).isoformat()}

@@ -22,6 +22,7 @@ from app.modules.integrations.xero.models import (
     XeroCreditNoteStatus,
     XeroCreditNoteType,
     XeroInvoice,
+    XeroPayment,
     XeroPayRun,
 )
 
@@ -137,6 +138,9 @@ class PAYGResult:
     w2_amount_withheld: Decimal = Decimal("0")
     pay_run_count: int = 0
     has_payroll: bool = False
+    # Spec 062: source label and draft run count for UI display
+    source_label: str = ""
+    draft_pay_run_count: int = 0
 
 
 class GSTCalculator:
@@ -156,6 +160,7 @@ class GSTCalculator:
         connection_id: UUID,
         start_date: date,
         end_date: date,
+        gst_basis: str = "accrual",
     ) -> GSTResult:
         """Calculate GST figures for a period.
 
@@ -163,24 +168,26 @@ class GSTCalculator:
             connection_id: Xero connection ID
             start_date: Period start date
             end_date: Period end date
+            gst_basis: 'accrual' (default) filters by issue_date;
+                       'cash' filters by payment_date via XeroPayment join
 
         Returns:
             GSTResult with all calculated fields
         """
         result = GSTResult()
 
-        # Process invoices
-        invoices = await self._get_invoices(connection_id, start_date, end_date)
+        # Process invoices (basis-aware)
+        invoices = await self._get_invoices(connection_id, start_date, end_date, gst_basis)
         result.invoice_count = len(invoices)
         self._process_invoices(invoices, result)
 
-        # Process bank transactions
+        # Process bank transactions (always by transaction_date)
         transactions = await self._get_transactions(connection_id, start_date, end_date)
         result.transaction_count = len(transactions)
         self._process_transactions(transactions, result)
 
-        # Process credit notes (Spec 024)
-        credit_notes = await self._get_credit_notes(connection_id, start_date, end_date)
+        # Process credit notes (basis-aware)
+        credit_notes = await self._get_credit_notes(connection_id, start_date, end_date, gst_basis)
         result.credit_note_count = len(credit_notes)
         self._process_credit_notes(credit_notes, result)
 
@@ -188,7 +195,7 @@ class GSTCalculator:
         result.calculate_gst_payable()
 
         logger.info(
-            f"GST calculated for {connection_id}: "
+            f"GST calculated for {connection_id} (basis={gst_basis}): "
             f"1A=${result.field_1a_gst_on_sales} (net: ${result.net_gst_on_sales}), "
             f"1B=${result.field_1b_gst_on_purchases} (net: ${result.net_gst_on_purchases}), "
             f"Net=${result.gst_payable}, "
@@ -202,17 +209,43 @@ class GSTCalculator:
         connection_id: UUID,
         start_date: date,
         end_date: date,
+        gst_basis: str = "accrual",
     ) -> list[XeroInvoice]:
-        """Get invoices for the period."""
-        result = await self.session.execute(
-            select(XeroInvoice).where(
+        """Get invoices for the period.
+
+        Accrual basis: filter by issue_date (when the invoice was raised).
+        Cash basis: filter by XeroPayment.payment_date (when the invoice was paid).
+        """
+        from sqlalchemy import cast
+        from sqlalchemy.dialects.postgresql import DATE
+
+        if gst_basis == "cash":
+            # Cash basis: join to payments, filter by payment_date
+            stmt = (
+                select(XeroInvoice)
+                .join(
+                    XeroPayment,
+                    XeroInvoice.xero_invoice_id == XeroPayment.xero_invoice_id,
+                )
+                .where(
+                    XeroInvoice.connection_id == connection_id,
+                    cast(XeroPayment.payment_date, DATE) >= start_date,
+                    cast(XeroPayment.payment_date, DATE) <= end_date,
+                    XeroInvoice.status.in_(["authorised", "paid"]),
+                    XeroPayment.connection_id == connection_id,
+                )
+                .distinct()
+            )
+        else:
+            # Accrual basis (default): filter by issue_date
+            stmt = select(XeroInvoice).where(
                 XeroInvoice.connection_id == connection_id,
                 XeroInvoice.issue_date >= start_date,
                 XeroInvoice.issue_date <= end_date,
-                # Only include authorised/paid invoices
                 XeroInvoice.status.in_(["authorised", "paid"]),
             )
-        )
+
+        result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
     async def _get_transactions(
@@ -238,11 +271,16 @@ class GSTCalculator:
         connection_id: UUID,
         start_date: date,
         end_date: date,
+        gst_basis: str = "accrual",
     ) -> list[XeroCreditNote]:
         """Get credit notes for the period (Spec 024).
 
-        Only includes AUTHORISED or PAID credit notes within the date range.
+        Accrual basis: filter by issue_date.
+        Cash basis: filter by issue_date (credit notes are always recognised on issue date
+        as they are not payment-dependent — this matches ATO cash basis guidance).
         """
+        # Credit notes are filtered by issue_date regardless of basis
+        # (credit notes don't have a separate payment date; they are adjustments)
         result = await self.session.execute(
             select(XeroCreditNote).where(
                 XeroCreditNote.connection_id == connection_id,
@@ -501,13 +539,22 @@ class PAYGCalculator:
         if not connection or not connection.has_payroll_access:
             return PAYGResult(has_payroll=False)
 
-        # Get pay runs in the period
-        pay_runs = await self._get_pay_runs(connection_id, start_date, end_date)
+        # Get finalised (posted) and draft pay runs separately
+        pay_runs = await self._get_pay_runs(connection_id, start_date, end_date, finalised_only=True)
+        draft_runs = await self._get_pay_runs(connection_id, start_date, end_date, finalised_only=False)
+        draft_pay_run_count = max(0, len(draft_runs) - len(pay_runs))
 
         if not pay_runs:
-            return PAYGResult(has_payroll=True)
+            source_label = (
+                f"From Xero Payroll — {start_date.strftime('%-d %b %Y')} to {end_date.strftime('%-d %b %Y')}"
+            )
+            return PAYGResult(
+                has_payroll=True,
+                source_label=source_label,
+                draft_pay_run_count=draft_pay_run_count,
+            )
 
-        # Aggregate totals
+        # Aggregate totals from finalised pay runs only
         w1_total = Decimal("0")
         w2_total = Decimal("0")
 
@@ -515,11 +562,17 @@ class PAYGCalculator:
             w1_total += Decimal(str(pay_run.total_wages or 0))
             w2_total += Decimal(str(pay_run.total_tax or 0))
 
+        source_label = (
+            f"From Xero Payroll — {start_date.strftime('%-d %b %Y')} to {end_date.strftime('%-d %b %Y')}"
+        )
+
         result = PAYGResult(
             w1_total_wages=w1_total,
             w2_amount_withheld=w2_total,
             pay_run_count=len(pay_runs),
             has_payroll=True,
+            source_label=source_label,
+            draft_pay_run_count=draft_pay_run_count,
         )
 
         logger.info(
@@ -542,15 +595,22 @@ class PAYGCalculator:
         connection_id: UUID,
         start_date: date,
         end_date: date,
+        finalised_only: bool = True,
     ) -> list[XeroPayRun]:
-        """Get pay runs for the period."""
-        result = await self.session.execute(
-            select(XeroPayRun).where(
-                XeroPayRun.connection_id == connection_id,
-                XeroPayRun.payment_date >= start_date,
-                XeroPayRun.payment_date <= end_date,
-                # Only include posted pay runs
-                XeroPayRun.pay_run_status == "posted",
-            )
-        )
+        """Get pay runs for the period.
+
+        finalised_only=True: only "posted" (finalised) pay runs populate W1/W2.
+        finalised_only=False: returns all pay runs (used to count draft runs).
+        """
+        from app.modules.integrations.xero.models import XeroPayRunStatus
+
+        filters = [
+            XeroPayRun.connection_id == connection_id,
+            XeroPayRun.payment_date >= start_date,
+            XeroPayRun.payment_date <= end_date,
+        ]
+        if finalised_only:
+            filters.append(XeroPayRun.pay_run_status == XeroPayRunStatus.POSTED)
+
+        result = await self.session.execute(select(XeroPayRun).where(*filters))
         return list(result.scalars().all())

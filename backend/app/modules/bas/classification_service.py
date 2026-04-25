@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import uuid as uuid_mod
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -141,6 +141,13 @@ class ClassificationService:
 
         if not pending:
             raise NoUnresolvedTransactionsError()
+
+        # Sort pending suggestions by transaction_date DESC (most recent first)
+        pending = sorted(
+            pending,
+            key=lambda s: s.transaction_date or date(1900, 1, 1),
+            reverse=True,
+        )
 
         # 4. Filter to specific transaction IDs if provided
         if transaction_ids:
@@ -762,6 +769,10 @@ class ClassificationService:
                     ai_confidence=Decimal("0.95"),
                     ai_mapped_at=now,
                 )
+                if c.suggestion_id:
+                    await self.repo.update_suggestion_tax_type(
+                        c.suggestion_id, "BASEXCLUDED", Decimal("0.95")
+                    )
                 mapped_count += 1
                 continue
 
@@ -820,6 +831,11 @@ class ClassificationService:
                     ai_confidence=confidence,
                     ai_mapped_at=now,
                 )
+                # Write back to TaxCodeSuggestion so the Approve button becomes visible
+                if suggested and c.suggestion_id:
+                    await self.repo.update_suggestion_tax_type(
+                        c.suggestion_id, suggested, confidence
+                    )
                 mapped_count += 1
 
         # Audit event
@@ -862,6 +878,10 @@ class ClassificationService:
         unprocessed = await self.repo.get_unprocessed_classifications(request.id)
         if unprocessed:
             await self.map_client_classifications(request.id, tenant_id)
+        else:
+            # Backfill: write ai_suggested_tax_type back to suggestions that
+            # were mapped before this fix (suggested_tax_type still null on the suggestion)
+            await self.repo.backfill_suggestion_tax_types_from_classifications(request.id)
 
         # Update status
         if request.status == ClassificationRequestStatus.SUBMITTED:

@@ -335,6 +335,63 @@ class InsightService:
         result = await self.db.execute(select(Insight).where(*filters).limit(1))
         return result.scalar_one_or_none()
 
+    async def get_insights_summary(
+        self,
+        tenant_id: UUID,
+        client_id: UUID,
+        top_n: int = 5,
+    ) -> tuple[str, str]:
+        """Fetch top N insights for a client and format as HTML + plain-text summary.
+
+        Ordered by priority (high first), then confidence (descending).
+        Returns (html_section, text_section) for email embedding.
+        Used by FR-021: include insights in lodgement confirmation email.
+        """
+        priority_order = func.array_position(
+            ["high", "medium", "low"],
+            Insight.priority,
+        )
+        stmt = (
+            select(Insight)
+            .where(
+                Insight.tenant_id == tenant_id,
+                Insight.client_id == client_id,
+                Insight.status.notin_([InsightStatus.DISMISSED.value, InsightStatus.EXPIRED.value]),
+            )
+            .order_by(
+                priority_order.asc(),
+                Insight.confidence.desc().nulls_last(),
+            )
+            .limit(top_n)
+        )
+        result = await self.db.execute(stmt)
+        insights = result.scalars().all()
+
+        if not insights:
+            return "", ""
+
+        # HTML section
+        rows_html = "\n".join(
+            f'<li style="margin: 0 0 6px 0; font-size: 14px; color: #374151;">'
+            f'<strong>{i.title}</strong> — {i.summary}</li>'
+            for i in insights
+        )
+        html = (
+            '<table role="presentation" cellspacing="0" cellpadding="0" border="0" '
+            'style="background-color: #f0fdf4; border-radius: 8px; padding: 16px; margin: 16px 0; width: 100%;">'
+            "<tr><td>"
+            '<p style="color: #065f46; font-size: 14px; font-weight: 600; margin: 0 0 10px 0;">'
+            "This Quarter in Numbers</p>"
+            f'<ul style="margin: 0; padding: 0 0 0 18px;">{rows_html}</ul>'
+            "</td></tr></table>"
+        )
+
+        # Plain-text section
+        rows_text = "\n".join(f"- {i.title}: {i.summary}" for i in insights)
+        text = f"This Quarter in Numbers:\n{rows_text}"
+
+        return html, text
+
     async def expire_old_insights(self, tenant_id: UUID | None = None) -> tuple[int, list[UUID]]:
         """Mark insights past their expiry date as expired.
 

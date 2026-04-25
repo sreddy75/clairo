@@ -637,6 +637,29 @@ class PracticeClientRepository:
         )
         return list(result.scalars().all())
 
+    async def update_gst_basis(
+        self,
+        client_id: UUID,
+        tenant_id: UUID,
+        basis: str,
+        updated_by: UUID,
+    ) -> "PracticeClient | None":
+        """Set or change the GST reporting basis for a client (Spec 062)."""
+        from app.modules.clients.models import PracticeClient
+
+        client = await self.get_by_id(client_id, tenant_id)
+        if client is None:
+            return None
+        client.gst_reporting_basis = basis
+        client.gst_basis_updated_at = datetime.now(UTC)
+        client.gst_basis_updated_by = updated_by
+        await self.db.flush()
+        self.db.expire(client)
+        result = await self.db.execute(
+            select(PracticeClient).where(PracticeClient.id == client_id)
+        )
+        return result.scalar_one_or_none()
+
 
 # =============================================================================
 # Client Exclusion Repository (Spec 058)
