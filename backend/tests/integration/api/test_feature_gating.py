@@ -10,8 +10,43 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.feature_flags import FeatureGate
-from app.modules.auth.models import PracticeUser, SubscriptionStatus, SubscriptionTier, Tenant
+from app.modules.auth.models import (
+    PracticeUser,
+    SubscriptionStatus,
+    SubscriptionTier,
+    Tenant,
+    User,
+    UserRole,
+    UserType,
+)
 from app.modules.billing.exceptions import FeatureNotAvailableError
+
+
+async def _create_practice_user(
+    db_session: AsyncSession,
+    tenant_id: "uuid4().__class__",
+    email: str = "user@test.com",
+) -> PracticeUser:
+    """Helper: create a properly-linked User + PracticeUser for tests."""
+    base_user = User(
+        id=uuid4(),
+        email=email,
+        user_type=UserType.PRACTICE_USER,
+        is_active=True,
+    )
+    db_session.add(base_user)
+    await db_session.flush()
+    practice_user = PracticeUser(
+        id=uuid4(),
+        tenant_id=tenant_id,
+        user_id=base_user.id,
+        clerk_id=f"clerk_{uuid4().hex[:12]}",
+        role=UserRole.ADMIN,
+    )
+    db_session.add(practice_user)
+    await db_session.flush()
+    return practice_user
+
 
 # =============================================================================
 # Fixtures
@@ -91,9 +126,9 @@ def create_auth_headers(user: PracticeUser, tenant: Tenant) -> dict[str, str]:
     from app.core.security import create_access_token
 
     token = create_access_token(
-        user_id=str(user.id),
+        user_id=user.clerk_id,
         tenant_id=str(tenant.id),
-        roles=["owner"],
+        roles=["admin"],
     )
     return {"Authorization": f"Bearer {token}"}
 
@@ -101,48 +136,21 @@ def create_auth_headers(user: PracticeUser, tenant: Tenant) -> dict[str, str]:
 @pytest.fixture
 async def starter_user_headers(db_session: AsyncSession, starter_tenant: Tenant) -> dict[str, str]:
     """Create auth headers for starter tenant."""
-    user = PracticeUser(
-        id=uuid4(),
-        tenant_id=starter_tenant.id,
-        clerk_user_id=f"clerk_{uuid4().hex[:12]}",
-        email="user@starter.com",
-        name="Starter User",
-        role="owner",
-    )
-    db_session.add(user)
-    await db_session.flush()
+    user = await _create_practice_user(db_session, starter_tenant.id, "user@starter.com")
     return create_auth_headers(user, starter_tenant)
 
 
 @pytest.fixture
 async def pro_user_headers(db_session: AsyncSession, professional_tenant: Tenant) -> dict[str, str]:
     """Create auth headers for professional tenant."""
-    user = PracticeUser(
-        id=uuid4(),
-        tenant_id=professional_tenant.id,
-        clerk_user_id=f"clerk_{uuid4().hex[:12]}",
-        email="user@pro.com",
-        name="Pro User",
-        role="owner",
-    )
-    db_session.add(user)
-    await db_session.flush()
+    user = await _create_practice_user(db_session, professional_tenant.id, "user@pro.com")
     return create_auth_headers(user, professional_tenant)
 
 
 @pytest.fixture
 async def growth_user_headers(db_session: AsyncSession, growth_tenant: Tenant) -> dict[str, str]:
     """Create auth headers for growth tenant."""
-    user = PracticeUser(
-        id=uuid4(),
-        tenant_id=growth_tenant.id,
-        clerk_user_id=f"clerk_{uuid4().hex[:12]}",
-        email="user@growth.com",
-        name="Growth User",
-        role="owner",
-    )
-    db_session.add(user)
-    await db_session.flush()
+    user = await _create_practice_user(db_session, growth_tenant.id, "user@growth.com")
     return create_auth_headers(user, growth_tenant)
 
 
@@ -155,16 +163,11 @@ async def growth_user_headers(db_session: AsyncSession, growth_tenant: Tenant) -
 class TestFeatureGateClass:
     """Tests for the FeatureGate class."""
 
-    def test_starter_cannot_access_client_portal(self, starter_tenant: Tenant) -> None:
-        """Starter tier should not access client_portal."""
+    def test_starter_can_access_client_portal(self, starter_tenant: Tenant) -> None:
+        """Starter tier has client_portal (single $299 plan with full access)."""
         gate = FeatureGate("client_portal")
-
-        with pytest.raises(FeatureNotAvailableError) as exc_info:
-            gate.check(starter_tenant)
-
-        assert exc_info.value.feature == "client_portal"
-        assert exc_info.value.required_tier == "professional"
-        assert exc_info.value.current_tier == "starter"
+        result = gate.check(starter_tenant)
+        assert result is True
 
     def test_professional_can_access_client_portal(self, professional_tenant: Tenant) -> None:
         """Professional tier should access client_portal."""
@@ -172,14 +175,14 @@ class TestFeatureGateClass:
         result = gate.check(professional_tenant)
         assert result is True
 
-    def test_starter_cannot_access_custom_triggers(self, starter_tenant: Tenant) -> None:
-        """Starter tier should not access custom_triggers."""
-        gate = FeatureGate("custom_triggers")
+    def test_starter_cannot_access_api_access_feature(self, starter_tenant: Tenant) -> None:
+        """Starter tier should not access api_access (growth+ only)."""
+        gate = FeatureGate("api_access")
 
         with pytest.raises(FeatureNotAvailableError) as exc_info:
             gate.check(starter_tenant)
 
-        assert exc_info.value.feature == "custom_triggers"
+        assert exc_info.value.feature == "api_access"
 
     def test_starter_cannot_access_api_access(self, starter_tenant: Tenant) -> None:
         """Starter tier should not access API."""
@@ -219,9 +222,9 @@ class TestFeatureGateClass:
             gate = FeatureGate(feature)  # type: ignore[arg-type]
             assert gate.check(enterprise_tenant) is True
 
-    def test_is_available_returns_boolean(self, starter_tenant: Tenant) -> None:
-        """is_available should return False without raising."""
-        gate = FeatureGate("client_portal")
+    def test_is_available_returns_false_for_blocked(self, starter_tenant: Tenant) -> None:
+        """is_available should return False for blocked features without raising."""
+        gate = FeatureGate("api_access")
         result = gate.is_available(starter_tenant)
         assert result is False
 
@@ -246,20 +249,20 @@ class TestFeatureAccessViaAPI:
         test_client: AsyncClient,
         starter_user_headers: dict[str, str],
     ) -> None:
-        """Starter tier should see restricted features."""
+        """Starter tier has full features except api_access (single $299 plan)."""
         response = await test_client.get(
-            "/api/v1/billing/features",
+            "/api/v1/features",
             headers=starter_user_headers,
         )
 
         assert response.status_code == 200
         data = response.json()
         assert data["tier"] == "starter"
-        assert data["can_access"]["client_portal"] is False
-        assert data["can_access"]["custom_triggers"] is False
-        assert data["can_access"]["api_access"] is False
-        assert data["can_access"]["knowledge_base"] is False
-        assert data["can_access"]["magic_zone"] is False
+        assert data["can_access"]["client_portal"] is True
+        assert data["can_access"]["custom_triggers"] is True
+        assert data["can_access"]["api_access"] is False  # Growth+ only
+        assert data["can_access"]["knowledge_base"] is True
+        assert data["can_access"]["magic_zone"] is True
 
     async def test_professional_sees_extended_features(
         self,
@@ -268,7 +271,7 @@ class TestFeatureAccessViaAPI:
     ) -> None:
         """Professional tier should see extended features."""
         response = await test_client.get(
-            "/api/v1/billing/features",
+            "/api/v1/features",
             headers=pro_user_headers,
         )
 
@@ -288,7 +291,7 @@ class TestFeatureAccessViaAPI:
     ) -> None:
         """Growth tier should see API access enabled."""
         response = await test_client.get(
-            "/api/v1/billing/features",
+            "/api/v1/features",
             headers=growth_user_headers,
         )
 
@@ -309,21 +312,21 @@ class TestFeatureGatingErrorFormat:
 
     def test_error_contains_feature_info(self, starter_tenant: Tenant) -> None:
         """Error should contain feature and tier information."""
-        gate = FeatureGate("client_portal")
+        gate = FeatureGate("api_access")
 
         with pytest.raises(FeatureNotAvailableError) as exc_info:
             gate.check(starter_tenant)
 
         error = exc_info.value
-        assert error.feature == "client_portal"
-        assert error.required_tier == "professional"
+        assert error.feature == "api_access"
+        assert error.required_tier == "growth"
         assert error.current_tier == "starter"
         assert error.code == "FEATURE_NOT_AVAILABLE"
         assert error.status_code == 403
 
     def test_error_details_include_upgrade_url(self, starter_tenant: Tenant) -> None:
         """Error details should include upgrade URL."""
-        gate = FeatureGate("magic_zone")
+        gate = FeatureGate("api_access")
 
         with pytest.raises(FeatureNotAvailableError) as exc_info:
             gate.check(starter_tenant)
@@ -360,24 +363,14 @@ class TestClientLimitGating:
         db_session.add(tenant)
         await db_session.flush()
 
-        user = PracticeUser(
-            id=uuid4(),
-            tenant_id=tenant.id,
-            clerk_user_id=f"clerk_{uuid4().hex[:12]}",
-            email="user@limit.com",
-            name="Limit User",
-            role="owner",
-        )
-        db_session.add(user)
-        await db_session.flush()
-
+        user = await _create_practice_user(db_session, tenant.id, "user@limit.com")
         headers = create_auth_headers(user, tenant)
 
         from unittest.mock import patch
 
         with patch("app.modules.billing.router.stripe"):
             response = await test_client.get(
-                "/api/v1/billing/subscription",
+                "/api/v1/subscription",
                 headers=headers,
             )
 
@@ -405,24 +398,14 @@ class TestClientLimitGating:
         db_session.add(tenant)
         await db_session.flush()
 
-        user = PracticeUser(
-            id=uuid4(),
-            tenant_id=tenant.id,
-            clerk_user_id=f"clerk_{uuid4().hex[:12]}",
-            email="user@enterprise.com",
-            name="Enterprise User",
-            role="owner",
-        )
-        db_session.add(user)
-        await db_session.flush()
-
+        user = await _create_practice_user(db_session, tenant.id, "user@enterprise.com")
         headers = create_auth_headers(user, tenant)
 
         from unittest.mock import patch
 
         with patch("app.modules.billing.router.stripe"):
             response = await test_client.get(
-                "/api/v1/billing/subscription",
+                "/api/v1/subscription",
                 headers=headers,
             )
 

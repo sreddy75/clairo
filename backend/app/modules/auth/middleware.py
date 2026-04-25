@@ -51,6 +51,10 @@ DEFAULT_EXCLUDE_PATHS = [
     "/api/v1/portal/requests",  # Client portal requests (portal JWT)
     "/api/v1/portal/documents",  # Client portal documents (portal JWT)
     "/api/v1/client-portal/classify",  # Client transaction classification (portal JWT, Spec 047)
+    "/api/v1/portal/push",  # Push notifications (portal JWT auth handled by router)
+    "/api/v1/portal/invitations",  # Portal invitations (accountant-initiated, validated inline)
+    "/api/v1/push",  # Push notification admin endpoints (no Clerk JWT required)
+    "/",  # Root health/info endpoint
 ]
 
 # Paths that require auth but not tenant context (e.g., registration, onboarding)

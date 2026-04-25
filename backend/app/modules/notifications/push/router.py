@@ -38,6 +38,7 @@ from app.modules.notifications.push.service import (
 )
 from app.modules.notifications.push.webauthn_service import WebAuthnService
 from app.modules.portal.dependencies import get_current_portal_session
+from app.modules.portal.models import PortalSession
 
 router = APIRouter(prefix="/portal/push", tags=["Portal Push Notifications"])
 
@@ -84,7 +85,7 @@ async def get_vapid_key(
 async def subscribe(
     subscription_data: PushSubscriptionCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
     user_agent: Annotated[str | None, Header(alias="User-Agent")] = None,
 ) -> PushSubscriptionResponse:
     """Subscribe to push notifications."""
@@ -95,8 +96,8 @@ async def subscribe(
         subscription_data.user_agent = user_agent
 
     subscription = await service.subscribe(
-        client_id=session["connection_id"],
-        tenant_id=session["tenant_id"],
+        client_id=session.connection_id,
+        tenant_id=session.tenant_id,
         subscription_data=subscription_data,
     )
 
@@ -113,7 +114,7 @@ async def subscribe(
 async def unsubscribe(
     endpoint: str,
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> None:
     """Unsubscribe from push notifications."""
     service = PushSubscriptionService(db)
@@ -136,11 +137,11 @@ async def unsubscribe(
 )
 async def list_subscriptions(
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> PushSubscriptionList:
     """List all active push subscriptions for the client."""
     service = PushSubscriptionService(db)
-    subscriptions = await service.list_subscriptions(session["connection_id"])
+    subscriptions = await service.list_subscriptions(session.connection_id)
 
     return PushSubscriptionList(
         subscriptions=[PushSubscriptionResponse.model_validate(s) for s in subscriptions],
@@ -157,7 +158,7 @@ async def list_subscriptions(
 async def delete_subscription(
     subscription_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> None:
     """Delete a specific push subscription."""
     service = PushSubscriptionService(db)
@@ -212,16 +213,16 @@ async def notification_clicked(
 async def log_pwa_event(
     event_data: PWAEventCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
     user_agent: Annotated[str | None, Header(alias="User-Agent")] = None,
 ) -> PWAEventResponse:
     """Log a PWA event for analytics."""
     service = PWAAnalyticsService(db)
 
     event = await service.log_event(
-        tenant_id=session["tenant_id"],
+        tenant_id=session.tenant_id,
         event_data=event_data,
-        client_id=session["connection_id"],
+        client_id=session.connection_id,
         user_agent=user_agent,
     )
 
@@ -295,11 +296,11 @@ class BiometricStatusResponse(BaseModel):
 )
 async def check_biometric_status(
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> BiometricStatusResponse:
     """Check if client has biometric credentials."""
     service = WebAuthnService(db)
-    credentials = await service.list_credentials(session["connection_id"])
+    credentials = await service.list_credentials(session.connection_id)
 
     return BiometricStatusResponse(
         has_credentials=len(credentials) > 0,
@@ -315,7 +316,7 @@ async def check_biometric_status(
 )
 async def get_registration_options(
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> WebAuthnRegistrationOptions:
     """Get WebAuthn registration options for navigator.credentials.create()."""
     service = WebAuthnService(db)
@@ -325,8 +326,8 @@ async def get_registration_options(
     display_name = session.get("organisation_name", user_name)
 
     options = await service.get_registration_options(
-        client_id=session["connection_id"],
-        tenant_id=session["tenant_id"],
+        client_id=session.connection_id,
+        tenant_id=session.tenant_id,
         user_name=user_name,
         user_display_name=display_name,
     )
@@ -344,15 +345,15 @@ async def get_registration_options(
 async def verify_registration(
     request: WebAuthnRegisterRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> WebAuthnCredentialResponse:
     """Verify and store WebAuthn registration response."""
     service = WebAuthnService(db)
 
     try:
         credential = await service.verify_registration(
-            client_id=session["connection_id"],
-            tenant_id=session["tenant_id"],
+            client_id=session.connection_id,
+            tenant_id=session.tenant_id,
             credential_response=request.credential.model_dump(),
             device_name=request.device_name,
         )
@@ -374,14 +375,14 @@ async def verify_registration(
 )
 async def get_authentication_options(
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> WebAuthnAuthenticationOptions:
     """Get WebAuthn authentication options for navigator.credentials.get()."""
     service = WebAuthnService(db)
 
     try:
         options = await service.get_authentication_options(
-            client_id=session["connection_id"],
+            client_id=session.connection_id,
         )
         return WebAuthnAuthenticationOptions(**options)
 
@@ -401,14 +402,14 @@ async def get_authentication_options(
 async def verify_authentication(
     request: WebAuthnAuthenticateRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> dict[str, bool]:
     """Verify WebAuthn authentication response."""
     service = WebAuthnService(db)
 
     try:
         await service.verify_authentication(
-            client_id=session["connection_id"],
+            client_id=session.connection_id,
             assertion_response=request.credential.model_dump(),
         )
         await db.commit()
@@ -429,11 +430,11 @@ async def verify_authentication(
 )
 async def list_credentials(
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> WebAuthnCredentialList:
     """List all WebAuthn credentials for the client."""
     service = WebAuthnService(db)
-    credentials = await service.list_credentials(session["connection_id"])
+    credentials = await service.list_credentials(session.connection_id)
 
     return WebAuthnCredentialList(
         credentials=[WebAuthnCredentialResponse.model_validate(c) for c in credentials],
@@ -450,12 +451,12 @@ async def list_credentials(
 async def delete_credential(
     credential_id: UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
-    session: Annotated[dict, Depends(get_current_portal_session)],
+    session: Annotated[PortalSession, Depends(get_current_portal_session)],
 ) -> None:
     """Delete a WebAuthn credential."""
     service = WebAuthnService(db)
     found = await service.revoke_credential(
-        client_id=session["connection_id"],
+        client_id=session.connection_id,
         credential_id=credential_id,
     )
 

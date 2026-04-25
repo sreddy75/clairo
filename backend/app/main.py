@@ -599,9 +599,13 @@ def register_routes(app: FastAPI) -> None:
 
     # Push notification routers (Spec 032 - PWA & Mobile Document Capture)
     try:
-        from app.modules.notifications.push.router import router as push_router
+        from app.modules.notifications.push.router import (
+            admin_router as push_admin_router,
+            router as push_router,
+        )
 
         app.include_router(push_router, prefix="/api/v1", tags=["portal-push"])
+        app.include_router(push_admin_router, prefix="/api/v1", tags=["push-admin"])
         logger.info("Push notification router registered at /api/v1/portal/push")
     except Exception as e:
         logger.warning("Push notification router registration skipped", error=str(e))

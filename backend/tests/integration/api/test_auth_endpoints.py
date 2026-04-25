@@ -7,7 +7,8 @@ Tests cover:
 """
 
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
@@ -73,14 +74,21 @@ class TestRegisterEndpoint:
                 iat=1234567890,
             )
 
-            # Mock ClerkClient.get_user
-            with patch("app.modules.auth.service.AuthService._get_clerk_user") as mock_get_user:
+            # Mock ClerkClient.get_user and update_user_metadata
+            with (
+                patch("app.modules.auth.service.AuthService._get_clerk_user") as mock_get_user,
+                patch(
+                    "app.modules.auth.clerk.ClerkClient.update_user_metadata",
+                    new_callable=AsyncMock,
+                ) as mock_update,
+            ):
                 mock_get_user.return_value = MagicMock(
                     id=mock_clerk_token_payload["sub"],
                     primary_email=mock_clerk_token_payload["email"],
                     first_name="John",
                     last_name="Doe",
                 )
+                mock_update.return_value = MagicMock()
 
                 response = await test_client.post(
                     "/api/v1/auth/register",
@@ -104,8 +112,8 @@ class TestRegisterEndpoint:
         auth_headers_mock: dict[str, str],
     ) -> None:
         """Test that registering with existing email returns 409 conflict."""
-        # Create existing user
-        existing_email = "existing@example.com"
+        # Create existing user (unique per run to avoid DB contamination)
+        existing_email = f"existing_{uuid4().hex[:8]}@example.com"
         tenant = TenantFactory()
         user = UserFactory(email=existing_email)
         practice_user = PracticeUserFactory(
@@ -130,7 +138,13 @@ class TestRegisterEndpoint:
                 iat=1234567890,
             )
 
-            with patch("app.modules.auth.service.AuthService._get_clerk_user") as mock_get_user:
+            with (
+                patch("app.modules.auth.service.AuthService._get_clerk_user") as mock_get_user,
+                patch(
+                    "app.modules.auth.clerk.ClerkClient.update_user_metadata",
+                    new_callable=AsyncMock,
+                ),
+            ):
                 mock_get_user.return_value = MagicMock(
                     id="user_new_clerk_id",
                     primary_email=existing_email,
@@ -143,7 +157,11 @@ class TestRegisterEndpoint:
                 )
 
         assert response.status_code == 409
-        assert "already registered" in response.json()["error"]["message"].lower()
+        body = response.json()
+        error_msg = (body.get("error") or body.get("detail", {}).get("error", {})).get(
+            "message", ""
+        )
+        assert "already registered" in error_msg.lower()
 
     @pytest.mark.asyncio
     async def test_register_with_invitation_joins_tenant(
@@ -186,11 +204,18 @@ class TestRegisterEndpoint:
                 iat=1234567890,
             )
 
-            with patch("app.modules.auth.service.AuthService._get_clerk_user") as mock_get_user:
+            with (
+                patch("app.modules.auth.service.AuthService._get_clerk_user") as mock_get_user,
+                patch(
+                    "app.modules.auth.clerk.ClerkClient.update_user_metadata",
+                    new_callable=AsyncMock,
+                ) as mock_update,
+            ):
                 mock_get_user.return_value = MagicMock(
                     id="user_invited_clerk",
                     primary_email="invited@example.com",
                 )
+                mock_update.return_value = MagicMock()
 
                 response = await test_client.post(
                     "/api/v1/auth/register",

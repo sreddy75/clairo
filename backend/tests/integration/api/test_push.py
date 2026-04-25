@@ -424,16 +424,22 @@ class TestNotificationClicked:
         tenant = TenantFactory()
         connection = XeroConnectionFactory(tenant_id=tenant.id)
 
+        from uuid import uuid4 as _uuid4
+
         subscription = PushSubscription(
             client_id=connection.id,
             tenant_id=tenant.id,
-            endpoint="https://fcm.googleapis.com/fcm/send/test",
+            endpoint=f"https://fcm.googleapis.com/fcm/send/test-{_uuid4().hex[:8]}",
             p256dh_key="test-key",
             auth_key="test-auth",
             is_active=True,
         )
 
-        db_session.add_all([tenant, connection, subscription])
+        db_session.add(tenant)
+        await db_session.flush()
+        db_session.add(connection)
+        await db_session.flush()
+        db_session.add(subscription)
         await db_session.flush()
 
         notification_log = PushNotificationLog(
