@@ -865,8 +865,13 @@ export function BASTab({
             setProceededWithUnreconciled(true);
           }}
           onGoBack={() => {
+            // Dismiss the dialog and stay on the current session.
+            // Clearing the session would drop the user on an empty "select a quarter"
+            // screen — the quarter dropdown is still on Q4 in the parent so there is
+            // nowhere sensible to snap back to from inside BASTab.
+            // The user can use the quarter dropdown to navigate back to Q3 themselves,
+            // or open Xero in a new tab to reconcile and then recalculate here.
             setShowUnreconciledWarning(false);
-            setSelectedSession(null);
           }}
         />
       )}

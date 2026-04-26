@@ -628,7 +628,7 @@ class BASService:
         w1_to_save = payg_result.w1_total_wages
         w2_to_save = payg_result.w2_amount_withheld
         if not payg_result.has_payroll:
-            existing_calc = await self.repo.get_calculation(session_id, tenant_id)
+            existing_calc = await self.repo.get_calculation(session_id)
             if existing_calc is not None:
                 if existing_calc.w1_total_wages and existing_calc.w1_total_wages > 0:
                     w1_to_save = existing_calc.w1_total_wages
