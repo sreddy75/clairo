@@ -115,9 +115,7 @@ class TaxStrategyDetail(TaxStrategyListItem):
     superseded_by_strategy_id: str | None = None
     source_ref: str | None = Field(
         default=None,
-        description=(
-            "Admin-only; never included in public hydration responses (FR-008)."
-        ),
+        description=("Admin-only; never included in public hydration responses (FR-008)."),
     )
     authoring_jobs: list[AuthoringJobResponse] = Field(default_factory=list)
     version_history: list[TaxStrategyListItem] = Field(default_factory=list)

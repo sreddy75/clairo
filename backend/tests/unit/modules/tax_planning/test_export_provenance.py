@@ -21,11 +21,7 @@ from jinja2 import Environment, FileSystemLoader
 @pytest.fixture
 def template_env() -> Environment:
     template_dir = (
-        Path(__file__).resolve().parents[4]
-        / "app"
-        / "modules"
-        / "tax_planning"
-        / "templates"
+        Path(__file__).resolve().parents[4] / "app" / "modules" / "tax_planning" / "templates"
     )
     return Environment(loader=FileSystemLoader(str(template_dir)), autoescape=True)
 
@@ -97,16 +93,12 @@ def _scenario(estimated: bool) -> SimpleNamespace:
         risk_rating="conservative",
         compliance_notes="s82KZM",
         cash_flow_impact=-19000.0,
-        source_tags={
-            "impact_data.after.tax_payable": "estimated" if estimated else "confirmed"
-        },
+        source_tags={"impact_data.after.tax_payable": "estimated" if estimated else "confirmed"},
     )
 
 
 def test_export_warns_when_estimated_figures_remain(template_env: Environment) -> None:
-    html = _render(
-        template_env, has_estimated_figures=True, scenarios=[_scenario(estimated=True)]
-    )
+    html = _render(template_env, has_estimated_figures=True, scenarios=[_scenario(estimated=True)])
     assert "AI-estimated" in html, "warning banner copy missing"
     assert "Review before sharing" in html, "banner header missing"
 

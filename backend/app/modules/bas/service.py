@@ -578,6 +578,7 @@ class BASService:
             from sqlalchemy import select as _select
 
             from app.modules.clients.models import PracticeClient
+
             _result = await self.session.execute(
                 _select(PracticeClient).where(
                     PracticeClient.xero_connection_id == period.connection_id
@@ -587,6 +588,7 @@ class BASService:
             if practice_client is not None:
                 if practice_client.gst_reporting_basis is None:
                     from app.core.exceptions import ValidationError
+
                     raise ValidationError(
                         "GST reporting basis has not been set for this client. "
                         "Please select Cash or Accrual basis before calculating BAS."
@@ -595,6 +597,7 @@ class BASService:
         except Exception as exc:
             # Re-raise domain validation errors; swallow unexpected lookup failures
             from app.core.exceptions import ValidationError
+
             if isinstance(exc, ValidationError):
                 raise
             logger.warning(f"Could not resolve GST basis for session {session_id}: {exc}")
@@ -620,8 +623,20 @@ class BASService:
             end_date=period.end_date,
         )
 
+        # FR-006: If no Xero payroll data, preserve any manually-entered W1/W2
+        # values from a previous manual entry rather than overwriting with zeros.
+        w1_to_save = payg_result.w1_total_wages
+        w2_to_save = payg_result.w2_amount_withheld
+        if not payg_result.has_payroll:
+            existing_calc = await self.repo.get_calculation(session_id)
+            if existing_calc is not None:
+                if existing_calc.w1_total_wages and existing_calc.w1_total_wages > 0:
+                    w1_to_save = existing_calc.w1_total_wages
+                if existing_calc.w2_amount_withheld and existing_calc.w2_amount_withheld > 0:
+                    w2_to_save = existing_calc.w2_amount_withheld
+
         # Calculate total payable
-        total_payable = gst_result.gst_payable + payg_result.w2_amount_withheld
+        total_payable = gst_result.gst_payable + w2_to_save
 
         # Calculate duration
         duration_ms = int((time.time() - start_time) * 1000)
@@ -637,8 +652,8 @@ class BASService:
             g11_non_capital_purchases=gst_result.g11_non_capital_purchases,
             field_1a_gst_on_sales=gst_result.field_1a_gst_on_sales,
             field_1b_gst_on_purchases=gst_result.field_1b_gst_on_purchases,
-            w1_total_wages=payg_result.w1_total_wages,
-            w2_amount_withheld=payg_result.w2_amount_withheld,
+            w1_total_wages=w1_to_save,
+            w2_amount_withheld=w2_to_save,
             gst_payable=gst_result.gst_payable,
             total_payable=total_payable,
             calculation_duration_ms=duration_ms,
@@ -661,6 +676,7 @@ class BASService:
         # Invalidate the cross-check cache so the next load fetches fresh Xero data
         try:
             from app.core.cache import cache_delete
+
             await cache_delete(f"xero_bas_crosscheck:{period.connection_id}:{session_id}")
         except Exception:
             pass  # Non-fatal — cache will expire naturally
@@ -807,8 +823,12 @@ class BASService:
                     "t2_instalment_rate": str(old_t2) if old_t2 is not None else None,
                 },
                 new_values={
-                    "t1_instalment_income": str(t1_instalment_income) if t1_instalment_income is not None else None,
-                    "t2_instalment_rate": str(t2_instalment_rate) if t2_instalment_rate is not None else None,
+                    "t1_instalment_income": str(t1_instalment_income)
+                    if t1_instalment_income is not None
+                    else None,
+                    "t2_instalment_rate": str(t2_instalment_rate)
+                    if t2_instalment_rate is not None
+                    else None,
                 },
             )
         except Exception:
@@ -816,6 +836,30 @@ class BASService:
 
         await self.session.commit()
         return self._calculation_to_response(updated)
+
+    async def update_payg_manual(
+        self,
+        calculation_id: UUID,
+        tenant_id: UUID,
+        actor_id: UUID,
+        w1_total_wages: Decimal,
+        w2_amount_withheld: Decimal,
+    ) -> "BASCalculationResponse":
+        """Manually set W1/W2 PAYG fields when Xero payroll is unavailable (FR-006)."""
+        from app.core.exceptions import NotFoundError
+
+        updated = await self.repo.update_payg_manual(
+            calculation_id=calculation_id,
+            tenant_id=tenant_id,
+            w1_total_wages=w1_total_wages,
+            w2_amount_withheld=w2_amount_withheld,
+        )
+        if updated is None:
+            raise NotFoundError(resource_type="BASCalculation", message="Calculation not found")
+
+        await self.session.commit()
+        return self._calculation_to_response(updated)
+
 
     # =========================================================================
     # Adjustment Operations
@@ -1618,7 +1662,6 @@ class BASService:
             transactions=transactions,
         )
 
-
     async def get_reconciliation_status(
         self,
         client_id: UUID,
@@ -1628,14 +1671,15 @@ class BASService:
     ) -> dict:
         """Return reconciliation status for a client period (Spec 062).
 
-        Looks up the client's Xero connection, then queries XeroBankTransaction
-        for unreconciled transactions in the given date range.
+        The caller may pass either a PracticeClient.id or a XeroConnection.id
+        (the BASTab frontend uses the XeroConnection UUID as its "connectionId").
+        We try both lookups to handle either case.
         """
         from sqlalchemy import select as _select
 
         from app.modules.clients.models import PracticeClient
 
-        practice_client = None
+        # Try lookup by PracticeClient.id first (canonical), then by xero_connection_id
         result = await self.session.execute(
             _select(PracticeClient).where(
                 PracticeClient.id == client_id,
@@ -1643,6 +1687,16 @@ class BASService:
             )
         )
         practice_client = result.scalar_one_or_none()
+
+        if practice_client is None:
+            # Caller may have passed the XeroConnection UUID directly
+            result = await self.session.execute(
+                _select(PracticeClient).where(
+                    PracticeClient.xero_connection_id == client_id,
+                    PracticeClient.tenant_id == tenant_id,
+                )
+            )
+            practice_client = result.scalar_one_or_none()
 
         if practice_client is None or practice_client.xero_connection_id is None:
             return {"unreconciled_count": 0, "total_transactions": 0}

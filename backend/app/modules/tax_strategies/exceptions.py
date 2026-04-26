@@ -22,8 +22,7 @@ class InvalidStatusTransitionError(DomainError):
 
     def __init__(self, strategy_id: str, from_status: str, to_status: str) -> None:
         super().__init__(
-            f"Invalid status transition for {strategy_id}: "
-            f"{from_status!r} → {to_status!r}"
+            f"Invalid status transition for {strategy_id}: {from_status!r} → {to_status!r}"
         )
         self.strategy_id = strategy_id
         self.from_status = from_status

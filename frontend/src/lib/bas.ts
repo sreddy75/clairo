@@ -1876,6 +1876,30 @@ export async function updateInstalments(
   return apiClient.handleResponse<BASCalculation>(response);
 }
 
+// =============================================================================
+// PAYG Manual Entry (FR-006)
+// =============================================================================
+
+export interface PAYGManualUpdateRequest {
+  w1_total_wages: number;
+  w2_amount_withheld: number;
+}
+
+export async function updatePAYGManual(
+  token: string,
+  calculationId: string,
+  data: PAYGManualUpdateRequest,
+): Promise<BASCalculation> {
+  const response = await apiClient.patch(
+    `/api/v1/bas/calculations/${calculationId}/payg-manual`,
+    {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    },
+  );
+  return apiClient.handleResponse<BASCalculation>(response);
+}
+
 export const VALID_TAX_TYPES = [
   { value: 'OUTPUT', label: 'GST on Sales (OUTPUT)', group: 'Sales' },
   { value: 'INPUT', label: 'GST on Purchases (INPUT)', group: 'Purchases' },

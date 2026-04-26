@@ -54,7 +54,7 @@ export function UnreconciledWarning({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onGoBack}>
-            Go back and reconcile first
+            Dismiss — I&apos;ll reconcile in Xero first
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onProceed}

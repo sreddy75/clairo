@@ -131,8 +131,12 @@ class InsightGenerator:
             "cashflow",
             "draft",
             "invoice",
+            "void",
+            "employee",
             "expense",
         ]
+        # Cap total AI insights to prevent flooding the UI with variations of the same topic
+        _MAX_AI_INSIGHTS = 5
         rule_based_topics: set[str] = set()
 
         # Run each analyzer
@@ -149,12 +153,19 @@ class InsightGenerator:
                         for i in insights
                         if not any(
                             kw in i.insight_type.lower().replace("_", "")
+                            or kw in (i.title or "").lower().replace("_", "")
                             for kw in rule_based_topics
                         )
                     ]
                     dropped = before - len(insights)
                     if dropped:
                         logger.debug(f"Dropped {dropped} AI insights overlapping rule-based topics")
+                if is_ai and len(insights) > _MAX_AI_INSIGHTS:
+                    # Sort by confidence descending and keep only the top N
+                    insights = sorted(insights, key=lambda i: i.confidence, reverse=True)[
+                        :_MAX_AI_INSIGHTS
+                    ]
+                    logger.debug(f"Capped AI insights at {_MAX_AI_INSIGHTS}")
                 else:
                     # Collect topic keywords from rule-based analyzers
                     for i in insights:
@@ -177,6 +188,7 @@ class InsightGenerator:
 
         # T045: Confidence threshold routing — downgrade high-priority low-confidence insights
         from app.modules.insights.models import InsightPriority  # noqa: PLC0415 (lazy import ok)
+
         for ic in all_insight_creates:
             if ic.priority == InsightPriority.HIGH and ic.confidence < URGENT_CONFIDENCE_THRESHOLD:
                 ic.priority = InsightPriority.MEDIUM

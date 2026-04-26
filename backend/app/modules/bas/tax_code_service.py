@@ -72,6 +72,12 @@ class TaxCodeService:
 
         excluded = gst_result.excluded_items
 
+        # BASEXCLUDED is a valid Xero tax code meaning "excluded from BAS" (e.g. wages).
+        # These are correctly coded — do NOT flag them as needing a tax code.
+        excluded = [
+            item for item in excluded if item.get("tax_type", "").upper() != "BASEXCLUDED"
+        ]
+
         # Enrich excluded items with contact names and dates
         enriched = (
             await self._enrich_excluded_items(excluded, period.connection_id, tenant_id)

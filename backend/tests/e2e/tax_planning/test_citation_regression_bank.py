@@ -21,9 +21,7 @@ from pathlib import Path
 
 import yaml
 
-FIXTURE_PATH = (
-    Path(__file__).parent / "fixtures" / "citation_regression_bank.yaml"
-)
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "citation_regression_bank.yaml"
 
 # Matches the gate in `service.send_chat_message` — keep in sync.
 CONFIDENCE_THRESHOLD = 0.5
@@ -64,9 +62,7 @@ def test_citation_bank_false_decline_rate_within_budget() -> None:
     the SC-008 budget (1 in 20)."""
     data = yaml.safe_load(FIXTURE_PATH.read_text(encoding="utf-8"))
     questions = data["questions"]
-    assert len(questions) >= 20, (
-        f"Bank must contain at least 20 questions; got {len(questions)}"
-    )
+    assert len(questions) >= 20, f"Bank must contain at least 20 questions; got {len(questions)}"
 
     declined: list[str] = []
     for entry in questions:

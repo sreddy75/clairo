@@ -68,23 +68,17 @@ from app.modules.tax_strategies.sync import (  # noqa: E402
 # scope events distinguishable from per-tenant events at a glance.
 _PLATFORM_TENANT_UUID = UUID(int=0)
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("sync_strategies_from_yaml")
 
 
 def _make_session_factory() -> async_sessionmaker[AsyncSession]:
     settings = get_settings()
-    engine = create_async_engine(
-        settings.database.url, echo=False, poolclass=NullPool
-    )
+    engine = create_async_engine(settings.database.url, echo=False, poolclass=NullPool)
     return async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-async def _publish_sync(
-    session: AsyncSession, strategy_id: str, actor: str
-) -> dict[str, Any]:
+async def _publish_sync(session: AsyncSession, strategy_id: str, actor: str) -> dict[str, Any]:
     """Inline synchronous publish — imports the celery task's async body."""
     from app.tasks.tax_strategy_authoring import _run_publish
 

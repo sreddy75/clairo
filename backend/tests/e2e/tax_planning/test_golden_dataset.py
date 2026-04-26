@@ -57,9 +57,7 @@ def _fixture_files() -> list[Path]:
     if not FIXTURE_DIR.exists():
         return []
     return sorted(
-        p
-        for p in FIXTURE_DIR.glob("*.json")
-        if p.is_file() and not p.name.startswith("_")
+        p for p in FIXTURE_DIR.glob("*.json") if p.is_file() and not p.name.startswith("_")
     )
 
 
@@ -108,6 +106,6 @@ def test_golden_dataset_matches_expected(fixture_path: Path | None) -> None:
                 f"(delta ${delta}, tolerance ${tolerance})"
             )
 
-    assert not failures, (
-        f"Golden dataset {_fixture_id(fixture_path)} failed:\n" + "\n".join(failures)
+    assert not failures, f"Golden dataset {_fixture_id(fixture_path)} failed:\n" + "\n".join(
+        failures
     )

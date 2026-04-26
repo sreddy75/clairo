@@ -69,6 +69,25 @@ def get_quarter_dates(
             current_fy = year
             current_q = 3 if month <= 3 else 4
 
+        # Lodgement-window default: Australian BAS is due 28 days after quarter end.
+        # If today falls within 28 days of the previous quarter's end, accountants are
+        # most likely preparing that lodgement — default to the just-completed quarter.
+        # Quarter end months: Q1→Sep, Q2→Dec, Q3→Mar, Q4→Jun
+        quarter_end_month = {1: 9, 2: 12, 3: 3, 4: 6}
+        prev_q = 4 if current_q == 1 else current_q - 1
+        prev_fy = current_fy - 1 if current_q == 1 else current_fy
+        # Calculate the end of the previous quarter
+        prev_end_month = quarter_end_month[prev_q]
+        from calendar import monthrange
+        prev_end_year = prev_fy - 1 if prev_q in [1, 2] else prev_fy
+        prev_end_day = monthrange(prev_end_year, prev_end_month)[1]
+        prev_quarter_end = date(prev_end_year, prev_end_month, prev_end_day)
+        days_since_prev_end = (today - prev_quarter_end).days
+        if 0 <= days_since_prev_end <= 28:
+            # Within lodgement window — default to the just-completed quarter
+            current_q = prev_q
+            current_fy = prev_fy
+
         quarter = quarter or current_q
         fy_year = fy_year or current_fy
 
@@ -551,7 +570,9 @@ class PracticeClientService:
     Handles team assignment, exclusion, notes, and manual client creation.
     """
 
-    def __init__(self, db: AsyncSession, actor_id: UUID | None = None, tenant_id: UUID | None = None):
+    def __init__(
+        self, db: AsyncSession, actor_id: UUID | None = None, tenant_id: UUID | None = None
+    ):
         self.db = db
         self.actor_id = actor_id
         self.tenant_id = tenant_id
@@ -559,10 +580,17 @@ class PracticeClientService:
         self.exclusion_repo = ClientExclusionRepository(db)
         self.note_history_repo = ClientNoteHistoryRepository(db)
 
-    async def _audit(self, event_type: str, resource_id: UUID, old_values: dict | None = None, new_values: dict | None = None) -> None:
+    async def _audit(
+        self,
+        event_type: str,
+        resource_id: UUID,
+        old_values: dict | None = None,
+        new_values: dict | None = None,
+    ) -> None:
         """Emit an audit event. Non-fatal if audit service is unavailable."""
         try:
             from app.core.audit import AuditService
+
             audit = AuditService(self.db)
             await audit.log_event(
                 event_type=event_type,
@@ -582,10 +610,11 @@ class PracticeClientService:
     # ─── Helper ────────────────────────────────────────────────────────────
 
     def _to_response(self, client: "PracticeClient") -> PracticeClientResponse:
-
         notes_editor_name = None
         if client.notes_updated_by and hasattr(client, "notes_editor") and client.notes_editor:
-            notes_editor_name = getattr(client.notes_editor, "display_name", None) or client.notes_editor.email
+            notes_editor_name = (
+                getattr(client.notes_editor, "display_name", None) or client.notes_editor.email
+            )
 
         return PracticeClientResponse(
             id=client.id,
@@ -617,7 +646,9 @@ class PracticeClientService:
         tenant_id: UUID,
     ) -> PracticeClientResponse:
         old_client = await self.client_repo.get_by_id(client_id, tenant_id)
-        old_assignee = str(old_client.assigned_user_id) if old_client and old_client.assigned_user_id else None
+        old_assignee = (
+            str(old_client.assigned_user_id) if old_client and old_client.assigned_user_id else None
+        )
         client = await self.client_repo.update_assignment(
             client_id=client_id,
             tenant_id=tenant_id,
@@ -625,7 +656,12 @@ class PracticeClientService:
         )
         if client is None:
             raise NotFoundError(resource_type="PracticeClient", message="Client not found")
-        await self._audit("client.assigned", client_id, {"assigned_user_id": old_assignee}, {"assigned_user_id": str(assigned_user_id) if assigned_user_id else None})
+        await self._audit(
+            "client.assigned",
+            client_id,
+            {"assigned_user_id": old_assignee},
+            {"assigned_user_id": str(assigned_user_id) if assigned_user_id else None},
+        )
         return self._to_response(client)
 
     async def bulk_assign_clients(
@@ -684,9 +720,16 @@ class PracticeClientService:
 
         user_name = None
         if exclusion.excluded_by_user:
-            user_name = getattr(exclusion.excluded_by_user, "display_name", None) or exclusion.excluded_by_user.email
+            user_name = (
+                getattr(exclusion.excluded_by_user, "display_name", None)
+                or exclusion.excluded_by_user.email
+            )
 
-        await self._audit("client.exclusion.created", client_id, new_values={"quarter": data.quarter, "fy_year": data.fy_year, "reason": data.reason})
+        await self._audit(
+            "client.exclusion.created",
+            client_id,
+            new_values={"quarter": data.quarter, "fy_year": data.fy_year, "reason": data.reason},
+        )
 
         return ClientExclusionResponse(
             id=exclusion.id,
@@ -718,9 +761,14 @@ class PracticeClientService:
 
         user_name = None
         if exclusion.reversed_by_user:
-            user_name = getattr(exclusion.reversed_by_user, "display_name", None) or exclusion.reversed_by_user.email
+            user_name = (
+                getattr(exclusion.reversed_by_user, "display_name", None)
+                or exclusion.reversed_by_user.email
+            )
 
-        await self._audit("client.exclusion.reversed", client_id, new_values={"exclusion_id": str(exclusion_id)})
+        await self._audit(
+            "client.exclusion.reversed", client_id, new_values={"exclusion_id": str(exclusion_id)}
+        )
 
         return ClientExclusionReversedResponse(
             id=exclusion.id,
@@ -756,7 +804,9 @@ class PracticeClientService:
             notes=notes,
             updated_by=updated_by,
         )
-        await self._audit("client.notes.updated", client_id, new_values={"notes_length": len(notes)})
+        await self._audit(
+            "client.notes.updated", client_id, new_values={"notes_length": len(notes)}
+        )
         return self._to_response(client)  # type: ignore[arg-type]
 
     async def get_note_history(
@@ -794,7 +844,11 @@ class PracticeClientService:
             assigned_user_id=data.assigned_user_id,
             notes=data.notes,
         )
-        await self._audit("client.created_manual", client.id, new_values={"name": data.name, "software": data.accounting_software})
+        await self._audit(
+            "client.created_manual",
+            client.id,
+            new_values={"name": data.name, "software": data.accounting_software},
+        )
         return self._to_response(client)
 
     async def update_manual_status(

@@ -136,20 +136,54 @@ async def db_session(
 @pytest_asyncio.fixture
 async def test_client(
     db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncGenerator[AsyncClient, None]:
     """Provide an async HTTP client for API testing.
 
     Overrides the database dependency to use the test session,
     ensuring all API operations use the same transaction that will
     be rolled back.
+
+    Also patches Clerk JWT validation to accept HS256 test tokens created
+    with app.core.security.create_access_token, allowing integration tests to
+    run without real Clerk credentials.  Test tokens must use clerk_id (not
+    the DB UUID) as the ``user_id`` argument so that get_current_practice_user
+    can look them up by clerk_id in the database.
     """
     from app.main import app
+    from app.modules.auth.clerk import ClerkTokenPayload
 
     # Override the database dependency
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+
+    # Patch Clerk's validate_token to accept HS256 test tokens.
+    # The token sub is expected to be the practice user's clerk_id so that
+    # get_current_practice_user can look the user up via get_by_clerk_id.
+    async def _mock_validate_token(self: Any, token: str) -> ClerkTokenPayload:  # type: ignore[misc]
+        from jose import jwt as _jose_jwt
+
+        from app.config import get_settings
+
+        settings = get_settings()
+        claims = _jose_jwt.decode(
+            token,
+            settings.security.secret_key.get_secret_value(),
+            algorithms=["HS256"],
+            options={"verify_exp": False, "verify_aud": False},
+        )
+        return ClerkTokenPayload(
+            sub=claims["sub"],
+            tenant_id=claims.get("tenant_id"),
+            exp=claims.get("exp", 9999999999),
+            iat=claims.get("iat", 0),
+        )
+
+    from app.modules.auth import clerk as _clerk_module
+
+    monkeypatch.setattr(_clerk_module.ClerkClient, "validate_token", _mock_validate_token)
 
     transport = ASGITransport(app=app)
     async with AsyncClient(
@@ -166,6 +200,53 @@ async def test_client(
 def anyio_backend() -> str:
     """Specify the async backend for anyio tests."""
     return "asyncio"
+
+
+@pytest_asyncio.fixture
+async def async_client(
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> AsyncGenerator[AsyncClient, None]:
+    """Alias for test_client — some test files use this name."""
+    from app.main import app
+    from app.modules.auth.clerk import ClerkTokenPayload
+
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    async def _mock_validate_token(self: Any, token: str) -> ClerkTokenPayload:  # type: ignore[misc]
+        from jose import jwt as _jose_jwt
+
+        from app.config import get_settings
+
+        settings = get_settings()
+        claims = _jose_jwt.decode(
+            token,
+            settings.security.secret_key.get_secret_value(),
+            algorithms=["HS256"],
+            options={"verify_exp": False, "verify_aud": False},
+        )
+        return ClerkTokenPayload(
+            sub=claims["sub"],
+            tenant_id=claims.get("tenant_id"),
+            exp=claims.get("exp", 9999999999),
+            iat=claims.get("iat", 0),
+        )
+
+    from app.modules.auth import clerk as _clerk_module
+
+    monkeypatch.setattr(_clerk_module.ClerkClient, "validate_token", _mock_validate_token)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+    ) as client:
+        yield client
+
+    app.dependency_overrides.clear()
 
 
 # ==============================================================================

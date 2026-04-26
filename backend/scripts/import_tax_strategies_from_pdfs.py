@@ -45,25 +45,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from app.config import get_settings  # noqa: E402
 from app.modules.tax_strategies.schemas import ALLOWED_CATEGORIES  # noqa: E402
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_SOURCE_DIR = Path(
-    "/Users/suren/KR8IT/projects/Personal/Clairo docs/Tax Fitness Strategy"
-)
-DEFAULT_OUTPUT_DIR = (
-    Path(__file__).parent.parent
-    / "app/modules/tax_strategies/data/strategies"
-)
+DEFAULT_SOURCE_DIR = Path("/Users/suren/KR8IT/projects/Personal/Clairo docs/Tax Fitness Strategy")
+DEFAULT_OUTPUT_DIR = Path(__file__).parent.parent / "app/modules/tax_strategies/data/strategies"
 
 # 5 pilot strategies — mix of categories so we can eyeball quality across
 # the breadth of the catalogue before widening.
-PILOT_IDS: frozenset[str] = frozenset(
-    {"CLR-012", "CLR-241", "CLR-085", "CLR-222", "CLR-149"}
-)
+PILOT_IDS: frozenset[str] = frozenset({"CLR-012", "CLR-241", "CLR-085", "CLR-222", "CLR-149"})
 
 # Map "N. Category Name (done ...)" folder → ALLOWED_CATEGORIES value.
 # The PDFs list their own category inside the document but this map is the
@@ -116,9 +107,7 @@ def discover_pdfs(source_dir: Path) -> list[PdfSource]:
             continue
         category = _folder_to_category(category_dir.name)
         if category is None:
-            logger.warning(
-                "skipping folder %r — no matching category", category_dir.name
-            )
+            logger.warning("skipping folder %r — no matching category", category_dir.name)
             continue
         for pdf_path in sorted(category_dir.glob("*.pdf")):
             m = _FILENAME_RE.match(pdf_path.name)
@@ -261,9 +250,7 @@ def _call_anthropic(
         model=model,
         max_tokens=4096,
         system=EXTRACTION_SYSTEM,
-        messages=[
-            {"role": "user", "content": _build_user_message(pdf_bytes, fallback_category)}
-        ],
+        messages=[{"role": "user", "content": _build_user_message(pdf_bytes, fallback_category)}],
     )
     return _parse_json_response(response)
 
@@ -325,9 +312,7 @@ def _parse_json_response(response: Any) -> dict[str, Any]:
 # ----------------------------------------------------------------------
 
 
-def _sanitize_categories(
-    raw: list[str] | None, fallback: str
-) -> list[str]:
+def _sanitize_categories(raw: list[str] | None, fallback: str) -> list[str]:
     """Filter to ALLOWED_CATEGORIES, always including the folder fallback."""
     out: list[str] = []
     for c in raw or []:
@@ -338,18 +323,14 @@ def _sanitize_categories(
     return out
 
 
-def _build_yaml_payload(
-    source: PdfSource, extracted: dict[str, Any]
-) -> dict[str, Any]:
+def _build_yaml_payload(source: PdfSource, extracted: dict[str, Any]) -> dict[str, Any]:
     """Produce the final YAML-ready dict for one strategy.
 
     Applies light cleanup on top of the LLM output so downstream seeders
     can trust the shape (categories filtered, source_ref synthesised from
     the filename number).
     """
-    categories = _sanitize_categories(
-        extracted.get("categories"), source.fallback_category
-    )
+    categories = _sanitize_categories(extracted.get("categories"), source.fallback_category)
     return {
         "strategy_id": source.strategy_id,
         "source_ref": f"STP-{source.source_number:03d}",
@@ -401,9 +382,7 @@ def extract_one(
     logger.info("extracting %s from %s (pass 1)", source.strategy_id, source.pdf_path.name)
     pdf_bytes = source.pdf_path.read_bytes()
     try:
-        pass1 = _call_anthropic(
-            client, pdf_bytes, source.fallback_category, model=model
-        )
+        pass1 = _call_anthropic(client, pdf_bytes, source.fallback_category, model=model)
     except Exception:
         logger.exception("pass 1 failed for %s", source.strategy_id)
         return False
@@ -450,9 +429,7 @@ def extract_one(
     )
     if audit is not None:
         audit_path.write_text(
-            yaml.safe_dump(
-                audit, sort_keys=False, allow_unicode=True, width=100
-            ),
+            yaml.safe_dump(audit, sort_keys=False, allow_unicode=True, width=100),
             encoding="utf-8",
         )
     logger.info("wrote %s", out_path)

@@ -40,7 +40,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ThresholdTooltip } from '@/components/insights/ThresholdTooltip';
 import {
@@ -52,6 +52,7 @@ import {
   useBASCrossCheck,
 } from '@/hooks/useBASData';
 import {
+  type BASCalculation,
   type BASSession,
   type BASFieldTransactionsResponse,
   type ExportFormat,
@@ -86,6 +87,7 @@ import {
   requestChanges,
   reopenBASSession,
   getXeroBASCrossCheck,
+  updatePAYGManual,
 } from '@/lib/bas';
 
 import { GSTBasisModal } from './GSTBasisModal';
@@ -95,6 +97,107 @@ import { LodgementModal } from './LodgementModal';
 import { TaxCodeResolutionPanel } from './TaxCodeResolutionPanel';
 import { UnreconciledWarning } from './UnreconciledWarning';
 import { XeroBASCrossCheck } from './XeroBASCrossCheck';
+
+// =============================================================================
+// PAYG Manual Entry Component (FR-006)
+// Shown when Xero payroll data is unavailable — lets accountant enter W1/W2 directly.
+// =============================================================================
+
+function PAYGManualEntry({
+  calculation,
+  getToken,
+  onUpdated,
+}: {
+  calculation: BASCalculation;
+  getToken: () => Promise<string | null>;
+  onUpdated: (updated: BASCalculation) => void;
+}) {
+  const [w1, setW1] = React.useState<string>(
+    calculation.w1_total_wages && parseFloat(calculation.w1_total_wages) > 0
+      ? String(parseFloat(calculation.w1_total_wages))
+      : '',
+  );
+  const [w2, setW2] = React.useState<string>(
+    calculation.w2_amount_withheld && parseFloat(calculation.w2_amount_withheld) > 0
+      ? String(parseFloat(calculation.w2_amount_withheld))
+      : '',
+  );
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
+
+  const handleBlur = async () => {
+    setSaveError(null);
+    const w1Val = w1 !== '' ? parseFloat(w1) : 0;
+    const w2Val = w2 !== '' ? parseFloat(w2) : 0;
+    const existingW1 = parseFloat(calculation.w1_total_wages ?? '0');
+    const existingW2 = parseFloat(calculation.w2_amount_withheld ?? '0');
+    if (w1Val === existingW1 && w2Val === existingW2) return;
+
+    setIsSaving(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('Not authenticated');
+      const updated = await updatePAYGManual(token, calculation.id, {
+        w1_total_wages: isNaN(w1Val) ? 0 : w1Val,
+        w2_amount_withheld: isNaN(w2Val) ? 0 : w2Val,
+      });
+      onUpdated(updated);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2 border border-border">
+        <FileText className="w-3.5 h-3.5 shrink-0" />
+        No payroll data found in Xero — enter wages manually if applicable
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            W1 — Total wages paid
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">$</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={w1}
+              onChange={(e) => setW1(e.target.value)}
+              onBlur={handleBlur}
+              className="w-full pl-7 pr-3 py-2 text-sm font-mono rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            W2 — Tax withheld
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">$</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={w2}
+              onChange={(e) => setW2(e.target.value)}
+              onBlur={handleBlur}
+              className="w-full pl-7 pr-3 py-2 text-sm font-mono rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            />
+          </div>
+        </div>
+      </div>
+      {isSaving && <p className="text-[10px] text-muted-foreground animate-pulse">Saving…</p>}
+      {saveError && <p className="text-xs text-status-danger">{saveError}</p>}
+    </div>
+  );
+}
 
 // =============================================================================
 // Types
@@ -762,8 +865,13 @@ export function BASTab({
             setProceededWithUnreconciled(true);
           }}
           onGoBack={() => {
+            // Dismiss the dialog and stay on the current session.
+            // Clearing the session would drop the user on an empty "select a quarter"
+            // screen — the quarter dropdown is still on Q4 in the parent so there is
+            // nowhere sensible to snap back to from inside BASTab.
+            // The user can use the quarter dropdown to navigate back to Q3 themselves,
+            // or open Xero in a new tab to reconcile and then recalculate here.
             setShowUnreconciledWarning(false);
-            setSelectedSession(null);
           }}
         />
       )}
@@ -1426,13 +1534,16 @@ export function BASTab({
                                   )}
                                 </>
                               ) : (
-                                <div className="text-center py-8">
-                                  <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-3">
-                                    <FileText className="w-6 h-6 text-muted-foreground" />
-                                  </div>
-                                  <p className="text-muted-foreground font-medium">No payroll data found</p>
-                                  <p className="text-muted-foreground text-sm">Enter manually if wages were paid this period</p>
-                                </div>
+                                <PAYGManualEntry
+                                  calculation={calculation}
+                                  getToken={getToken}
+                                  onUpdated={(updated) => {
+                                    queryClient.setQueryData(
+                                      basQueryKeys.calculation(connectionId, sessionId!),
+                                      updated,
+                                    );
+                                  }}
+                                />
                               )}
 
                               {/* PAYG Instalment (T1/T2) — always visible */}

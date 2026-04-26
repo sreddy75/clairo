@@ -76,9 +76,7 @@ class TaxStrategy(Base):
     reviewer_display_name: Mapped[str | None] = mapped_column(String(200))
     superseded_by_strategy_id: Mapped[str | None] = mapped_column(String(16))
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
@@ -128,9 +126,7 @@ class TaxStrategyAuthoringJob(Base):
     output_payload: Mapped[dict | None] = mapped_column(JSONB)
     error: Mapped[str | None] = mapped_column(Text)
     triggered_by: Mapped[str] = mapped_column(String(120))
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
         Index(
@@ -144,6 +140,5 @@ class TaxStrategyAuthoringJob(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<TaxStrategyAuthoringJob {self.strategy_id} "
-            f"stage={self.stage} status={self.status}>"
+            f"<TaxStrategyAuthoringJob {self.strategy_id} stage={self.stage} status={self.status}>"
         )

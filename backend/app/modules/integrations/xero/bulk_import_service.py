@@ -483,6 +483,7 @@ class BulkImportService:
             # Create PracticeClient for this connection (Spec 058)
             try:
                 from app.modules.clients.repository import PracticeClientRepository
+
                 pc_repo = PracticeClientRepository(self.session)
                 assigned_user_id = org_selection.get("assigned_user_id")
                 await pc_repo.create(

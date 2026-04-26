@@ -457,15 +457,10 @@ def _to_public(strategy: TaxStrategy) -> PublicTaxStrategy:
 
 def _visible_to_caller(strategy: TaxStrategy) -> bool:
     """Enforce public-hydration visibility: only published, non-superseded."""
-    return (
-        strategy.status == "published"
-        and strategy.superseded_by_strategy_id is None
-    )
+    return strategy.status == "published" and strategy.superseded_by_strategy_id is None
 
 
-@public_router.get(
-    "/public", response_model=PublicHydrationBatchResponse
-)
+@public_router.get("/public", response_model=PublicHydrationBatchResponse)
 async def hydrate_tax_strategies_batch(
     session: DbSession,
     ids: str = Query(..., description="Comma-separated CLR-XXX identifiers; max 20"),
@@ -498,9 +493,7 @@ async def hydrate_tax_strategies_batch(
     return PublicHydrationBatchResponse(data=[_to_public(r) for r in visible])
 
 
-@public_router.get(
-    "/{strategy_id}/public", response_model=PublicTaxStrategy
-)
+@public_router.get("/{strategy_id}/public", response_model=PublicTaxStrategy)
 async def hydrate_tax_strategy(
     strategy_id: str,
     session: DbSession,

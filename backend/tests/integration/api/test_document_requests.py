@@ -291,7 +291,7 @@ class TestListDocumentRequests:
         response = await async_client.get(
             "/api/v1/requests",
             headers=auth_headers,
-            params={"priority": "high"},
+            params={"priority": "HIGH"},
         )
 
         assert response.status_code == 200

@@ -369,9 +369,7 @@ class XeroConnectionService:
 
         # Connections in needs_reauth require a new OAuth flow — cannot auto-refresh.
         if connection.status == XeroConnectionStatus.NEEDS_REAUTH:
-            raise XeroAuthRequiredError(
-                connection_id, org_name=connection.organization_name or ""
-            )
+            raise XeroAuthRequiredError(connection_id, org_name=connection.organization_name or "")
 
         # Check if token needs refresh
         if connection.needs_refresh:
@@ -432,9 +430,7 @@ class XeroConnectionService:
                     # same grant lock may have already refreshed and propagated tokens.
                     connection = await self.connection_repo.get_by_id(connection_id)
                     if connection is None:
-                        raise XeroConnectionNotFoundError(
-                            f"Connection {connection_id} not found"
-                        )
+                        raise XeroConnectionNotFoundError(f"Connection {connection_id} not found")
                     if connection.needs_refresh:
                         return await self.refresh_tokens(connection_id)
                     return connection

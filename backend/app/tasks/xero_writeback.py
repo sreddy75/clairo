@@ -123,6 +123,7 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
         # handles rotation races with sibling connections).
         from app.modules.integrations.xero.connection_service import XeroConnectionService
         from app.modules.integrations.xero.exceptions import XeroAuthRequiredError
+
         conn_service = XeroConnectionService(db, settings)
         try:
             access_token = await conn_service.ensure_valid_token(connection.id)
@@ -160,9 +161,7 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
                 try:
                     access_token = await conn_service.ensure_valid_token(connection.id)
                 except XeroAuthRequiredError as e:
-                    logger.error(
-                        "Token refresh failed mid-writeback for job %s: %s", job_id, e
-                    )
+                    logger.error("Token refresh failed mid-writeback for job %s: %s", job_id, e)
                     for remaining_item in pending_items:
                         if remaining_item.status == XeroWritebackItemStatus.PENDING.value:
                             await repo.update_item_status(
@@ -404,15 +403,19 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
                     # Mark connection as NEEDS_REAUTH, fail all remaining items, abort.
                     logger.error(
                         "Xero auth error mid-writeback for job %s (item %s): %s",
-                        job_id, item.id, e,
+                        job_id,
+                        item.id,
+                        e,
                     )
                     try:
                         from app.modules.integrations.xero.models import XeroConnectionStatus
                         from app.modules.integrations.xero.repository import (
                             XeroConnectionRepository,
                         )
+
                         conn_repo = XeroConnectionRepository(db)
                         from app.modules.integrations.xero.schemas import XeroConnectionUpdate
+
                         await conn_repo.update(
                             connection.id,
                             XeroConnectionUpdate(status=XeroConnectionStatus.NEEDS_REAUTH),

@@ -1185,6 +1185,7 @@ class InvitationService:
 
             # Build invitation URL from config
             from app.config import get_settings
+
             frontend_url = get_settings().frontend_url.rstrip("/")
             invitation_url = f"{frontend_url}/invitation?token={token}"
 

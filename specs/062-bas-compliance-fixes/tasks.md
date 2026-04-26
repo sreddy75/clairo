@@ -418,3 +418,35 @@ Complete phases in order of priority (P1 → P11 → FR-021), validating each ph
 | Phase 13 | T054–T058 | US11: Unreconciled Warning (5 tasks) |
 | Phase 14 | T059–T064 | FR-021: Insights Email (6 tasks) |
 | Phase 15 + FINAL | T065–T073 | Polish + PR (9 tasks) |
+
+---
+
+## Phase 16 — Post-Trial Bug Fixes (2026-04-26)
+
+Trial by Unni Ashok (Ashok Business Consulting Group) found 13 issues. All fixed in the `062-bas-compliance-fixes` branch.
+
+- [X] BF-001 Fix Bug 1: BASEXCLUDED transactions wrongly flagged as uncoded
+  - `backend/app/modules/bas/tax_code_service.py`: filter out `tax_type == "BASEXCLUDED"` before generating suggestions
+- [X] BF-002 Fix FR-006: W1/W2 manual entry — "enter manually" hint with no input fields
+  - `frontend/src/components/bas/BASTab.tsx`: added `PAYGManualEntry` inline component; new `updatePAYGManual` in `frontend/src/lib/bas.ts`; `backend/app/modules/bas/router.py`: added `PATCH /calculations/{id}/payg-manual` endpoint; `backend/app/modules/bas/service.py` + `repository.py`: added `update_payg_manual` method
+- [X] BF-003 Fix Bug 3: Quarter defaults to current (Q4) instead of lodgement-relevant (Q3)
+  - `backend/app/modules/clients/service.py`: lodgement-window logic — if today is within 28 days of prev-quarter end, default to that quarter
+- [X] BF-004 Fix Bug 4: Misleading "Could not fetch BAS data from Xero" error message
+  - `frontend/src/components/bas/XeroBASCrossCheck.tsx`: changed error text to "Live Xero cross-check unavailable — BAS figures are from the last Xero sync."
+- [X] BF-005 Fix FR-007: T1/T2 instalment values not persisting after blur
+  - `backend/app/modules/bas/router.py` line ~1126: `get_calculation_by_id(calculation_id)` missing `tenant_id` argument — fixed to `get_calculation_by_id(calculation_id, user.tenant_id)`
+- [X] BF-006 Fix FR-008 / FR-022 / FR-009: Label "pending"/"unresolved" should read "uncoded"
+  - `frontend/src/components/bas/TaxCodeBulkActions.tsx`: "pending" → "uncoded"
+  - `frontend/src/components/bas/ClassificationRequestButton.tsx`: "unresolved" → "uncoded"
+- [X] BF-007 Fix FR-010: Currency amounts rounding to whole dollars
+  - `frontend/src/lib/formatters.ts`: `formatCurrency` default `fractionDigits` changed from 0 → 2
+- [X] BF-008 Fix FR-013: GST registration insight appearing for already-registered clients
+  - `backend/app/modules/insights/analyzers/compliance.py`: added secondary guard checking `PracticeClient.gst_reporting_basis`
+- [X] BF-009 Fix FR-015/FR-016: Duplicate and contradictory insights (voided invoices × 5, employee count contradiction)
+  - `backend/app/modules/insights/generator.py`: added `_MAX_AI_INSIGHTS = 5` cap; added "void" and "employee" to `_TOPIC_KEYWORDS`; title-based topic filtering for AI insights
+- [X] BF-010 Fix FR-017: "How was this calculated?" breakdown not expanding
+  - `frontend/src/components/insights/InsightDetailPanel.tsx`: added `useEffect` to reset `showBreakdown` on `insight.id` change; added `scrollIntoView` on expand; changed breakdown container from `bg-muted/50` to `bg-card` for better visibility
+- [X] BF-011 Fix FR-020: Reconciliation status 404 — endpoint uses `client_id` but frontend sends connection UUID
+  - `backend/app/modules/bas/service.py` `get_reconciliation_status`: added fallback lookup by `PracticeClient.xero_connection_id`
+- [X] BF-012 Fix Bug 5: Insights "No financial activity in past 90 days" false positive
+  - `backend/app/modules/insights/analyzers/ai_analyzer.py`: added `transactions_90d_note` to context when bank transactions are empty but invoices/trends present; updated system prompt and user prompt to prohibit "no activity" insights when other data sources show revenue

@@ -59,7 +59,7 @@ export function TaxCodeBulkActions({
         ) : (
           <>
             <span className="font-medium text-foreground tabular-nums">{summary.unresolved_count}</span>
-            {' '}pending
+            {' '}uncoded
             {summary.high_confidence_pending > 0 && (
               <span className="text-status-success">
                 {' '}({summary.high_confidence_pending} high confidence)

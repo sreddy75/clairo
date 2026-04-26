@@ -325,6 +325,28 @@ class BASRepository:
         await self.session.refresh(calculation)
         return calculation
 
+    async def update_payg_manual(
+        self,
+        calculation_id: UUID,
+        tenant_id: UUID,
+        w1_total_wages: Decimal,
+        w2_amount_withheld: Decimal,
+    ) -> BASCalculation | None:
+        """Manually update W1/W2 fields on a calculation (FR-006).
+
+        Called when no Xero payroll data is available and the accountant enters
+        wages and withholding directly.
+        """
+        calculation = await self.get_calculation_by_id(calculation_id, tenant_id)
+        if calculation is None:
+            return None
+        calculation.w1_total_wages = w1_total_wages
+        calculation.w2_amount_withheld = w2_amount_withheld
+        calculation.updated_at = datetime.now(UTC)
+        await self.session.flush()
+        await self.session.refresh(calculation)
+        return calculation
+
     # =========================================================================
     # Adjustment Operations
     # =========================================================================
@@ -489,9 +511,7 @@ class BASRepository:
 
         # Index by (fy_year, quarter) for lookup
         index: dict[tuple[int, int], BASSession] = {
-            (s.period.fy_year, s.period.quarter): s
-            for s in sessions
-            if s.period
+            (s.period.fy_year, s.period.quarter): s for s in sessions if s.period
         }
 
         return {
@@ -1006,9 +1026,7 @@ class BASRepository:
         await self.session.refresh(suggestion)
         return suggestion
 
-    async def backfill_suggestion_tax_types_from_classifications(
-        self, request_id: UUID
-    ) -> int:
+    async def backfill_suggestion_tax_types_from_classifications(self, request_id: UUID) -> int:
         """One-time backfill: for already-mapped classifications whose linked
         TaxCodeSuggestion still has suggested_tax_type=NULL, copy the
         ai_suggested_tax_type across.  Safe to call repeatedly — skips rows
@@ -1060,9 +1078,7 @@ class BASRepository:
             values["confidence_score"] = _Decimal(str(confidence_score))
 
         await self.session.execute(
-            update(TaxCodeSuggestion)
-            .where(TaxCodeSuggestion.id == suggestion_id)
-            .values(**values)
+            update(TaxCodeSuggestion).where(TaxCodeSuggestion.id == suggestion_id).values(**values)
         )
         await self.session.flush()
 
