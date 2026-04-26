@@ -69,6 +69,25 @@ def get_quarter_dates(
             current_fy = year
             current_q = 3 if month <= 3 else 4
 
+        # Lodgement-window default: Australian BAS is due 28 days after quarter end.
+        # If today falls within 28 days of the previous quarter's end, accountants are
+        # most likely preparing that lodgement — default to the just-completed quarter.
+        # Quarter end months: Q1→Sep, Q2→Dec, Q3→Mar, Q4→Jun
+        quarter_end_month = {1: 9, 2: 12, 3: 3, 4: 6}
+        prev_q = 4 if current_q == 1 else current_q - 1
+        prev_fy = current_fy - 1 if current_q == 1 else current_fy
+        # Calculate the end of the previous quarter
+        prev_end_month = quarter_end_month[prev_q]
+        from calendar import monthrange
+        prev_end_year = prev_fy - 1 if prev_q in [1, 2] else prev_fy
+        prev_end_day = monthrange(prev_end_year, prev_end_month)[1]
+        prev_quarter_end = date(prev_end_year, prev_end_month, prev_end_day)
+        days_since_prev_end = (today - prev_quarter_end).days
+        if 0 <= days_since_prev_end <= 28:
+            # Within lodgement window — default to the just-completed quarter
+            current_q = prev_q
+            current_fy = prev_fy
+
         quarter = quarter or current_q
         fy_year = fy_year or current_fy
 

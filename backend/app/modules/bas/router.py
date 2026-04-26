@@ -506,6 +506,13 @@ class InstalmentUpdateRequest(_RouterBaseModel):
     t2_instalment_rate: Decimal | None = None
 
 
+class PAYGManualUpdateRequest(_RouterBaseModel):
+    """Request to manually enter W1/W2 PAYG fields when no Xero payroll data (FR-006)."""
+
+    w1_total_wages: Decimal = Decimal("0")
+    w2_amount_withheld: Decimal = Decimal("0")
+
+
 @router.patch(
     "/{connection_id}/bas/sessions/{session_id}/calculation/instalments",
     response_model=BASCalculationResponse,
@@ -1123,7 +1130,7 @@ async def update_instalment_by_calc_id(
 ) -> BASCalculationResponse:
     """Update PAYG instalment T1/T2 by calculation UUID."""
     bas_service = BASService(session)
-    calc = await bas_service.repo.get_calculation_by_id(calculation_id)
+    calc = await bas_service.repo.get_calculation_by_id(calculation_id, user.tenant_id)
     if calc is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -1135,6 +1142,35 @@ async def update_instalment_by_calc_id(
         actor_id=user.id,
         t1_instalment_income=request.t1_instalment_income,
         t2_instalment_rate=request.t2_instalment_rate,
+    )
+
+
+@workboard_router.patch(
+    "/calculations/{calculation_id}/payg-manual",
+    response_model=BASCalculationResponse,
+    summary="Manually enter W1/W2 PAYG values",
+    description="Set W1 (total wages) and W2 (tax withheld) when Xero payroll data is unavailable (FR-006).",
+)
+async def update_payg_manual(
+    calculation_id: UUID,
+    request: PAYGManualUpdateRequest,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> BASCalculationResponse:
+    """Manually update W1/W2 PAYG fields by calculation UUID."""
+    bas_service = BASService(session)
+    calc = await bas_service.repo.get_calculation_by_id(calculation_id, user.tenant_id)
+    if calc is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Calculation not found",
+        )
+    return await bas_service.update_payg_manual(
+        calculation_id=calc.id,
+        tenant_id=user.tenant_id,
+        actor_id=user.id,
+        w1_total_wages=request.w1_total_wages,
+        w2_amount_withheld=request.w2_amount_withheld,
     )
 
 

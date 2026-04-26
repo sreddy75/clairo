@@ -325,6 +325,28 @@ class BASRepository:
         await self.session.refresh(calculation)
         return calculation
 
+    async def update_payg_manual(
+        self,
+        calculation_id: UUID,
+        tenant_id: UUID,
+        w1_total_wages: Decimal,
+        w2_amount_withheld: Decimal,
+    ) -> BASCalculation | None:
+        """Manually update W1/W2 fields on a calculation (FR-006).
+
+        Called when no Xero payroll data is available and the accountant enters
+        wages and withholding directly.
+        """
+        calculation = await self.get_calculation_by_id(calculation_id, tenant_id)
+        if calculation is None:
+            return None
+        calculation.w1_total_wages = w1_total_wages
+        calculation.w2_amount_withheld = w2_amount_withheld
+        calculation.updated_at = datetime.now(UTC)
+        await self.session.flush()
+        await self.session.refresh(calculation)
+        return calculation
+
     # =========================================================================
     # Adjustment Operations
     # =========================================================================

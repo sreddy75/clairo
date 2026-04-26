@@ -20,7 +20,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   Dialog,
@@ -97,6 +97,14 @@ export function InsightDetailPanel({
   isExpanding,
 }: InsightDetailPanelProps) {
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const breakdownRef = useRef<HTMLDivElement>(null);
+
+  // Reset breakdown visibility whenever the user switches to a different insight.
+  // Without this, showBreakdown persists across insight selections and the first
+  // click would collapse (not expand) if it was left open from a previous insight.
+  useEffect(() => {
+    setShowBreakdown(false);
+  }, [insight?.id]);
 
   if (!insight) return null;
 
@@ -205,7 +213,16 @@ export function InsightDetailPanel({
               {insight.data_snapshot?.calculation_breakdown && insight.data_snapshot.calculation_breakdown.length > 0 && (
                 <div>
                   <button
-                    onClick={() => setShowBreakdown((v) => !v)}
+                    onClick={() => {
+                      const next = !showBreakdown;
+                      setShowBreakdown(next);
+                      if (next) {
+                        // Scroll the breakdown into view after the DOM updates
+                        requestAnimationFrame(() => {
+                          breakdownRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        });
+                      }
+                    }}
                     className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors w-full text-left"
                   >
                     {showBreakdown ? (
@@ -216,7 +233,10 @@ export function InsightDetailPanel({
                     How was this calculated?
                   </button>
                   {showBreakdown && (
-                    <div className="mt-1.5 rounded-lg bg-muted/50 border border-border divide-y divide-border overflow-hidden">
+                    <div
+                      ref={breakdownRef}
+                      className="mt-1.5 rounded-lg bg-card border border-border divide-y divide-border overflow-hidden"
+                    >
                       {insight.data_snapshot.calculation_breakdown.map((row, idx) => (
                         <div key={idx} className="flex items-center justify-between px-3 py-1.5 text-xs">
                           <span className="text-muted-foreground">{row.label}</span>

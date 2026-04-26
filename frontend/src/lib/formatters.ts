@@ -17,8 +17,8 @@ export function formatCurrency(
   return new Intl.NumberFormat('en-AU', {
     style: 'currency',
     currency: options?.currency ?? 'AUD',
-    minimumFractionDigits: options?.fractionDigits ?? 0,
-    maximumFractionDigits: options?.fractionDigits ?? 0,
+    minimumFractionDigits: options?.fractionDigits ?? 2,
+    maximumFractionDigits: options?.fractionDigits ?? 2,
   }).format(num);
 }
 

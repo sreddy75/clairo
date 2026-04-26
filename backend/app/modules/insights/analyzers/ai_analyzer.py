@@ -168,6 +168,18 @@ class AIAnalyzer(BaseAnalyzer):
             for t in transactions
         ]
 
+        # If no bank transactions were found, note that this may simply be an invoice-based
+        # business without a connected bank feed — not a "no activity" situation.
+        # This prevents the AI from incorrectly flagging inactive clients when invoice/GST
+        # data already shows significant revenue (e.g. $206K Q3 sales visible in BAS tab).
+        if not context["transactions_90d"]:
+            context["transactions_90d_note"] = (
+                "No bank feed transactions found in the last 90 days. "
+                "This is common for clients who use Xero for invoicing only and do not connect a bank feed. "
+                "Do NOT treat this as 'no financial activity' — refer to invoices, GST summary, "
+                "and monthly trends for actual financial activity."
+            )
+
         # Get invoice summary
         invoice_result = await self.db.execute(
             select(
@@ -434,6 +446,7 @@ CRITICAL RULES:
 - If a deadline applies, include it as an ISO date string
 - Be conservative - only flag issues with at least medium confidence
 - DO NOT generate insights about: BAS/IAS lodgement deadlines, GST registration thresholds, overdue receivables aging, or data quality scores — these are already covered by dedicated rule-based analyzers and creating them here causes duplicates
+- DO NOT flag "no financial activity" or "no transactions" if invoice data, GST figures, or monthly trends show revenue — empty bank transactions means no bank feed, not a dormant business
 
 You must respond with ONLY valid JSON in this exact format:
 {
@@ -486,6 +499,8 @@ Please identify:
 5. Any other issues an experienced accountant would flag
 
 IMPORTANT: Do NOT generate insights about BAS lodgement deadlines, GST registration thresholds, overdue receivables/payables aging percentages, or data quality scores. These are covered by dedicated analyzers.
+
+IMPORTANT: Do NOT generate "no financial activity", "no transactions recorded", or similar low-activity insights if invoice data, GST summary, or monthly revenue trends show activity. Empty bank transactions simply means the client uses invoice-based accounting without a bank feed — it does NOT indicate a dormant business.
 
 Remember to respond with ONLY valid JSON."""
 

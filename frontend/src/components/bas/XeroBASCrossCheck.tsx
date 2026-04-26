@@ -30,14 +30,18 @@ export function XeroBASCrossCheck({ data, onRefresh }: XeroBASCrossCheckProps) {
 
   if (dismissed) return null;
 
-  // Xero error or unavailable
+  // Xero error or unavailable — figures are from last sync, not a live Xero fetch
   if (data.xero_report_found === null) {
     return (
       <Card className="mb-4 border-stone-200 bg-stone-50">
         <CardContent className="py-2 px-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Info className="w-3.5 h-3.5" />
-            <span>{data.xero_error || 'Could not fetch Xero BAS data'}</span>
+            <span>
+              {data.xero_error
+                ? `Live Xero cross-check unavailable — ${data.xero_error}. BAS figures are from the last Xero sync.`
+                : 'Live Xero cross-check unavailable. BAS figures are from the last Xero sync.'}
+            </span>
           </div>
           <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => setDismissed(true)}>
             <X className="w-3 h-3" />
