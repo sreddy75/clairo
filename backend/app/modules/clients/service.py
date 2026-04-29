@@ -79,6 +79,7 @@ def get_quarter_dates(
         # Calculate the end of the previous quarter
         prev_end_month = quarter_end_month[prev_q]
         from calendar import monthrange
+
         prev_end_year = prev_fy - 1 if prev_q in [1, 2] else prev_fy
         prev_end_day = monthrange(prev_end_year, prev_end_month)[1]
         prev_quarter_end = date(prev_end_year, prev_end_month, prev_end_day)

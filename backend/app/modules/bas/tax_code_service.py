@@ -6,6 +6,7 @@ Detects excluded transactions, generates AI-powered tax code suggestions
 using a 4-tier confidence waterfall, and manages the accountant review workflow.
 """
 
+import asyncio
 import logging
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -74,9 +75,7 @@ class TaxCodeService:
 
         # BASEXCLUDED is a valid Xero tax code meaning "excluded from BAS" (e.g. wages).
         # These are correctly coded — do NOT flag them as needing a tax code.
-        excluded = [
-            item for item in excluded if item.get("tax_type", "").upper() != "BASEXCLUDED"
-        ]
+        excluded = [item for item in excluded if item.get("tax_type", "").upper() != "BASEXCLUDED"]
 
         # Enrich excluded items with contact names and dates
         enriched = (
@@ -922,7 +921,7 @@ class TaxCodeService:
 
         # Fetch from Xero
         try:
-            from app.modules.integrations.xero.client import XeroClient
+            from app.modules.integrations.xero.client import XeroClient, XeroRateLimitError
             from app.modules.integrations.xero.repository import XeroConnectionRepository
 
             xero_repo = XeroConnectionRepository(self.session)
@@ -945,15 +944,33 @@ class TaxCodeService:
             xero_svc = XeroConnectionService(self.session, settings)
             access_token = await xero_svc.ensure_valid_token(connection_id)
 
-            async with XeroClient(settings.xero) as client:
-                data, _rate_limit = await client.get_bas_report(
-                    access_token=access_token,
-                    tenant_id=connection.xero_tenant_id,
-                )
+            # Retry up to 3 attempts for transient errors; never retry rate-limit (429)
+            data = None
+            last_exc: Exception | None = None
+            for attempt in range(3):
+                try:
+                    async with XeroClient(settings.xero) as client:
+                        data, _rate_limit = await client.get_bas_report(
+                            access_token=access_token,
+                            tenant_id=connection.xero_tenant_id,
+                        )
+                    break
+                except XeroRateLimitError:
+                    raise
+                except Exception as exc:
+                    last_exc = exc
+                    if attempt < 2:
+                        await asyncio.sleep(0.5 * (1.5**attempt))
 
-            # Parse BAS labels from report rows
+            if data is None:
+                raise last_exc or RuntimeError("Xero BAS report fetch failed after 3 attempts")
+
+            # Parse BAS labels from report rows — 1A, 1B, G1, G10, G11
             xero_1a = D("0")
             xero_1b = D("0")
+            xero_g1 = D("0")
+            xero_g10 = D("0")
+            xero_g11 = D("0")
             reports = data.get("Reports", [])
             if reports:
                 for row in reports[0].get("Rows", []):
@@ -971,25 +988,55 @@ class TaxCodeService:
                             xero_1a = amount
                         elif label == "1B":
                             xero_1b = amount
+                        elif label == "G1":
+                            xero_g1 = amount
+                        elif label == "G10":
+                            xero_g10 = amount
+                        elif label == "G11":
+                            xero_g11 = amount
 
             xero_net = xero_1a - xero_1b
             has_data = reports and any(
                 row.get("RowType") == "Row" for row in reports[0].get("Rows", [])
             )
 
+            # Enrich clairo_figures with G1/G10/G11 from calculation
+            if clairo_figures and bas_session.calculation:
+                calc = bas_session.calculation
+                clairo_figures = {
+                    **clairo_figures,
+                    "g1_total_sales": calc.g1_total_sales,
+                    "g10_capital_purchases": calc.g10_capital_purchases,
+                    "g11_non_capital_purchases": calc.g11_non_capital_purchases,
+                }
+
             xero_figures = {
                 "label_1a_gst_on_sales": xero_1a,
                 "label_1b_gst_on_purchases": xero_1b,
                 "net_gst": xero_net,
+                "g1_total_sales": xero_g1,
+                "g10_capital_purchases": xero_g10,
+                "g11_non_capital_purchases": xero_g11,
             }
 
-            # Compute differences
+            # Compute differences across all comparable fields
             differences = None
             if clairo_figures and has_data:
                 diffs = {}
-                for key in ("label_1a_gst_on_sales", "label_1b_gst_on_purchases", "net_gst"):
-                    x = xero_figures[key]
-                    c = clairo_figures[key]
+                compare_keys = [
+                    "label_1a_gst_on_sales",
+                    "label_1b_gst_on_purchases",
+                    "net_gst",
+                    "g1_total_sales",
+                    "g10_capital_purchases",
+                    "g11_non_capital_purchases",
+                ]
+                for key in compare_keys:
+                    x = xero_figures.get(key, D("0"))
+                    c = clairo_figures.get(key)
+                    if c is None:
+                        continue
+                    c = D(str(c))
                     delta = x - c
                     if abs(delta) > 1:
                         diffs[key] = {
@@ -999,6 +1046,31 @@ class TaxCodeService:
                             "material": True,
                         }
                 differences = diffs if diffs else None
+
+            # Emit audit event if discrepancies found (Spec 063)
+            if differences:
+                try:
+                    from app.core.audit import AuditService
+                    from app.modules.bas.audit_events import BAS_FIGURES_CROSS_CHECK_DISCREPANCY
+
+                    await AuditService(self.session).log_event(
+                        event_type=BAS_FIGURES_CROSS_CHECK_DISCREPANCY,
+                        event_category="compliance",
+                        actor_type="system",
+                        tenant_id=tenant_id,
+                        resource_type="BASSession",
+                        resource_id=session_id,
+                        action="cross_check",
+                        metadata={
+                            "discrepant_fields": list(differences.keys()),
+                            "clairo_values": {k: str(v["clairo"]) for k, v in differences.items()},
+                            "xero_values": {k: str(v["xero"]) for k, v in differences.items()},
+                        },
+                    )
+                except Exception:
+                    logger.warning(
+                        "Failed to emit cross-check discrepancy audit event", exc_info=True
+                    )
 
             result = {
                 "xero_report_found": has_data,
@@ -1012,7 +1084,11 @@ class TaxCodeService:
             return result
 
         except Exception as e:
-            from app.modules.integrations.xero.client import XeroClientError
+            from app.modules.integrations.xero.client import XeroClientError, XeroRateLimitError
+
+            # Rate limit errors must propagate — caller handles retry scheduling
+            if isinstance(e, XeroRateLimitError):
+                raise
 
             error_msg = str(e)
             if "404" in error_msg or (isinstance(e, XeroClientError) and "404" in str(e)):

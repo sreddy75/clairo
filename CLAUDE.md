@@ -89,6 +89,8 @@ cd backend && uv run ruff check . && uv run pytest && cd ../frontend && npm run 
 - PostgreSQL 16 — 2 new tables (`tax_strategies`, `tax_strategy_authoring_jobs`); 2 new nullable columns on existing `content_chunks` (`tax_strategy_id` FK, `chunk_section`, `context_header`); 1 new Pinecone namespace (`tax_strategies`, shared); 1 new in-repo CSV fixture (`backend/app/modules/tax_strategies/data/strategy_seed.csv`, 415 rows) (060-tax-strategies-kb)
 - Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0 async, Pydantic v2, Alembic, Celery + Redis, Anthropic SDK (Claude Sonnet — Insights AI), React 18 + shadcn/ui, TanStack Query, Zustand (062-bas-compliance-fixes)
 - PostgreSQL 16 — 3 new nullable columns across 2 existing tables (`practice_clients`, `bas_sessions`, `bas_calculations`). No new tables. (062-bas-compliance-fixes)
+- Python 3.12+ (backend), TypeScript 5.x / Next.js 14 (frontend) + FastAPI, SQLAlchemy 2.0 async, Pydantic v2, React 18, TanStack Query, httpx (Xero HTTP calls) (063-bas-compliance-xero-figures)
+- PostgreSQL 16 — no schema changes; one data migration (UPDATE only) (063-bas-compliance-xero-figures)
 
 ## Recent Changes
 - 049-xero-taxcode-sync: Xero write-back, multi-round client send-back, portal IDK validation, agent notes

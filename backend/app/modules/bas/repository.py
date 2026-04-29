@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Integer, Text, func, select, update
+from sqlalchemy import Integer, Text, case, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -863,6 +863,8 @@ class BASRepository:
                 TaxCodeSuggestion.session_id == session_id,
                 TaxCodeSuggestion.tenant_id == tenant_id,
                 TaxCodeSuggestion.status == "pending",
+                # BASEXCLUDED transactions are not BAS-reportable — exclude from uncoded count
+                func.upper(TaxCodeSuggestion.original_tax_type) != "BASEXCLUDED",
             )
         )
         return result.scalar() or 0
@@ -1474,6 +1476,12 @@ class BASRepository:
                         Integer,
                     )
                 ).label("unreconciled"),
+                func.sum(
+                    case(
+                        (~XeroBankTransaction.is_reconciled, XeroBankTransaction.subtotal),
+                        else_=0,
+                    )
+                ).label("balance_discrepancy"),
             ).where(
                 XeroBankTransaction.tenant_id == tenant_id,
                 XeroBankTransaction.connection_id == connection_id,
@@ -1483,7 +1491,9 @@ class BASRepository:
             )
         )
         row = result.one()
+        raw_discrepancy = row.balance_discrepancy or Decimal("0")
         return {
             "total_transactions": int(row.total or 0),
             "unreconciled_count": int(row.unreconciled or 0),
+            "balance_discrepancy": abs(raw_discrepancy),
         }

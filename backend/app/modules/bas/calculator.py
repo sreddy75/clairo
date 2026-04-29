@@ -215,12 +215,16 @@ class GSTCalculator:
 
         Accrual basis: filter by issue_date (when the invoice was raised).
         Cash basis: filter by XeroPayment.payment_date (when the invoice was paid).
+
+        Cash basis correctly uses XeroPayment.payment_date via a join — NOT invoice_date.
+        ATO cash basis requires recognising GST when payment is received/made, which
+        payment_date represents.
         """
         from sqlalchemy import cast
         from sqlalchemy.dialects.postgresql import DATE
 
         if gst_basis == "cash":
-            # Cash basis: join to payments, filter by payment_date
+            # Cash basis: join to payments, filter by payment_date (ATO requirement)
             stmt = (
                 select(XeroInvoice)
                 .join(
