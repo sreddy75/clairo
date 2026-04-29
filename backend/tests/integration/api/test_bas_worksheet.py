@@ -426,3 +426,20 @@ class TestGSTCalculationWithCreditNotes:
         # Credit note reduces current period GST
         assert result.net_gst_on_sales == Decimal("900")
         assert result.gst_payable == Decimal("500")  # 900 - 400
+
+
+@pytest.mark.integration
+class TestReconciliationStatusEndpoint:
+    """Tests for reconciliation status endpoint (Spec 063)."""
+
+    async def test_reconciliation_status_requires_auth(
+        self,
+        test_client: AsyncClient,
+    ) -> None:
+        """Should return 401 without authentication."""
+        client_id = uuid.uuid4()
+        response = await test_client.get(
+            f"/api/v1/bas/clients/{client_id}/reconciliation-status",
+            params={"start_date": "2026-01-01", "end_date": "2026-03-31"},
+        )
+        assert response.status_code == 401

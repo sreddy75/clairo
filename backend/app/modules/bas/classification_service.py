@@ -128,16 +128,24 @@ class ClassificationService:
         if not bas_session:
             raise ClassificationRequestNotFoundError(str(session_id))
 
+        def _actionable(suggestions: list) -> list:
+            # BASEXCLUDED transactions are not BAS-reportable — never include in client requests
+            return [
+                s
+                for s in suggestions
+                if s.status == "pending" and (s.original_tax_type or "").upper() != "BASEXCLUDED"
+            ]
+
         # 3. Get unresolved transactions (pending suggestions from spec 046)
         tax_code_service = TaxCodeService(self.session)
         suggestions = await self.repo.list_suggestions(session_id, tenant_id)
-        pending = [s for s in suggestions if s.status == "pending"]
+        pending = _actionable(suggestions)
 
         if not pending:
             # Try generating suggestions first
             await tax_code_service.detect_and_generate(session_id, tenant_id)
             suggestions = await self.repo.list_suggestions(session_id, tenant_id)
-            pending = [s for s in suggestions if s.status == "pending"]
+            pending = _actionable(suggestions)
 
         if not pending:
             raise NoUnresolvedTransactionsError()

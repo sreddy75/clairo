@@ -860,7 +860,6 @@ class BASService:
         await self.session.commit()
         return self._calculation_to_response(updated)
 
-
     # =========================================================================
     # Adjustment Operations
     # =========================================================================
@@ -1709,4 +1708,8 @@ class BASService:
             end_date=end_date,
             tenant_id=tenant_id,
         )
-        return {**counts, "as_of": datetime.now(UTC).isoformat()}
+        return {
+            **counts,
+            "balance_discrepancy": counts.get("balance_discrepancy", Decimal("0")),
+            "as_of": datetime.now(UTC).isoformat(),
+        }

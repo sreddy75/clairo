@@ -1341,18 +1341,19 @@ export interface SuggestionNoteResponse {
 /**
  * Xero BAS cross-check data.
  */
+export interface CrossCheckFigures {
+  label_1a_gst_on_sales: number;
+  label_1b_gst_on_purchases: number;
+  net_gst: number;
+  g1_total_sales?: number;
+  g10_capital_purchases?: number;
+  g11_non_capital_purchases?: number;
+}
+
 export interface XeroBASCrossCheckResponse {
   xero_report_found: boolean | null;
-  xero_figures: {
-    label_1a_gst_on_sales: number;
-    label_1b_gst_on_purchases: number;
-    net_gst: number;
-  } | null;
-  clairo_figures: {
-    label_1a_gst_on_sales: number;
-    label_1b_gst_on_purchases: number;
-    net_gst: number;
-  } | null;
+  xero_figures: CrossCheckFigures | null;
+  clairo_figures: CrossCheckFigures | null;
   differences: Record<string, { xero: number; clairo: number; delta: number; material: boolean }> | null;
   period_label: string;
   fetched_at: string;
@@ -1835,6 +1836,7 @@ export async function listXeroAccounts(
 export interface ReconciliationStatus {
   unreconciled_count: number;
   total_transactions: number;
+  balance_discrepancy: number;
   as_of: string;
 }
 

@@ -124,6 +124,7 @@ function PAYGManualEntry({
   );
   const [isSaving, setIsSaving] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
+  const [saved, setSaved] = React.useState(false);
 
   const handleBlur = async () => {
     setSaveError(null);
@@ -142,6 +143,8 @@ function PAYGManualEntry({
         w2_amount_withheld: isNaN(w2Val) ? 0 : w2Val,
       });
       onUpdated(updated);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
@@ -194,6 +197,7 @@ function PAYGManualEntry({
         </div>
       </div>
       {isSaving && <p className="text-[10px] text-muted-foreground animate-pulse">Saving…</p>}
+      {saved && !isSaving && <p className="text-[10px] text-status-success">Saved ✓</p>}
       {saveError && <p className="text-xs text-status-danger">{saveError}</p>}
     </div>
   );
@@ -331,8 +335,13 @@ export function BASTab({
 
   // Reconciliation warning state (Spec 062 - US11)
   const [reconciliationStatus, setReconciliationStatus] = useState<ReconciliationStatus | null>(null);
+  const [reconciliationStatusUnavailable, setReconciliationStatusUnavailable] = useState(false);
   const [showUnreconciledWarning, setShowUnreconciledWarning] = useState(false);
   const [proceededWithUnreconciled, setProceededWithUnreconciled] = useState(false);
+  const proceededWithUnreconciledRef = useRef(false);
+  // Stores the basis that was in-flight when the reconciliation warning was triggered
+  // from handleCalculate. Null means the warning was auto-shown by useEffect (no pending calc).
+  const pendingCalculateBasisRef = useRef<string | null>(null);
 
   // Xero write-back state (Spec 049)
   const [activeWritebackJobId, setActiveWritebackJobId] = useState<string | null>(null);
@@ -396,7 +405,10 @@ export function BASTab({
       setActiveWritebackJobId(null);
       setCompletedWritebackJob(null);
       setReconciliationStatus(null);
+      setReconciliationStatusUnavailable(false);
       setShowUnreconciledWarning(false);
+      proceededWithUnreconciledRef.current = false;
+      pendingCalculateBasisRef.current = null;
       setProceededWithUnreconciled(false);
     }
   }, [selectedSession]);
@@ -417,7 +429,7 @@ export function BASTab({
         );
         if (!cancelled) {
           setReconciliationStatus(status);
-          if (status.unreconciled_count > 0 && !proceededWithUnreconciled) {
+          if (status.unreconciled_count > 0 && !proceededWithUnreconciledRef.current) {
             setShowUnreconciledWarning(true);
           }
         }
@@ -462,7 +474,7 @@ export function BASTab({
     }
   };
 
-  const handleCalculate = async (effectiveBasis?: string) => {
+  const handleCalculate = async (effectiveBasis?: string, bypassReconciliationCheck = false) => {
     if (!selectedSession) return;
 
     // US1: Require GST basis to be set before calculating
@@ -470,6 +482,39 @@ export function BASTab({
     if (basisToUse === null || basisToUse === undefined) {
       setShowGSTBasisModal(true);
       return;
+    }
+
+    // US3 (Spec 063): Pre-check reconciliation status before calculating.
+    // Read from ref (not state) so every call path — including onSaved's setTimeout —
+    // sees the current value rather than the stale closure from a previous render.
+    if (!bypassReconciliationCheck && !proceededWithUnreconciledRef.current) {
+      let statusToCheck = reconciliationStatus;
+      if (!statusToCheck) {
+        // Race-condition fallback: fetch inline if not already loaded
+        try {
+          const token = await getToken();
+          if (token) {
+            statusToCheck = await getReconciliationStatus(
+              token,
+              connectionId,
+              selectedSession.start_date,
+              selectedSession.end_date,
+            );
+            setReconciliationStatus(statusToCheck);
+          }
+        } catch {
+          // Non-critical — show non-blocking notice and proceed
+          setReconciliationStatusUnavailable(true);
+        }
+      }
+      if (
+        statusToCheck &&
+        (statusToCheck.unreconciled_count > 0 || statusToCheck.balance_discrepancy > 0)
+      ) {
+        pendingCalculateBasisRef.current = basisToUse;
+        setShowUnreconciledWarning(true);
+        return;
+      }
     }
 
     try {
@@ -859,12 +904,23 @@ export function BASTab({
           open={showUnreconciledWarning}
           unreconciledCount={reconciliationStatus.unreconciled_count}
           totalTransactions={reconciliationStatus.total_transactions}
+          balanceDiscrepancy={reconciliationStatus.balance_discrepancy ?? 0}
           asOf={reconciliationStatus.as_of}
           onProceed={() => {
+            const basis = pendingCalculateBasisRef.current;
+            pendingCalculateBasisRef.current = null;
             setShowUnreconciledWarning(false);
+            proceededWithUnreconciledRef.current = true;
             setProceededWithUnreconciled(true);
+            // Only auto-calculate if the warning was triggered from handleCalculate
+            // (basis stored). If auto-shown by useEffect, basis is null — user clicks
+            // Calculate next and the reconciliation check is already bypassed.
+            if (basis !== null) {
+              handleCalculate(basis, true);
+            }
           }}
           onGoBack={() => {
+            pendingCalculateBasisRef.current = null;
             // Dismiss the dialog and stay on the current session.
             // Clearing the session would drop the user on an empty "select a quarter"
             // screen — the quarter dropdown is still on Q4 in the parent so there is
@@ -1071,6 +1127,9 @@ export function BASTab({
                         )}
                         {calculation ? 'Recalculate' : 'Calculate'}
                       </button>
+                      {reconciliationStatusUnavailable && (
+                        <p className="text-[10px] text-muted-foreground">Reconciliation status unavailable</p>
+                      )}
 
                       {calculation && (
                         <div className="flex flex-col sm:items-end gap-2">
@@ -1498,7 +1557,7 @@ export function BASTab({
                           {/* PAYG Tab */}
                           {activeTab === 'payg' && (
                             <div className="space-y-4">
-                              {parseFloat(calculation.w1_total_wages) > 0 ? (
+                              {calculation.payg_source_label !== null && calculation.payg_source_label !== undefined ? (
                                 <>
                                   {/* Source label */}
                                   <p className="text-xs text-muted-foreground">

@@ -12,12 +12,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { formatDate } from '@/lib/formatters';
+import { formatCurrency, formatDate } from '@/lib/formatters';
 
 interface UnreconciledWarningProps {
   open: boolean;
   unreconciledCount: number;
   totalTransactions: number;
+  balanceDiscrepancy: number;
   asOf: string | null;
   onProceed: () => void;
   onGoBack: () => void;
@@ -27,6 +28,7 @@ export function UnreconciledWarning({
   open,
   unreconciledCount,
   totalTransactions,
+  balanceDiscrepancy,
   asOf,
   onProceed,
   onGoBack,
@@ -45,6 +47,11 @@ export function UnreconciledWarning({
               {totalTransactions !== 1 ? 's' : ''} for this period are not reconciled in Xero —
               BAS figures may be incomplete or inaccurate.
             </span>
+            {balanceDiscrepancy > 0 && (
+              <span className="block">
+                {formatCurrency(balanceDiscrepancy)} balance discrepancy from unreconciled transactions.
+              </span>
+            )}
             {asOf && (
               <span className="block text-xs text-muted-foreground">
                 Reconciliation status as at {formatDate(asOf)}
