@@ -64,16 +64,12 @@ def check_one(path: Path) -> tuple[list[str], list[str]]:
             "Implementation advice section. Admin detail view will show '(empty)'."
         )
     elif len(impl) < _MIN_IMPL_CHARS:
-        warnings.append(
-            f"implementation_text is very short ({len(impl)} chars): {impl[:60]!r}"
-        )
+        warnings.append(f"implementation_text is very short ({len(impl)} chars): {impl[:60]!r}")
 
     if not expl:
         errors.append("explanation_text is EMPTY — chunk would be zero-length")
     elif len(expl) < _MIN_EXPL_CHARS:
-        warnings.append(
-            f"explanation_text is short ({len(expl)} chars) — retrieval may be weak"
-        )
+        warnings.append(f"explanation_text is short ({len(expl)} chars) — retrieval may be weak")
 
     if not keywords:
         warnings.append("keywords list is empty — retrieval will miss keyword queries")

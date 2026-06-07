@@ -336,3 +336,101 @@ class TestDetectAndGenerateReconciliation:
 
             # _apply_reconciliation_to_suggestions must be called even with empty excluded list
             mock_apply.assert_called_once()
+
+
+# =============================================================================
+# get_reconciliation_status repository tests (Spec 063 T034)
+# =============================================================================
+
+
+class TestGetReconciliationStatusRepository:
+    """Test that get_reconciliation_status returns balance_discrepancy (Spec 063)."""
+
+    async def test_returns_balance_discrepancy_field(self):
+        """Response dict must include balance_discrepancy as a Decimal."""
+        from datetime import date
+        from decimal import Decimal
+
+        from app.modules.bas.repository import BASRepository
+
+        session = AsyncMock()
+        repo = BASRepository(session)
+
+        # Mock DB row: 5 total, 2 unreconciled, $1500 discrepancy
+        mock_row = MagicMock()
+        mock_row.total = 5
+        mock_row.unreconciled = 2
+        mock_row.balance_discrepancy = Decimal("1500.00")
+
+        mock_result = MagicMock()
+        mock_result.one.return_value = mock_row
+        session.execute = AsyncMock(return_value=mock_result)
+
+        result = await repo.get_reconciliation_status(
+            connection_id=uuid.uuid4(),
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 3, 31),
+            tenant_id=uuid.uuid4(),
+        )
+
+        assert "balance_discrepancy" in result
+        assert result["balance_discrepancy"] == Decimal("1500.00")
+        assert result["unreconciled_count"] == 2
+        assert result["total_transactions"] == 5
+
+    async def test_balance_discrepancy_zero_when_all_reconciled(self):
+        """balance_discrepancy must be 0 (not None) when all transactions are reconciled."""
+        from datetime import date
+        from decimal import Decimal
+
+        from app.modules.bas.repository import BASRepository
+
+        session = AsyncMock()
+        repo = BASRepository(session)
+
+        mock_row = MagicMock()
+        mock_row.total = 10
+        mock_row.unreconciled = 0
+        mock_row.balance_discrepancy = None  # SQL SUM returns NULL when no rows match
+
+        mock_result = MagicMock()
+        mock_result.one.return_value = mock_row
+        session.execute = AsyncMock(return_value=mock_result)
+
+        result = await repo.get_reconciliation_status(
+            connection_id=uuid.uuid4(),
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 3, 31),
+            tenant_id=uuid.uuid4(),
+        )
+
+        assert result["balance_discrepancy"] == Decimal("0")
+        assert result["unreconciled_count"] == 0
+
+    async def test_balance_discrepancy_is_absolute_value(self):
+        """balance_discrepancy must be non-negative (absolute value of subtotals)."""
+        from datetime import date
+        from decimal import Decimal
+
+        from app.modules.bas.repository import BASRepository
+
+        session = AsyncMock()
+        repo = BASRepository(session)
+
+        mock_row = MagicMock()
+        mock_row.total = 3
+        mock_row.unreconciled = 1
+        mock_row.balance_discrepancy = Decimal("-500.00")  # negative subtotal (SPEND txn)
+
+        mock_result = MagicMock()
+        mock_result.one.return_value = mock_row
+        session.execute = AsyncMock(return_value=mock_result)
+
+        result = await repo.get_reconciliation_status(
+            connection_id=uuid.uuid4(),
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 3, 31),
+            tenant_id=uuid.uuid4(),
+        )
+
+        assert result["balance_discrepancy"] == Decimal("500.00")

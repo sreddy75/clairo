@@ -33,6 +33,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Minimum confidence to keep an insight at HIGH/URGENT priority.
+# Insights below this threshold are downgraded to MEDIUM so low-quality
+# AI guesses don't pollute the urgent triage bucket.
+URGENT_CONFIDENCE_THRESHOLD = 0.70
+
 
 class InsightGenerator:
     """Orchestrates insight generation across all analyzers.
@@ -126,8 +131,12 @@ class InsightGenerator:
             "cashflow",
             "draft",
             "invoice",
+            "void",
+            "employee",
             "expense",
         ]
+        # Cap total AI insights to prevent flooding the UI with variations of the same topic
+        _MAX_AI_INSIGHTS = 5
         rule_based_topics: set[str] = set()
 
         # Run each analyzer
@@ -144,12 +153,19 @@ class InsightGenerator:
                         for i in insights
                         if not any(
                             kw in i.insight_type.lower().replace("_", "")
+                            or kw in (i.title or "").lower().replace("_", "")
                             for kw in rule_based_topics
                         )
                     ]
                     dropped = before - len(insights)
                     if dropped:
                         logger.debug(f"Dropped {dropped} AI insights overlapping rule-based topics")
+                if is_ai and len(insights) > _MAX_AI_INSIGHTS:
+                    # Sort by confidence descending and keep only the top N
+                    insights = sorted(insights, key=lambda i: i.confidence, reverse=True)[
+                        :_MAX_AI_INSIGHTS
+                    ]
+                    logger.debug(f"Capped AI insights at {_MAX_AI_INSIGHTS}")
                 else:
                     # Collect topic keywords from rule-based analyzers
                     for i in insights:
@@ -169,6 +185,31 @@ class InsightGenerator:
                 # Rollback to clear any failed transaction state so
                 # subsequent analyzers and _save_insights can still use the session
                 await self.db.rollback()
+
+        # T045: Confidence threshold routing — downgrade high-priority low-confidence insights
+        from app.modules.insights.models import InsightPriority  # noqa: PLC0415 (lazy import ok)
+
+        for ic in all_insight_creates:
+            if ic.priority == InsightPriority.HIGH and ic.confidence < URGENT_CONFIDENCE_THRESHOLD:
+                ic.priority = InsightPriority.MEDIUM
+
+        # T046: Type-level deduplication — keep highest-confidence instance per (insight_type)
+        seen: dict[str, int] = {}  # insight_type -> index in all_insight_creates
+        deduped: list[InsightCreate] = []
+        for ic in all_insight_creates:
+            key = ic.insight_type
+            if key in seen:
+                existing_idx = seen[key]
+                if ic.confidence > deduped[existing_idx].confidence:
+                    deduped[existing_idx] = ic
+            else:
+                seen[key] = len(deduped)
+                deduped.append(ic)
+        if len(deduped) < len(all_insight_creates):
+            logger.debug(
+                f"Deduped {len(all_insight_creates) - len(deduped)} duplicate insight(s) by type"
+            )
+        all_insight_creates = deduped
 
         # Save insights (with deduplication)
         saved_insights = await self._save_insights(

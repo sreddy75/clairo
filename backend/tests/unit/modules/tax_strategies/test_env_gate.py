@@ -24,9 +24,7 @@ def test_vector_writes_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 @pytest.mark.parametrize("value", ["true", "True", "1", "yes"])
-def test_vector_writes_enabled_when_flag_true(
-    monkeypatch: pytest.MonkeyPatch, value: str
-) -> None:
+def test_vector_writes_enabled_when_flag_true(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
     monkeypatch.setenv("TAX_STRATEGIES_VECTOR_WRITE_ENABLED", value)
     assert env_gate.vector_writes_enabled() is True
 

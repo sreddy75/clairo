@@ -168,6 +168,18 @@ class AIAnalyzer(BaseAnalyzer):
             for t in transactions
         ]
 
+        # If no bank transactions were found, note that this may simply be an invoice-based
+        # business without a connected bank feed — not a "no activity" situation.
+        # This prevents the AI from incorrectly flagging inactive clients when invoice/GST
+        # data already shows significant revenue (e.g. $206K Q3 sales visible in BAS tab).
+        if not context["transactions_90d"]:
+            context["transactions_90d_note"] = (
+                "No bank feed transactions found in the last 90 days. "
+                "This is common for clients who use Xero for invoicing only and do not connect a bank feed. "
+                "Do NOT treat this as 'no financial activity' — refer to invoices, GST summary, "
+                "and monthly trends for actual financial activity."
+            )
+
         # Get invoice summary
         invoice_result = await self.db.execute(
             select(
@@ -428,10 +440,13 @@ Your task is to analyze the financial data provided and identify insights that:
 CRITICAL RULES:
 - Only generate insights if you see actual issues or opportunities in the data
 - Each insight MUST be specific and actionable
+- Write in third-person declarative style: "Revenue declined 12%" not "I notice revenue declined 12%"
+- NEVER begin summary or detail text with "I ", "I've ", "It appears", "I notice", "I can see" or any first-person language
 - Include specific numbers and percentages where relevant
 - If a deadline applies, include it as an ISO date string
 - Be conservative - only flag issues with at least medium confidence
 - DO NOT generate insights about: BAS/IAS lodgement deadlines, GST registration thresholds, overdue receivables aging, or data quality scores — these are already covered by dedicated rule-based analyzers and creating them here causes duplicates
+- DO NOT flag "no financial activity" or "no transactions" if invoice data, GST figures, or monthly trends show revenue — empty bank transactions means no bank feed, not a dormant business
 
 You must respond with ONLY valid JSON in this exact format:
 {
@@ -485,6 +500,8 @@ Please identify:
 
 IMPORTANT: Do NOT generate insights about BAS lodgement deadlines, GST registration thresholds, overdue receivables/payables aging percentages, or data quality scores. These are covered by dedicated analyzers.
 
+IMPORTANT: Do NOT generate "no financial activity", "no transactions recorded", or similar low-activity insights if invoice data, GST summary, or monthly revenue trends show activity. Empty bank transactions simply means the client uses invoice-based accounting without a bank feed — it does NOT indicate a dormant business.
+
 Remember to respond with ONLY valid JSON."""
 
         return prompt
@@ -523,6 +540,27 @@ Remember to respond with ONLY valid JSON."""
         Returns:
             InsightCreate or None if parsing fails.
         """
+        # Strip first-person AI chat language from summary/detail
+        _FIRST_PERSON_PREFIXES = (
+            "I ",
+            "I've ",
+            "I've ",
+            "I notice",
+            "I see",
+            "I can ",
+            "It appears",
+        )
+
+        def _strip_first_person(text: str | None) -> str | None:
+            if not text:
+                return text
+            stripped = text.strip()
+            for prefix in _FIRST_PERSON_PREFIXES:
+                if stripped.startswith(prefix):
+                    # Return None so the insight is discarded rather than mangled
+                    return None
+            return text
+
         try:
             # Map category string to enum
             category_map = {
@@ -577,13 +615,19 @@ Remember to respond with ONLY valid JSON."""
             else:
                 expires_at = datetime.now(UTC) + timedelta(days=30)
 
+            summary = _strip_first_person(data.get("summary", ""))
+            if summary is None:
+                logger.debug("Discarded AI insight with first-person summary language")
+                return None
+            detail = _strip_first_person(data.get("detail"))
+
             return InsightCreate(
                 category=category,
                 insight_type=data.get("insight_type", "ai_generated"),
                 priority=priority,
                 title=data.get("title", "AI-Generated Insight")[:255],
-                summary=data.get("summary", ""),
-                detail=data.get("detail"),
+                summary=summary,
+                detail=detail,
                 suggested_actions=actions,
                 related_url=f"/clients/{client.id}",
                 expires_at=expires_at,

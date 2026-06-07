@@ -151,7 +151,7 @@ export function ClassificationRequestButton({
     const resendLabel = canSendRemaining ? `Send ${unresolvedCount} remaining` : "Resend";
     const resendTitle = canSendRemaining ? "Send Remaining Transactions" : "Resend Client Request";
     const resendDescription = canSendRemaining
-      ? `Send the ${unresolvedCount} remaining unclassified transaction${unresolvedCount !== 1 ? "s" : ""} to the client for classification.`
+      ? `Send the ${unresolvedCount} remaining uncoded transaction${unresolvedCount !== 1 ? "s" : ""} to the client for classification.`
       : "Resend the classification link to the same or a different email address.";
     return (
       <div className="flex items-center gap-2">
@@ -269,7 +269,7 @@ export function ClassificationRequestButton({
         <DialogHeader>
           <DialogTitle>Request Client Input</DialogTitle>
           <DialogDescription>
-            Send your client a link to classify {unresolvedCount} unresolved
+            Send your client a link to classify {unresolvedCount} uncoded
             transaction{unresolvedCount !== 1 ? "s" : ""}. They&apos;ll see plain-English categories — no tax codes.
           </DialogDescription>
         </DialogHeader>

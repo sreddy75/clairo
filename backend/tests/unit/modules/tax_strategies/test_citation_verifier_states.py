@@ -61,9 +61,7 @@ def test_strategy_citation_state_classification(
     expected_status: str,
     expected_strategy_id: str,
 ) -> None:
-    results = CitationVerifier().verify_strategy_citations(
-        response_text, _RETRIEVED
-    )
+    results = CitationVerifier().verify_strategy_citations(response_text, _RETRIEVED)
     assert len(results) == 1
     assert results[0]["strategy_id"] == expected_strategy_id
     assert results[0]["status"] == expected_status

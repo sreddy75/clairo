@@ -17,7 +17,15 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.auth.models import PracticeUser, SubscriptionStatus, SubscriptionTier, Tenant
+from app.modules.auth.models import (
+    PracticeUser,
+    SubscriptionStatus,
+    SubscriptionTier,
+    Tenant,
+    User,
+    UserRole,
+    UserType,
+)
 from app.modules.onboarding.models import OnboardingProgress, OnboardingStatus
 
 # =============================================================================
@@ -73,20 +81,36 @@ async def test_tenant_with_progress(db_session: AsyncSession) -> tuple[Tenant, O
     return tenant, progress
 
 
+async def _create_practice_user(
+    db_session: AsyncSession,
+    tenant_id: "uuid4().__class__",
+    email: str = "user@test.com",
+) -> PracticeUser:
+    """Helper: create a properly-linked User + PracticeUser for tests."""
+    base_user = User(
+        id=uuid4(),
+        email=email,
+        user_type=UserType.PRACTICE_USER,
+        is_active=True,
+    )
+    db_session.add(base_user)
+    await db_session.flush()
+    practice_user = PracticeUser(
+        id=uuid4(),
+        tenant_id=tenant_id,
+        user_id=base_user.id,
+        clerk_id=f"clerk_{uuid4().hex[:12]}",
+        role=UserRole.ADMIN,
+    )
+    db_session.add(practice_user)
+    await db_session.flush()
+    return practice_user
+
+
 @pytest.fixture
 async def test_practice_user(db_session: AsyncSession, test_tenant: Tenant) -> PracticeUser:
     """Create a practice user for the test tenant."""
-    user = PracticeUser(
-        id=uuid4(),
-        tenant_id=test_tenant.id,
-        clerk_user_id=f"clerk_{uuid4().hex[:12]}",
-        email="user@test.com",
-        name="Test User",
-        role="owner",
-    )
-    db_session.add(user)
-    await db_session.flush()
-    return user
+    return await _create_practice_user(db_session, test_tenant.id, "user@test.com")
 
 
 @pytest.fixture
@@ -97,9 +121,9 @@ def auth_headers_for_tenant(
     from app.core.security import create_access_token
 
     token = create_access_token(
-        user_id=str(test_practice_user.id),
+        user_id=test_practice_user.clerk_id,
         tenant_id=str(test_tenant.id),
-        roles=["owner"],
+        roles=["admin"],
     )
     return {"Authorization": f"Bearer {token}"}
 
@@ -113,21 +137,11 @@ async def auth_headers_with_progress(
     from app.core.security import create_access_token
 
     tenant, _ = test_tenant_with_progress
-    user = PracticeUser(
-        id=uuid4(),
-        tenant_id=tenant.id,
-        clerk_user_id=f"clerk_{uuid4().hex[:12]}",
-        email="user@test.com",
-        name="Test User",
-        role="owner",
-    )
-    db_session.add(user)
-    await db_session.flush()
-
+    user = await _create_practice_user(db_session, tenant.id, "user@test.com")
     token = create_access_token(
-        user_id=str(user.id),
+        user_id=user.clerk_id,
         tenant_id=str(tenant.id),
-        roles=["owner"],
+        roles=["admin"],
     )
     return {"Authorization": f"Bearer {token}"}
 
@@ -196,7 +210,7 @@ class TestStartOnboarding:
         assert response.status_code == 201
         data = response.json()
         assert data["status"] == "started"
-        assert data["current_step"] == "start"
+        assert data["current_step"] == "tier_selection"
 
 
 # =============================================================================
@@ -237,31 +251,29 @@ class TestSelectTier:
         )
         assert response.status_code == 422
 
-    @patch("app.modules.billing.service.BillingService.create_checkout_session")
-    async def test_valid_tier_returns_checkout_url(
+    @patch("app.modules.billing.service.BillingService.start_trial", new_callable=AsyncMock)
+    async def test_valid_tier_starts_trial(
         self,
-        mock_checkout: AsyncMock,
+        mock_trial: AsyncMock,
         test_client: AsyncClient,
         auth_headers_for_tenant: dict[str, str],
     ) -> None:
-        """Valid tier should return checkout URL."""
-        mock_checkout.return_value = ("https://checkout.stripe.com/...", "cs_test123")
+        """Valid tier should start trial and return progress."""
+        mock_trial.return_value = {"id": "sub_test123", "status": "trialing"}
 
         response = await test_client.post(
             "/api/v1/onboarding/tier",
             headers=auth_headers_for_tenant,
             json={
                 "tier": "professional",
-                "success_url": "https://test.com/success",
-                "cancel_url": "https://test.com/cancel",
                 "with_trial": True,
             },
         )
 
         assert response.status_code == 200
         data = response.json()
-        assert "checkout_url" in data
-        assert "session_id" in data
+        assert data["current_step"] == "connect_xero"
+        assert data["status"] == "payment_setup"
 
 
 # =============================================================================

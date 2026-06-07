@@ -59,6 +59,9 @@ export interface DataSnapshot {
     knowledge_match: number;
     perspective_coverage: number;
   } | null;
+  calculation_breakdown?: Array<{ label: string; value: string }> | null;
+  // Allow other arbitrary snapshot fields
+  [key: string]: unknown;
 }
 
 export interface Insight {

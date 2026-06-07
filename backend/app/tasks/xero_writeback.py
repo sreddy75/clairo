@@ -50,7 +50,7 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
         WRITEBACK_ITEM_SKIPPED,
         WRITEBACK_ITEM_SUCCESS,
     )
-    from app.modules.integrations.xero.client import XeroClient
+    from app.modules.integrations.xero.client import XeroAuthError, XeroClient
     from app.modules.integrations.xero.exceptions import (
         WritebackError,
         XeroConflictError,
@@ -123,6 +123,7 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
         # handles rotation races with sibling connections).
         from app.modules.integrations.xero.connection_service import XeroConnectionService
         from app.modules.integrations.xero.exceptions import XeroAuthRequiredError
+
         conn_service = XeroConnectionService(db, settings)
         try:
             access_token = await conn_service.ensure_valid_token(connection.id)
@@ -160,9 +161,7 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
                 try:
                     access_token = await conn_service.ensure_valid_token(connection.id)
                 except XeroAuthRequiredError as e:
-                    logger.error(
-                        "Token refresh failed mid-writeback for job %s: %s", job_id, e
-                    )
+                    logger.error("Token refresh failed mid-writeback for job %s: %s", job_id, e)
                     for remaining_item in pending_items:
                         if remaining_item.status == XeroWritebackItemStatus.PENDING.value:
                             await repo.update_item_status(
@@ -398,6 +397,57 @@ async def _run_writeback_job(job_id_str: str, tenant_id_str: str) -> None:
                             "skip_reason": "conflict_changed",
                         },
                     )
+
+                except XeroAuthError as e:
+                    # 401/403 AuthenticationUnsuccessful mid-writeback — token is dead.
+                    # Mark connection as NEEDS_REAUTH, fail all remaining items, abort.
+                    logger.error(
+                        "Xero auth error mid-writeback for job %s (item %s): %s",
+                        job_id,
+                        item.id,
+                        e,
+                    )
+                    try:
+                        from app.modules.integrations.xero.models import XeroConnectionStatus
+                        from app.modules.integrations.xero.repository import (
+                            XeroConnectionRepository,
+                        )
+
+                        conn_repo = XeroConnectionRepository(db)
+                        from app.modules.integrations.xero.schemas import XeroConnectionUpdate
+
+                        await conn_repo.update(
+                            connection.id,
+                            XeroConnectionUpdate(status=XeroConnectionStatus.NEEDS_REAUTH),
+                        )
+                    except Exception:
+                        logger.exception("Failed to mark connection as NEEDS_REAUTH")
+
+                    error_detail = "xero_reauth_required: please reconnect Xero in Settings"
+                    await repo.update_item_status(
+                        item.id,
+                        XeroWritebackItemStatus.FAILED,
+                        processed_at=item_processed_at,
+                        error_detail=error_detail,
+                    )
+                    failed += 1
+                    for remaining_item in pending_items:
+                        if remaining_item.status == XeroWritebackItemStatus.PENDING.value:
+                            await repo.update_item_status(
+                                remaining_item.id,
+                                XeroWritebackItemStatus.FAILED,
+                                processed_at=datetime.now(UTC),
+                                error_detail=error_detail,
+                            )
+                            failed += 1
+                    await repo.update_job_status(
+                        job_id,
+                        XeroWritebackJobStatus.FAILED,
+                        error_detail=error_detail,
+                        completed_at=datetime.now(UTC),
+                    )
+                    await db.commit()
+                    return
 
                 except SplitAmountMismatchError as e:
                     await repo.update_item_status(

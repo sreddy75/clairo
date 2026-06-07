@@ -1376,9 +1376,7 @@ async def _sync_payroll_async(
                 tax_planning_service = TaxPlanningService(session, settings)
                 for plan in recent_plans:
                     try:
-                        await tax_planning_service.recompute_tax_position(
-                            plan.id, plan.tenant_id
-                        )
+                        await tax_planning_service.recompute_tax_position(plan.id, plan.tenant_id)
                     except Exception:
                         logger.warning(
                             "Tax position recompute failed for plan %s after payroll sync",

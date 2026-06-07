@@ -82,8 +82,24 @@ class ComplianceAnalyzer(BaseAnalyzer):
         profile: ClientAIProfile,
     ) -> InsightCreate | None:
         """Check if client is approaching GST registration threshold."""
-        # Skip if already registered
+        # Skip if already registered (primary check via AI profile)
         if profile.gst_registered:
+            return None
+
+        # Secondary guard: if the client has a gst_reporting_basis set in Clairo,
+        # they are already registered for GST — do not show the threshold insight.
+        # ClientAIProfile.gst_registered may lag behind actual registration status.
+        from sqlalchemy import select as _select
+
+        from app.modules.clients.models import PracticeClient
+
+        pc_result = await self.db.execute(
+            _select(PracticeClient.gst_reporting_basis).where(
+                PracticeClient.xero_connection_id == client_id
+            )
+        )
+        row = pc_result.first()
+        if row and row[0] is not None:
             return None
 
         # Get annual revenue from trends

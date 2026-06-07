@@ -86,9 +86,7 @@ class DraftParseError(ValueError):
 # ----------------------------------------------------------------------
 
 
-def build_draft_user_prompt(
-    *, name: str, categories: list[str], ato_sources: list[str]
-) -> str:
+def build_draft_user_prompt(*, name: str, categories: list[str], ato_sources: list[str]) -> str:
     """Assemble the user message for the drafting call."""
     categories_line = ", ".join(categories) if categories else "(uncategorised)"
     if ato_sources:
@@ -176,9 +174,7 @@ def parse_draft_response(text: str) -> DraftOutput:
             f"(implementation={bool(implementation)}, "
             f"explanation={bool(explanation)}): {text[:300]!r}"
         )
-    return DraftOutput(
-        implementation_text=implementation, explanation_text=explanation
-    )
+    return DraftOutput(implementation_text=implementation, explanation_text=explanation)
 
 
 _ALLOWED_ENTITY_TYPES: frozenset[str] = frozenset(
@@ -226,9 +222,7 @@ def parse_enrich_response(text: str) -> dict[str, Any]:
         return dict(_DEFAULT_ELIGIBILITY)
 
     if not isinstance(raw, dict):
-        logger.warning(
-            "parse_enrich_response: top-level value is %s, expected dict", type(raw)
-        )
+        logger.warning("parse_enrich_response: top-level value is %s, expected dict", type(raw))
         return dict(_DEFAULT_ELIGIBILITY)
 
     result = dict(_DEFAULT_ELIGIBILITY)
@@ -255,9 +249,7 @@ def parse_enrich_response(text: str) -> dict[str, Any]:
     return result
 
 
-def _filter_string_list(
-    value: Any, *, allowed: frozenset[str] | None = None
-) -> list[str]:
+def _filter_string_list(value: Any, *, allowed: frozenset[str] | None = None) -> list[str]:
     """Normalise to a list[str]; optionally restrict to an allowed vocabulary."""
     if not isinstance(value, list):
         return []
@@ -310,9 +302,7 @@ async def run_draft_llm(
     """
     text = await _acall_anthropic(
         system=DRAFT_SYSTEM_PROMPT,
-        user=build_draft_user_prompt(
-            name=name, categories=categories, ato_sources=ato_sources
-        ),
+        user=build_draft_user_prompt(name=name, categories=categories, ato_sources=ato_sources),
         client=client,
         model=model,
         max_tokens=max_tokens,

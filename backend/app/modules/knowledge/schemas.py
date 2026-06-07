@@ -394,20 +394,14 @@ class KnowledgeSearchFilters(BaseModel):
         None,
         description="Client turnover in AUD; same inclusion logic as income_band.",
     )
-    age: int | None = Field(
-        None, description="Client age; included when age_min <= v <= age_max."
-    )
+    age: int | None = Field(None, description="Client age; included when age_min <= v <= age_max.")
     industry_codes: list[str] | None = Field(
         None,
-        description=(
-            "Client industry codes; matched against strategy industry_triggers via $in."
-        ),
+        description=("Client industry codes; matched against strategy industry_triggers via $in."),
     )
     tenant_id: str | None = Field(
         None,
-        description=(
-            "Tenant context; expands to {'platform', tenant_id} on the filter."
-        ),
+        description=("Tenant context; expands to {'platform', tenant_id} on the filter."),
     )
 
 

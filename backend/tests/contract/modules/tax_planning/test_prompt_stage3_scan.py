@@ -62,8 +62,7 @@ def test_no_pre_stage3_strings_in_prompt_modules() -> None:
             if pattern.search(text):
                 offenders.append(f"{path.relative_to(BACKEND_ROOT)}: matches {pattern.pattern!r}")
     assert not offenders, (
-        "Pre-Stage-3 tax-rate language must not appear in prompt modules.\n"
-        + "\n".join(offenders)
+        "Pre-Stage-3 tax-rate language must not appear in prompt modules.\n" + "\n".join(offenders)
     )
 
 

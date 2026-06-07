@@ -82,6 +82,8 @@ export interface BASSession {
   updated_at: string;
   // Spec 049: count of approved overrides not yet synced to Xero
   approved_unsynced_count: number;
+  // Spec 062: GST basis used at calculation time
+  gst_basis_used: string | null;
 }
 
 export interface BASSessionListResponse {
@@ -107,6 +109,8 @@ export interface PAYGBreakdown {
   w2_amount_withheld: string;
   pay_run_count: number;
   has_payroll: boolean;
+  source_label?: string;
+  draft_pay_run_count?: number;
 }
 
 export interface BASCalculation {
@@ -129,6 +133,13 @@ export interface BASCalculation {
   transaction_count: number;
   invoice_count: number;
   pay_run_count: number;
+  // Spec 062: PAYG source label and draft pay run count
+  payg_source_label?: string;
+  draft_pay_run_count?: number;
+  // Spec 062: PAYG instalment fields
+  t1_instalment_income?: string | null;
+  t2_instalment_rate?: string | null;
+  t_instalment_payable?: string | null;
 }
 
 export interface BASCalculateTriggerResponse {
@@ -228,6 +239,8 @@ export interface LodgementRecordRequest {
   lodgement_method_description?: string;
   ato_reference_number?: string;
   lodgement_notes?: string;
+  // FR-021: include insights summary in the lodgement confirmation email
+  include_insights?: boolean;
 }
 
 export interface LodgementUpdateRequest {
@@ -1328,18 +1341,19 @@ export interface SuggestionNoteResponse {
 /**
  * Xero BAS cross-check data.
  */
+export interface CrossCheckFigures {
+  label_1a_gst_on_sales: number;
+  label_1b_gst_on_purchases: number;
+  net_gst: number;
+  g1_total_sales?: number;
+  g10_capital_purchases?: number;
+  g11_non_capital_purchases?: number;
+}
+
 export interface XeroBASCrossCheckResponse {
   xero_report_found: boolean | null;
-  xero_figures: {
-    label_1a_gst_on_sales: number;
-    label_1b_gst_on_purchases: number;
-    net_gst: number;
-  } | null;
-  clairo_figures: {
-    label_1a_gst_on_sales: number;
-    label_1b_gst_on_purchases: number;
-    net_gst: number;
-  } | null;
+  xero_figures: CrossCheckFigures | null;
+  clairo_figures: CrossCheckFigures | null;
   differences: Record<string, { xero: number; clairo: number; delta: number; material: boolean }> | null;
   period_label: string;
   fetched_at: string;
@@ -1576,7 +1590,7 @@ export async function dismissSuggestion(
 }
 
 /**
- * Unpark a suggestion — return to Manual Required (pending).
+ * Unpark a suggestion — return to Uncoded (pending).
  */
 export async function unparkSuggestion(
   token: string,
@@ -1815,6 +1829,79 @@ export async function listXeroAccounts(
 }
 
 /** Valid tax types for override dropdown (non-excluded from TAX_TYPE_MAPPING) */
+// =============================================================================
+// Reconciliation Status (Spec 062 - US11)
+// =============================================================================
+
+export interface ReconciliationStatus {
+  unreconciled_count: number;
+  total_transactions: number;
+  balance_discrepancy: number;
+  as_of: string;
+}
+
+export async function getReconciliationStatus(
+  token: string,
+  clientId: string,
+  startDate: string,
+  endDate: string,
+): Promise<ReconciliationStatus> {
+  const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
+  const response = await apiClient.get(
+    `/api/v1/bas/clients/${clientId}/reconciliation-status?${params}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return apiClient.handleResponse<ReconciliationStatus>(response);
+}
+
+// =============================================================================
+// PAYG Instalments (Spec 062 - US3)
+// =============================================================================
+
+export interface InstalmentUpdateRequest {
+  t1_instalment_income: number | null;
+  t2_instalment_rate: number | null;
+}
+
+export async function updateInstalments(
+  token: string,
+  calculationId: string,
+  data: InstalmentUpdateRequest,
+): Promise<BASCalculation> {
+  const response = await apiClient.patch(
+    `/api/v1/bas/calculations/${calculationId}/instalments`,
+    {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    },
+  );
+  return apiClient.handleResponse<BASCalculation>(response);
+}
+
+// =============================================================================
+// PAYG Manual Entry (FR-006)
+// =============================================================================
+
+export interface PAYGManualUpdateRequest {
+  w1_total_wages: number;
+  w2_amount_withheld: number;
+}
+
+export async function updatePAYGManual(
+  token: string,
+  calculationId: string,
+  data: PAYGManualUpdateRequest,
+): Promise<BASCalculation> {
+  const response = await apiClient.patch(
+    `/api/v1/bas/calculations/${calculationId}/payg-manual`,
+    {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    },
+  );
+  return apiClient.handleResponse<BASCalculation>(response);
+}
+
 export const VALID_TAX_TYPES = [
   { value: 'OUTPUT', label: 'GST on Sales (OUTPUT)', group: 'Sales' },
   { value: 'INPUT', label: 'GST on Purchases (INPUT)', group: 'Purchases' },

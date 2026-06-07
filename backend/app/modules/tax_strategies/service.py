@@ -93,9 +93,7 @@ class TaxStrategyService:
         if old_status == new_status:
             return strategy
         if (old_status, new_status) not in _ALLOWED_TRANSITIONS:
-            raise InvalidStatusTransitionError(
-                strategy.strategy_id, old_status, new_status
-            )
+            raise InvalidStatusTransitionError(strategy.strategy_id, old_status, new_status)
 
         now = datetime.now(UTC)
         is_approval = old_status == "in_review" and new_status == "approved"
@@ -325,9 +323,7 @@ class SeedSummary:
 
 
 # Default CSV location — bundled with the module. FR-012 / research §R6.
-DEFAULT_SEED_CSV_PATH = (
-    Path(__file__).parent / "data" / "strategy_seed.csv"
-)
+DEFAULT_SEED_CSV_PATH = Path(__file__).parent / "data" / "strategy_seed.csv"
 
 _STRATEGY_ID_PATTERN = re.compile(r"^CLR-\d{3,5}$")
 
@@ -394,9 +390,7 @@ async def seed_from_csv(
             source_ref = (raw.get("source_ref") or "").strip() or None
 
             if not _STRATEGY_ID_PATTERN.match(strategy_id):
-                validation_errors.append(
-                    f"line {i}: invalid strategy_id {strategy_id!r}"
-                )
+                validation_errors.append(f"line {i}: invalid strategy_id {strategy_id!r}")
                 continue
             if strategy_id in seen_ids:
                 validation_errors.append(
@@ -415,9 +409,7 @@ async def seed_from_csv(
                 continue
             unknown = [c for c in categories if c not in ALLOWED_CATEGORIES]
             if unknown:
-                validation_errors.append(
-                    f"line {i} ({strategy_id}): unknown categories {unknown}"
-                )
+                validation_errors.append(f"line {i} ({strategy_id}): unknown categories {unknown}")
                 continue
             rows_to_create.append(
                 {
@@ -494,9 +486,7 @@ async def seed_from_csv(
     return summary
 
 
-def _dispatch_stage_task(
-    stage: str, strategy_id: str, actor_clerk_user_id: str
-) -> None:
+def _dispatch_stage_task(stage: str, strategy_id: str, actor_clerk_user_id: str) -> None:
     """Queue the Celery task for the given stage.
 
     Import locally to avoid a circular dependency (tasks module imports

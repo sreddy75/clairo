@@ -81,9 +81,7 @@ class _PublishOutcome:
     retry_backoff_max=600,
     retry_jitter=True,
 )
-def publish_strategy(
-    self: Task, strategy_id: str, triggered_by: str
-) -> dict[str, Any]:
+def publish_strategy(self: Task, strategy_id: str, triggered_by: str) -> dict[str, Any]:
     """Chunk → embed → upsert to Pinecone → write ContentChunk/BM25 rows.
 
     Env gate (FR-028): when TAX_STRATEGIES_VECTOR_WRITE_ENABLED is false the
@@ -107,9 +105,7 @@ async def _run_publish(strategy_id: str, triggered_by: str) -> dict[str, Any]:
             triggered_by=triggered_by,
             input_payload={"version": strategy.version},
         )
-        await svc.repo.update_job(
-            job, status="running", started_at=datetime.now(UTC)
-        )
+        await svc.repo.update_job(job, status="running", started_at=datetime.now(UTC))
         await session.commit()
 
         try:
@@ -123,9 +119,7 @@ async def _run_publish(strategy_id: str, triggered_by: str) -> dict[str, Any]:
                 output_payload={"message": str(exc)},
             )
             await session.commit()
-            logger.warning(
-                "publish_strategy.env_gate_blocked: %s", exc.strategy_id
-            )
+            logger.warning("publish_strategy.env_gate_blocked: %s", exc.strategy_id)
             return {
                 "status": "failed",
                 "error": VectorWriteDisabledError.code,
@@ -171,9 +165,7 @@ async def _execute_publish(
     strategy: TaxStrategy,
 ) -> _PublishOutcome:
     if strategy.status != "approved":
-        raise InvalidStatusTransitionError(
-            strategy.strategy_id, strategy.status, "published"
-        )
+        raise InvalidStatusTransitionError(strategy.strategy_id, strategy.status, "published")
     # NB: the env-gate (`TAX_STRATEGIES_VECTOR_WRITE_ENABLED`) used to fire
     # here unconditionally. That was wrong once the idempotent-publish path
     # landed — in prod, after a local bulk-bootstrap, Pinecone already holds
@@ -238,15 +230,10 @@ async def _execute_publish(
         section = chunk.metadata["chunk_section"]
         if section_chunk_counts[section] > 1:
             idx = section_indices.get(section, 0)
-            vector_id = (
-                f"tax_strategy:{strategy.strategy_id}:{section}:{idx}:"
-                f"v{strategy.version}"
-            )
+            vector_id = f"tax_strategy:{strategy.strategy_id}:{section}:{idx}:v{strategy.version}"
             section_indices[section] = idx + 1
         else:
-            vector_id = (
-                f"tax_strategy:{strategy.strategy_id}:{section}:v{strategy.version}"
-            )
+            vector_id = f"tax_strategy:{strategy.strategy_id}:{section}:v{strategy.version}"
         chunk_records.append(
             {
                 "chunk": chunk,
@@ -385,9 +372,7 @@ async def _execute_publish(
         # BM25IndexEntry primary key is chunk_id — upsert via existence
         # check against the chunk we just reconciled.
         existing_bm25_q = await session.execute(
-            select(BM25IndexEntry).where(
-                BM25IndexEntry.chunk_id == content_chunk_row.id
-            )
+            select(BM25IndexEntry).where(BM25IndexEntry.chunk_id == content_chunk_row.id)
         )
         existing_bm25 = existing_bm25_q.scalar_one_or_none()
         tokens = _tokenise_for_bm25(chunk.text)
@@ -531,9 +516,7 @@ async def _run_research(strategy_id: str, triggered_by: str) -> dict[str, Any]:
             triggered_by=triggered_by,
             input_payload={"version": strategy.version},
         )
-        await svc.repo.update_job(
-            job, status="running", started_at=datetime.now(UTC)
-        )
+        await svc.repo.update_job(job, status="running", started_at=datetime.now(UTC))
         await session.commit()
 
         try:
@@ -608,9 +591,7 @@ async def _run_draft(strategy_id: str, triggered_by: str) -> dict[str, Any]:
             raise StrategyNotFoundError(strategy_id)
 
         if strategy.status not in {"researching", "enriched"}:
-            raise InvalidStatusTransitionError(
-                strategy.strategy_id, strategy.status, "drafted"
-            )
+            raise InvalidStatusTransitionError(strategy.strategy_id, strategy.status, "drafted")
 
         job = await svc.repo.create_job(
             strategy_id=strategy_id,
@@ -621,9 +602,7 @@ async def _run_draft(strategy_id: str, triggered_by: str) -> dict[str, Any]:
                 "ato_source_count": len(strategy.ato_sources or []),
             },
         )
-        await svc.repo.update_job(
-            job, status="running", started_at=datetime.now(UTC)
-        )
+        await svc.repo.update_job(job, status="running", started_at=datetime.now(UTC))
         await session.commit()
 
         try:
@@ -705,9 +684,7 @@ async def _run_enrich(strategy_id: str, triggered_by: str) -> dict[str, Any]:
             raise StrategyNotFoundError(strategy_id)
 
         if strategy.status != "drafted":
-            raise InvalidStatusTransitionError(
-                strategy.strategy_id, strategy.status, "enriched"
-            )
+            raise InvalidStatusTransitionError(strategy.strategy_id, strategy.status, "enriched")
 
         job = await svc.repo.create_job(
             strategy_id=strategy_id,
@@ -715,9 +692,7 @@ async def _run_enrich(strategy_id: str, triggered_by: str) -> dict[str, Any]:
             triggered_by=triggered_by,
             input_payload={"version": strategy.version},
         )
-        await svc.repo.update_job(
-            job, status="running", started_at=datetime.now(UTC)
-        )
+        await svc.repo.update_job(job, status="running", started_at=datetime.now(UTC))
         await session.commit()
 
         try:

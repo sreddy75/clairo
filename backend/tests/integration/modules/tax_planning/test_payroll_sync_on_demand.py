@@ -71,9 +71,7 @@ async def test_sync_within_15s_returns_ready() -> None:
         )
     )
 
-    status, result = await sync_payroll_with_timeout(
-        syncer, connection_id=uuid4(), timeout_s=15.0
-    )
+    status, result = await sync_payroll_with_timeout(syncer, connection_id=uuid4(), timeout_s=15.0)
 
     assert status == "ready"
     assert result is not None
@@ -93,9 +91,7 @@ async def test_sync_timeout_returns_pending() -> None:
     syncer = SimpleNamespace(sync_payroll=slow_sync)
 
     # Tight timeout exercises the timeout branch without waiting 15s.
-    status, result = await sync_payroll_with_timeout(
-        syncer, connection_id=uuid4(), timeout_s=0.05
-    )
+    status, result = await sync_payroll_with_timeout(syncer, connection_id=uuid4(), timeout_s=0.05)
 
     assert status == "pending"
     assert result is None
@@ -131,24 +127,16 @@ def test_schedule_background_sync_enqueues_celery_task(monkeypatch) -> None:
 
 
 def test_resolve_payroll_status_unavailable_when_no_access() -> None:
-    assert (
-        resolve_payroll_status(has_connection=True, has_payroll_access=False)
-        == "unavailable"
-    )
+    assert resolve_payroll_status(has_connection=True, has_payroll_access=False) == "unavailable"
 
 
 def test_resolve_payroll_status_not_required_without_connection() -> None:
-    assert (
-        resolve_payroll_status(has_connection=False, has_payroll_access=False)
-        == "not_required"
-    )
+    assert resolve_payroll_status(has_connection=False, has_payroll_access=False) == "not_required"
 
 
 def test_resolve_payroll_status_defers_when_access_available() -> None:
     # None means "go ahead and sync; the outcome decides the status".
-    assert (
-        resolve_payroll_status(has_connection=True, has_payroll_access=True) is None
-    )
+    assert resolve_payroll_status(has_connection=True, has_payroll_access=True) is None
 
 
 # ---------------------------------------------------------------------------

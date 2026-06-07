@@ -45,9 +45,7 @@ from app.modules.tax_strategies.sync import (  # noqa: E402
     load_yaml,
 )
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -83,9 +81,7 @@ class ParaphraseResult:
         """Join accepted steps into the numbered-list format the chunker expects."""
         if not self.steps:
             return ""
-        return "\n".join(
-            f"{i + 1}. {s['step_text'].strip()}" for i, s in enumerate(self.steps)
-        )
+        return "\n".join(f"{i + 1}. {s['step_text'].strip()}" for i, s in enumerate(self.steps))
 
 
 def _parse_json(response: anthropic.types.Message) -> dict:
@@ -171,9 +167,7 @@ def paraphrase_explanation(
     return ParaphraseResult(steps=accepted, rejected=rejected)
 
 
-def iter_empty_yamls(
-    strategies_dir: Path, wanted: set[str] | None
-) -> list[tuple[Path, dict]]:
+def iter_empty_yamls(strategies_dir: Path, wanted: set[str] | None) -> list[tuple[Path, dict]]:
     """Return YAML paths + parsed payloads for strategies with empty implementation."""
     out: list[tuple[Path, dict]] = []
     for path in sorted(strategies_dir.glob("*.yaml")):
@@ -207,9 +201,7 @@ def _write_yaml(path: Path, payload: dict) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--strategies-dir", type=Path, default=DEFAULT_STRATEGIES_DIR
-    )
+    parser.add_argument("--strategies-dir", type=Path, default=DEFAULT_STRATEGIES_DIR)
     parser.add_argument(
         "--ids",
         default="",

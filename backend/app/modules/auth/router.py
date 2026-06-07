@@ -790,6 +790,7 @@ async def list_users(
     # Fix placeholder emails from Clerk dev environment
     from app.config import get_settings
     from app.modules.auth.clerk import ClerkClient
+
     clerk_client = ClerkClient(settings=get_settings().clerk)
     for u in users:
         if "@placeholder." in u.email:

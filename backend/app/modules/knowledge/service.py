@@ -207,9 +207,7 @@ class KnowledgeService:
             request.filters,
             include_structured_eligibility=False,
         )
-        has_eligibility_clauses = (
-            pinecone_filter != pinecone_filter_without_eligibility
-        )
+        has_eligibility_clauses = pinecone_filter != pinecone_filter_without_eligibility
 
         # Step 3a: Resolve namespaces. Spec 060 opt-in; None preserves the
         # legacy default (compliance_knowledge only) so existing callers are
@@ -678,11 +676,7 @@ class KnowledgeService:
                 additional_conditions.append(
                     {
                         "$or": [
-                            {
-                                "turnover_band_min": {
-                                    "$lte": request_filters.turnover_band
-                                }
-                            },
+                            {"turnover_band_min": {"$lte": request_filters.turnover_band}},
                             {"turnover_band_min": {"$exists": False}},
                         ]
                     }
@@ -690,11 +684,7 @@ class KnowledgeService:
                 additional_conditions.append(
                     {
                         "$or": [
-                            {
-                                "turnover_band_max": {
-                                    "$gte": request_filters.turnover_band
-                                }
-                            },
+                            {"turnover_band_max": {"$gte": request_filters.turnover_band}},
                             {"turnover_band_max": {"$exists": False}},
                         ]
                     }

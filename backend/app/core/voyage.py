@@ -22,9 +22,8 @@ Usage:
 
 import asyncio
 import logging
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
-import voyageai
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -35,6 +34,24 @@ from tenacity import (
 from app.config import VoyageSettings
 
 logger = logging.getLogger(__name__)
+
+# Lazy-import voyageai to avoid pydantic v1 compatibility errors at module load
+# time (Python 3.14 + pydantic v2's v1 shim raises ValueError for min_items).
+# The actual import happens in VoyageService.__init__ when the service is used.
+_voyageai: Any = None
+_VoyageRateLimitError: type = Exception
+_VoyageInvalidRequestError: type = Exception
+
+
+def _load_voyageai() -> Any:
+    global _voyageai, _VoyageRateLimitError, _VoyageInvalidRequestError
+    if _voyageai is None:
+        import voyageai as _vai
+
+        _voyageai = _vai
+        _VoyageRateLimitError = _vai.error.RateLimitError
+        _VoyageInvalidRequestError = _vai.error.InvalidRequestError
+    return _voyageai
 
 
 class VoyageEmbeddingError(Exception):
@@ -76,9 +93,10 @@ class VoyageService:
                 "Voyage API key not configured. Set VOYAGE_API_KEY environment variable."
             )
 
+        vai = _load_voyageai()
         self._settings = settings
-        self._client = voyageai.Client(api_key=api_key)
-        self._async_client = voyageai.AsyncClient(api_key=api_key)
+        self._client = vai.Client(api_key=api_key)
+        self._async_client = vai.AsyncClient(api_key=api_key)
 
         # Validate model
         if settings.model not in self.SUPPORTED_MODELS:
@@ -106,7 +124,7 @@ class VoyageService:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type((voyageai.error.RateLimitError, ConnectionError)),
+        retry=retry_if_exception_type((_VoyageRateLimitError, ConnectionError)),
         reraise=True,
     )
     async def embed_text(
@@ -133,7 +151,7 @@ class VoyageService:
                 input_type=input_type,
             )
             return result.embeddings[0]
-        except voyageai.error.InvalidRequestError as e:
+        except _VoyageInvalidRequestError as e:
             raise VoyageEmbeddingError(f"Invalid request: {e}") from e
         except Exception as e:
             raise VoyageEmbeddingError(f"Embedding failed: {e}") from e
@@ -171,7 +189,7 @@ class VoyageService:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type((voyageai.error.RateLimitError, ConnectionError)),
+        retry=retry_if_exception_type((_VoyageRateLimitError, ConnectionError)),
         reraise=True,
     )
     async def _embed_batch_chunk(
@@ -198,7 +216,7 @@ class VoyageService:
                 input_type=input_type,
             )
             return result.embeddings
-        except voyageai.error.InvalidRequestError as e:
+        except _VoyageInvalidRequestError as e:
             raise VoyageEmbeddingError(f"Invalid request: {e}") from e
         except Exception as e:
             raise VoyageEmbeddingError(f"Batch embedding failed: {e}") from e

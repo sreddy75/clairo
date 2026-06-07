@@ -78,15 +78,9 @@ def test_compute_ground_truth_matches_calculator(
     # guard against any future divergence caused by separate evolution paths).
     assert abs(truth.taxable_income - Decimal(str(calculator_result["taxable_income"]))) < 1
     assert abs(truth.gross_tax - Decimal(str(calculator_result["gross_tax"]))) < 1
+    assert abs(truth.total_tax_payable - Decimal(str(calculator_result["total_tax_payable"]))) < 1
     assert (
-        abs(truth.total_tax_payable - Decimal(str(calculator_result["total_tax_payable"]))) < 1
-    )
-    assert (
-        abs(
-            truth.credits_total
-            - Decimal(str(calculator_result["credits_applied"]["total"]))
-        )
-        < 1
+        abs(truth.credits_total - Decimal(str(calculator_result["credits_applied"]["total"]))) < 1
     )
     assert abs(truth.net_position - Decimal(str(calculator_result["net_position"]))) < 1
 

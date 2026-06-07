@@ -84,6 +84,7 @@ class XeroReportService:
 
         if connection.status == XeroConnectionStatus.NEEDS_REAUTH:
             from app.modules.integrations.xero.exceptions import XeroAuthRequiredError
+
             raise XeroAuthRequiredError(connection_id, org_name=connection.organization_name or "")
 
         if connection.status != XeroConnectionStatus.ACTIVE:

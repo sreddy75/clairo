@@ -79,6 +79,7 @@ import {
 } from '@/lib/quality';
 import { cn } from '@/lib/utils';
 import { getSyncHistory } from '@/lib/xero-sync';
+import { useClientPeriodStore } from '@/stores/clientPeriodStore';
 import type { Insight } from '@/types/insights';
 
 // =============================================================================
@@ -116,6 +117,8 @@ interface ClientDetail {
   critical_issues: number;
   // Contact info
   contact_email?: string | null;
+  // GST basis (Spec 062)
+  gst_reporting_basis?: string | null;
 }
 
 interface Contact {
@@ -245,9 +248,8 @@ export default function ClientDetailPage() {
   // Tab state
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
-  // Quarter selector
-  const [selectedQuarter, setSelectedQuarter] = useState<number | null>(null);
-  const [selectedFyYear, setSelectedFyYear] = useState<number | null>(null);
+  // Quarter selector — shared via Zustand store so BAS/Insights/Dashboard tabs stay in sync
+  const { selectedQuarter, selectedFyYear, setQuarter: setStoreQuarter, reset: resetPeriodStore } = useClientPeriodStore();
   const [quarterDropdownOpen, setQuarterDropdownOpen] = useState(false);
 
   // Contacts state
@@ -360,15 +362,14 @@ export default function ClientDetailPage() {
 
       // Initialize quarter selection from response
       if (!selectedQuarter) {
-        setSelectedQuarter(data.quarter);
-        setSelectedFyYear(data.fy_year);
+        setStoreQuarter(data.quarter, data.fy_year);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);
     }
-  }, [getToken, id, selectedQuarter, selectedFyYear]);
+  }, [getToken, id, selectedQuarter, selectedFyYear, setStoreQuarter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -669,6 +670,11 @@ export default function ClientDetailPage() {
   }, [getToken, client?.id]);
 
   // Initial load
+  // Reset shared period store when navigating to a different client
+  useEffect(() => {
+    resetPeriodStore();
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     fetchClient();
   }, [fetchClient]);
@@ -920,8 +926,7 @@ export default function ClientDetailPage() {
         setQuarterDropdownOpen={setQuarterDropdownOpen}
         quarterOptions={quarterOptions}
         onQuarterSelect={(quarter, year) => {
-          setSelectedQuarter(quarter);
-          setSelectedFyYear(year);
+          setStoreQuarter(quarter, year);
           setQuarterDropdownOpen(false);
         }}
         clientId={id as string}
@@ -943,6 +948,8 @@ export default function ClientDetailPage() {
           onRefreshData={handleRefresh}
           isRefreshing={isRefreshing}
           clientId={id as string}
+          selectedQuarter={selectedQuarter}
+          selectedFyYear={selectedFyYear}
         />
       )}
 
@@ -954,6 +961,8 @@ export default function ClientDetailPage() {
             getToken={getToken}
             selectedQuarter={selectedQuarter || client.quarter}
             selectedFyYear={selectedFyYear || client.fy_year}
+            clientGstBasis={client.gst_reporting_basis ?? null}
+            onGstBasisChanged={() => fetchClient()}
           />
         </>
       )}
@@ -1044,6 +1053,8 @@ export default function ClientDetailPage() {
             onExpandInsight={handleExpandInsight}
             onConvertInsight={(insight) => setInsightToConvert(insight)}
             isExpandingInsight={isExpandingInsight}
+            selectedQuarter={selectedQuarter}
+            selectedFyYear={selectedFyYear}
           />
 
           {/* Convert to Action Item Modal */}

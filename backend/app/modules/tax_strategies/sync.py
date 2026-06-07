@@ -44,9 +44,7 @@ from app.modules.tax_strategies.schemas import ALLOWED_CATEGORIES
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_STRATEGIES_DIR = (
-    Path(__file__).parent / "data" / "strategies"
-)
+DEFAULT_STRATEGIES_DIR = Path(__file__).parent / "data" / "strategies"
 
 
 # Keys from the YAML file that contribute to the retrieval representation
@@ -120,9 +118,7 @@ def load_yaml(path: Path) -> dict[str, Any]:
 
     strategy_id = raw.get("strategy_id")
     if not isinstance(strategy_id, str) or not strategy_id.startswith("CLR-"):
-        raise YamlValidationError(
-            f"{path.name}: missing or invalid strategy_id"
-        )
+        raise YamlValidationError(f"{path.name}: missing or invalid strategy_id")
     name = raw.get("name")
     if not isinstance(name, str) or not name.strip():
         raise YamlValidationError(f"{path.name}: missing or empty name")
@@ -132,8 +128,7 @@ def load_yaml(path: Path) -> dict[str, Any]:
     for c in categories:
         if c not in ALLOWED_CATEGORIES:
             raise YamlValidationError(
-                f"{path.name}: unknown category {c!r}; "
-                f"must be one of {sorted(ALLOWED_CATEGORIES)}"
+                f"{path.name}: unknown category {c!r}; must be one of {sorted(ALLOWED_CATEGORIES)}"
             )
 
     # Normalise defaults so downstream code doesn't need to handle None
@@ -280,9 +275,7 @@ async def sync_one(
                 "content_signature": yaml_sig,
             },
         )
-        return SyncDecision(
-            strategy_id=strategy_id, action="created", needs_publish=True
-        )
+        return SyncDecision(strategy_id=strategy_id, action="created", needs_publish=True)
 
     if yaml_version > existing.version:
         # Explicit version bump in the YAML — supersede the old row and
@@ -348,9 +341,7 @@ async def sync_one(
             strategy_id=strategy_id,
             action="unchanged",
             needs_publish=needs_publish,
-            reason="no content drift; publish required for bootstrap"
-            if needs_publish
-            else "",
+            reason="no content drift; publish required for bootstrap" if needs_publish else "",
         )
 
     # Drift — update in place.
@@ -488,22 +479,16 @@ async def compute_staleness_report(
     for strategy_id, payload in yaml_by_id.items():
         existing = await repo.get_live_version(strategy_id)
         if existing is None:
-            entries.append(
-                StalenessEntry(strategy_id=strategy_id, reason="missing_row")
-            )
+            entries.append(StalenessEntry(strategy_id=strategy_id, reason="missing_row"))
             continue
         yaml_version = int(payload.get("version") or 1)
         if yaml_version > existing.version:
-            entries.append(
-                StalenessEntry(strategy_id=strategy_id, reason="version_ahead")
-            )
+            entries.append(StalenessEntry(strategy_id=strategy_id, reason="version_ahead"))
             continue
         if compute_content_signature(payload) != compute_content_signature(
             strategy_to_payload(existing)
         ):
-            entries.append(
-                StalenessEntry(strategy_id=strategy_id, reason="content_drift")
-            )
+            entries.append(StalenessEntry(strategy_id=strategy_id, reason="content_drift"))
 
     # Rows that exist in DB but have no corresponding YAML — potential
     # orphans if someone deleted a YAML without going through the admin
@@ -514,8 +499,6 @@ async def compute_staleness_report(
     live_rows, _ = all_live
     for row in live_rows:
         if row.strategy_id not in yaml_by_id:
-            entries.append(
-                StalenessEntry(strategy_id=row.strategy_id, reason="yaml_missing")
-            )
+            entries.append(StalenessEntry(strategy_id=row.strategy_id, reason="yaml_missing"))
 
     return entries

@@ -19,6 +19,8 @@ interface InsightsDashboardProps {
   onExpandInsight: (insightId: string) => void;
   onConvertInsight: (insight: Insight) => void;
   isExpandingInsight: boolean;
+  selectedQuarter?: number | null;
+  selectedFyYear?: number | null;
 }
 
 const BUCKET_ORDER: Bucket[] = ['urgent', 'review', 'later', 'handled'];
@@ -38,6 +40,8 @@ export function InsightsDashboard({
   onExpandInsight,
   onConvertInsight,
   isExpandingInsight,
+  selectedQuarter,
+  selectedFyYear,
 }: InsightsDashboardProps) {
   const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
 
@@ -117,6 +121,11 @@ export function InsightsDashboard({
         <div>
           <h3 className="text-lg font-semibold text-foreground">
             Insights for {clientName}
+            {selectedQuarter && selectedFyYear && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                Q{selectedQuarter} FY{String(selectedFyYear).slice(-2)}
+              </span>
+            )}
           </h3>
           <p className="text-sm text-muted-foreground">
             AI-powered analysis of potential issues and opportunities

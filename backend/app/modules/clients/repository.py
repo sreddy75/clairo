@@ -522,9 +522,7 @@ class PracticeClientRepository:
         await self.db.refresh(client)
         return client
 
-    async def get_by_id(
-        self, client_id: UUID, tenant_id: UUID
-    ) -> "PracticeClient | None":
+    async def get_by_id(self, client_id: UUID, tenant_id: UUID) -> "PracticeClient | None":
         from app.modules.clients.models import PracticeClient
 
         result = await self.db.execute(
@@ -535,9 +533,7 @@ class PracticeClientRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_xero_connection_id(
-        self, connection_id: UUID
-    ) -> "PracticeClient | None":
+    async def get_by_xero_connection_id(self, connection_id: UUID) -> "PracticeClient | None":
         from app.modules.clients.models import PracticeClient
 
         result = await self.db.execute(
@@ -559,9 +555,7 @@ class PracticeClientRepository:
         await self.db.flush()
         # Re-fetch with eager joins to ensure relationships are loaded
         self.db.expire(client)
-        result = await self.db.execute(
-            select(PracticeClient).where(PracticeClient.id == client_id)
-        )
+        result = await self.db.execute(select(PracticeClient).where(PracticeClient.id == client_id))
         return result.scalar_one_or_none()
 
     async def bulk_update_assignment(
@@ -602,9 +596,7 @@ class PracticeClientRepository:
         client.notes_updated_by = updated_by
         await self.db.flush()
         self.db.expire(client)
-        result = await self.db.execute(
-            select(PracticeClient).where(PracticeClient.id == client_id)
-        )
+        result = await self.db.execute(select(PracticeClient).where(PracticeClient.id == client_id))
         return result.scalar_one_or_none()
 
     async def update_manual_status(
@@ -620,14 +612,10 @@ class PracticeClientRepository:
         client.manual_status = status
         await self.db.flush()
         self.db.expire(client)
-        result = await self.db.execute(
-            select(PracticeClient).where(PracticeClient.id == client_id)
-        )
+        result = await self.db.execute(select(PracticeClient).where(PracticeClient.id == client_id))
         return result.scalar_one_or_none()
 
-    async def list_by_tenant(
-        self, tenant_id: UUID
-    ) -> list["PracticeClient"]:
+    async def list_by_tenant(self, tenant_id: UUID) -> list["PracticeClient"]:
         from app.modules.clients.models import PracticeClient
 
         result = await self.db.execute(
@@ -636,6 +624,27 @@ class PracticeClientRepository:
             .order_by(PracticeClient.name)
         )
         return list(result.scalars().all())
+
+    async def update_gst_basis(
+        self,
+        client_id: UUID,
+        tenant_id: UUID,
+        basis: str,
+        updated_by: UUID,
+    ) -> "PracticeClient | None":
+        """Set or change the GST reporting basis for a client (Spec 062)."""
+        from app.modules.clients.models import PracticeClient
+
+        client = await self.get_by_id(client_id, tenant_id)
+        if client is None:
+            return None
+        client.gst_reporting_basis = basis
+        client.gst_basis_updated_at = datetime.now(UTC)
+        client.gst_basis_updated_by = updated_by
+        await self.db.flush()
+        self.db.expire(client)
+        result = await self.db.execute(select(PracticeClient).where(PracticeClient.id == client_id))
+        return result.scalar_one_or_none()
 
 
 # =============================================================================
@@ -759,9 +768,7 @@ class ClientNoteHistoryRepository:
         await self.db.flush()
         return entry
 
-    async def get_history(
-        self, client_id: UUID, tenant_id: UUID
-    ) -> list["ClientNoteHistory"]:
+    async def get_history(self, client_id: UUID, tenant_id: UUID) -> list["ClientNoteHistory"]:
         from app.modules.clients.models import ClientNoteHistory
 
         result = await self.db.execute(

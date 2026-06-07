@@ -348,6 +348,7 @@ class XeroOAuthService:
         # Auto-create PracticeClient for new connection (Spec 058)
         try:
             from app.modules.clients.repository import PracticeClientRepository
+
             pc_repo = PracticeClientRepository(self.session)
             existing = await pc_repo.get_by_xero_connection_id(connection.id)
             if not existing:

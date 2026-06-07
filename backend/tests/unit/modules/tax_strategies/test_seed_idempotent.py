@@ -113,8 +113,7 @@ def test_duplicate_strategy_id_within_csv_raises(tmp_path: Path) -> None:
 def test_missing_name_raises(tmp_path: Path) -> None:
     csv_path = _write_csv(
         tmp_path / "no_name.csv",
-        "strategy_id,name,categories,source_ref\n"
-        "CLR-555,,Recommendations,STP-555\n",
+        "strategy_id,name,categories,source_ref\nCLR-555,,Recommendations,STP-555\n",
     )
 
     import asyncio
@@ -175,10 +174,7 @@ def test_missing_header_columns_raises(tmp_path: Path) -> None:
                 csv_path=csv_path,
             )
         # Error message mentions the missing columns.
-        assert any(
-            "missing" in e.lower() or "header" in e.lower()
-            for e in excinfo.value.errors
-        )
+        assert any("missing" in e.lower() or "header" in e.lower() for e in excinfo.value.errors)
 
     asyncio.run(run())
 

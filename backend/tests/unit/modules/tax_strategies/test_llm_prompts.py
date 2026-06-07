@@ -34,9 +34,7 @@ def test_build_draft_user_prompt_includes_all_inputs() -> None:
 
 
 def test_build_draft_user_prompt_handles_no_sources() -> None:
-    prompt = build_draft_user_prompt(
-        name="Something", categories=["Business"], ato_sources=[]
-    )
+    prompt = build_draft_user_prompt(name="Something", categories=["Business"], ato_sources=[])
     # Don't assert on exact wording — just that the builder doesn't crash
     # and marks the absence clearly.
     assert "Something" in prompt
@@ -155,9 +153,7 @@ def test_parse_enrich_response_filters_unknown_entity_types() -> None:
 
 
 def test_parse_enrich_response_filters_unknown_impact_types() -> None:
-    text = (
-        '{"financial_impact_type": ["deduction", "magic", "offset"], "keywords": []}'
-    )
+    text = '{"financial_impact_type": ["deduction", "magic", "offset"], "keywords": []}'
     out = parse_enrich_response(text)
     assert out["financial_impact_type"] == ["deduction", "offset"]
 

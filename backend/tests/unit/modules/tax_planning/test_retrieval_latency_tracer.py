@@ -36,15 +36,11 @@ class _FakeService:
         compliance_count = 0
         strategy_count = 0
         try:
-            result = await self._retrieve_tax_knowledge_impl(
-                query, entity_type, financials_data
-            )
+            result = await self._retrieve_tax_knowledge_impl(query, entity_type, financials_data)
             _, _, retrieved_strategies = result
             strategy_count = len(retrieved_strategies)
             compliance_count = sum(
-                1
-                for c in result[0]
-                if not c.get("chunk_id", "").startswith("strategy:")
+                1 for c in result[0] if not c.get("chunk_id", "").startswith("strategy:")
             )
             return result
         except BaseException:

@@ -98,13 +98,13 @@ class TestGetTenantSettings:
         assert data["mfa_required"] is False
 
     @pytest.mark.asyncio
-    async def test_get_tenant_settings_non_admin_forbidden(
+    async def test_get_tenant_settings_staff_allowed(
         self,
         test_client: AsyncClient,
         db_session: AsyncSession,
         mfa_user_data: dict[str, Any],
     ) -> None:
-        """Test that non-admin users cannot access tenant settings."""
+        """Test that staff users can read tenant settings (TENANT_READ permission)."""
         # Create tenant with staff user
         tenant = TenantFactory()
         user = UserFactory(email=mfa_user_data["email"])
@@ -112,7 +112,7 @@ class TestGetTenantSettings:
             user_id=user.id,
             tenant_id=tenant.id,
             clerk_id=mfa_user_data["clerk_id"],
-            role=UserRole.STAFF,  # Not admin
+            role=UserRole.STAFF,
         )
 
         db_session.add(tenant)
@@ -137,7 +137,7 @@ class TestGetTenantSettings:
                 headers={"Authorization": "Bearer mock_token"},
             )
 
-        assert response.status_code == 403
+        assert response.status_code == 200
 
 
 # =============================================================================

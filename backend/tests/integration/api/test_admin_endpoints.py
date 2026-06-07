@@ -88,7 +88,7 @@ def admin_auth_headers(
     from app.core.security import create_access_token
 
     token = create_access_token(
-        user_id=str(admin_practice_user.id),
+        user_id=admin_practice_user.clerk_id,
         tenant_id=str(admin_tenant.id),
         roles=["admin"],
     )
@@ -137,7 +137,7 @@ def non_admin_auth_headers(
     from app.core.security import create_access_token
 
     token = create_access_token(
-        user_id=str(non_admin_practice_user.id),
+        user_id=non_admin_practice_user.clerk_id,
         tenant_id=str(admin_tenant.id),
         roles=["accountant"],
     )

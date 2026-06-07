@@ -238,8 +238,12 @@ class DashboardService:
                     transaction_count=c["transaction_count"],
                     activity_count=c["activity_count"],
                     bas_status=c["bas_status"],
-                    quality_score=quality_data.get(UUID(c["xero_connection_id"]) if c.get("xero_connection_id") else None, {}).get("overall_score"),
-                    critical_issues=quality_data.get(UUID(c["xero_connection_id"]) if c.get("xero_connection_id") else None, {}).get("critical_issues", 0),
+                    quality_score=quality_data.get(
+                        UUID(c["xero_connection_id"]) if c.get("xero_connection_id") else None, {}
+                    ).get("overall_score"),
+                    critical_issues=quality_data.get(
+                        UUID(c["xero_connection_id"]) if c.get("xero_connection_id") else None, {}
+                    ).get("critical_issues", 0),
                     last_synced_at=c["last_synced_at"],
                 )
             )

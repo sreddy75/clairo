@@ -96,6 +96,5 @@ def test_identifier_in_canonical_form_near_near_miss_form() -> None:
     text = "[CLR-012: Concessional super contributions]; also CLR-241."
     out = normalise_strategy_citations(text, _RETRIEVED)
     assert out == (
-        "[CLR-012: Concessional super contributions]; also "
-        "[CLR-241: Change PSI to PSB]."
+        "[CLR-012: Concessional super contributions]; also [CLR-241: Change PSI to PSB]."
     )

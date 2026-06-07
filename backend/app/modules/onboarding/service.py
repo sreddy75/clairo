@@ -388,13 +388,15 @@ class OnboardingService:
         xpm_clients = await xpm_service.list_xpm_clients(
             tenant_id=tenant_id,
             search=search,
-            page=page,
-            page_size=page_size,
+            limit=page_size,
+            offset=(page - 1) * page_size,
         )
 
-        # Get tier limit from billing service
-        tier_limit = await self.billing_service.get_client_limit(tenant_id)
-        current_count = await self.billing_service.get_current_client_count(tenant_id)
+        # Get tier limit and current count via usage info
+        tenant = await self.tenant_repo.get_by_id(tenant_id)
+        usage = self.billing_service.get_usage_info(tenant)  # type: ignore[arg-type]
+        tier_limit = usage.client_limit
+        current_count = usage.client_count
 
         # Transform XPM clients to AvailableClient with Xero status
         available_clients: list[AvailableClient] = [
@@ -417,8 +419,8 @@ class OnboardingService:
             "source_type": "xpm",
             "tier_limit": tier_limit,
             "current_count": current_count,
-            "page": xpm_clients.page,
-            "page_size": xpm_clients.page_size,
+            "limit": xpm_clients.limit,
+            "offset": xpm_clients.offset,
         }
 
     async def start_bulk_import(

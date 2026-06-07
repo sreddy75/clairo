@@ -149,9 +149,7 @@ async def dedupe_and_rerank_strategies(
             top_k=top_k,
         )
     except Exception:
-        logger.exception(
-            "strategy_hits.rerank_failed: falling back to chunk-score order"
-        )
+        logger.exception("strategy_hits.rerank_failed: falling back to chunk-score order")
         hits.sort(key=lambda h: h.score, reverse=True)
         return hits[:top_k]
 

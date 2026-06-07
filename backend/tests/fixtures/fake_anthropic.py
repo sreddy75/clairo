@@ -30,9 +30,7 @@ class TextResponse:
 
     text: str
     stop_reason: str = "end_turn"
-    usage: dict[str, int] = field(
-        default_factory=lambda: {"input_tokens": 0, "output_tokens": 0}
-    )
+    usage: dict[str, int] = field(default_factory=lambda: {"input_tokens": 0, "output_tokens": 0})
 
 
 @dataclass
@@ -44,9 +42,7 @@ class ToolUseResponse:
     tool_use_id: str = "toolu_fake_001"
     stop_reason: str = "tool_use"
     text: str = ""
-    usage: dict[str, int] = field(
-        default_factory=lambda: {"input_tokens": 0, "output_tokens": 0}
-    )
+    usage: dict[str, int] = field(default_factory=lambda: {"input_tokens": 0, "output_tokens": 0})
 
 
 ScriptedResponse = TextResponse | ToolUseResponse

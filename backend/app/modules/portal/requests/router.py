@@ -486,6 +486,167 @@ async def list_requests(
     )
 
 
+# =============================================================================
+# Request Tracking Endpoints (must be before /requests/{request_id})
+# =============================================================================
+
+
+@requests_router.get(
+    "/requests/tracking",
+    response_model=TrackingResponse,
+    summary="Get request tracking data",
+)
+async def get_tracking_data(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+    status_filter: RequestStatus | None = Query(None, alias="status"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+) -> TrackingResponse:
+    """Get request tracking dashboard data.
+
+    Returns summary statistics and requests grouped by status.
+    Use this for the main tracking dashboard view.
+    """
+    from datetime import date as date_type
+
+    service = DocumentRequestService(db)
+    skip = (page - 1) * page_size
+
+    summary, requests = await service.get_tracking_data(
+        tenant_id=user.tenant_id,
+        status=status_filter,
+        skip=skip,
+        limit=page_size,
+    )
+
+    # Convert requests to tracking items
+    today = date_type.today()
+    tracking_items = []
+    for req in requests:
+        org_name = "Unknown"
+        if hasattr(req, "connection") and req.connection:
+            org_name = req.connection.organization_name or "Unknown"
+
+        is_overdue = False
+        days_until_due = None
+        if req.due_date:
+            days_until_due = (req.due_date - today).days
+            if days_until_due < 0 and req.status not in [
+                RequestStatus.COMPLETE.value,
+                RequestStatus.CANCELLED.value,
+            ]:
+                is_overdue = True
+
+        tracking_items.append(
+            TrackingRequestItem(
+                id=req.id,
+                connection_id=req.connection_id,
+                organization_name=org_name,
+                title=req.title,
+                due_date=req.due_date,
+                priority=RequestPriority(req.priority),
+                status=RequestStatus(req.status),
+                sent_at=req.sent_at,
+                viewed_at=req.viewed_at,
+                responded_at=req.responded_at,
+                is_overdue=is_overdue,
+                days_until_due=days_until_due,
+                response_count=len(req.responses)
+                if hasattr(req, "responses") and req.responses
+                else 0,
+            )
+        )
+
+    # Group by status
+    groups: dict[RequestStatus, list[TrackingRequestItem]] = {}
+    for item in tracking_items:
+        if item.status not in groups:
+            groups[item.status] = []
+        groups[item.status].append(item)
+
+    status_groups = [
+        TrackingStatusGroup(
+            status=status,
+            count=len(items),
+            requests=items,
+        )
+        for status, items in groups.items()
+    ]
+
+    return TrackingResponse(
+        summary=TrackingSummary(**summary),
+        groups=status_groups,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@requests_router.get(
+    "/requests/tracking/summary",
+    response_model=TrackingSummaryResponse,
+    summary="Get request tracking summary",
+)
+async def get_tracking_summary(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
+) -> TrackingSummaryResponse:
+    """Get quick summary of request tracking statistics.
+
+    Returns counts by status plus overdue, due today, due this week.
+    Also includes recent activity for quick reference.
+    """
+    from datetime import date as date_type
+
+    service = DocumentRequestService(db)
+
+    summary = await service.get_tracking_summary(user.tenant_id)
+    recent_requests = await service.get_recent_activity(user.tenant_id, limit=5)
+
+    # Convert recent requests to tracking items
+    today = date_type.today()
+    recent_items = []
+    for req in recent_requests:
+        org_name = "Unknown"
+        if hasattr(req, "connection") and req.connection:
+            org_name = req.connection.organization_name or "Unknown"
+
+        is_overdue = False
+        days_until_due = None
+        if req.due_date:
+            days_until_due = (req.due_date - today).days
+            if days_until_due < 0 and req.status not in [
+                RequestStatus.COMPLETE.value,
+                RequestStatus.CANCELLED.value,
+            ]:
+                is_overdue = True
+
+        recent_items.append(
+            TrackingRequestItem(
+                id=req.id,
+                connection_id=req.connection_id,
+                organization_name=org_name,
+                title=req.title,
+                due_date=req.due_date,
+                priority=RequestPriority(req.priority),
+                status=RequestStatus(req.status),
+                sent_at=req.sent_at,
+                viewed_at=req.viewed_at,
+                responded_at=req.responded_at,
+                is_overdue=is_overdue,
+                days_until_due=days_until_due,
+                response_count=len(req.responses)
+                if hasattr(req, "responses") and req.responses
+                else 0,
+            )
+        )
+
+    return TrackingSummaryResponse(
+        summary=TrackingSummary(**summary),
+        recent_activity=recent_items,
+    )
+
+
 @requests_router.get(
     "/requests/{request_id}",
     response_model=RequestDetailResponse,
@@ -904,167 +1065,6 @@ async def get_bulk_request(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
-
-
-# =============================================================================
-# Request Tracking Endpoints
-# =============================================================================
-
-
-@requests_router.get(
-    "/requests/tracking",
-    response_model=TrackingResponse,
-    summary="Get request tracking data",
-)
-async def get_tracking_data(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
-    status_filter: RequestStatus | None = Query(None, alias="status"),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
-) -> TrackingResponse:
-    """Get request tracking dashboard data.
-
-    Returns summary statistics and requests grouped by status.
-    Use this for the main tracking dashboard view.
-    """
-    from datetime import date as date_type
-
-    service = DocumentRequestService(db)
-    skip = (page - 1) * page_size
-
-    summary, requests = await service.get_tracking_data(
-        tenant_id=user.tenant_id,
-        status=status_filter,
-        skip=skip,
-        limit=page_size,
-    )
-
-    # Convert requests to tracking items
-    today = date_type.today()
-    tracking_items = []
-    for req in requests:
-        org_name = "Unknown"
-        if hasattr(req, "connection") and req.connection:
-            org_name = req.connection.organization_name or "Unknown"
-
-        is_overdue = False
-        days_until_due = None
-        if req.due_date:
-            days_until_due = (req.due_date - today).days
-            if days_until_due < 0 and req.status not in [
-                RequestStatus.COMPLETE.value,
-                RequestStatus.CANCELLED.value,
-            ]:
-                is_overdue = True
-
-        tracking_items.append(
-            TrackingRequestItem(
-                id=req.id,
-                connection_id=req.connection_id,
-                organization_name=org_name,
-                title=req.title,
-                due_date=req.due_date,
-                priority=RequestPriority(req.priority),
-                status=RequestStatus(req.status),
-                sent_at=req.sent_at,
-                viewed_at=req.viewed_at,
-                responded_at=req.responded_at,
-                is_overdue=is_overdue,
-                days_until_due=days_until_due,
-                response_count=len(req.responses)
-                if hasattr(req, "responses") and req.responses
-                else 0,
-            )
-        )
-
-    # Group by status
-    groups: dict[RequestStatus, list[TrackingRequestItem]] = {}
-    for item in tracking_items:
-        if item.status not in groups:
-            groups[item.status] = []
-        groups[item.status].append(item)
-
-    status_groups = [
-        TrackingStatusGroup(
-            status=status,
-            count=len(items),
-            requests=items,
-        )
-        for status, items in groups.items()
-    ]
-
-    return TrackingResponse(
-        summary=TrackingSummary(**summary),
-        groups=status_groups,
-        page=page,
-        page_size=page_size,
-    )
-
-
-@requests_router.get(
-    "/requests/tracking/summary",
-    response_model=TrackingSummaryResponse,
-    summary="Get request tracking summary",
-)
-async def get_tracking_summary(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[PracticeUser, Depends(get_current_practice_user)],
-) -> TrackingSummaryResponse:
-    """Get quick summary of request tracking statistics.
-
-    Returns counts by status plus overdue, due today, due this week.
-    Also includes recent activity for quick reference.
-    """
-    from datetime import date as date_type
-
-    service = DocumentRequestService(db)
-
-    summary = await service.get_tracking_summary(user.tenant_id)
-    recent_requests = await service.get_recent_activity(user.tenant_id, limit=5)
-
-    # Convert recent requests to tracking items
-    today = date_type.today()
-    recent_items = []
-    for req in recent_requests:
-        org_name = "Unknown"
-        if hasattr(req, "connection") and req.connection:
-            org_name = req.connection.organization_name or "Unknown"
-
-        is_overdue = False
-        days_until_due = None
-        if req.due_date:
-            days_until_due = (req.due_date - today).days
-            if days_until_due < 0 and req.status not in [
-                RequestStatus.COMPLETE.value,
-                RequestStatus.CANCELLED.value,
-            ]:
-                is_overdue = True
-
-        recent_items.append(
-            TrackingRequestItem(
-                id=req.id,
-                connection_id=req.connection_id,
-                organization_name=org_name,
-                title=req.title,
-                due_date=req.due_date,
-                priority=RequestPriority(req.priority),
-                status=RequestStatus(req.status),
-                sent_at=req.sent_at,
-                viewed_at=req.viewed_at,
-                responded_at=req.responded_at,
-                is_overdue=is_overdue,
-                days_until_due=days_until_due,
-                response_count=len(req.responses)
-                if hasattr(req, "responses") and req.responses
-                else 0,
-            )
-        )
-
-    return TrackingSummaryResponse(
-        summary=TrackingSummary(**summary),
-        recent_activity=recent_items,
-    )
 
 
 # =============================================================================
