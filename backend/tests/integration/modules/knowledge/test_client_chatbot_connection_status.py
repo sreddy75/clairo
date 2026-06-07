@@ -73,9 +73,7 @@ async def _make_connection(
 class TestGetConnectionStatus:
     """Tests for ClientContextChatbot.get_connection_status."""
 
-    async def test_resolves_active_connection_by_id(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_resolves_active_connection_by_id(self, db_session: AsyncSession) -> None:
         synced_at = datetime(2026, 6, 1, 9, 30, tzinfo=timezone.utc)
         conn = await _make_connection(
             db_session,
@@ -105,9 +103,7 @@ class TestGetConnectionStatus:
         assert result["needs_reauth"] is True
         assert result["last_sync"] is None
 
-    async def test_unknown_id_returns_not_found(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_unknown_id_returns_not_found(self, db_session: AsyncSession) -> None:
         result = await _chatbot(db_session).get_connection_status(uuid4())
 
         assert result["status"] == "not_found"

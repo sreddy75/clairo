@@ -98,9 +98,7 @@ class TestClientChatSearch:
             status=XeroConnectionStatus.NEEDS_REAUTH,
         )
 
-        response = await test_client.get(
-            SEARCH_URL, params={"q": "kr8"}, headers=auth_headers
-        )
+        response = await test_client.get(SEARCH_URL, params={"q": "kr8"}, headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -109,9 +107,7 @@ class TestClientChatSearch:
         assert names == {"KR8 Active Pty Ltd", "KR8 Stale Pty Ltd"}
 
         # The needs_reauth client is present and flagged inactive.
-        reauth_result = next(
-            r for r in data["results"] if r["name"] == "KR8 Stale Pty Ltd"
-        )
+        reauth_result = next(r for r in data["results"] if r["name"] == "KR8 Stale Pty Ltd")
         assert reauth_result["is_active"] is False
         # id/connection_id stay the XeroConnection id (downstream chat contract).
         assert reauth_result["id"] == str(reauth_conn.id)
@@ -134,16 +130,12 @@ class TestClientChatSearch:
         )
 
         # Matches the practice-client name...
-        match = await test_client.get(
-            SEARCH_URL, params={"q": "renamed"}, headers=auth_headers
-        )
+        match = await test_client.get(SEARCH_URL, params={"q": "renamed"}, headers=auth_headers)
         assert match.status_code == 200
         assert match.json()["total"] == 1
 
         # ...and does not leak via the stale Xero org name.
-        no_match = await test_client.get(
-            SEARCH_URL, params={"q": "old xero"}, headers=auth_headers
-        )
+        no_match = await test_client.get(SEARCH_URL, params={"q": "old xero"}, headers=auth_headers)
         assert no_match.status_code == 200
         assert no_match.json()["total"] == 0
 
@@ -169,9 +161,7 @@ class TestClientChatSearch:
         db_session.add(manual_client)
         await db_session.flush()
 
-        response = await test_client.get(
-            SEARCH_URL, params={"q": "manual"}, headers=auth_headers
-        )
+        response = await test_client.get(SEARCH_URL, params={"q": "manual"}, headers=auth_headers)
 
         assert response.status_code == 200
         assert response.json()["total"] == 0
@@ -204,9 +194,7 @@ class TestClientChatSearch:
             status=XeroConnectionStatus.ACTIVE,
         )
 
-        response = await test_client.get(
-            SEARCH_URL, params={"q": "kr8"}, headers=auth_headers
-        )
+        response = await test_client.get(SEARCH_URL, params={"q": "kr8"}, headers=auth_headers)
 
         assert response.status_code == 200
         assert response.json()["total"] == 0

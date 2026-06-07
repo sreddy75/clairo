@@ -519,9 +519,7 @@ class ClientContextChatbot:
         Returns:
             Dict with connection status info.
         """
-        result = await self.db.execute(
-            select(XeroConnection).where(XeroConnection.id == client_id)
-        )
+        result = await self.db.execute(select(XeroConnection).where(XeroConnection.id == client_id))
         connection = result.scalar_one_or_none()
 
         if not connection:
