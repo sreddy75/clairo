@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import AnthropicSettings
 from app.core.pinecone_service import PineconeService
 from app.core.voyage import VoyageService
-from app.modules.integrations.xero.models import XeroClient, XeroConnection
+from app.modules.integrations.xero.models import XeroConnection, XeroConnectionStatus
 from app.modules.knowledge.chatbot import ChatContext, Citation, KnowledgeChatbot
 from app.modules.knowledge.context_builder import ClientContext, ContextBuilderService
 
@@ -514,31 +514,24 @@ class ClientContextChatbot:
         """Get connection status for a client.
 
         Args:
-            client_id: The client ID.
+            client_id: The client ID (XeroConnection ID).
 
         Returns:
             Dict with connection status info.
         """
         result = await self.db.execute(
-            select(XeroClient, XeroConnection)
-            .join(XeroConnection, XeroClient.connection_id == XeroConnection.id)
-            .where(XeroClient.id == client_id)
+            select(XeroConnection).where(XeroConnection.id == client_id)
         )
-        row = result.one_or_none()
+        connection = result.scalar_one_or_none()
 
-        if not row:
+        if not connection:
             return {"status": "not_found", "message": "Client not found"}
 
-        client, connection = row
-
         return {
-            "status": connection.connection_status.value
-            if connection.connection_status
-            else "unknown",
+            "status": connection.status.value if connection.status else "unknown",
             "organization_name": connection.organization_name,
             "last_sync": connection.last_full_sync_at.isoformat()
             if connection.last_full_sync_at
             else None,
-            "needs_reauth": connection.connection_status
-            and connection.connection_status.value == "needs_reauth",
+            "needs_reauth": connection.status == XeroConnectionStatus.NEEDS_REAUTH,
         }
