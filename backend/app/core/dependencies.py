@@ -20,6 +20,7 @@ Usage:
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import TYPE_CHECKING, Annotated, Any
 
@@ -33,6 +34,36 @@ from app.core.security import (
     extract_token_from_header,
 )
 from app.database import get_db
+
+logger = logging.getLogger(__name__)
+
+
+async def _sync_tenant_to_clerk(clerk_id: str, tenant_id: uuid.UUID, role: str) -> None:
+    """Best-effort sync of a user's resolved tenant into Clerk public_metadata.
+
+    Onboarding establishes the tenant in the database; this keeps Clerk's
+    ``public_metadata.tenant_id`` in lockstep so the user's JWT becomes the
+    authoritative, correct source of their tenant. Without it the JWT tenant_id
+    stays unset/stale and can silently diverge from the user's real tenant —
+    which ``get_current_tenant_id`` (trusting the JWT claim first) would then
+    honour, scoping the user to the wrong/empty tenant.
+
+    Failures never block onboarding: the next onboarding request re-attempts the
+    sync via the "user already has a tenant" branch.
+    """
+    from app.modules.auth.clerk import get_clerk_client
+
+    try:
+        await get_clerk_client().update_user_metadata(
+            clerk_id=clerk_id,
+            public_metadata={"tenant_id": str(tenant_id), "role": role},
+        )
+    except Exception:
+        logger.exception(
+            "Failed to sync tenant %s to Clerk for user %s during onboarding",
+            tenant_id,
+            clerk_id,
+        )
 
 
 async def get_current_user(
@@ -277,11 +308,16 @@ async def get_or_create_onboarding_tenant(
 
     # Check if user already has a tenant
     result = await session.execute(
-        select(PracticeUser.tenant_id).where(PracticeUser.clerk_id == user.sub)
+        select(PracticeUser.tenant_id, PracticeUser.role).where(PracticeUser.clerk_id == user.sub)
     )
-    tenant_id = result.scalar_one_or_none()
+    row = result.one_or_none()
 
-    if tenant_id is not None:
+    if row is not None:
+        tenant_id, role = row
+        # The DB already has a tenant for this user, but their JWT didn't carry
+        # it (user.tenant_id was None above). Sync Clerk so the JWT becomes
+        # authoritative and can't later diverge to a different/empty tenant.
+        await _sync_tenant_to_clerk(user.sub, tenant_id, getattr(role, "value", role))
         return tenant_id
 
     # Create new tenant and user for onboarding
@@ -327,6 +363,13 @@ async def get_or_create_onboarding_tenant(
     )
     session.add(practice_user)
     await session.commit()
+
+    # Sync the newly created tenant into Clerk so the user's JWT reflects their
+    # real tenant from the next token refresh onward. This is the core fix for
+    # the onboarding/Clerk divergence: previously this path created the tenant
+    # in the DB but never told Clerk, leaving public_metadata.tenant_id free to
+    # hold a stale or wrong value that get_current_tenant_id would then trust.
+    await _sync_tenant_to_clerk(user.sub, tenant.id, UserRole.ADMIN.value)
 
     return tenant.id
 
