@@ -26,6 +26,7 @@ from app.core.dependencies import (
 from app.core.pinecone_service import PineconeService
 from app.core.voyage import VoyageService
 from app.database import get_db
+from app.modules.clients.models import PracticeClient
 from app.modules.integrations.xero.models import XeroConnection
 from app.modules.knowledge.chatbot import Citation
 from app.modules.knowledge.client_chat_schemas import (
@@ -106,33 +107,40 @@ async def search_clients(
 
     limit = min(limit, 50)
 
-    # Search XeroConnection directly (no Anthropic required)
+    # Search PracticeClient (the authoritative client list, matching the
+    # dashboard) joined to its XeroConnection. The join is intentionally inner:
+    # the client-context chat pipeline keys entirely on XeroConnection.id, so
+    # non-Xero clients (no connection) can't be chatted and are excluded here.
+    # We do NOT filter on status == "active" — needs_reauth connections still
+    # appear in the dashboard, so they must appear here too.
     search_pattern = f"%{q}%"
     result = await db.execute(
-        select(XeroConnection)
+        select(PracticeClient, XeroConnection)
+        .join(XeroConnection, PracticeClient.xero_connection_id == XeroConnection.id)
         .where(
-            XeroConnection.tenant_id == tenant_id,
-            XeroConnection.status == "active",
-            XeroConnection.organization_name.ilike(search_pattern),
+            PracticeClient.tenant_id == tenant_id,
+            PracticeClient.name.ilike(search_pattern),
         )
-        .order_by(XeroConnection.organization_name)
+        .order_by(PracticeClient.name)
         .limit(limit)
     )
-    connections = result.scalars().all()
+    rows = result.all()
 
     return ClientSearchResponse(
         results=[
             ClientSearchResult(
+                # id stays the XeroConnection id: downstream profile/chat
+                # endpoints resolve client_id against XeroConnection.id.
                 id=conn.id,
-                name=conn.organization_name,
-                abn=None,
+                name=client.name,
+                abn=client.abn,
                 connection_id=conn.id,
                 organization_name=conn.organization_name,
                 is_active=conn.status == "active",
             )
-            for conn in connections
+            for client, conn in rows
         ],
-        total=len(connections),
+        total=len(rows),
         query=q,
     )
 
