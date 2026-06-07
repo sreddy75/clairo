@@ -69,9 +69,7 @@ def _request(tenant_id: uuid.UUID | None = None, email: str = "new.user@example.
 def clerk_mock(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     mock = MagicMock()
     mock.update_user_metadata = AsyncMock()
-    monkeypatch.setattr(
-        "app.modules.auth.clerk.get_clerk_client", lambda *a, **k: mock
-    )
+    monkeypatch.setattr("app.modules.auth.clerk.get_clerk_client", lambda *a, **k: mock)
     return mock
 
 
